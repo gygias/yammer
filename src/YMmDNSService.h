@@ -13,6 +13,13 @@
 
 typedef struct __YMmDNSService *YMmDNSServiceRef;
 
+typedef struct
+{
+    char *key;
+    void *value;
+    uint8_t valueLen; // length of key + value can't exceed 255 (allowing for '=')
+} YMmDNSTxtRecordKeyPair;
+
 YMmDNSServiceRef YMmDNSServiceCreate(char *type, char *name);
 
 void YMmDNSServiceStart();
