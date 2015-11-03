@@ -9,27 +9,35 @@
 #include "YMSecurityProvider.h"
 #include "YMPrivate.h"
 
+typedef bool (*ym_security_init_func)(YMSecurityProviderRef);
+typedef bool (*ym_security_read_func)(int,const uint8_t*,size_t);
+typedef bool (*ym_security_write_func)(int,const uint8_t*,size_t);
+typedef bool (*ym_security_close_func)(YMSecurityProviderRef);
+
 typedef struct __YMSecurityProvider
 {
     YMTypeID type;
     
     int fd;
     ym_security_init_func   initFunc;
-    ym_read_func            readFunc;
-    ym_write_func           writeFunc;
+    ym_security_read_func   readFunc;
+    ym_security_write_func  writeFunc;
+    ym_security_close_func  closeFunc;
 } _YMSecurityProvider;
 
-bool YMNoSecurityInit(int);
-bool YMNoSecurityRead(int, uint8_t*, size_t);
-bool YMNoSecurityWrite(int, uint8_t*, size_t);
+bool YMNoSecurityInit(YMSecurityProviderRef);
+bool YMNoSecurityRead(int fd, const uint8_t*, size_t);
+bool YMNoSecurityWrite(int fd, const uint8_t*, size_t);
+bool YMNoSecurityClose(YMSecurityProviderRef provider);
 
 YMSecurityProviderRef YMSecurityProviderCreate(int fd)
 {
     _YMSecurityProvider *provider = (_YMSecurityProvider *)calloc(1,sizeof(_YMSecurityProvider));
     provider->type = _YMSecurityProviderType;
     provider->initFunc = YMNoSecurityInit;
-    provider->readFunc = YMRead;
-    provider->writeFunc = YMWrite;
+    provider->readFunc = YMNoSecurityRead;
+    provider->writeFunc = YMNoSecurityWrite;
+    provider->closeFunc = YMNoSecurityClose;
     provider->fd = fd;
     return provider;
 }
@@ -54,9 +62,28 @@ void YMSecurityProviderWrite(YMSecurityProviderRef provider, const void *buffer,
     provider->readFunc(provider->fd,buffer,bytes);
 }
 
-// passthrough
+void YMSecurityProviderClose(YMSecurityProviderRef provider)
+{
+    
+}
 
-bool YMNoSecurityInit(int fd)
+// passthrough
+bool YMNoSecurityInit(YMSecurityProviderRef provider)
+{
+    return true;
+}
+
+bool YMNoSecurityRead(int fd, const uint8_t *buffer, size_t bytes)
+{
+    return YMRead(fd, buffer, bytes);
+}
+
+bool YMNoSecurityWrite(int fd, const uint8_t *buffer, size_t bytes)
+{
+    return YMWrite(fd, buffer, bytes);
+}
+
+bool YMNoSecurityClose(YMSecurityProviderRef provider)
 {
     return true;
 }
