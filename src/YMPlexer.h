@@ -10,7 +10,27 @@
 #define YMPlexer_h
 
 #include "YMBase.h"
+#include "YMStream.h"
 
-#include <stdio.h>
+typedef struct __YMPlexer *YMPlexerRef; // CF defines const, how to shadow writeable struct?
+
+typedef void (*ym_plexer_interrupted_func)      (YMPlexerRef);
+typedef void (*ym_plexer_new_upstream_func)     (YMPlexerRef,YMStreamRef);
+typedef void (*ym_plexer_stream_closing_func)   (YMPlexerRef,YMStreamRef);
+
+YMPlexerRef YMPlexerCreate(char *name);
+void YMPlexerFree(YMPlexerRef plexer);
+
+// init
+void YMPlexerSetInterruptedFunc(YMPlexerRef plexer, ym_plexer_interrupted_func func);
+void YMPlexerSetNewIncomingStreamFunc(YMPlexerRef plexer, ym_plexer_new_upstream_func func);
+void YMPlexerSetStreamClosingFunc(YMPlexerRef plexer, ym_plexer_stream_closing_func func);
+void YMPlexerSetSecurityProvider(YMPlexerRef plexer, YMTypeRef provider); // unsure how to handle this poly in c (yet?)
+
+bool YMPlexerStartOnFile(YMPlexerRef plexer, int fd, bool master);
+void YMPlexerStop(YMPlexerRef plexer);
+
+YMStreamRef YMPlexerNewStream(YMPlexerRef plexer, char *name, bool direct);
+void YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream);
 
 #endif /* YMPlexer_h */
