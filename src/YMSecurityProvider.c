@@ -16,7 +16,7 @@ typedef bool (*ym_security_close_func)(YMSecurityProviderRef);
 
 typedef struct __YMSecurityProvider
 {
-    YMTypeID type;
+    YMTypeID _typeID;
     
     int fd;
     ym_security_init_func   initFunc;
@@ -33,7 +33,7 @@ bool YMNoSecurityClose(YMSecurityProviderRef provider);
 YMSecurityProviderRef YMSecurityProviderCreate(int fd)
 {
     _YMSecurityProvider *provider = (_YMSecurityProvider *)calloc(1,sizeof(_YMSecurityProvider));
-    provider->type = _YMSecurityProviderType;
+    provider->_typeID = _YMSecurityProviderTypeID;
     provider->initFunc = YMNoSecurityInit;
     provider->readFunc = YMNoSecurityRead;
     provider->writeFunc = YMNoSecurityWrite;

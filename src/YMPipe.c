@@ -9,9 +9,32 @@
 #include "YMPipe.h"
 #include "YMPrivate.h"
 
-typedef const struct _YMPipe
+typedef struct __YMPipe
 {
+    YMTypeID _typeID;
+    
     int inFd;
     int outFd;
     char *name;
-} YMPipe;
+} _YMPipe;
+
+YMPipeRef YMPipeCreate(char *name, int inFd, int outFd)
+{
+    _YMPipe *pipe = (_YMPipe *)calloc(1,sizeof(_YMPipe));
+    pipe->_typeID = _YMPipeTypeID;
+    
+    pipe->name = strdup(name);
+    pipe->inFd = inFd;
+    pipe->outFd = outFd;
+    
+    return (YMPipeRef)pipe;
+}
+
+void _YMPipeFree(YMTypeRef object)
+{
+    _YMPipe *pipe = (_YMPipe *)object;
+    if ( pipe->name )
+        free(pipe->name);
+    free(pipe);
+    
+}
