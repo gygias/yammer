@@ -19,7 +19,7 @@
 #include "YMLog.h"
 
 typedef const void *YMTypeRef;
-typedef unsigned long YMTypeID;
+typedef char YMTypeID;
 
 void YMFree(YMTypeRef object);
 

@@ -11,8 +11,6 @@
 
 #include "YMBase.h"
 
-extern YMTypeID YMSecurityProviderType;
-
 typedef struct __YMSecurityProvider *YMSecurityProviderRef;
 
 YMSecurityProviderRef YMSecurityProviderCreate(int fd);

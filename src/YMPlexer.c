@@ -13,7 +13,7 @@
 
 typedef struct __YMPlexer
 {
-    YMTypeID type;
+    YMTypeID _typeID;
     
     int fd;
     char *name;
@@ -30,20 +30,17 @@ typedef struct __YMPlexer
     ym_plexer_stream_closing_func closingFunc;
 } _YMPlexer;
 
-YMPlexerRef YMPlexerCreate(char *name)
+YMPlexerRef YMPlexerCreate(int fd)
 {
     _YMPlexer *plexer = (_YMPlexer *)calloc(1,sizeof(_YMPlexer));
-    plexer->type = _YMPlexerTypeID;
-    plexer->fd = -1;
-    plexer->name = strdup(name);
+    plexer->_typeID = _YMPlexerTypeID;
+    plexer->fd = fd;
     plexer->running = false;
     return plexer;
 }
 
-void YMPlexerFree(YMPlexerRef plexer)
+void _YMPlexerFree(YMPlexerRef plexer)
 {
-    if ( plexer->name )
-        free( plexer->name );
     free(plexer);
 }
 
@@ -64,15 +61,15 @@ void YMPlexerSetStreamClosingFunc(YMPlexerRef plexer, ym_plexer_stream_closing_f
 
 void YMPlexerSetSecurityProvider(YMPlexerRef plexer, YMTypeRef provider)
 {
-    YMTypeID type = ((_YMTypeRef *)provider)->type;
-    if ( type != _YMSecurityProviderType )
+    YMTypeID type = ((_YMTypeRef *)provider)->_typeID;
+    if ( type != _YMSecurityProviderTypeID )
         YMLog("warning: %s: provider is type '%c'",__FUNCTION__,type);
     plexer->provider = (YMSecurityProviderRef)provider;
 }
 
 const char* YMPlexerMasterHello = "hola";
 const char* YMPlexerSlaveHello = "greetings";
-bool YMPlexerStartOnFile(YMPlexerRef plexer, int fd, bool master)
+bool YMPlexerStartOnFile(YMPlexerRef plexer, bool master)
 {
     bool okay;
     
@@ -85,7 +82,7 @@ bool YMPlexerStartOnFile(YMPlexerRef plexer, int fd, bool master)
     char *error = "error: plexer initialization failed";
     if ( master )
     {
-        okay = YMWrite(fd, YMPlexerMasterHello, strlen(YMPlexerMasterHello));
+        okay = YMWrite(plexer->fd, YMPlexerMasterHello, strlen(YMPlexerMasterHello));
         if ( ! okay )
         {
             YMLog(error);
@@ -94,7 +91,7 @@ bool YMPlexerStartOnFile(YMPlexerRef plexer, int fd, bool master)
         
         unsigned long inHelloLen = strlen(YMPlexerSlaveHello);
         char *inHello = (char *)calloc(sizeof(char),inHelloLen);
-        okay = YMRead(fd, inHello, inHelloLen);
+        okay = YMRead(plexer->fd, inHello, inHelloLen);
         if ( ! okay || strcmp(YMPlexerSlaveHello,inHello) )
         {
             YMLog(error);
@@ -105,7 +102,7 @@ bool YMPlexerStartOnFile(YMPlexerRef plexer, int fd, bool master)
     {
         unsigned long inHelloLen = strlen(YMPlexerMasterHello);
         char *inHello = (char *)calloc(sizeof(char),inHelloLen);
-        okay = YMRead(fd, inHello, inHelloLen);
+        okay = YMRead(plexer->fd, inHello, inHelloLen);
         
         if ( ! okay || strcmp(YMPlexerMasterHello,inHello) )
         {
@@ -113,7 +110,7 @@ bool YMPlexerStartOnFile(YMPlexerRef plexer, int fd, bool master)
             return false;
         }
         
-        okay = YMWrite(fd, YMPlexerSlaveHello, strlen(YMPlexerSlaveHello));
+        okay = YMWrite(plexer->fd, YMPlexerSlaveHello, strlen(YMPlexerSlaveHello));
         if ( ! okay )
         {
             YMLog(error);
@@ -121,7 +118,6 @@ bool YMPlexerStartOnFile(YMPlexerRef plexer, int fd, bool master)
         }
     }
     
-    plexer->fd = fd;
     plexer->running = true;
     
     return true;

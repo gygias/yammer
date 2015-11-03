@@ -11,8 +11,18 @@
 
 #include "YMPipe.h"
 
-typedef const struct _YMStream
+typedef struct __YMStream
 {
     YMPipeRef upStream;
     YMPipeRef downStream;
-} YMStream;
+} _YMStream;
+
+void _YMStreamFree(YMTypeRef object)
+{
+    _YMStream *stream = (_YMStream *)object;
+    if ( stream->upStream )
+        _YMStreamFree(stream->upStream);
+    if ( stream->downStream )
+        _YMStreamFree(stream->downStream);
+    free(stream);
+}
