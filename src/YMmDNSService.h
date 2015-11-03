@@ -20,7 +20,7 @@ typedef struct
     uint8_t valueLen; // length of key + value can't exceed 255 (allowing for '=')
 } YMmDNSTxtRecordKeyPair;
 
-YMmDNSServiceRef YMmDNSServiceCreate(char *type, char *name);
+YMmDNSServiceRef YMmDNSServiceCreate(char *type, char *name, uint16_t port);
 
 void YMmDNSServiceStart();
 void YMmDNSServiceStop();
