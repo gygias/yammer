@@ -1,16 +1,16 @@
 //
-//  YMStream.h
+//  YMLog.h
 //  yammer
 //
 //  Created by david on 11/3/15.
 //  Copyright © 2015 Combobulated Software. All rights reserved.
 //
 
-#ifndef YMStream_h
-#define YMStream_h
+#ifndef YMLog_h
+#define YMLog_h
 
 #include "YMBase.h"
 
-typedef const struct _YMStream *YMStreamRef;
+void YMLog( char* format, ... );
 
-#endif /* YMStream_h */
+#endif /* YMLog_h */

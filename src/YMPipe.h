@@ -11,8 +11,6 @@
 
 #include "YMBase.h"
 
-#include <stdio.h>
-
 typedef const struct _YMPipe *YMPipeRef;
 
 #endif /* YMPipe_h */

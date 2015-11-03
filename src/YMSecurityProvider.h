@@ -11,8 +11,6 @@
 
 #include "YMBase.h"
 
-#include <stdio.h>
-
 typedef bool (*ym_security_init_func)(int,size_t*);
 
 typedef const struct _YMSecurityProvider *YMSecurityProviderRef;
