@@ -6,6 +6,21 @@
 	objectVersion = 46;
 	objects = {
 
+/* Begin PBXAggregateTarget section */
+		630A5D0C1BE96EE1003292EE /* All */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 630A5D0D1BE96EE1003292EE /* Build configuration list for PBXAggregateTarget "All" */;
+			buildPhases = (
+			);
+			dependencies = (
+				630A5D111BE96EEE003292EE /* PBXTargetDependency */,
+				630A5D131BE96EEE003292EE /* PBXTargetDependency */,
+			);
+			name = All;
+			productName = All;
+		};
+/* End PBXAggregateTarget section */
+
 /* Begin PBXBuildFile section */
 		630A5CE91BE93BEF003292EE /* YMSSLProvider.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CE71BE93BEF003292EE /* YMSSLProvider.c */; };
 		630A5CEA1BE93BEF003292EE /* YMSSLProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5CE81BE93BEF003292EE /* YMSSLProvider.h */; };
@@ -17,6 +32,8 @@
 		630A5CF71BE9518A003292EE /* YMSession.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5CF51BE9518A003292EE /* YMSession.h */; };
 		630A5CFA1BE95E36003292EE /* YMThreads.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CF81BE95E36003292EE /* YMThreads.c */; };
 		630A5CFB1BE95E36003292EE /* YMThreads.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5CF91BE95E36003292EE /* YMThreads.h */; };
+		630A5D031BE96CE9003292EE /* YammerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 630A5D021BE96CE9003292EE /* YammerTests.m */; };
+		630A5D051BE96CE9003292EE /* libyammer.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63225D421BE9026200C28F05 /* libyammer.dylib */; };
 		63225D541BE9074700C28F05 /* YMPipe.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D521BE9074700C28F05 /* YMPipe.c */; };
 		63225D551BE9074700C28F05 /* YMPipe.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D531BE9074700C28F05 /* YMPipe.h */; };
 		63225D5C1BE9092500C28F05 /* YMStream.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D5A1BE9092500C28F05 /* YMStream.c */; };
@@ -33,6 +50,30 @@
 		63225D9E1BE9372800C28F05 /* libssl.1.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63225D9D1BE9372800C28F05 /* libssl.1.0.0.dylib */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		630A5D061BE96CE9003292EE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 63225D3A1BE9026200C28F05 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 63225D411BE9026200C28F05;
+			remoteInfo = yammer;
+		};
+		630A5D101BE96EEE003292EE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 63225D3A1BE9026200C28F05 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 63225D411BE9026200C28F05;
+			remoteInfo = yammer;
+		};
+		630A5D121BE96EEE003292EE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 63225D3A1BE9026200C28F05 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 630A5CFF1BE96CE9003292EE;
+			remoteInfo = YammerTests;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		630A5CE71BE93BEF003292EE /* YMSSLProvider.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMSSLProvider.c; path = src/YMSSLProvider.c; sourceTree = "<group>"; };
 		630A5CE81BE93BEF003292EE /* YMSSLProvider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMSSLProvider.h; path = src/YMSSLProvider.h; sourceTree = "<group>"; };
@@ -44,6 +85,10 @@
 		630A5CF51BE9518A003292EE /* YMSession.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMSession.h; path = src/YMSession.h; sourceTree = "<group>"; };
 		630A5CF81BE95E36003292EE /* YMThreads.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMThreads.c; path = src/YMThreads.c; sourceTree = "<group>"; };
 		630A5CF91BE95E36003292EE /* YMThreads.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMThreads.h; path = src/YMThreads.h; sourceTree = "<group>"; };
+		630A5D001BE96CE9003292EE /* YammerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YammerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		630A5D021BE96CE9003292EE /* YammerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = YammerTests.m; sourceTree = "<group>"; };
+		630A5D041BE96CE9003292EE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		630A5D0B1BE96D6E003292EE /* Yammer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Yammer.h; path = src/Yammer.h; sourceTree = "<group>"; };
 		63225D421BE9026200C28F05 /* libyammer.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libyammer.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		63225D521BE9074700C28F05 /* YMPipe.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMPipe.c; path = src/YMPipe.c; sourceTree = "<group>"; };
 		63225D531BE9074700C28F05 /* YMPipe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMPipe.h; path = src/YMPipe.h; sourceTree = "<group>"; };
@@ -64,6 +109,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		630A5CFD1BE96CE9003292EE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				630A5D051BE96CE9003292EE /* libyammer.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		63225D3F1BE9026200C28F05 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -75,11 +128,21 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		630A5D011BE96CE9003292EE /* YammerTests */ = {
+			isa = PBXGroup;
+			children = (
+				630A5D021BE96CE9003292EE /* YammerTests.m */,
+				630A5D041BE96CE9003292EE /* Info.plist */,
+			);
+			path = YammerTests;
+			sourceTree = "<group>";
+		};
 		63225D391BE9026200C28F05 = {
 			isa = PBXGroup;
 			children = (
 				63225D9C1BE9314100C28F05 /* libs */,
 				63225D491BE9027000C28F05 /* src */,
+				630A5D011BE96CE9003292EE /* YammerTests */,
 				63225D431BE9026200C28F05 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -88,6 +151,7 @@
 			isa = PBXGroup;
 			children = (
 				63225D421BE9026200C28F05 /* libyammer.dylib */,
+				630A5D001BE96CE9003292EE /* YammerTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -120,6 +184,7 @@
 				630A5CF41BE9518A003292EE /* YMSession.c */,
 				630A5CF91BE95E36003292EE /* YMThreads.h */,
 				630A5CF81BE95E36003292EE /* YMThreads.c */,
+				630A5D0B1BE96D6E003292EE /* Yammer.h */,
 			);
 			name = src;
 			sourceTree = "<group>";
@@ -156,6 +221,24 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		630A5CFF1BE96CE9003292EE /* YammerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 630A5D081BE96CE9003292EE /* Build configuration list for PBXNativeTarget "YammerTests" */;
+			buildPhases = (
+				630A5CFC1BE96CE9003292EE /* Sources */,
+				630A5CFD1BE96CE9003292EE /* Frameworks */,
+				630A5CFE1BE96CE9003292EE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				630A5D071BE96CE9003292EE /* PBXTargetDependency */,
+			);
+			name = YammerTests;
+			productName = YammerTests;
+			productReference = 630A5D001BE96CE9003292EE /* YammerTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		63225D411BE9026200C28F05 /* yammer */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 63225D461BE9026200C28F05 /* Build configuration list for PBXNativeTarget "yammer" */;
@@ -182,6 +265,12 @@
 				LastUpgradeCheck = 0710;
 				ORGANIZATIONNAME = "Combobulated Software";
 				TargetAttributes = {
+					630A5CFF1BE96CE9003292EE = {
+						CreatedOnToolsVersion = 7.1;
+					};
+					630A5D0C1BE96EE1003292EE = {
+						CreatedOnToolsVersion = 7.1;
+					};
 					63225D411BE9026200C28F05 = {
 						CreatedOnToolsVersion = 7.1;
 					};
@@ -199,12 +288,32 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				630A5D0C1BE96EE1003292EE /* All */,
 				63225D411BE9026200C28F05 /* yammer */,
+				630A5CFF1BE96CE9003292EE /* YammerTests */,
 			);
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		630A5CFE1BE96CE9003292EE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
+		630A5CFC1BE96CE9003292EE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				630A5D031BE96CE9003292EE /* YammerTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		63225D3E1BE9026200C28F05 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -226,7 +335,61 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		630A5D071BE96CE9003292EE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 63225D411BE9026200C28F05 /* yammer */;
+			targetProxy = 630A5D061BE96CE9003292EE /* PBXContainerItemProxy */;
+		};
+		630A5D111BE96EEE003292EE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 63225D411BE9026200C28F05 /* yammer */;
+			targetProxy = 630A5D101BE96EEE003292EE /* PBXContainerItemProxy */;
+		};
+		630A5D131BE96EEE003292EE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 630A5CFF1BE96CE9003292EE /* YammerTests */;
+			targetProxy = 630A5D121BE96EEE003292EE /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		630A5D091BE96CE9003292EE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = YammerTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.combobulated.YammerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		630A5D0A1BE96CE9003292EE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = YammerTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.combobulated.YammerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		630A5D0E1BE96EE1003292EE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		630A5D0F1BE96EE1003292EE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		63225D441BE9026200C28F05 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -339,6 +502,22 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		630A5D081BE96CE9003292EE /* Build configuration list for PBXNativeTarget "YammerTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				630A5D091BE96CE9003292EE /* Debug */,
+				630A5D0A1BE96CE9003292EE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		630A5D0D1BE96EE1003292EE /* Build configuration list for PBXAggregateTarget "All" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				630A5D0E1BE96EE1003292EE /* Debug */,
+				630A5D0F1BE96EE1003292EE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
 		63225D3D1BE9026200C28F05 /* Build configuration list for PBXProject "yammer" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

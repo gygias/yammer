@@ -22,7 +22,8 @@ typedef struct
 
 YMmDNSServiceRef YMmDNSServiceCreate(char *type, char *name, uint16_t port);
 
-void YMmDNSServiceStart();
-void YMmDNSServiceStop();
+void YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPair *keyPairs[], int nPairs );
+bool YMmDNSServiceStart( YMmDNSServiceRef service );
+bool YMmDNSServiceStop( YMmDNSServiceRef service, bool synchronous );
 
 #endif /* YMmDNSService_h */

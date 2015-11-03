@@ -23,7 +23,7 @@ typedef struct __YMmDNSService
     // volatile stuff
     uint8_t *txtRecord;
     uint16_t txtRecordLen;
-    DNSServiceRef dnsService;
+    DNSServiceRef *dnsService;
     bool advertising;
     YMThreadRef eventThread;
 } _YMmDNSService;
@@ -92,11 +92,11 @@ void YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPair
     service->txtRecordLen = offset;
 }
 
-bool YMmDNSServicePublish( YMmDNSServiceRef service, int port )
+bool YMmDNSServiceStart( YMmDNSServiceRef service )
 {
-    DNSServiceRef *sdRef = (DNSServiceRef *)calloc( 1, sizeof(DNSServiceRef) );
+    service->dnsService = (DNSServiceRef *)calloc( 1, sizeof(DNSServiceRef) );
     uint16_t netPort = htons(service->port);
-    DNSServiceErrorType result = DNSServiceRegister(sdRef,
+    DNSServiceErrorType result = DNSServiceRegister(service->dnsService,
                                                     0, // DNSServiceFlags
                                                     0, // interfaceIndex (0=all)
                                                     service->name,
@@ -111,6 +111,7 @@ bool YMmDNSServicePublish( YMmDNSServiceRef service, int port )
     
     if( result != kDNSServiceErr_NoError )
     {
+        free(service->dnsService);
         YMLog("DNSServiceRegister failed: %d",result);
         return false;
     }
@@ -123,11 +124,22 @@ bool YMmDNSServicePublish( YMmDNSServiceRef service, int port )
     return true;
 }
 
+bool YMmDNSServiceStop( YMmDNSServiceRef service, bool synchronous )
+{
+    service->advertising = false;
+    
+    bool okay = true;
+    if ( synchronous )
+        okay = YMThreadJoin(service->eventThread);
+    
+    return okay;
+}
+
 void *_YMmDNSEventThread(void *context)
 {
     YMmDNSServiceRef service = (YMmDNSServiceRef)context;
     YMLog("event thread for %s entered...",service->name);
-    while (true) {
+    while (service->advertising) {
         sleep(1);
     }
     return NULL;
