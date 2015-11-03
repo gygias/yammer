@@ -13,16 +13,14 @@
 
 extern YMTypeID YMSecurityProviderType;
 
-typedef bool (*ym_security_init_func)();
-
 typedef struct __YMSecurityProvider *YMSecurityProviderRef;
 
 YMSecurityProviderRef YMSecurityProviderCreate(int fd);
 void YMSecurityProviderFree();
 
-void YMSecurityProviderSetInitFunc(YMSecurityProviderRef provider, ym_security_init_func func);
-
 void YMSecurityProviderRead(YMSecurityProviderRef provider, const void *buffer, size_t bytes);
 void YMSecurityProviderWrite(YMSecurityProviderRef provider, const void *buffer, size_t byte);
+
+void YMSecurityProviderClose(YMSecurityProviderRef provider);
 
 #endif /* YMSecurityProvider_h */

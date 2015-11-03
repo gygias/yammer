@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		630A5CE91BE93BEF003292EE /* YMSSLProvider.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CE71BE93BEF003292EE /* YMSSLProvider.c */; };
+		630A5CEA1BE93BEF003292EE /* YMSSLProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5CE81BE93BEF003292EE /* YMSSLProvider.h */; };
 		63225D541BE9074700C28F05 /* YMPipe.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D521BE9074700C28F05 /* YMPipe.c */; };
 		63225D551BE9074700C28F05 /* YMPipe.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D531BE9074700C28F05 /* YMPipe.h */; };
 		63225D5C1BE9092500C28F05 /* YMStream.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D5A1BE9092500C28F05 /* YMStream.c */; };
@@ -21,9 +23,12 @@
 		63225D6E1BE91B3B00C28F05 /* YMLog.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D6C1BE91B3B00C28F05 /* YMLog.h */; };
 		63225D981BE92B6000C28F05 /* YMBase.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D971BE92B6000C28F05 /* YMBase.c */; };
 		63225D9B1BE9302D00C28F05 /* YMPrivate.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D9A1BE9302D00C28F05 /* YMPrivate.c */; };
+		63225D9E1BE9372800C28F05 /* libssl.1.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63225D9D1BE9372800C28F05 /* libssl.1.0.0.dylib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		630A5CE71BE93BEF003292EE /* YMSSLProvider.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMSSLProvider.c; path = src/YMSSLProvider.c; sourceTree = "<group>"; };
+		630A5CE81BE93BEF003292EE /* YMSSLProvider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMSSLProvider.h; path = src/YMSSLProvider.h; sourceTree = "<group>"; };
 		63225D421BE9026200C28F05 /* libyammer.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libyammer.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		63225D521BE9074700C28F05 /* YMPipe.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMPipe.c; path = src/YMPipe.c; sourceTree = "<group>"; };
 		63225D531BE9074700C28F05 /* YMPipe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMPipe.h; path = src/YMPipe.h; sourceTree = "<group>"; };
@@ -41,6 +46,7 @@
 		63225D971BE92B6000C28F05 /* YMBase.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMBase.c; path = src/YMBase.c; sourceTree = "<group>"; };
 		63225D991BE92CBA00C28F05 /* YMPrivate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMPrivate.h; path = src/YMPrivate.h; sourceTree = "<group>"; };
 		63225D9A1BE9302D00C28F05 /* YMPrivate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMPrivate.c; path = src/YMPrivate.c; sourceTree = "<group>"; };
+		63225D9D1BE9372800C28F05 /* libssl.1.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libssl.1.0.0.dylib; path = /opt/local/lib/libssl.1.0.0.dylib; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -48,6 +54,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				63225D9E1BE9372800C28F05 /* libssl.1.0.0.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -57,6 +64,7 @@
 		63225D391BE9026200C28F05 = {
 			isa = PBXGroup;
 			children = (
+				63225D9C1BE9314100C28F05 /* libs */,
 				63225D491BE9027000C28F05 /* src */,
 				63225D431BE9026200C28F05 /* Products */,
 			);
@@ -73,24 +81,34 @@
 		63225D491BE9027000C28F05 /* src */ = {
 			isa = PBXGroup;
 			children = (
-				63225D5B1BE9092500C28F05 /* YMStream.h */,
-				63225D5A1BE9092500C28F05 /* YMStream.c */,
+				63225D661BE90B2D00C28F05 /* YMBase.h */,
+				63225D971BE92B6000C28F05 /* YMBase.c */,
+				63225D991BE92CBA00C28F05 /* YMPrivate.h */,
+				63225D9A1BE9302D00C28F05 /* YMPrivate.c */,
 				63225D531BE9074700C28F05 /* YMPipe.h */,
 				63225D521BE9074700C28F05 /* YMPipe.c */,
+				63225D5B1BE9092500C28F05 /* YMStream.h */,
+				63225D5A1BE9092500C28F05 /* YMStream.c */,
 				63225D5F1BE909BB00C28F05 /* YMPlexer.h */,
 				63225D5E1BE909BB00C28F05 /* YMPlexer.c */,
 				63225D631BE90A6400C28F05 /* YMSecurityProvider.h */,
 				63225D621BE90A6400C28F05 /* YMSecurityProvider.c */,
-				63225D661BE90B2D00C28F05 /* YMBase.h */,
+				630A5CE81BE93BEF003292EE /* YMSSLProvider.h */,
+				630A5CE71BE93BEF003292EE /* YMSSLProvider.c */,
 				63225D671BE9184000C28F05 /* YMIO.c */,
 				63225D681BE9184000C28F05 /* YMIO.h */,
 				63225D6C1BE91B3B00C28F05 /* YMLog.h */,
 				63225D6B1BE91B3B00C28F05 /* YMLog.c */,
-				63225D971BE92B6000C28F05 /* YMBase.c */,
-				63225D991BE92CBA00C28F05 /* YMPrivate.h */,
-				63225D9A1BE9302D00C28F05 /* YMPrivate.c */,
 			);
 			name = src;
+			sourceTree = "<group>";
+		};
+		63225D9C1BE9314100C28F05 /* libs */ = {
+			isa = PBXGroup;
+			children = (
+				63225D9D1BE9372800C28F05 /* libssl.1.0.0.dylib */,
+			);
+			name = libs;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -105,6 +123,7 @@
 				63225D611BE909BB00C28F05 /* YMPlexer.h in Headers */,
 				63225D6E1BE91B3B00C28F05 /* YMLog.h in Headers */,
 				63225D551BE9074700C28F05 /* YMPipe.h in Headers */,
+				630A5CEA1BE93BEF003292EE /* YMSSLProvider.h in Headers */,
 				63225D651BE90A6400C28F05 /* YMSecurityProvider.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -171,6 +190,7 @@
 				63225D601BE909BB00C28F05 /* YMPlexer.c in Sources */,
 				63225D541BE9074700C28F05 /* YMPipe.c in Sources */,
 				63225D9B1BE9302D00C28F05 /* YMPrivate.c in Sources */,
+				630A5CE91BE93BEF003292EE /* YMSSLProvider.c in Sources */,
 				63225D641BE90A6400C28F05 /* YMSecurityProvider.c in Sources */,
 				63225D5C1BE9092500C28F05 /* YMStream.c in Sources */,
 			);
@@ -215,6 +235,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = /opt/local/include;
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -252,6 +273,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = /opt/local/include;
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = macosx;
@@ -264,6 +286,10 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				EXECUTABLE_PREFIX = lib;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/opt/local/lib,
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -274,6 +300,10 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				EXECUTABLE_PREFIX = lib;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/opt/local/lib,
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;

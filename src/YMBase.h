@@ -23,7 +23,7 @@ typedef unsigned long YMTypeID;
 
 void YMFree(YMTypeRef object);
 
-typedef bool (*ym_read_func)(int,const void*,size_t);
-typedef bool (*ym_write_func)(int,const void*,size_t);
+typedef bool (*ym_read_func)(int,const uint8_t*,size_t);
+typedef bool (*ym_write_func)(int,const uint8_t*,size_t);
 
 #endif /* YMBase_h */
