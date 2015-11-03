@@ -11,8 +11,18 @@
 
 #include "YMBase.h"
 
-typedef bool (*ym_security_init_func)(int,size_t*);
+extern YMTypeID YMSecurityProviderType;
 
-typedef const struct _YMSecurityProvider *YMSecurityProviderRef;
+typedef bool (*ym_security_init_func)();
+
+typedef struct __YMSecurityProvider *YMSecurityProviderRef;
+
+YMSecurityProviderRef YMSecurityProviderCreate(int fd);
+void YMSecurityProviderFree();
+
+void YMSecurityProviderSetInitFunc(YMSecurityProviderRef provider, ym_security_init_func func);
+
+void YMSecurityProviderRead(YMSecurityProviderRef provider, const void *buffer, size_t bytes);
+void YMSecurityProviderWrite(YMSecurityProviderRef provider, const void *buffer, size_t byte);
 
 #endif /* YMSecurityProvider_h */

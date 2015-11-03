@@ -7,6 +7,7 @@
 //
 
 #include "YMPipe.h"
+#include "YMPrivate.h"
 
 typedef const struct _YMPipe
 {
