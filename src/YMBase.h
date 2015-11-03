@@ -21,7 +21,9 @@
 typedef const void *YMTypeRef;
 typedef unsigned long YMTypeID;
 
-typedef ssize_t (*ym_read_func)(int,void*,size_t);
-typedef ssize_t (*ym_write_func)(int,void*,size_t);
+void YMFree(YMTypeRef object);
+
+typedef bool (*ym_read_func)(int,const void*,size_t);
+typedef bool (*ym_write_func)(int,const void*,size_t);
 
 #endif /* YMBase_h */

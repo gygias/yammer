@@ -7,10 +7,9 @@
 //
 
 #include "YMPlexer.h"
+#include "YMPrivate.h"
 
 #include "YMSecurityProvider.h"
-
-YMTypeID YMPlexerTypeID = 'p';
 
 typedef struct __YMPlexer
 {
@@ -18,6 +17,11 @@ typedef struct __YMPlexer
     
     int fd;
     char *name;
+    uint8_t *downBuffer;
+    size_t downBufferSize;
+    uint8_t *upBuffer;
+    size_t upBufferSize;
+    bool running;
     
     YMSecurityProviderRef provider;
     
@@ -29,8 +33,10 @@ typedef struct __YMPlexer
 YMPlexerRef YMPlexerCreate(char *name)
 {
     _YMPlexer *plexer = (_YMPlexer *)calloc(1,sizeof(_YMPlexer));
-    plexer->type = YMPlexerTypeID;
+    plexer->type = _YMPlexerTypeID;
+    plexer->fd = -1;
     plexer->name = strdup(name);
+    plexer->running = false;
     return plexer;
 }
 
@@ -58,7 +64,10 @@ void YMPlexerSetStreamClosingFunc(YMPlexerRef plexer, ym_plexer_stream_closing_f
 
 void YMPlexerSetSecurityProvider(YMPlexerRef plexer, YMTypeRef provider)
 {
-    plexer->provider = provider;
+    YMTypeID type = ((_YMTypeRef *)provider)->type;
+    if ( type != _YMSecurityProviderType )
+        YMLog("warning: %s: provider is type '%c'",__FUNCTION__,type);
+    plexer->provider = (YMSecurityProviderRef)provider;
 }
 
 const char* YMPlexerMasterHello = "hola";
@@ -67,11 +76,28 @@ bool YMPlexerStartOnFile(YMPlexerRef plexer, int fd, bool master)
 {
     bool okay;
     
+    if ( plexer->fd != -1 )
+    {
+        YMLog("error: this plexer is already initialized");
+        return false;
+    }
+    
+    char *error = "error: plexer initialization failed";
     if ( master )
     {
         okay = YMWrite(fd, YMPlexerMasterHello, strlen(YMPlexerMasterHello));
         if ( ! okay )
         {
+            YMLog(error);
+            return false;
+        }
+        
+        unsigned long inHelloLen = strlen(YMPlexerSlaveHello);
+        char *inHello = (char *)calloc(sizeof(char),inHelloLen);
+        okay = YMRead(fd, inHello, inHelloLen);
+        if ( ! okay || strcmp(YMPlexerSlaveHello,inHello) )
+        {
+            YMLog(error);
             return false;
         }
     }
@@ -82,15 +108,42 @@ bool YMPlexerStartOnFile(YMPlexerRef plexer, int fd, bool master)
         okay = YMRead(fd, inHello, inHelloLen);
         
         if ( ! okay || strcmp(YMPlexerMasterHello,inHello) )
+        {
+            YMLog(error);
             return false;
+        }
+        
+        okay = YMWrite(fd, YMPlexerSlaveHello, strlen(YMPlexerSlaveHello));
+        if ( ! okay )
+        {
+            YMLog(error);
+            return false;
+        }
     }
     
-    // ...
+    plexer->fd = fd;
+    plexer->running = true;
     
     return true;
 }
 
-void YMPlexerStop(YMPlexerRef plexer);
+void YMPlexerStop(YMPlexerRef plexer)
+{
+    // deallocate volatile stuff
+    
+    if ( plexer->downBuffer )
+    {
+        free(plexer->downBuffer);
+        plexer->downBuffer = NULL;
+    }
+    if ( plexer->upBuffer )
+    {
+        free(plexer->upBuffer);
+        plexer->upBuffer = NULL;
+    }
+    
+    plexer->running = false;
+}
 
 YMStreamRef YMPlexerNewStream(YMPlexerRef plexer, char *name, bool direct);
 void YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream);

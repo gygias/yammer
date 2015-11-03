@@ -7,6 +7,7 @@
 //
 
 #include "YMStream.h"
+#include "YMPrivate.h"
 
 #include "YMPipe.h"
 

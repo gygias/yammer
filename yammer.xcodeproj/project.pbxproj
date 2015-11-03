@@ -19,6 +19,8 @@
 		63225D6A1BE9184000C28F05 /* YMIO.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D681BE9184000C28F05 /* YMIO.h */; };
 		63225D6D1BE91B3B00C28F05 /* YMLog.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D6B1BE91B3B00C28F05 /* YMLog.c */; };
 		63225D6E1BE91B3B00C28F05 /* YMLog.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D6C1BE91B3B00C28F05 /* YMLog.h */; };
+		63225D981BE92B6000C28F05 /* YMBase.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D971BE92B6000C28F05 /* YMBase.c */; };
+		63225D9B1BE9302D00C28F05 /* YMPrivate.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D9A1BE9302D00C28F05 /* YMPrivate.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -36,6 +38,9 @@
 		63225D681BE9184000C28F05 /* YMIO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMIO.h; path = src/YMIO.h; sourceTree = "<group>"; };
 		63225D6B1BE91B3B00C28F05 /* YMLog.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMLog.c; path = src/YMLog.c; sourceTree = "<group>"; };
 		63225D6C1BE91B3B00C28F05 /* YMLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMLog.h; path = src/YMLog.h; sourceTree = "<group>"; };
+		63225D971BE92B6000C28F05 /* YMBase.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMBase.c; path = src/YMBase.c; sourceTree = "<group>"; };
+		63225D991BE92CBA00C28F05 /* YMPrivate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMPrivate.h; path = src/YMPrivate.h; sourceTree = "<group>"; };
+		63225D9A1BE9302D00C28F05 /* YMPrivate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMPrivate.c; path = src/YMPrivate.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -81,6 +86,9 @@
 				63225D681BE9184000C28F05 /* YMIO.h */,
 				63225D6C1BE91B3B00C28F05 /* YMLog.h */,
 				63225D6B1BE91B3B00C28F05 /* YMLog.c */,
+				63225D971BE92B6000C28F05 /* YMBase.c */,
+				63225D991BE92CBA00C28F05 /* YMPrivate.h */,
+				63225D9A1BE9302D00C28F05 /* YMPrivate.c */,
 			);
 			name = src;
 			sourceTree = "<group>";
@@ -158,9 +166,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				63225D6D1BE91B3B00C28F05 /* YMLog.c in Sources */,
+				63225D981BE92B6000C28F05 /* YMBase.c in Sources */,
 				63225D691BE9184000C28F05 /* YMIO.c in Sources */,
 				63225D601BE909BB00C28F05 /* YMPlexer.c in Sources */,
 				63225D541BE9074700C28F05 /* YMPipe.c in Sources */,
+				63225D9B1BE9302D00C28F05 /* YMPrivate.c in Sources */,
 				63225D641BE90A6400C28F05 /* YMSecurityProvider.c in Sources */,
 				63225D5C1BE9092500C28F05 /* YMStream.c in Sources */,
 			);
