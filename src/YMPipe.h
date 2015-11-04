@@ -3,7 +3,7 @@
 //  yammer
 //
 //  Created by david on 11/3/15.
-//  Copyright © 2015 Combobulated Software. All rights reserved.
+//  Copyright © 2015 combobulated. All rights reserved.
 //
 
 #ifndef YMPipe_h

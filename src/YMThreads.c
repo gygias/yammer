@@ -3,15 +3,18 @@
 //  yammer
 //
 //  Created by david on 11/3/15.
-//  Copyright © 2015 Combobulated Software. All rights reserved.
+//  Copyright © 2015 combobulated. All rights reserved.
 //
 
 #include "YMThreads.h"
+#include "YMPrivate.h"
 
 #include <pthread.h>
 
 typedef struct __YMThread
 {
+    YMTypeID _typeID;
+    
     ym_thread_entry entryPoint;
     void *context;
     pthread_t pthread;
@@ -27,6 +30,8 @@ void _YMThreadFree(YMTypeRef object)
 YMThreadRef YMThreadCreate(ym_thread_entry entryPoint, void *context)
 {
     _YMThread *thread = (_YMThread *)calloc(1,sizeof(_YMThread));
+    thread->_typeID = _YMThreadTypeID;
+    
     thread->entryPoint = entryPoint;
     thread->context = context;
     thread->pthread = NULL;

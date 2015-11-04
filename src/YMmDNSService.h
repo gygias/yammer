@@ -3,26 +3,21 @@
 //  yammer
 //
 //  Created by david on 11/3/15.
-//  Copyright © 2015 Combobulated Software. All rights reserved.
+//  Copyright © 2015 combobulated. All rights reserved.
 //
 
 #ifndef YMmDNSService_h
 #define YMmDNSService_h
 
 #include "YMBase.h"
+#include "YMmDNS.h"
 
 typedef struct __YMmDNSService *YMmDNSServiceRef;
 
-typedef struct
-{
-    char *key;
-    void *value;
-    uint8_t valueLen; // length of key + value can't exceed 255 (allowing for '=')
-} YMmDNSTxtRecordKeyPair;
+YMmDNSServiceRef YMmDNSServiceCreate(const char *type, const char *name, uint16_t port);
 
-YMmDNSServiceRef YMmDNSServiceCreate(char *type, char *name, uint16_t port);
-
-void YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPair *keyPairs[], int nPairs );
+// copies the keys/values
+void YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPair *keyPairs[], size_t nPairs );
 bool YMmDNSServiceStart( YMmDNSServiceRef service );
 bool YMmDNSServiceStop( YMmDNSServiceRef service, bool synchronous );
 

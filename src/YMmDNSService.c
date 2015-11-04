@@ -3,10 +3,11 @@
 //  yammer
 //
 //  Created by david on 11/3/15.
-//  Copyright © 2015 Combobulated Software. All rights reserved.
+//  Copyright © 2015 combobulated. All rights reserved.
 //
 
 #include "YMmDNSService.h"
+#include "YMPrivate.h"
 #include "YMThreads.h"
 
 #include <sys/socket.h>
@@ -42,9 +43,11 @@ void _YMmDNSReplyCallback( DNSServiceRef sdRef,
 
 void *_YMmDNSEventThread(void *context);
 
-YMmDNSServiceRef YMmDNSServiceCreate(char *type, char *name, uint16_t port)
+YMmDNSServiceRef YMmDNSServiceCreate(const char *type, const char *name, uint16_t port)
 {
     _YMmDNSService *service = (_YMmDNSService *)calloc(1, sizeof(_YMmDNSService));
+    service->_typeID = _YMmDNSServiceTypeID;
+    
     service->type = strdup(type);
     service->name = strdup(name);
     service->port = port;
@@ -65,7 +68,7 @@ void _YMmDNSServiceFree(YMTypeRef object)
     free(service);
 }
 
-void YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPair *keyPairs[], int nPairs )
+void YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPair *keyPairs[], size_t nPairs )
 {
     int idx;
     size_t  offset = 0,
@@ -73,9 +76,10 @@ void YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPair
     uint8_t *buffer = calloc(1,bufferSize);
     for ( idx = 0; idx < nPairs; idx++ )
     {
-        char *key = keyPairs[idx]->key;
-        uint8_t *value = keyPairs[idx]->value;
-        uint8_t tupleLen = strlen(key) + 1 + keyPairs[idx]->valueLen;
+        YMmDNSTxtRecordKeyPair **_keyPairs = (YMmDNSTxtRecordKeyPair **)keyPairs;
+        const char *key = _keyPairs[idx]->key;
+        const uint8_t *value = _keyPairs[idx]->value;
+        uint8_t tupleLen = strlen(key) + 1 + _keyPairs[idx]->valueLen;
         size_t formatLength = 1 + tupleLen;
         
         if ( bufferSize - offset < formatLength )

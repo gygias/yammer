@@ -3,7 +3,7 @@
 //  yammer
 //
 //  Created by david on 11/3/15.
-//  Copyright © 2015 Combobulated Software. All rights reserved.
+//  Copyright © 2015 combobulated. All rights reserved.
 //
 
 #include "YMBase.h"
@@ -16,6 +16,7 @@ YMTypeID _YMSecurityProviderTypeID = 'p';
 YMTypeID _YMPlexerTypeID = 'x';
 YMTypeID _YMSessionTypeID = 's';
 YMTypeID _YMmDNSServiceTypeID = 'm';
+YMTypeID _YMmDNSBrowserTypeID = 'b';
 YMTypeID _YMThreadTypeID = 't';
 
 extern void _YMPipeFree(YMTypeRef);
@@ -25,6 +26,7 @@ extern void _YMSecurityProviderFree(YMTypeRef);
 extern void _YMPlexerFree(YMTypeRef);
 extern void _YMSessionFree(YMTypeRef);
 extern void _YMmDNSServiceFree(YMTypeRef);
+extern void _YMmDNSBrowserFree(YMTypeRef);
 extern void _YMThreadFree(YMTypeRef);
 
 void YMFree(YMTypeRef object)
@@ -44,6 +46,8 @@ void YMFree(YMTypeRef object)
         _YMSessionFree(object);
     else if ( type == _YMmDNSServiceTypeID )
         _YMmDNSServiceFree(object);
+    else if ( type == _YMmDNSBrowserTypeID )
+        _YMmDNSBrowserFree(object);
     else if ( type == _YMThreadTypeID )
         _YMThreadFree(object);
 }

@@ -3,7 +3,7 @@
 //  yammer
 //
 //  Created by david on 11/3/15.
-//  Copyright © 2015 Combobulated Software. All rights reserved.
+//  Copyright © 2015 combobulated. All rights reserved.
 //
 
 #include "YMLog.h"
@@ -20,5 +20,5 @@ void YMLog( char* format, ... )
     snprintf(str, ym_log_line_max, format, vargs);
     va_end(vargs);
     
-    printf("%s",str);
+    printf("%s\n",str);
 }
