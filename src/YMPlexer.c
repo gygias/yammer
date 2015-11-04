@@ -3,7 +3,7 @@
 //  yammer
 //
 //  Created by david on 11/3/15.
-//  Copyright © 2015 Combobulated Software. All rights reserved.
+//  Copyright © 2015 combobulated. All rights reserved.
 //
 
 #include "YMPlexer.h"
@@ -34,6 +34,7 @@ YMPlexerRef YMPlexerCreate(int fd)
 {
     _YMPlexer *plexer = (_YMPlexer *)calloc(1,sizeof(_YMPlexer));
     plexer->_typeID = _YMPlexerTypeID;
+    
     plexer->fd = fd;
     plexer->running = false;
     return plexer;

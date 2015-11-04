@@ -3,7 +3,7 @@
 //  yammer
 //
 //  Created by david on 11/3/15.
-//  Copyright © 2015 Combobulated Software. All rights reserved.
+//  Copyright © 2015 combobulated. All rights reserved.
 //
 
 #ifndef YMPrivate_h
@@ -17,6 +17,9 @@ extern YMTypeID _YMConnectionTypeID;
 extern YMTypeID _YMSecurityProviderTypeID;
 extern YMTypeID _YMPlexerTypeID;
 extern YMTypeID _YMSessionTypeID;
+extern YMTypeID _YMThreadTypeID;
+extern YMTypeID _YMmDNSServiceTypeID;
+extern YMTypeID _YMmDNSBrowserTypeID;
 
 typedef struct __YMTypeRef
 {
