@@ -8,44 +8,54 @@
 
 #import <XCTest/XCTest.h>
 
-// for now, cuz nothing wraps it
+#import "YMmDNS.h"
 #import "YMmDNSService.h"
 #import "YMmDNSBrowser.h"
 
 @interface YammerTests : XCTestCase
 {
     NSString *testServiceName;
-    dispatch_semaphore_t waitSemaphore;
     YMmDNSTxtRecordKeyPair **testKeyPairs;
     size_t nTestKeyPairs;
     
     YMmDNSBrowserRef browser;
     YMmDNSServiceRef service;
     
-    BOOL stopping;
+    BOOL waitingOnAppearance;
+    BOOL waitingOnResolution;
+    BOOL waitingOnDisappearance;
 }
 
 @end
 
+YammerTests *gGlobalSelf;
+
 @implementation YammerTests
 
-#define testType "_yammer._tcp"
-#define testKeyLengthBound 128
-#define testTimeout 5
+#pragma mark mDNS tests
 
-- (NSString *)_randomASCIIStringWithMaxLength:(uint8_t)maxLength
+#define testServiceType "_yammer._tcp"
+#define testKeyLengthBound 128
+
+#if 0 // actually debugging
+#define testTimeout (10 * 60)
+#else
+#define testTimeout 10
+#endif
+
+- (NSString *)_randomASCIIStringWithMaxLength:(uint8_t)maxLength :(BOOL)forServiceName
 {
     NSMutableString *string = [NSMutableString string];
     
-    uint8_t randomLength = arc4random_uniform(testKeyLengthBound);
-    // http://www.zeroconf.org/rendezvous/txtrecords.html
-    // The characters of "Name" MUST be printable US-ASCII values (0x20-0x7E), excluding '=' (0x3D).
-    uint8_t maxChar = 0x7E, minChar = 0x20;
+    uint8_t randomLength = arc4random_uniform(maxLength);
+    if ( randomLength == 0 ) randomLength = 1;
+    uint8_t maxChar = forServiceName ? 'z' : 0x7E, minChar = forServiceName ? 'a' : 0x20;
     uint8_t range = maxChar - minChar;
     
     while ( randomLength-- )
     {
-        uint8_t aChar = arc4random_uniform(range + 1) - minChar;
+        char aChar;
+        while ( ( aChar = arc4random_uniform(range + 1) + minChar ) == '=' );
         [string appendFormat:@"%c",aChar];
     }
     
@@ -67,86 +77,49 @@
     return data;
 }
 
-static YammerTests *gGlobalSelf = nil;
 - (void)setUp {
     [super setUp];
     // Put setup code here. This method is called before the invocation of each test method in the class.
     
-    gGlobalSelf = self; // think callbacks might need a context pointer... TODO
+    waitingOnAppearance = YES;
+    waitingOnResolution = YES;
+    waitingOnDisappearance = YES;
+    gGlobalSelf = self;
 }
 
 - (void)tearDown {
     // Put teardown code here. This method is called after the invocation of each test method in the class.
     [super tearDown];
+    
+    if ( testKeyPairs )
+        _YMmDNSTxtRecordKeyPairsFree(testKeyPairs, nTestKeyPairs);
 }
 
-- (void)testCreateService
+void test_service_appeared(YMmDNSBrowserRef browser, YMmDNSServiceRecord *service, void *context)
 {
-    // This is an example of a functional test case.
-    // Use XCTAssert and related functions to verify your tests produce the correct results.
-    
-    waitSemaphore = dispatch_semaphore_create(0);
-    testServiceName = [self _randomASCIIStringWithMaxLength:15];
-    
-    service = YMmDNSServiceCreate(testType, [testServiceName UTF8String], 5050);
-    
-    nTestKeyPairs = arc4random_uniform(10);
-    size_t idx = 0;
-    testKeyPairs = (YMmDNSTxtRecordKeyPair **)malloc(nTestKeyPairs * sizeof(YMmDNSTxtRecordKeyPair *));
-    
-    for ( ; idx < nTestKeyPairs; idx++ )
-    {
-        testKeyPairs[idx] = calloc(1,sizeof(YMmDNSTxtRecordKeyPair));
-        NSString *randomKey = [self _randomASCIIStringWithMaxLength:testKeyLengthBound];
-        testKeyPairs[idx]->key = (char *)[randomKey cStringUsingEncoding:NSASCIIStringEncoding];//"test-key";
-        NSData *valueData = [self _randomValueWithMaxLength:(255 - [randomKey lengthOfBytesUsingEncoding:NSASCIIStringEncoding])];//"test-value"; // XXX 255 or 256 (include =?, probably)
-        testKeyPairs[idx]->value = malloc([valueData length]);
-        memcpy((void *)testKeyPairs[idx]->value, [valueData bytes], [valueData length]);
-        testKeyPairs[idx]->valueLen = [valueData length];
-    }
-    
-    YMmDNSServiceSetTXTRecord(service, testKeyPairs, nTestKeyPairs);
-    YMmDNSServiceStart(service);
-    
-    XCTAssert(0 == dispatch_semaphore_wait(waitSemaphore, dispatch_time(DISPATCH_TIME_NOW, testTimeout * NSEC_PER_SEC)),
-                  @"service not signaled in %u seconds", testTimeout);
-}
-
-void test_service_appeared(YMmDNSBrowserRef browser, YMmDNSServiceRecord *service)
-{
-    [gGlobalSelf appeared:browser :service];
+    YammerTests *SELF = (__bridge YammerTests *)context;
+    if (!context || SELF != gGlobalSelf) [NSException raise:@"test failed" format:@"context is nil or != gGlobalSelf in %s",__FUNCTION__]; // XCT depends on self, NSAssert on _cmd...
+    [SELF appeared:browser :service];
 }
 
 - (void)appeared:(YMmDNSBrowserRef)aBrowser :(YMmDNSServiceRecord *)aService
 {
     NSLog(@"%s/%s:? appeared",aService->type,aService->name);
     XCTAssert(aBrowser==browser,@"browser pointers are not equal on service appearance");
-    if ( 0 == strcmp(aService->name, [testServiceName UTF8String]) )
-        YMmDNSBrowserResolve(browser, aService->name, test_service_resolved);
-}
-
-void test_service_removed(YMmDNSBrowserRef browser, YMmDNSServiceRecord *service)
-{
-    [gGlobalSelf removed:browser :service];
-}
-
-- (void)removed:(YMmDNSBrowserRef)aBrowser :(YMmDNSServiceRecord *)aService
-{
-    NSLog(@"%s/%s:? disappeared",aService->type,aService->name);
-    XCTAssert(aBrowser==browser,@"browser pointers %p and %p are not equal on service disappearance",browser,aBrowser);
-    
-    if ( ! stopping )
-        XCTAssert(strcmp(aService->name,[testServiceName UTF8String]), @"test service disappeared before tearDown");
-    else
+    if ( waitingOnAppearance && 0 == strcmp(aService->name, [testServiceName cStringUsingEncoding:NSASCIIStringEncoding]) )
     {
-        NSLog(@"target service removed");
-        dispatch_semaphore_signal(waitSemaphore);
+        waitingOnAppearance = NO;
+        NSLog(@"resolving...");
+        BOOL startedResolve = YMmDNSBrowserResolve(browser, aService->name);
+        XCTAssert(startedResolve,@"YMmDNSBrowserResolve failed");
     }
 }
 
-void test_service_updated(YMmDNSBrowserRef browser, YMmDNSServiceRecord *service)
+void test_service_updated(YMmDNSBrowserRef browser, YMmDNSServiceRecord *service, void *context)
 {
-    [gGlobalSelf updated:browser :service];
+    YammerTests *SELF = (__bridge YammerTests *)context;
+    if (!context || SELF != gGlobalSelf) [NSException raise:@"test failed" format:@"context is nil or != gGlobalSelf in %s",__FUNCTION__]; // XCT depends on self, NSAssert on _cmd...
+    [SELF updated:browser :service];
 }
 
 - (void)updated:(YMmDNSBrowserRef)aBrowser :(YMmDNSServiceRecord *)aService
@@ -155,9 +128,11 @@ void test_service_updated(YMmDNSBrowserRef browser, YMmDNSServiceRecord *service
     XCTAssert(browser==aBrowser,@"browser pointers %p and %p are not equal on service update",browser,aBrowser);
 }
 
-void test_service_resolved(YMmDNSBrowserRef browser, YMmDNSServiceRecord *service, bool resolved)
+void test_service_resolved(YMmDNSBrowserRef browser, bool resolved, YMmDNSServiceRecord *service, void *context)
 {
-    [gGlobalSelf resolved:browser :service :resolved];
+    YammerTests *SELF = (__bridge YammerTests *)context;
+    if (!context || SELF != gGlobalSelf) [NSException raise:@"test failed" format:@"context is nil or != gGlobalSelf in %s",__FUNCTION__]; // XCT depends on self, NSAssert on _cmd...
+    [SELF resolved:browser :service :resolved];
 }
 
 - (void)resolved:(YMmDNSBrowserRef)aBrowser :(YMmDNSServiceRecord *)aService :(bool)resolved
@@ -168,9 +143,9 @@ void test_service_resolved(YMmDNSBrowserRef browser, YMmDNSServiceRecord *servic
     NSLog(@"%s/%s:%d resolved",aService->type,aService->name,aService->port);
     YMmDNSTxtRecordKeyPair **keyPairs = aService->txtRecordKeyPairs;
     size_t keyPairsSize = aService->txtRecordKeyPairsSize,
-            idx = 0;
+    idx = 0;
     
-    XCTAssert(keyPairsSize == nTestKeyPairs, @"txt record sizes do not match");
+    XCTAssert(keyPairsSize == nTestKeyPairs, @"txt record sizes do not match (%u,%u)",(unsigned)keyPairsSize,(unsigned)nTestKeyPairs);
     
     for ( ; idx < keyPairsSize; idx++ )
     {
@@ -179,17 +154,87 @@ void test_service_resolved(YMmDNSBrowserRef browser, YMmDNSServiceRecord *servic
         XCTAssert(0 == memcmp(keyPairs[idx]->value, testKeyPairs[idx]->value, keyPairs[idx]->valueLen), @"%zu-th values of length %u don't match",idx,keyPairs[idx]->valueLen);
     }
     
-    stopping = YES;
+    waitingOnResolution = NO;
     YMmDNSServiceStop(service, false);
-    XCTAssert(0==dispatch_semaphore_wait(waitSemaphore, dispatch_time(DISPATCH_TIME_NOW, testTimeout * NSEC_PER_SEC)),@"service didn't disappear within %u seconds",testTimeout);
 }
 
-
-- (void)testBrowse
+void test_service_removed(YMmDNSBrowserRef browser, const char *serviceName, void *context)
 {
-    browser = YMmDNSBrowserCreate(testType, test_service_appeared, test_service_removed);
-    YMmDNSBrowserSetServiceUpdatedFunc(browser, test_service_updated);
-    YMmDNSBrowserSetServiceResolvedFunc(browser, test_service_resolved);
+    YammerTests *SELF = (__bridge YammerTests *)context;
+    if (!context || SELF != gGlobalSelf) [NSException raise:@"test failed" format:@"context is nil or != gGlobalSelf in %s",__FUNCTION__]; // XCT depends on self, NSAssert on _cmd...
+    [SELF removed:browser :serviceName];
+}
+
+- (void)removed:(YMmDNSBrowserRef)aBrowser :(const char *)serviceName
+{
+    NSLog(@"%s/%s:? disappeared",testServiceType,serviceName);
+    XCTAssert(aBrowser==browser,@"browser pointers %p and %p are not equal on service disappearance",browser,aBrowser);
+    
+    if ( waitingOnAppearance || waitingOnResolution )
+        XCTAssert(strcmp(serviceName,[testServiceName UTF8String]), @"test service disappeared before tearDown");
+    else
+    {
+        NSLog(@"target service removed");
+        waitingOnDisappearance = NO;
+    }
+}
+
+- (void)testBonjourCreateServiceDiscoverAndResolve
+{
+    BOOL okay;
+    testServiceName = [self _randomASCIIStringWithMaxLength:mDNS_SERVICE_NAME_LENGTH_MAX :YES];
+    service = YMmDNSServiceCreate(testServiceType, [testServiceName UTF8String], 5050);
+    
+    nTestKeyPairs = arc4random_uniform(10);
+    size_t idx = 0;
+    testKeyPairs = (YMmDNSTxtRecordKeyPair **)malloc(nTestKeyPairs * sizeof(YMmDNSTxtRecordKeyPair *));
+    
+    for ( ; idx < nTestKeyPairs; idx++ )
+    {
+        testKeyPairs[idx] = calloc(1,sizeof(YMmDNSTxtRecordKeyPair));
+        NSString *randomKey = [self _randomASCIIStringWithMaxLength:testKeyLengthBound :NO];
+        testKeyPairs[idx]->key = strdup((char *)[randomKey cStringUsingEncoding:NSASCIIStringEncoding]);//"test-key";
+        NSData *valueData = [self _randomValueWithMaxLength:(254 - [randomKey lengthOfBytesUsingEncoding:NSASCIIStringEncoding])]; // 256 - '=' - size prefix, ok?
+        testKeyPairs[idx]->value = malloc([valueData length]);
+        memcpy((void *)testKeyPairs[idx]->value, [valueData bytes], [valueData length]);
+        testKeyPairs[idx]->valueLen = [valueData length];
+        
+        NSLog(@"aKeyPair[%u]: [%u]%s => [%d]", (unsigned)idx, (unsigned)[randomKey length], [randomKey UTF8String], (int)[valueData length]);
+    }
+    
+    okay = YMmDNSServiceSetTXTRecord(service, testKeyPairs, nTestKeyPairs);
+    XCTAssert(okay,@"YMmDNSServiceSetTXTRecord failed");
+    okay = YMmDNSServiceStart(service);
+    XCTAssert(okay,@"YMmDNSServiceStart failed");
+    
+    // i had these as separate functions, but apparently "self" is a new object for each -test* method, which isn't what we need here
+    browser = YMmDNSBrowserCreateWithCallbacks(testServiceType, test_service_appeared, test_service_updated, test_service_resolved, test_service_removed, (__bridge void *)(self));
+    okay = YMmDNSBrowserStart(browser);
+    XCTAssert(okay,@"YMmDNSBrowserStartBrowsing failed");
+    
+    NSArray *steps = @[ @[ @"appearance", [NSValue valueWithPointer:&waitingOnAppearance] ],
+                        @[ @"resolution", [NSValue valueWithPointer:&waitingOnResolution] ],
+                        @[ @"disappearance", [NSValue valueWithPointer:&waitingOnDisappearance] ] ];
+    
+    [steps enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSArray *stepArray = (NSArray *)obj;
+        NSString *stepName = stepArray[0];
+        BOOL *flag = [(NSValue *)stepArray[1] pointerValue];
+        
+        NSDate *then = [NSDate date];
+        while ( *flag )
+        {
+            if ( [[NSDate date] timeIntervalSinceDate:then] >= testTimeout )
+            {
+                *stop = YES;
+                XCTAssert(NO, @"timed out waiting for %@",stepName);
+                return;
+            }
+            CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.5, false); // not using semaphore to avoid starving whatever thread, likely main, this runs on. event delivery isn't configurable.
+        }
+        
+        NSLog(@"%@ happened",stepName);
+    }];
 }
 
 //- (void)testPerformanceExample {

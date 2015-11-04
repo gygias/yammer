@@ -16,28 +16,37 @@
 
 typedef struct _YMmDNSBrowser *YMmDNSBrowserRef;
 
-typedef void (*ym_mdns_service_appeared_func)(YMmDNSBrowserRef, YMmDNSServiceRecord *);
-typedef void (*ym_mdns_service_removed_func)(YMmDNSBrowserRef, YMmDNSServiceRecord *);
-typedef void (*ym_mdns_service_updated_func)(YMmDNSBrowserRef, YMmDNSServiceRecord *);
-typedef void (*ym_mdns_service_resolved_func)(YMmDNSBrowserRef, YMmDNSServiceRecord *, bool);
+// callback definitions
+typedef void (*ym_mdns_service_appeared_func)(YMmDNSBrowserRef browser, YMmDNSServiceRecord * service, void *context);
+typedef void (*ym_mdns_service_removed_func)(YMmDNSBrowserRef browser, const char *name, void *context);
+typedef void (*ym_mdns_service_updated_func)(YMmDNSBrowserRef browser, YMmDNSServiceRecord *service, void *context);
+// if success is false, service is undefined
+typedef void (*ym_mdns_service_resolved_func)(YMmDNSBrowserRef browser, bool success, YMmDNSServiceRecord *service, void *context);
 
-YMmDNSBrowserRef YMmDNSBrowserCreate(char *type, ym_mdns_service_appeared_func serviceAppeared, ym_mdns_service_removed_func serviceRemoved);
+YMmDNSBrowserRef YMmDNSBrowserCreate(char *type);
+YMmDNSBrowserRef YMmDNSBrowserCreateWithCallbacks(char *type,
+                                                  ym_mdns_service_appeared_func serviceAppeared,
+                                                  ym_mdns_service_updated_func serviceUpdated,
+                                                  ym_mdns_service_resolved_func serviceResolved,
+                                                  ym_mdns_service_removed_func serviceRemoved,
+                                                  void *context);
 
-// ended up putting these in the constructor, but they may be useful to sequester certain events
+// these are broken out in case, say, sequestering certain events later on is useful
 void YMmDNSBrowserSetServiceAppearedFunc(YMmDNSBrowserRef browser, ym_mdns_service_appeared_func func);
 void YMmDNSBrowserSetServiceRemovedFunc(YMmDNSBrowserRef browser, ym_mdns_service_removed_func func);
 void YMmDNSBrowserSetServiceUpdatedFunc(YMmDNSBrowserRef browser, ym_mdns_service_updated_func func);
 void YMmDNSBrowserSetServiceResolvedFunc(YMmDNSBrowserRef browser, ym_mdns_service_resolved_func func);
+void YMmDNSBrowserSetCallbackContext(YMmDNSBrowserRef browser, void *context);
 
 #ifdef YMmDNS_ENUMERATION
-bool YMmDNSBrowserStartEnumerating(YMmDNSBrowserRef browser);
-bool YMmDNSBrowserStopEnumerating(YMmDNSBrowserRef browser);
+bool YMmDNSBrowserEnumeratingStart(YMmDNSBrowserRef browser);
+bool YMmDNSBrowserEnumeratingStop(YMmDNSBrowserRef browser);
 #endif
 
-bool YMmDNSBrowserStartBrowsing(YMmDNSBrowserRef browser);
-bool YMmDNSBrowserStopBrowsing(YMmDNSBrowserRef browser);
+bool YMmDNSBrowserStart(YMmDNSBrowserRef browser);
+bool YMmDNSBrowserStop(YMmDNSBrowserRef browser);
 
-bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser, const char *serviceName, ym_mdns_service_resolved_func);
+bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser, const char *serviceName);
 
 YMmDNSServiceRecord *YMmDNSBrowserGetServiceWithName(YMmDNSBrowserRef browser, const char *name);
 

@@ -29,7 +29,7 @@ typedef struct __YMmDNSService
     YMThreadRef eventThread;
 } _YMmDNSService;
 
-void _YMmDNSReplyCallback( DNSServiceRef sdRef,
+void _YMmDNSRegisterCallback(  DNSServiceRef sdRef,
                             DNSServiceFlags flags,
                             DNSServiceErrorType errorCode,
                             const char                          *name,
@@ -38,13 +38,23 @@ void _YMmDNSReplyCallback( DNSServiceRef sdRef,
                             void                                *context )
 {
     YMmDNSServiceRef service = (YMmDNSServiceRef)context;
-    YMLog("_YMmDNSReplyCallback: %s/%s:%u: %d", service->type, service->name, service->port, errorCode);
+    YMLog("_YMmDNSRegisterCallback: %s/%s:%u: %d", service->type, service->name, service->port, errorCode);
+    // DNSServiceRefDeallocate?
 }
 
 void *_YMmDNSEventThread(void *context);
 
 YMmDNSServiceRef YMmDNSServiceCreate(const char *type, const char *name, uint16_t port)
 {
+    // DNSServiceRegister will truncate this automatically, but keep the client well informed i suppose
+    if ( ! name
+        || strlen(name) >= mDNS_SERVICE_NAME_LENGTH_MAX
+        || strlen(name) < mDNS_SERVICE_NAME_LENGTH_MIN )
+    {
+        YMLog("invalid service name specified to YMmDNSServiceCreate");
+        return NULL;
+    }
+    
     _YMmDNSService *service = (_YMmDNSService *)calloc(1, sizeof(_YMmDNSService));
     service->_typeID = _YMmDNSServiceTypeID;
     
@@ -64,43 +74,85 @@ void _YMmDNSServiceFree(YMTypeRef object)
     if ( service->name )
         free(service->name);
     if ( service->txtRecord )
+#ifdef MANUAL_TXT
         free(service->txtRecord);
+#else
+        TXTRecordDeallocate((TXTRecordRef *)service->txtRecord);
+#endif
     free(service);
 }
 
-void YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPair *keyPairs[], size_t nPairs )
+// todo this should be replaced by the TxtRecord* family in dns_sd.h
+bool YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPair *keyPairs[], size_t nPairs )
 {
     int idx;
+#ifdef MANUAL_TXT
     size_t  offset = 0,
             bufferSize = 1024;
-    uint8_t *buffer = calloc(1,bufferSize);
+    char *buffer = calloc(1,bufferSize),
+            *bufferWalker = buffer; // debugging, delete later
+#endif
+    
+    TXTRecordRef *txtRecord = (TXTRecordRef *)malloc(sizeof(TXTRecordRef));
+    TXTRecordCreate(txtRecord, 0, NULL);
     for ( idx = 0; idx < nPairs; idx++ )
     {
         YMmDNSTxtRecordKeyPair **_keyPairs = (YMmDNSTxtRecordKeyPair **)keyPairs;
         const char *key = _keyPairs[idx]->key;
         const uint8_t *value = _keyPairs[idx]->value;
-        uint8_t tupleLen = strlen(key) + 1 + _keyPairs[idx]->valueLen;
-        size_t formatLength = 1 + tupleLen;
+        uint8_t valueLen = _keyPairs[idx]->valueLen;
         
-        if ( bufferSize - offset < formatLength )
+#ifndef MANUAL_TXT
+        TXTRecordSetValue(txtRecord, key, valueLen, value);
+#else
+        YMmDNSTxtRecordKeyPair **_keyPairs = (YMmDNSTxtRecordKeyPair **)keyPairs;
+        uint8_t keyLen = strlen(key);
+        uint8_t keyEqualsLen = keyLen + 1;                  // key=
+        uint8_t prefixedKeyEqualsLen = 1 + keyEqualsLen;    // %ckey=
+        uint8_t tupleLen = prefixedKeyEqualsLen + valueLen; // %ckey=value
+        
+        
+        while ( bufferSize - offset < tupleLen )
         {
             bufferSize *= 2;
             buffer = realloc(buffer, bufferSize);
         }
         
-        snprintf((char *)(buffer + offset), formatLength, "%c%s=%s", tupleLen, key, value);
-        offset += formatLength;
+        YMLog("writing %dth keypair to %p + %u",idx,buffer,offset);
+//        int written = snprintf(bufferWalker, prefixedKeyEqualsLen + 2, "%c%s=", tupleLen, key);
+//        if ( written != prefixedKeyEqualsLen )
+//        {
+//            YMLog("YMmDNSServiceSetTXTRecord failed to format key '%s'",key);
+//            return false;
+//        }
+        memcpy(buffer + offset, &tupleLen, sizeof(tupleLen));
+        offset += sizeof(tupleLen);
+        memcpy(buffer + offset, key, strlen(key));
+        offset += strlen(key);
+        memcpy(buffer + offset, "=", 1);
+        offset += 1;
+        memcpy(buffer + offset, value, valueLen);
+        offset += valueLen;
+        bufferWalker = buffer + offset;
+#endif
     }
     
-    service->txtRecord = buffer;
+    service->txtRecord =
+#ifdef MANUAL_TXT
+        buffer;
     service->txtRecordLen = offset;
+#else
+        (uint8_t *)txtRecord;
+#endif
+    
+    return true;
 }
 
 bool YMmDNSServiceStart( YMmDNSServiceRef service )
 {
-    service->dnsService = (DNSServiceRef *)calloc( 1, sizeof(DNSServiceRef) );
+    DNSServiceRef *serviceRef = (DNSServiceRef *)calloc( 1, sizeof(DNSServiceRef) );
     uint16_t netPort = htons(service->port);
-    DNSServiceErrorType result = DNSServiceRegister(service->dnsService,
+    DNSServiceErrorType result = DNSServiceRegister(serviceRef,
                                                     0, // DNSServiceFlags
                                                     0, // interfaceIndex (0=all)
                                                     service->name,
@@ -108,34 +160,51 @@ bool YMmDNSServiceStart( YMmDNSServiceRef service )
                                                     NULL, // domain
                                                     NULL, // host
                                                     netPort,
+#ifdef MANUAL_TXT
                                                     service->txtRecordLen,
                                                     service->txtRecord,
-                                                    _YMmDNSReplyCallback, // DNSServiceRegisterReply
+#else
+                                                    TXTRecordGetLength((TXTRecordRef *)service->txtRecord),
+                                                    TXTRecordGetBytesPtr((TXTRecordRef *)service->txtRecord),
+#endif
+                                                    _YMmDNSRegisterCallback, // DNSServiceRegisterReply
                                                     service); // context
     
     if( result != kDNSServiceErr_NoError )
     {
-        free(service->dnsService);
+        // on error "the callback is never invoked and the DNSServiceRef is not initialized"
+        // leading me to think we free instead of DNSServiceRefDeallocate
+        free(serviceRef);
         YMLog("DNSServiceRegister failed: %d",result);
         return false;
     }
     
+    service->dnsService = serviceRef;
     service->advertising = true;
     YMThreadRef eventThread = YMThreadCreate(_YMmDNSEventThread, service);
     YMThreadStart(eventThread);
 
-    YMLog("YMmDNSService published %s@%s:%u",service->name,service->type,service->port);
+    YMLog("YMmDNSService published %s/%s:%u",service->type,service->name,(unsigned)service->port);
     return true;
 }
 
 bool YMmDNSServiceStop( YMmDNSServiceRef service, bool synchronous )
 {
-    service->advertising = false;
+    if ( ! service->advertising )
+        return false;
+    
+    service->advertising = false; // let event thread fall out
     
     bool okay = true;
+    
+    DNSServiceRefDeallocate(*(service->dnsService));
+    free(service->dnsService);
+    service->dnsService = NULL;
+    
     if ( synchronous )
         okay = YMThreadJoin(service->eventThread);
     
+    YMLog("YMmDNSService stopping");
     return okay;
 }
 
@@ -146,5 +215,6 @@ void *_YMmDNSEventThread(void *context)
     while (service->advertising) {
         sleep(1);
     }
+    YMLog("event thread for %s exiting...",service->name);
     return NULL;
 }

@@ -11,6 +11,9 @@
 
 #include "YMBase.h"
 
+#define mDNS_SERVICE_NAME_LENGTH_MAX 63
+#define mDNS_SERVICE_NAME_LENGTH_MIN 1
+
 typedef struct _YMmDNSTxtRecordKeyPair
 {
     const char *key;
@@ -26,6 +29,7 @@ typedef struct _YMmDNSServiceRecord
     
     // values below aren't known until the service is resolved
     bool resolved;
+    const char *address;
     uint16_t port;
     YMmDNSTxtRecordKeyPair **txtRecordKeyPairs;
     size_t txtRecordKeyPairsSize;
@@ -37,8 +41,9 @@ typedef struct _YMmDNSServiceList
     struct _YMmDNSServiceList *next;
 } YMmDNSServiceList;
 
-YMmDNSServiceRecord *_YMmDNSCreateServiceRecord(const char *name, const char*type, const char *domain, bool resolved, uint16_t port, const unsigned char *txtRecord);
-YMmDNSTxtRecordKeyPair **__YMmDNSCreateTxtKeyPairs(const unsigned char *txtRecord, size_t *outSize);
+YMmDNSServiceRecord *_YMmDNSCreateServiceRecord(const char *name, const char*type, const char *domain, bool resolved, const char *address,
+                                                uint16_t port, const unsigned char *txtRecord, uint16_t txtLength);
+YMmDNSTxtRecordKeyPair **__YMmDNSCreateTxtKeyPairs(const unsigned char *txtRecord, uint16_t txtLength, size_t *outSize);
 void _YMmDNSServiceListFree(YMmDNSServiceList *serviceList); // xxx
 void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *service);
 void _YMmDNSTxtRecordKeyPairsFree(YMmDNSTxtRecordKeyPair **keyPairList, size_t size);
