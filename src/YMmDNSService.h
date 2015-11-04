@@ -17,7 +17,7 @@ typedef struct __YMmDNSService *YMmDNSServiceRef;
 YMmDNSServiceRef YMmDNSServiceCreate(const char *type, const char *name, uint16_t port);
 
 // copies the keys/values
-void YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPair *keyPairs[], size_t nPairs );
+bool YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPair *keyPairs[], size_t nPairs );
 bool YMmDNSServiceStart( YMmDNSServiceRef service );
 bool YMmDNSServiceStop( YMmDNSServiceRef service, bool synchronous );
 

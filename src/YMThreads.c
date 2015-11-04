@@ -23,7 +23,7 @@ typedef struct __YMThread
 void _YMThreadFree(YMTypeRef object)
 {
     _YMThread *thread = (_YMThread *)object;
-    // todo
+    // todo not really sure what to do with pthread_t here, we don't know if it's still running
     free(thread);
 }
 
