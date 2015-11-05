@@ -10,6 +10,9 @@
 #include "YMPrivate.h"
 
 #include "YMSecurityProvider.h"
+#include "YMDictionary.h"
+#include "YMLock.h"
+#include "YMThreads.h"
 
 typedef struct __YMPlexer
 {
@@ -17,23 +20,47 @@ typedef struct __YMPlexer
     
     int fd;
     char *name;
-    uint8_t *downBuffer;
-    size_t downBufferSize;
-    uint8_t *upBuffer;
-    size_t upBufferSize;
     bool running;
-    
     YMSecurityProviderRef provider;
     
+    // the downstream
+    YMDictionaryRef localStreamsByID;
+    uint8_t *localPlexBuffer;
+    size_t localPlexBufferSize;
+    
+    // the upstream
+    YMDictionaryRef remoteStreamsByID;
+    uint8_t *remotePlexBuffer;
+    size_t remotePlexBufferSize;
+    
+    // synchronization
+    YMThreadRef localServiceThread;
+    YMThreadRef remoteServiceThread;
+    YMLockRef listAccessLock;
+    YMLockRef interruptionLock;
+    
+    // user
     ym_plexer_interrupted_func interruptedFunc;
     ym_plexer_new_upstream_func newIncomingFunc;
     ym_plexer_stream_closing_func closingFunc;
 } _YMPlexer;
 
+#define YMPlexerDefaultBufferSize (1e+6)
+
 YMPlexerRef YMPlexerCreate(int fd)
 {
     _YMPlexer *plexer = (_YMPlexer *)calloc(1,sizeof(_YMPlexer));
     plexer->_typeID = _YMPlexerTypeID;
+    
+    plexer->provider = YMSecurityProviderCreate(fd);
+    
+    plexer->localStreamsByID = YMDictionaryCreate();
+    plexer->localPlexBufferSize = YMPlexerDefaultBufferSize;
+    plexer->localPlexBuffer = malloc(plexer->localPlexBufferSize);
+    
+    plexer->remoteStreamsByID = YMDictionaryCreate();
+    plexer->remotePlexBufferSize = YMPlexerDefaultBufferSize;
+    plexer->remotePlexBuffer = malloc(plexer->remotePlexBufferSize);
     
     plexer->fd = fd;
     plexer->running = false;
@@ -70,7 +97,7 @@ void YMPlexerSetSecurityProvider(YMPlexerRef plexer, YMTypeRef provider)
 
 const char* YMPlexerMasterHello = "hola";
 const char* YMPlexerSlaveHello = "greetings";
-bool YMPlexerStartOnFile(YMPlexerRef plexer, bool master)
+bool YMPlexerStart(YMPlexerRef plexer, bool master)
 {
     bool okay;
     
@@ -83,7 +110,7 @@ bool YMPlexerStartOnFile(YMPlexerRef plexer, bool master)
     char *error = "error: plexer initialization failed";
     if ( master )
     {
-        okay = YMWrite(plexer->fd, YMPlexerMasterHello, strlen(YMPlexerMasterHello));
+        okay = YMWriteFull(plexer->fd, (void *)YMPlexerMasterHello, strlen(YMPlexerMasterHello));
         if ( ! okay )
         {
             YMLog(error);
@@ -92,7 +119,7 @@ bool YMPlexerStartOnFile(YMPlexerRef plexer, bool master)
         
         unsigned long inHelloLen = strlen(YMPlexerSlaveHello);
         char *inHello = (char *)calloc(sizeof(char),inHelloLen);
-        okay = YMRead(plexer->fd, inHello, inHelloLen);
+        okay = YMReadFull(plexer->fd, (void *)inHello, inHelloLen);
         if ( ! okay || strcmp(YMPlexerSlaveHello,inHello) )
         {
             YMLog(error);
@@ -103,7 +130,7 @@ bool YMPlexerStartOnFile(YMPlexerRef plexer, bool master)
     {
         unsigned long inHelloLen = strlen(YMPlexerMasterHello);
         char *inHello = (char *)calloc(sizeof(char),inHelloLen);
-        okay = YMRead(plexer->fd, inHello, inHelloLen);
+        okay = YMReadFull(plexer->fd, (void *)inHello, inHelloLen);
         
         if ( ! okay || strcmp(YMPlexerMasterHello,inHello) )
         {
@@ -111,7 +138,7 @@ bool YMPlexerStartOnFile(YMPlexerRef plexer, bool master)
             return false;
         }
         
-        okay = YMWrite(plexer->fd, YMPlexerSlaveHello, strlen(YMPlexerSlaveHello));
+        okay = YMWriteFull(plexer->fd, (void *)YMPlexerSlaveHello, strlen(YMPlexerSlaveHello));
         if ( ! okay )
         {
             YMLog(error);
@@ -128,19 +155,24 @@ void YMPlexerStop(YMPlexerRef plexer)
 {
     // deallocate volatile stuff
     
-    if ( plexer->downBuffer )
-    {
-        free(plexer->downBuffer);
-        plexer->downBuffer = NULL;
-    }
-    if ( plexer->upBuffer )
-    {
-        free(plexer->upBuffer);
-        plexer->upBuffer = NULL;
-    }
+    free(plexer->localPlexBuffer);
+    plexer->localPlexBuffer = NULL;
+    
+    free(plexer->remotePlexBuffer);
+    plexer->remotePlexBuffer = NULL;
     
     plexer->running = false;
 }
 
-YMStreamRef YMPlexerNewStream(YMPlexerRef plexer, char *name, bool direct);
-void YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream);
+YMStreamRef YMPlexerNewStream(YMPlexerRef plexer, char *name, bool direct)
+{
+    YMStreamRef newStream = YMStreamCreate(name);
+    
+#warning todo fcntl direct.
+    return NULL;
+}
+
+void YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream)
+{
+    
+}

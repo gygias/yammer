@@ -37,6 +37,13 @@
 		63225D981BE92B6000C28F05 /* YMBase.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D971BE92B6000C28F05 /* YMBase.c */; };
 		63225D9E1BE9372800C28F05 /* libssl.1.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63225D9D1BE9372800C28F05 /* libssl.1.0.0.dylib */; };
 		63476A3F1BEAE54100D10081 /* mDNSTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 63476A3E1BEAE54100D10081 /* mDNSTests.m */; };
+		63476A411BEAEFC500D10081 /* PlexerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 63476A401BEAEFC500D10081 /* PlexerTests.m */; };
+		63476A441BEAF4DB00D10081 /* YMLock.c in Sources */ = {isa = PBXBuildFile; fileRef = 63476A421BEAF4DB00D10081 /* YMLock.c */; };
+		63476A451BEAF4DB00D10081 /* YMLock.h in Headers */ = {isa = PBXBuildFile; fileRef = 63476A431BEAF4DB00D10081 /* YMLock.h */; };
+		63476A4B1BEB074C00D10081 /* YMLinkedList.c in Sources */ = {isa = PBXBuildFile; fileRef = 63476A491BEB074C00D10081 /* YMLinkedList.c */; };
+		63476A4C1BEB074C00D10081 /* YMLinkedList.h in Headers */ = {isa = PBXBuildFile; fileRef = 63476A4A1BEB074C00D10081 /* YMLinkedList.h */; };
+		63476A4F1BEB159C00D10081 /* YMDictionary.c in Sources */ = {isa = PBXBuildFile; fileRef = 63476A4D1BEB159C00D10081 /* YMDictionary.c */; };
+		63476A501BEB159C00D10081 /* YMDictionary.h in Headers */ = {isa = PBXBuildFile; fileRef = 63476A4E1BEB159C00D10081 /* YMDictionary.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -86,6 +93,13 @@
 		63225D991BE92CBA00C28F05 /* YMPrivate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMPrivate.h; path = src/YMPrivate.h; sourceTree = "<group>"; };
 		63225D9D1BE9372800C28F05 /* libssl.1.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libssl.1.0.0.dylib; path = /opt/local/lib/libssl.1.0.0.dylib; sourceTree = "<absolute>"; };
 		63476A3E1BEAE54100D10081 /* mDNSTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = mDNSTests.m; sourceTree = "<group>"; };
+		63476A401BEAEFC500D10081 /* PlexerTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PlexerTests.m; sourceTree = "<group>"; };
+		63476A421BEAF4DB00D10081 /* YMLock.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMLock.c; path = src/YMLock.c; sourceTree = "<group>"; };
+		63476A431BEAF4DB00D10081 /* YMLock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMLock.h; path = src/YMLock.h; sourceTree = "<group>"; };
+		63476A491BEB074C00D10081 /* YMLinkedList.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMLinkedList.c; path = src/YMLinkedList.c; sourceTree = "<group>"; };
+		63476A4A1BEB074C00D10081 /* YMLinkedList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMLinkedList.h; path = src/YMLinkedList.h; sourceTree = "<group>"; };
+		63476A4D1BEB159C00D10081 /* YMDictionary.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = YMDictionary.c; path = src/YMDictionary.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		63476A4E1BEB159C00D10081 /* YMDictionary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMDictionary.h; path = src/YMDictionary.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -114,6 +128,7 @@
 				630A5D021BE96CE9003292EE /* YammerTests.m */,
 				63476A3E1BEAE54100D10081 /* mDNSTests.m */,
 				630A5D041BE96CE9003292EE /* Info.plist */,
+				63476A401BEAEFC500D10081 /* PlexerTests.m */,
 			);
 			path = YammerTests;
 			sourceTree = "<group>";
@@ -140,36 +155,9 @@
 		63225D491BE9027000C28F05 /* src */ = {
 			isa = PBXGroup;
 			children = (
-				63225D661BE90B2D00C28F05 /* YMBase.h */,
-				63225D971BE92B6000C28F05 /* YMBase.c */,
-				63225D991BE92CBA00C28F05 /* YMPrivate.h */,
-				63225D531BE9074700C28F05 /* YMPipe.h */,
-				63225D521BE9074700C28F05 /* YMPipe.c */,
-				63225D5B1BE9092500C28F05 /* YMStream.h */,
-				63225D5A1BE9092500C28F05 /* YMStream.c */,
-				63225D5F1BE909BB00C28F05 /* YMPlexer.h */,
-				63225D5E1BE909BB00C28F05 /* YMPlexer.c */,
-				63225D631BE90A6400C28F05 /* YMSecurityProvider.h */,
-				63225D621BE90A6400C28F05 /* YMSecurityProvider.c */,
-				630A5CE81BE93BEF003292EE /* YMSSLProvider.h */,
-				630A5CE71BE93BEF003292EE /* YMSSLProvider.c */,
-				63225D671BE9184000C28F05 /* YMIO.c */,
-				63225D681BE9184000C28F05 /* YMIO.h */,
-				63225D6C1BE91B3B00C28F05 /* YMLog.h */,
-				63225D6B1BE91B3B00C28F05 /* YMLog.c */,
-				630A5CF11BE950F1003292EE /* YMConnection.h */,
-				630A5CF01BE950F1003292EE /* YMConnection.c */,
-				630A5CF51BE9518A003292EE /* YMSession.h */,
-				630A5CF41BE9518A003292EE /* YMSession.c */,
-				630A5CF91BE95E36003292EE /* YMThreads.h */,
-				630A5CF81BE95E36003292EE /* YMThreads.c */,
-				630A5D0B1BE96D6E003292EE /* Yammer.h */,
-				630A5D1A1BE97D5A003292EE /* YMmDNS.h */,
-				630A5D1B1BE98199003292EE /* YMmDNS.c */,
-				630A5D151BE9777C003292EE /* YMmDNSBrowser.h */,
-				630A5D141BE9777C003292EE /* YMmDNSBrowser.c */,
-				630A5CEC1BE9428C003292EE /* YMmDNSService.h */,
-				630A5CEB1BE9428C003292EE /* YMmDNSService.c */,
+				63476A471BEB05B400D10081 /* API */,
+				63476A481BEB05DC00D10081 /* Private */,
+				63476A461BEAF4E900D10081 /* Utility */,
 			);
 			name = src;
 			sourceTree = "<group>";
@@ -182,6 +170,63 @@
 			name = libs;
 			sourceTree = "<group>";
 		};
+		63476A461BEAF4E900D10081 /* Utility */ = {
+			isa = PBXGroup;
+			children = (
+				630A5CF91BE95E36003292EE /* YMThreads.h */,
+				630A5CF81BE95E36003292EE /* YMThreads.c */,
+				63225D531BE9074700C28F05 /* YMPipe.h */,
+				63225D521BE9074700C28F05 /* YMPipe.c */,
+				63225D681BE9184000C28F05 /* YMIO.h */,
+				63225D671BE9184000C28F05 /* YMIO.c */,
+				63476A431BEAF4DB00D10081 /* YMLock.h */,
+				63476A421BEAF4DB00D10081 /* YMLock.c */,
+				63476A4A1BEB074C00D10081 /* YMLinkedList.h */,
+				63476A491BEB074C00D10081 /* YMLinkedList.c */,
+				63476A4E1BEB159C00D10081 /* YMDictionary.h */,
+				63476A4D1BEB159C00D10081 /* YMDictionary.c */,
+			);
+			name = Utility;
+			sourceTree = "<group>";
+		};
+		63476A471BEB05B400D10081 /* API */ = {
+			isa = PBXGroup;
+			children = (
+				63225D661BE90B2D00C28F05 /* YMBase.h */,
+				63225D971BE92B6000C28F05 /* YMBase.c */,
+				630A5D0B1BE96D6E003292EE /* Yammer.h */,
+				63225D5B1BE9092500C28F05 /* YMStream.h */,
+				63225D5A1BE9092500C28F05 /* YMStream.c */,
+				63225D631BE90A6400C28F05 /* YMSecurityProvider.h */,
+				63225D621BE90A6400C28F05 /* YMSecurityProvider.c */,
+				630A5CE81BE93BEF003292EE /* YMSSLProvider.h */,
+				630A5CE71BE93BEF003292EE /* YMSSLProvider.c */,
+				630A5CF11BE950F1003292EE /* YMConnection.h */,
+				630A5CF01BE950F1003292EE /* YMConnection.c */,
+				630A5CF51BE9518A003292EE /* YMSession.h */,
+				630A5CF41BE9518A003292EE /* YMSession.c */,
+			);
+			name = API;
+			sourceTree = "<group>";
+		};
+		63476A481BEB05DC00D10081 /* Private */ = {
+			isa = PBXGroup;
+			children = (
+				63225D991BE92CBA00C28F05 /* YMPrivate.h */,
+				63225D5F1BE909BB00C28F05 /* YMPlexer.h */,
+				63225D5E1BE909BB00C28F05 /* YMPlexer.c */,
+				63225D6C1BE91B3B00C28F05 /* YMLog.h */,
+				63225D6B1BE91B3B00C28F05 /* YMLog.c */,
+				630A5D1A1BE97D5A003292EE /* YMmDNS.h */,
+				630A5D1B1BE98199003292EE /* YMmDNS.c */,
+				630A5D151BE9777C003292EE /* YMmDNSBrowser.h */,
+				630A5D141BE9777C003292EE /* YMmDNSBrowser.c */,
+				630A5CEC1BE9428C003292EE /* YMmDNSService.h */,
+				630A5CEB1BE9428C003292EE /* YMmDNSService.c */,
+			);
+			name = Private;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -189,10 +234,13 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				63476A451BEAF4DB00D10081 /* YMLock.h in Headers */,
 				630A5CF31BE950F1003292EE /* YMConnection.h in Headers */,
 				63225D6A1BE9184000C28F05 /* YMIO.h in Headers */,
+				63476A501BEB159C00D10081 /* YMDictionary.h in Headers */,
 				630A5CFB1BE95E36003292EE /* YMThreads.h in Headers */,
 				63225D5D1BE9092500C28F05 /* YMStream.h in Headers */,
+				63476A4C1BEB074C00D10081 /* YMLinkedList.h in Headers */,
 				63225D611BE909BB00C28F05 /* YMPlexer.h in Headers */,
 				63225D6E1BE91B3B00C28F05 /* YMLog.h in Headers */,
 				63225D551BE9074700C28F05 /* YMPipe.h in Headers */,
@@ -293,6 +341,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				630A5D031BE96CE9003292EE /* YammerTests.m in Sources */,
+				63476A411BEAEFC500D10081 /* PlexerTests.m in Sources */,
 				63476A3F1BEAE54100D10081 /* mDNSTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -307,13 +356,16 @@
 				630A5D1C1BE98199003292EE /* YMmDNS.c in Sources */,
 				630A5D161BE9777C003292EE /* YMmDNSBrowser.c in Sources */,
 				63225D691BE9184000C28F05 /* YMIO.c in Sources */,
+				63476A441BEAF4DB00D10081 /* YMLock.c in Sources */,
 				63225D601BE909BB00C28F05 /* YMPlexer.c in Sources */,
+				63476A4B1BEB074C00D10081 /* YMLinkedList.c in Sources */,
 				63225D541BE9074700C28F05 /* YMPipe.c in Sources */,
 				630A5CF21BE950F1003292EE /* YMConnection.c in Sources */,
 				630A5CED1BE9428C003292EE /* YMmDNSService.c in Sources */,
 				630A5CF61BE9518A003292EE /* YMSession.c in Sources */,
 				630A5CE91BE93BEF003292EE /* YMSSLProvider.c in Sources */,
 				63225D641BE90A6400C28F05 /* YMSecurityProvider.c in Sources */,
+				63476A4F1BEB159C00D10081 /* YMDictionary.c in Sources */,
 				63225D5C1BE9092500C28F05 /* YMStream.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

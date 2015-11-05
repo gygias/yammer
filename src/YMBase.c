@@ -18,6 +18,9 @@ YMTypeID _YMSessionTypeID = 's';
 YMTypeID _YMmDNSServiceTypeID = 'm';
 YMTypeID _YMmDNSBrowserTypeID = 'b';
 YMTypeID _YMThreadTypeID = 't';
+YMTypeID _YMLockTypeID = 'k';
+YMTypeID _YMLinkedListTypeID = 'l';
+YMTypeID _YMDictionaryTypeID = 'y';
 
 extern void _YMPipeFree(YMTypeRef);
 extern void _YMStreamFree(YMTypeRef);
@@ -28,6 +31,9 @@ extern void _YMSessionFree(YMTypeRef);
 extern void _YMmDNSServiceFree(YMTypeRef);
 extern void _YMmDNSBrowserFree(YMTypeRef);
 extern void _YMThreadFree(YMTypeRef);
+extern void _YMLockFree(YMTypeRef);
+extern void _YMLinkedListFree(YMTypeRef);
+extern void _YMDictionaryFree(YMTypeRef);
 
 void YMFree(YMTypeRef object)
 {
@@ -50,4 +56,10 @@ void YMFree(YMTypeRef object)
         _YMmDNSBrowserFree(object);
     else if ( type == _YMThreadTypeID )
         _YMThreadFree(object);
+    else if ( type == _YMLockTypeID )
+        _YMLockFree(object);
+    else if ( type == _YMLinkedListTypeID )
+        _YMLinkedListFree(object);
+    else if ( type == _YMDictionaryTypeID )
+        _YMDictionaryFree(object);
 }

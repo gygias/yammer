@@ -8,12 +8,12 @@
 
 #include "YMIO.h"
 
-bool YMRead(int fd, const void *buffer, size_t bytes)
+bool YMReadFull(int fd, uint8_t *buffer, size_t bytes)
 {
     size_t off = 0;
     while ( off < bytes )
     {
-        ssize_t aRead = read(fd, (uint8_t *)buffer + off, bytes - off);
+        ssize_t aRead = read(fd, (void *)buffer + off, bytes - off);
         if ( aRead == 0 )
             return false;
         else if ( aRead == -1 )
@@ -23,12 +23,12 @@ bool YMRead(int fd, const void *buffer, size_t bytes)
     return true;
 }
 
-bool YMWrite(int fd, const void *buffer, size_t bytes)
+bool YMWriteFull(int fd, const uint8_t *buffer, size_t bytes)
 {
     size_t off = 0;
     while ( off < bytes )
     {
-        ssize_t aWrite = write(fd, (uint8_t *)buffer + off, bytes - off);
+        ssize_t aWrite = write(fd, buffer + off, bytes - off);
         switch(aWrite)
         {
             case 0:
