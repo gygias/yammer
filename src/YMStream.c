@@ -23,10 +23,11 @@ typedef struct __YMStream
     bool downstreamClosed;
     char *name;
     
-    const void *userInfo;
+    const void *__userInfo;
+    YMSemaphoreRef __dataAvailableSemaphore;
 } _YMStream;
 
-YMStreamRef YMStreamCreate(char *name, void *userInfo)
+YMStreamRef YMStreamCreate(char *name)
 {
     YMStreamRef stream = (YMStreamRef)malloc(sizeof(struct __YMStream));
     stream->name = strdup( name ? name : "ymstream" );
@@ -49,7 +50,8 @@ YMStreamRef YMStreamCreate(char *name, void *userInfo)
     stream->downstream = YMPipeCreate(downStreamName);
     free(downStreamName);
     
-    stream->userInfo = userInfo;
+    stream->__userInfo = NULL;
+    stream->__dataAvailableSemaphore = NULL;
     
     return (YMStreamRef)stream;
 }
@@ -79,7 +81,12 @@ bool YMStreamWrite(YMStreamRef stream, void *buffer, size_t length)
     _YMStream *_stream = (_YMStream *)stream;
     
     int downstreamWrite = YMPipeGetInputFile(_stream->downstream);
-    return YMWriteFull(downstreamWrite, buffer, length);
+    bool okay = YMWriteFull(downstreamWrite, buffer, length);
+    
+    if ( stream->__dataAvailableSemaphore )
+        YMSemaphoreSignal(stream->__dataAvailableSemaphore);
+    
+    return okay;
 }
 
 bool YMStreamClose(YMStreamRef stream)
@@ -94,10 +101,15 @@ bool YMStreamClose(YMStreamRef stream)
 
 void _YMStreamSetUserInfo(YMStreamRef stream, const void *userInfo)
 {
-    stream->userInfo = userInfo;
+    stream->__userInfo = userInfo;
 }
 
 const void *_YMStreamGetUserInfo(YMStreamRef stream)
 {
-    return stream->userInfo;
+    return stream->__userInfo;
+}
+
+void _YMStreamSetDataAvailableSemaphore(YMStreamRef stream, YMSemaphoreRef semaphore)
+{
+    stream->__dataAvailableSemaphore = semaphore;
 }

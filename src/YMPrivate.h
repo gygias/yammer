@@ -21,6 +21,7 @@ extern YMTypeID _YMThreadTypeID;
 extern YMTypeID _YMmDNSServiceTypeID;
 extern YMTypeID _YMmDNSBrowserTypeID;
 extern YMTypeID _YMLockTypeID;
+extern YMTypeID _YMSemaphoreTypeID;
 extern YMTypeID _YMLinkedListTypeID;
 extern YMTypeID _YMDictionaryTypeID;
 

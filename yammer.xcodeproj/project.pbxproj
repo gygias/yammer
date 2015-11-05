@@ -44,6 +44,8 @@
 		63476A4C1BEB074C00D10081 /* YMLinkedList.h in Headers */ = {isa = PBXBuildFile; fileRef = 63476A4A1BEB074C00D10081 /* YMLinkedList.h */; };
 		63476A4F1BEB159C00D10081 /* YMDictionary.c in Sources */ = {isa = PBXBuildFile; fileRef = 63476A4D1BEB159C00D10081 /* YMDictionary.c */; };
 		63476A501BEB159C00D10081 /* YMDictionary.h in Headers */ = {isa = PBXBuildFile; fileRef = 63476A4E1BEB159C00D10081 /* YMDictionary.h */; };
+		63476A531BEB319000D10081 /* YMSemaphore.c in Sources */ = {isa = PBXBuildFile; fileRef = 63476A511BEB319000D10081 /* YMSemaphore.c */; };
+		63476A541BEB319000D10081 /* YMSemaphore.h in Headers */ = {isa = PBXBuildFile; fileRef = 63476A521BEB319000D10081 /* YMSemaphore.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -100,6 +102,8 @@
 		63476A4A1BEB074C00D10081 /* YMLinkedList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMLinkedList.h; path = src/YMLinkedList.h; sourceTree = "<group>"; };
 		63476A4D1BEB159C00D10081 /* YMDictionary.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = YMDictionary.c; path = src/YMDictionary.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
 		63476A4E1BEB159C00D10081 /* YMDictionary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMDictionary.h; path = src/YMDictionary.h; sourceTree = "<group>"; };
+		63476A511BEB319000D10081 /* YMSemaphore.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMSemaphore.c; path = src/YMSemaphore.c; sourceTree = "<group>"; };
+		63476A521BEB319000D10081 /* YMSemaphore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMSemaphore.h; path = src/YMSemaphore.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -185,6 +189,8 @@
 				63476A491BEB074C00D10081 /* YMLinkedList.c */,
 				63476A4E1BEB159C00D10081 /* YMDictionary.h */,
 				63476A4D1BEB159C00D10081 /* YMDictionary.c */,
+				63476A511BEB319000D10081 /* YMSemaphore.c */,
+				63476A521BEB319000D10081 /* YMSemaphore.h */,
 			);
 			name = Utility;
 			sourceTree = "<group>";
@@ -247,6 +253,7 @@
 				630A5CEA1BE93BEF003292EE /* YMSSLProvider.h in Headers */,
 				630A5CF71BE9518A003292EE /* YMSession.h in Headers */,
 				630A5D171BE9777C003292EE /* YMmDNSBrowser.h in Headers */,
+				63476A541BEB319000D10081 /* YMSemaphore.h in Headers */,
 				630A5CEE1BE9428C003292EE /* YMmDNSService.h in Headers */,
 				63225D651BE90A6400C28F05 /* YMSecurityProvider.h in Headers */,
 			);
@@ -356,6 +363,7 @@
 				630A5D1C1BE98199003292EE /* YMmDNS.c in Sources */,
 				630A5D161BE9777C003292EE /* YMmDNSBrowser.c in Sources */,
 				63225D691BE9184000C28F05 /* YMIO.c in Sources */,
+				63476A531BEB319000D10081 /* YMSemaphore.c in Sources */,
 				63476A441BEAF4DB00D10081 /* YMLock.c in Sources */,
 				63225D601BE909BB00C28F05 /* YMPlexer.c in Sources */,
 				63476A4B1BEB074C00D10081 /* YMLinkedList.c in Sources */,

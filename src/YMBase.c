@@ -9,6 +9,11 @@
 #include "YMBase.h"
 #include "YMPrivate.h"
 
+typedef struct __YMType
+{
+    YMTypeID _type;
+} _YMType;
+
 YMTypeID _YMPipeTypeID = 'i';
 YMTypeID _YMStreamTypeID = 'r';
 YMTypeID _YMConnectionTypeID = 'c';
@@ -19,6 +24,7 @@ YMTypeID _YMmDNSServiceTypeID = 'm';
 YMTypeID _YMmDNSBrowserTypeID = 'b';
 YMTypeID _YMThreadTypeID = 't';
 YMTypeID _YMLockTypeID = 'k';
+YMTypeID _YMSemaphoreTypeID = 'p';
 YMTypeID _YMLinkedListTypeID = 'l';
 YMTypeID _YMDictionaryTypeID = 'y';
 
@@ -32,6 +38,7 @@ extern void _YMmDNSServiceFree(YMTypeRef);
 extern void _YMmDNSBrowserFree(YMTypeRef);
 extern void _YMThreadFree(YMTypeRef);
 extern void _YMLockFree(YMTypeRef);
+extern void _YMSemaphoreFree(YMTypeRef);
 extern void _YMLinkedListFree(YMTypeRef);
 extern void _YMDictionaryFree(YMTypeRef);
 
@@ -58,8 +65,13 @@ void YMFree(YMTypeRef object)
         _YMThreadFree(object);
     else if ( type == _YMLockTypeID )
         _YMLockFree(object);
+    else if ( type == _YMSemaphoreTypeID )
+        _YMSemaphoreFree(object);
     else if ( type == _YMLinkedListTypeID )
         _YMLinkedListFree(object);
     else if ( type == _YMDictionaryTypeID )
         _YMDictionaryFree(object);
+    
+    YMLog("YMFree unknown type %c",((_YMType *)object)->_type);
+    abort();
 }

@@ -28,12 +28,19 @@ typedef struct {
 
 typedef uint32_t YMPlexerStreamID;
 
+bool _YMPlexerStartServiceThreads(YMPlexerRef plexer);
+bool _YMPlexerDoInitialization(YMPlexerRef plexer, bool master);
+void *_YMPlexerLocalServiceThread(void *context);
+void *_YMPlexerRemoteServiceThread(void *context);
+
 typedef struct __YMPlexer
 {
     YMTypeID _typeID;
     
     int fd;
     char *name;
+    bool initialized;
+    bool master;
     bool running;
     YMSecurityProviderRef provider;
     
@@ -57,6 +64,7 @@ typedef struct __YMPlexer
     YMThreadRef localServiceThread;
     YMThreadRef remoteServiceThread;
     YMLockRef interruptionLock;
+    YMSemaphoreRef localDataAvailableSemaphore;
     
     // user
     ym_plexer_interrupted_func interruptedFunc;
@@ -83,7 +91,13 @@ YMPlexerRef YMPlexerCreate(int fd)
     plexer->remotePlexBufferSize = YMPlexerDefaultBufferSize;
     plexer->remotePlexBuffer = malloc(plexer->remotePlexBufferSize);
     
+    plexer->localServiceThread = YMThreadCreate(_YMPlexerLocalServiceThread, plexer);
+    plexer->remoteServiceThread = YMThreadCreate(_YMPlexerRemoteServiceThread, plexer);
+    plexer->interruptionLock = YMLockCreate();
+    plexer->localDataAvailableSemaphore = YMSemaphoreCreate();
+    
     plexer->fd = fd;
+    plexer->initialized = false;
     plexer->running = false;
     return plexer;
 }
@@ -120,9 +134,30 @@ const char* YMPlexerMasterHello = "hola";
 const char* YMPlexerSlaveHello = "greetings";
 bool YMPlexerStart(YMPlexerRef plexer, bool master)
 {
-    bool okay;
+    bool okay = _YMPlexerDoInitialization(plexer,master);
     
-    if ( plexer->fd != -1 )
+    if ( ! okay )
+        goto catch_fail;
+    
+    okay = YMThreadStart(plexer->localServiceThread);
+    
+    if ( ! okay )
+        goto catch_fail;
+    
+    okay = YMThreadStart(plexer->remoteServiceThread);
+    
+    if ( ! okay )
+        goto catch_fail;
+    
+catch_fail:
+    return okay;
+}
+
+bool _YMPlexerDoInitialization(YMPlexerRef plexer, bool master)
+{
+    bool okay = false;
+    
+    if ( plexer->initialized )
     {
         YMLog("error: this plexer is already initialized");
         return false;
@@ -227,9 +262,32 @@ bool YMPlexerStart(YMPlexerRef plexer, bool master)
           master ? plexer->remoteStreamIDMin : plexer->localStreamIDMin,
           master ? plexer->remoteStreamIDMax : plexer->localStreamIDMax);
     
+    plexer->initialized = true; // todo maybe redundant
+    plexer->master = true;
     plexer->running = true;
     
     return true;
+}
+
+void *_YMPlexerLocalServiceThread(void *context)
+{
+    YMPlexerRef plexer = (YMPlexerRef)context;
+    YMLog("YMPlexer (%s) has enteret its local service thread",plexer->master?"master":"slave");
+    while(1)
+    {
+        YMLog("YMPlexer (%s) V data available wait...",plexer->master?"master":"slave");
+        YMSemaphoreWait(plexer->localDataAvailableSemaphore);
+        YMLog("YMPlexer (%s) has woken up",plexer->master?"master":"slave");
+    }
+    return NULL;
+}
+
+void *_YMPlexerRemoteServiceThread(void *context)
+{
+    YMPlexerRef plexer = (YMPlexerRef)context;
+    YMLog("YMPlexer (%s) has enteret its remote service thread and is going to sleep",plexer->master?"master":"slave");
+    sleep(1e+6);//todo receive signal from 'underlying medium'
+    return NULL;
 }
 
 void YMPlexerStop(YMPlexerRef plexer)
@@ -251,7 +309,8 @@ YMStreamRef YMPlexerNewStream(YMPlexerRef plexer, char *name, bool direct)
     YMPlexerStreamID newStreamID = ( plexer->localStreamIDLast == plexer->localStreamIDMax ) ? plexer->localStreamIDMin : ++(plexer->localStreamIDLast);
     YMPlexerStreamID *userInfo = (YMPlexerStreamID *)malloc(sizeof(YMPlexerStreamID));
     *userInfo = newStreamID;
-    YMStreamRef newStream = YMStreamCreate(name,userInfo);
+    YMStreamRef newStream = YMStreamCreate(name);
+    _YMStreamSetUserInfo(newStream, userInfo);
     if ( YMDictionaryContains(plexer->localStreamsByID, newStreamID) )
     {
         YMLog("fatal: YMPlexer has run out of streams");

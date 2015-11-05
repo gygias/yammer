@@ -14,7 +14,7 @@
 
 #include <dns_sd.h>
 
-typedef struct _YMmDNSBrowser *YMmDNSBrowserRef;
+typedef struct __YMmDNSBrowser *YMmDNSBrowserRef;
 
 // callback definitions
 typedef void (*ym_mdns_service_appeared_func)(YMmDNSBrowserRef browser, YMmDNSServiceRecord * service, void *context);
