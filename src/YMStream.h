@@ -11,17 +11,20 @@
 
 #include "YMBase.h"
 
+#include "YMSemaphore.h"
+
 typedef struct __YMStream *YMStreamRef;
 
-YMStreamRef YMStreamCreate(char *name, void *userInfo);
+YMStreamRef YMStreamCreate(char *name);
 
 bool YMStreamRead(YMStreamRef stream, void *buffer, size_t length);
 bool YMStreamWrite(YMStreamRef stream, void *buffer, size_t length);
 
 bool YMStreamClose(YMStreamRef stream);
 
-// for plexer only
+// for plexer only, these are not owned by the stream
 void _YMStreamSetUserInfo(YMStreamRef stream, const void *);
 const void *_YMStreamGetUserInfo(YMStreamRef stream);
+void _YMStreamSetDataAvailableSemaphore(YMStreamRef stream, YMSemaphoreRef semaphore);
 
 #endif /* YMStream_h */

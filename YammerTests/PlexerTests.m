@@ -29,7 +29,7 @@
 
 - (void)testPlexer {
     
-    YMPipeRef 
+    YMPipeRef networkSimPipe = YMPipeCreate("test-network-sim-pipe");
     
 }
 

@@ -88,23 +88,22 @@ catch_release:
 
 void YMLockLock(YMLockRef lock)
 {
-    _YMLock *_lock = (_YMLock *)lock;
-    int result = pthread_mutex_lock(&_lock->mutex);
+    int result = pthread_mutex_lock(&lock->mutex);
     bool okay = true;
     switch(result)
     {
         case 0:
             break;
         case EDEADLK:
-            YMLog("fatal: user of YMLock (%s) created deadlock", _lock->name);
+            YMLog("fatal: user of YMLock (%s) created deadlock", lock->name);
             okay = false;
             break;
         case EINVAL:
-            YMLog("fatal: invalid parameter to YMLock (%s)", _lock->name);
+            YMLog("fatal: invalid parameter to YMLock (%s)", lock->name);
             okay = false;
             break;
         default:
-            YMLog("warning: unknown error on YMLockLock (%s): %d (%s)", _lock->name, result, strerror(result));
+            YMLog("warning: unknown error on YMLockLock (%s): %d (%s)", lock->name, result, strerror(result));
             break;
     }
     
@@ -116,23 +115,22 @@ void YMLockLock(YMLockRef lock)
 
 void YMLockUnlock(YMLockRef lock)
 {
-    _YMLock *_lock = (_YMLock *)lock;
-    int result = pthread_mutex_unlock(&_lock->mutex);
+    int result = pthread_mutex_unlock(&lock->mutex);
     bool okay = true;
     switch(result)
     {
         case 0:
             break;
         case EPERM:
-            YMLog("fatal: unlocking thread does not hold YMLock (%s)", _lock->name);
+            YMLog("fatal: unlocking thread does not hold YMLock (%s)", lock->name);
             okay = false;
             break;
         case EINVAL:
-            YMLog("fatal: invalid parameter to YMLock (%s)", _lock->name);
+            YMLog("fatal: invalid parameter to YMLock (%s)", lock->name);
             okay = false;
             break;
         default:
-            YMLog("warning: unknown error on YMLockLock (%s): %d (%s)", _lock->name, result, strerror(result));
+            YMLog("warning: unknown error on YMLockLock (%s): %d (%s)", lock->name, result, strerror(result));
             break;
     }
     
@@ -144,7 +142,7 @@ void YMLockUnlock(YMLockRef lock)
 
 void _YMLockFree(YMTypeRef object)
 {
-    _YMLock *lock = (_YMLock *)object;
+    YMLockRef lock = (YMLockRef)object;
     
     int result = pthread_mutex_destroy(&lock->mutex);
     if ( result != 0 )
@@ -154,4 +152,9 @@ void _YMLockFree(YMTypeRef object)
     lock->name = NULL;
     
     free(lock);
+}
+
+pthread_mutex_t _YMLockGetMutex(YMLockRef lock)
+{
+    return lock->mutex;
 }

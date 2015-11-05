@@ -17,7 +17,7 @@ typedef enum
     YMLockRecursive = 1 << 0
 } YMLockOptions;
 
-typedef struct _YMLock *YMLockRef;
+typedef struct __YMLock *YMLockRef;
 
 YMLockRef YMLockCreate();
 YMLockRef YMLockCreateWithOptions(YMLockOptions options);
@@ -26,5 +26,8 @@ YMLockRef YMLockCreateWithOptionsAndName(YMLockOptions options, char *name);
 // avoid 'try lock'
 void YMLockLock(YMLockRef lock);
 void YMLockUnlock(YMLockRef lock);
+
+// for YMSemaphore
+pthread_mutex_t _YMLockGetMutex(YMLockRef lock);
 
 #endif /* YMLock_h */
