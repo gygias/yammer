@@ -13,7 +13,8 @@
 
 typedef struct __YMSecurityProvider *YMSecurityProviderRef;
 
-YMSecurityProviderRef YMSecurityProviderCreate(int fd);
+YMSecurityProviderRef YMSecurityProviderCreateWithFullDuplexFile(int fd);
+YMSecurityProviderRef YMSecurityProviderCreate(int inFd, int outFd);
 
 bool YMSecurityProviderInit(YMSecurityProviderRef provider);
 bool YMSecurityProviderRead(YMSecurityProviderRef provider, uint8_t *buffer, size_t bytes);

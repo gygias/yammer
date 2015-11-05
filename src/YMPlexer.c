@@ -37,7 +37,8 @@ typedef struct __YMPlexer
 {
     YMTypeID _typeID;
     
-    int fd;
+    int inFd;
+    int outFd;
     char *name;
     bool initialized;
     bool master;
@@ -74,12 +75,17 @@ typedef struct __YMPlexer
 
 #define YMPlexerDefaultBufferSize (1e+6)
 
-YMPlexerRef YMPlexerCreate(int fd)
+YMPlexerRef YMPlexerCreateWithFullDuplexFile(int fd)
+{
+    return YMPlexerCreate(fd, fd);
+}
+
+YMPlexerRef YMPlexerCreate(int inFd, int outFd)
 {
     _YMPlexer *plexer = (_YMPlexer *)calloc(1,sizeof(_YMPlexer));
     plexer->_typeID = _YMPlexerTypeID;
     
-    plexer->provider = YMSecurityProviderCreate(fd);
+    plexer->provider = YMSecurityProviderCreate(inFd, outFd);
     
     plexer->localStreamsByID = YMDictionaryCreate();
     plexer->localAccessLock = YMLockCreate();
@@ -96,7 +102,8 @@ YMPlexerRef YMPlexerCreate(int fd)
     plexer->interruptionLock = YMLockCreate();
     plexer->localDataAvailableSemaphore = YMSemaphoreCreate();
     
-    plexer->fd = fd;
+    plexer->inFd = inFd;
+    plexer->outFd = outFd;
     plexer->initialized = false;
     plexer->running = false;
     return plexer;
@@ -174,9 +181,9 @@ bool _YMPlexerDoInitialization(YMPlexerRef plexer, bool master)
         }
         
         unsigned long inHelloLen = strlen(YMPlexerSlaveHello);
-        char *inHello = (char *)calloc(sizeof(char),inHelloLen);
+        char inHello[inHelloLen];
         okay = YMSecurityProviderRead(plexer->provider, (void *)inHello, inHelloLen);
-        if ( ! okay || strcmp(YMPlexerSlaveHello,inHello) )
+        if ( ! okay || memcmp(YMPlexerSlaveHello,inHello,inHelloLen) )
         {
             YMLog(error);
             return false;
@@ -212,10 +219,10 @@ bool _YMPlexerDoInitialization(YMPlexerRef plexer, bool master)
     else
     {
         unsigned long inHelloLen = strlen(YMPlexerMasterHello);
-        char *inHello = (char *)calloc(sizeof(char),inHelloLen);
+        char inHello[inHelloLen];
         okay = YMSecurityProviderRead(plexer->provider, (void *)inHello, inHelloLen);
         
-        if ( ! okay || strcmp(YMPlexerMasterHello,inHello) )
+        if ( ! okay || memcmp(YMPlexerMasterHello,inHello,inHelloLen) )
         {
             YMLog(error);
             return false;
@@ -237,7 +244,11 @@ bool _YMPlexerDoInitialization(YMPlexerRef plexer, bool master)
         }
         
         // todo, technically this should handle non-zero-based master min id, but doesn't
-        
+        plexer->localStreamIDMin = initializer.masterStreamIDMax + 1;
+        plexer->localStreamIDMax = UINT32_MAX;
+        plexer->localStreamIDLast = plexer->localStreamIDMax;
+        plexer->remoteStreamIDMin = initializer.masterStreamIDMin;
+        plexer->remoteStreamIDMax = initializer.masterStreamIDMax;
         
         bool supported = initializer.protocolVersion <= YMPlexerBuiltInVersion;
         YMPlexerSlaveAck ack = { YMPlexerBuiltInVersion };
@@ -263,7 +274,7 @@ bool _YMPlexerDoInitialization(YMPlexerRef plexer, bool master)
           master ? plexer->remoteStreamIDMax : plexer->localStreamIDMax);
     
     plexer->initialized = true; // todo maybe redundant
-    plexer->master = true;
+    plexer->master = master;
     plexer->running = true;
     
     return true;

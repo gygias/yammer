@@ -7,14 +7,30 @@
 //
 
 #include "YMLog.h"
+#include "YMLock.h"
 
 #include <stdarg.h>
+#include <pthread.h>
+
+pthread_once_t gYMLogLockOnce;
+YMLockRef gYMLogLock = NULL;
+
+void YMLogInitLock()
+{
+    gYMLogLock = YMLockCreate();
+}
 
 void YMLog( char* format, ... )
 {
-    va_list args;
-    va_start(args,format);
-    vprintf(format, args);
-    va_end(args);
-    printf("\n");
+    pthread_once(&gYMLogLockOnce, YMLogInitLock);
+    
+    YMLockLock(gYMLogLock);
+    {
+        va_list args;
+        va_start(args,format);
+        vprintf(format, args);
+        va_end(args);
+        printf("\n");
+    }
+    YMLockUnlock(gYMLogLock);
 }
