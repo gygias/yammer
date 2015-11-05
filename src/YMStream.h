@@ -11,13 +11,17 @@
 
 #include "YMBase.h"
 
-typedef const struct _YMStream *YMStreamRef;
+typedef struct __YMStream *YMStreamRef;
 
-YMStreamRef YMStreamCreate(char *name);
+YMStreamRef YMStreamCreate(char *name, void *userInfo);
 
 bool YMStreamRead(YMStreamRef stream, void *buffer, size_t length);
 bool YMStreamWrite(YMStreamRef stream, void *buffer, size_t length);
 
 bool YMStreamClose(YMStreamRef stream);
+
+// for plexer only
+void _YMStreamSetUserInfo(YMStreamRef stream, const void *);
+const void *_YMStreamGetUserInfo(YMStreamRef stream);
 
 #endif /* YMStream_h */

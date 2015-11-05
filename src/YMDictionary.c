@@ -66,6 +66,7 @@ void YMDictionaryAdd(YMDictionaryRef dict, YMDictionaryKey key, const void *item
     YMDictionaryItemRef newItem = (YMDictionaryItemRef)malloc(sizeof(struct __YMDictionaryItem));
     newItem->representedItem = item;
     newItem->next = (struct _YMDictionaryItem *)dict->head;
+    dict->count++;
 }
 
 bool YMDictionaryContains(YMDictionaryRef dict, YMDictionaryKey key)
@@ -108,6 +109,7 @@ void * YMDictionaryRemove(YMDictionaryRef dict, YMDictionaryKey key)
             previousItem->next = theItem->next;
         else
             dict->head = NULL;
+        dict->count--;
     }
     
     return theItem;
