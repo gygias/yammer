@@ -20,6 +20,9 @@ extern YMTypeID _YMSessionTypeID;
 extern YMTypeID _YMThreadTypeID;
 extern YMTypeID _YMmDNSServiceTypeID;
 extern YMTypeID _YMmDNSBrowserTypeID;
+extern YMTypeID _YMLockTypeID;
+extern YMTypeID _YMLinkedListTypeID;
+extern YMTypeID _YMDictionaryTypeID;
 
 typedef struct __YMTypeRef
 {

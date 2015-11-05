@@ -11,7 +11,7 @@
 
 #include "YMBase.h"
 
-bool YMRead(int fd, const void *buffer, size_t bytes);
-bool YMWrite(int fd, const void *buffer, size_t bytes);
+bool YMReadFull(int fd, uint8_t *buffer, size_t bytes);
+bool YMWriteFull(int fd, const uint8_t *buffer, size_t bytes);
 
 #endif /* YMIO_h */

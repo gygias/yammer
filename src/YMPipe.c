@@ -13,21 +13,27 @@ typedef struct __YMPipe
 {
     YMTypeID _typeID;
     
+    char *name;
     int inFd;
     int outFd;
-    char *name;
 } _YMPipe;
 
-YMPipeRef YMPipeCreate(char *name, int inFd, int outFd)
+YMPipeRef YMPipeCreate(char *name)
 {
-    _YMPipe *pipe = (_YMPipe *)calloc(1,sizeof(_YMPipe));
-    pipe->_typeID = _YMPipeTypeID;
+    _YMPipe *ymPipe = (_YMPipe *)calloc(1,sizeof(_YMPipe));
+    ymPipe->_typeID = _YMPipeTypeID;
     
-    pipe->name = strdup(name);
-    pipe->inFd = inFd;
-    pipe->outFd = outFd;
+    ymPipe->name = strdup(name);
     
-    return (YMPipeRef)pipe;
+    int fds[2];
+    while ( pipe(fds) == -1 )
+    {
+    }
+    
+    ymPipe->outFd = fds[0];
+    ymPipe->inFd = fds[1];
+    
+    return (YMPipeRef)ymPipe;
 }
 
 void _YMPipeFree(YMTypeRef object)
@@ -37,4 +43,14 @@ void _YMPipeFree(YMTypeRef object)
         free(pipe->name);
     free(pipe);
     
+}
+
+int YMPipeGetInputFile(YMPipeRef pipe)
+{
+    return ((_YMPipe *)pipe)->inFd;
+}
+
+int YMPipeGetOutputFile(YMPipeRef pipe)
+{
+    return ((_YMPipe *)pipe)->outFd;
 }

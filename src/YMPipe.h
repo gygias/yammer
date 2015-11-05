@@ -13,6 +13,9 @@
 
 typedef struct _YMPipe *YMPipeRef;
 
-YMPipeRef YMPipeCreate(char *name, int inFd, int outFd);
+YMPipeRef YMPipeCreate(char *name);
+
+int YMPipeGetInputFile(YMPipeRef pipe);
+int YMPipeGetOutputFile(YMPipeRef pipe);
 
 #endif /* YMPipe_h */

@@ -14,6 +14,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include "YMIO.h"
 #include "YMLog.h"

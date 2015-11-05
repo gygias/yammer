@@ -27,7 +27,7 @@ void YMPlexerSetNewIncomingStreamFunc(YMPlexerRef plexer, ym_plexer_new_upstream
 void YMPlexerSetStreamClosingFunc(YMPlexerRef plexer, ym_plexer_stream_closing_func func);
 void YMPlexerSetSecurityProvider(YMPlexerRef plexer, YMTypeRef provider); // unsure how to handle this poly in c (yet?)
 
-bool YMPlexerStartOnFile(YMPlexerRef plexer, bool master);
+bool YMPlexerStart(YMPlexerRef plexer, bool master);
 void YMPlexerStop(YMPlexerRef plexer);
 
 YMStreamRef YMPlexerNewStream(YMPlexerRef plexer, char *name, bool direct);

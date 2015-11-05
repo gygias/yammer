@@ -14,11 +14,10 @@
 typedef struct __YMSecurityProvider *YMSecurityProviderRef;
 
 YMSecurityProviderRef YMSecurityProviderCreate(int fd);
-void YMSecurityProviderFree();
 
-void YMSecurityProviderRead(YMSecurityProviderRef provider, const void *buffer, size_t bytes);
-void YMSecurityProviderWrite(YMSecurityProviderRef provider, const void *buffer, size_t byte);
-
-void YMSecurityProviderClose(YMSecurityProviderRef provider);
+bool YMSecurityProviderInit(YMSecurityProviderRef provider);
+bool YMSecurityProviderRead(YMSecurityProviderRef provider, uint8_t *buffer, size_t bytes);
+bool YMSecurityProviderWrite(YMSecurityProviderRef provider, const uint8_t *buffer, size_t byte);
+bool YMSecurityProviderClose(YMSecurityProviderRef provider);
 
 #endif /* YMSecurityProvider_h */
