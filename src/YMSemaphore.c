@@ -28,7 +28,7 @@ YMSemaphoreRef YMSemaphoreCreate()
     int result = pthread_cond_init(&cond, NULL); // "FreeBSD doesn't support non-default attributes"
     if ( result != 0 )
     {
-        YMLog("fatal: pthread_cond_init failed: %d (%s)",result,strerror(errno));
+        YMLog("semaphore: fatal: pthread_cond_init failed: %d (%s)",result,strerror(errno));
         return NULL;
     }
     
@@ -48,7 +48,7 @@ void _YMSemaphoreFree(YMTypeRef object)
     int result = pthread_cond_destroy(&semaphore->cond);
     if ( result != 0 )
     {
-        YMLog("fatal: pthread_cond_destroy failed: %d (%s)",result,strerror(result));
+        YMLog("semaphore: fatal: pthread_cond_destroy failed: %d (%s)",result,strerror(result));
         abort();
     }
     
@@ -60,25 +60,25 @@ void YMSemaphoreWait(YMSemaphoreRef semaphore)
     YMLockLock(semaphore->lock);
     
     pthread_mutex_t mutex = _YMLockGetMutex(semaphore->lock);
-    YMLog("waiting on %d...",mutex);
+    YMLog("semaphore: waiting on %p...",semaphore);
     int result = pthread_cond_wait(&semaphore->cond, &mutex);
     if ( result != 0 )
     {
-        YMLog("fatal: pthread_cond_wait failed: %d (%s)",result,strerror(result));
+        YMLog("semaphore: fatal: pthread_cond_wait failed: %d (%s)",result,strerror(result));
         abort();
     }
-    YMLog("received signal %d...",mutex);
+    YMLog("semaphore: received signal %p...",semaphore);
     
     YMLockUnlock(semaphore->lock);
 }
 
 void YMSemaphoreSignal(YMSemaphoreRef semaphore)
 {
-    YMLog("signaling %d...",semaphore->cond);
+    YMLog("semaphore: signaling %p",semaphore);
     int result = pthread_cond_signal(&(semaphore->cond));
     if ( result != 0 )
     {
-        YMLog("fatal: pthread_cond_signal failed: %d (%s)",result,strerror(result));
+        YMLog("semaphore: fatal: pthread_cond_signal failed: %d (%s)",result,strerror(result));
         abort();
     }
 }

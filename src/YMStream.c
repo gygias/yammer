@@ -94,33 +94,67 @@ bool YMStreamWriteDown(YMStreamRef stream, uint8_t *buffer, uint32_t length)
 {
     int downstreamWrite = YMPipeGetInputFile(stream->downstream);
     YMStreamChunkHeader header = { length };
+    YMLog("stream[%s,%lu,%d]: error: writing header for stream chunk size %lu",stream->isLocal?"down":"up",stream->__userInfo->streamID,downstreamWrite,length);
     bool okay = YMWriteFull(downstreamWrite, (void *)&header, sizeof(header));
+    if ( ! okay )
+    {
+        YMLog("stream[%s,%lu,%d]: error: failed writing header for stream chunk size %lu",stream->isLocal?"down":"up",stream->__userInfo->streamID,downstreamWrite,length);
+        return false;
+    }
+    YMLog("stream[%s,%lu,%d]: error: wrote header for stream chunk size %lu",stream->isLocal?"down":"up",stream->__userInfo->streamID,downstreamWrite,length);
+    
+    YMLog("stream[%s,%lu,%d]: error: writing buffer for stream chunk size %lu",stream->isLocal?"down":"up",stream->__userInfo->streamID,downstreamWrite,length);
     okay = YMWriteFull(downstreamWrite, buffer, length);
+    if ( ! okay )
+    {
+        YMLog("stream[%s,%lu,%d]: error: failed writing stream chunk with size %lu to %d",stream->isLocal?"down":"up",stream->__userInfo->streamID,downstreamWrite,length);
+        return false;
+    }
+    YMLog("stream[%s,%lu,%d]: error: wrote buffer for stream chunk size %lu",stream->isLocal?"down":"up",stream->__userInfo->streamID,downstreamWrite,length);
     
     // signal the plexer to wake and service this stream
     YMSemaphoreSignal(stream->__dataAvailableSemaphore);
+    
+    YMLog("stream[%s,%lu,%d]: wrote %lu + %lu down stream chunk",stream->isLocal?"down":"up",stream->__userInfo->streamID,downstreamWrite,sizeof(header),length);
     
     return okay;
 }
 
 bool YMStreamReadDown(YMStreamRef stream, uint8_t *buffer, uint32_t length)
 {
-    int fd = YMPipeGetOutputFile(stream->downstream);
-    bool okay = YMReadFull(fd, buffer, length);
+    int downstreamRead = YMPipeGetOutputFile(stream->downstream);
+    YMLog("stream[%s,%lu,%d]: reading %lu bytes from downstream",stream->isLocal?"down":"up",stream->__userInfo->streamID,downstreamRead,length);
+    bool okay = YMReadFull(downstreamRead, buffer, length);
+    if ( ! okay )
+    {
+        YMLog("stream[%s,%lu,%d]: error: failed reading %lu bytes from downstream",stream->isLocal?"down":"up",stream->__userInfo->streamID,downstreamRead,length);
+        return false;
+    }
+    YMLog("stream[%s,%lu,%d]: read %lu bytes from downstream",stream->isLocal?"down":"up",stream->__userInfo->streamID,downstreamRead,length);
     return okay;
 }
 
 bool YMStreamWriteUp(YMStreamRef stream, uint8_t *buffer, uint32_t length)
 {
-    int fd = YMPipeGetInputFile(stream->upstream);
-    bool okay = YMWriteFull(fd, buffer, length);
+    int upstreamWrite = YMPipeGetInputFile(stream->upstream);
+    bool okay = YMWriteFull(upstreamWrite, buffer, length);
+    if ( ! okay )
+    {
+        YMLog("stream[%s,%lu,%d]: error: failed writing %lu bytes to upstream",stream->isLocal?"down":"up",stream->__userInfo->streamID,upstreamWrite,length);
+        return false;
+    }
     return okay;
 }
 
 bool YMStreamReadUp(YMStreamRef stream, uint8_t *buffer, uint32_t length)
 {
-    int fd = YMPipeGetOutputFile(stream->upstream);
-    bool okay = YMReadFull(fd, buffer, length);
+    int upstreamRead = YMPipeGetOutputFile(stream->upstream);
+    bool okay = YMReadFull(upstreamRead, buffer, length);
+    if ( ! okay )
+    {
+        YMLog("streamp%s,%lu,%d]: error: failed reading %lu bytes from upstream",stream->isLocal?"down":"up",stream->__userInfo->streamID,upstreamRead,length);
+        return false;
+    }
     return okay;
 }
 
