@@ -64,10 +64,24 @@ void local_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream)
     YMPlexerSetStreamClosingFunc(fakeRemotePlexer, remote_plexer_stream_closing);
     
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
-        YMPlexerStart(localPlexer,true);
+        bool okay = YMPlexerStart(localPlexer,true);
+        XCTAssert(okay,@"master did not start");
+        
+        YMStreamRef aStream = YMPlexerCreateNewStream(localPlexer,"test stream 1",false);
+        char *testMessage1 = "this is a test message. one, two, three. four. sometimes five.";
+        uint32_t testMessage1Length = (uint32_t)strlen(testMessage1);
+        okay = YMStreamWriteDown(aStream, (void *)&testMessage1Length, sizeof(testMessage1Length));
+        XCTAssert(okay,@"failed to write message length");
+        okay = YMStreamWriteDown(aStream, (void *)testMessage1, (uint32_t)strlen(testMessage1));
+        XCTAssert(okay,@"failed to write message");
+#warning todo could YMStream provide a convenience for not framing these sizes twice \
+            like a 'write datagram of size' so that it could piggy-back off of the client's framing?
+        
+        YMLog("wrote user message");
     });
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
-        YMPlexerStart(fakeRemotePlexer,false);
+        bool okay = YMPlexerStart(fakeRemotePlexer,false);
+        XCTAssert(okay,@"slave did not start");
     });
     
     CFRunLoopRunInMode(kCFRunLoopDefaultMode,5*60,false);
@@ -81,6 +95,12 @@ void remote_plexer_interrupted(YMPlexerRef plexer)
 void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream)
 {
     NSLog(@"%s",__FUNCTION__);
+    uint16_t messageLength;
+    bool okay = YMStreamReadUp(stream, (void *)&messageLength, sizeof(messageLength));
+    if ( ! okay ) YMLog("failed to read message length");
+    char message[messageLength];
+    okay = YMStreamReadUp(stream, (void *)message, messageLength);
+    if ( ! okay ) YMLog("failed to read message");
 }
 
 void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream)
@@ -88,11 +108,11 @@ void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream)
     NSLog(@"%s",__FUNCTION__);
 }
 
-- (void)testPerformanceExample {
-    // This is an example of a performance test case.
-    [self measureBlock:^{
-        // Put the code you want to measure the time of here.
-    }];
-}
+//- (void)testPerformanceExample {
+    //// This is an example of a performance test case.
+    //[self measureBlock:^{
+    //    // Put the code you want to measure the time of here.
+    //}];
+//}
 
 @end

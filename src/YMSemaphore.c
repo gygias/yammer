@@ -60,18 +60,21 @@ void YMSemaphoreWait(YMSemaphoreRef semaphore)
     YMLockLock(semaphore->lock);
     
     pthread_mutex_t mutex = _YMLockGetMutex(semaphore->lock);
+    YMLog("waiting on %d...",mutex);
     int result = pthread_cond_wait(&semaphore->cond, &mutex);
     if ( result != 0 )
     {
         YMLog("fatal: pthread_cond_wait failed: %d (%s)",result,strerror(result));
         abort();
     }
+    YMLog("received signal %d...",mutex);
     
     YMLockUnlock(semaphore->lock);
 }
 
 void YMSemaphoreSignal(YMSemaphoreRef semaphore)
 {
+    YMLog("signaling %d...",semaphore->cond);
     int result = pthread_cond_signal(&(semaphore->cond));
     if ( result != 0 )
     {

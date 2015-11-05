@@ -147,7 +147,7 @@ void _YMLockFree(YMTypeRef object)
     int result = pthread_mutex_destroy(&lock->mutex);
     if ( result != 0 )
         YMLog("warning: cannot destroy mutex (%s), something may be deadlocked", lock->name ? lock->name : "unnamed");
-#warning other Free()s should NULL stuff like this and let misuse crash, not guard
+#warning todo other Free()s should NULL stuff like this and let misuse crash, not guard
     free(lock->name);
     lock->name = NULL;
     

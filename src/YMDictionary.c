@@ -12,7 +12,7 @@
 
 typedef struct __YMDictionaryItem
 {
-    int key;
+    uint64_t key;
     const void *representedItem;
     struct _YMDictionaryItem *next;
 } _YMDictionaryItem;
@@ -28,6 +28,7 @@ typedef struct __YMDictionary
 } _YMDictionary;
 
 YMDictionaryItemRef _YMDictionaryFindItemWithIdentifier(YMDictionaryItemRef head, YMDictionaryKey key, YMDictionaryItemRef *outPreviousItem);
+YMDictionaryItemRef _YMDictionaryCopyItem(YMDictionaryItemRef item);
 
 YMDictionaryRef YMDictionaryCreate()
 {
@@ -56,7 +57,7 @@ void _YMDictionaryFree(YMTypeRef object)
     free(dict);
 }
 
-void YMDictionaryAdd(YMDictionaryRef dict, YMDictionaryKey key, const void *item)
+void YMDictionaryAdd(YMDictionaryRef dict, YMDictionaryKey key, YMDictionaryValue item)
 {
     if ( _YMDictionaryFindItemWithIdentifier(dict->head, key, NULL) )
     {
@@ -65,7 +66,10 @@ void YMDictionaryAdd(YMDictionaryRef dict, YMDictionaryKey key, const void *item
     }
     YMDictionaryItemRef newItem = (YMDictionaryItemRef)malloc(sizeof(struct __YMDictionaryItem));
     newItem->representedItem = item;
-    newItem->next = (struct _YMDictionaryItem *)dict->head;
+    newItem->next = (struct _YMDictionaryItem *)dict->head; // nulls or prepends
+    if ( ! dict->head )
+        dict->head = newItem;    
+    
     dict->count++;
 }
 
@@ -119,4 +123,40 @@ size_t YMDictionaryGetCount(YMDictionaryRef dict)
 {
     _YMDictionary *_dict = (_YMDictionary *)dict;
     return _dict->count;
+}
+
+YMDictionaryEnumRef YMDictionaryEnumeratorBegin(YMDictionaryRef dict)
+{
+    if ( ! dict->head )
+        return NULL;
+    
+    return (YMDictionaryEnumRef)_YMDictionaryCopyItem(dict->head);
+}
+
+YMDictionaryEnumRef YMDictionaryEnumeratorGetNext(YMDictionaryRef dict, YMDictionaryEnumRef aEnum)
+{
+    YMDictionaryItemRef item = (YMDictionaryItemRef)aEnum;
+    YMDictionaryItemRef next = (YMDictionaryItemRef)item->next;
+    
+#warning todo why bother reallocating our enum-cum-listitem each time?
+    free(item);
+    
+    if ( ! next )
+        return NULL;
+    
+    return (YMDictionaryEnumRef)_YMDictionaryCopyItem(next);
+}
+
+void YMDictionaryEnumeratorEnd(YMDictionaryRef dict, YMDictionaryEnumRef aEnum)
+{
+    free(aEnum);
+}
+
+YMDictionaryItemRef _YMDictionaryCopyItem(YMDictionaryItemRef item)
+{
+    YMDictionaryItemRef itemCopy = (YMDictionaryItemRef)malloc(sizeof(struct __YMDictionaryItem));
+    itemCopy->key = item->key;
+    itemCopy->representedItem = item->representedItem;
+    itemCopy->next = item->next;
+    return itemCopy;
 }

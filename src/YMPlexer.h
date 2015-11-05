@@ -32,7 +32,7 @@ void YMPlexerSetSecurityProvider(YMPlexerRef plexer, YMTypeRef provider); // uns
 bool YMPlexerStart(YMPlexerRef plexer, bool master);
 void YMPlexerStop(YMPlexerRef plexer);
 
-YMStreamRef YMPlexerNewStream(YMPlexerRef plexer, char *name, bool direct);
-void YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream);
+YMStreamRef YMPlexerCreateNewStream(YMPlexerRef plexer, char *name, bool direct);
+bool YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream);
 
 #endif /* YMPlexer_h */

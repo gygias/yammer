@@ -9,6 +9,8 @@
 #include "YMSecurityProvider.h"
 #include "YMPrivate.h"
 
+#include "YMUtilities.h"
+
 typedef bool (*ym_security_init_func)(int,int);
 typedef bool (*ym_security_read_func)(int,int,uint8_t*,size_t);
 typedef bool (*ym_security_write_func)(int,int,const uint8_t*,size_t);
@@ -61,7 +63,7 @@ void YMSecurityProviderSetInitFunc(YMSecurityProviderRef provider, ym_security_i
 
 bool YMSecurityProviderInit(YMSecurityProviderRef provider)
 {
-#warning note we're not casting providerRef here... fix everywhere else
+#warning todo note we're not casting providerRef here... fix everywhere else
     return provider->initFunc(provider->inFd, provider->outFd);
 }
 

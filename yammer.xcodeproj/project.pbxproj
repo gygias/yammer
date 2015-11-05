@@ -30,8 +30,8 @@
 		63225D611BE909BB00C28F05 /* YMPlexer.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D5F1BE909BB00C28F05 /* YMPlexer.h */; };
 		63225D641BE90A6400C28F05 /* YMSecurityProvider.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D621BE90A6400C28F05 /* YMSecurityProvider.c */; };
 		63225D651BE90A6400C28F05 /* YMSecurityProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D631BE90A6400C28F05 /* YMSecurityProvider.h */; };
-		63225D691BE9184000C28F05 /* YMIO.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D671BE9184000C28F05 /* YMIO.c */; };
-		63225D6A1BE9184000C28F05 /* YMIO.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D681BE9184000C28F05 /* YMIO.h */; };
+		63225D691BE9184000C28F05 /* YMUtilities.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D671BE9184000C28F05 /* YMUtilities.c */; };
+		63225D6A1BE9184000C28F05 /* YMUtilities.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D681BE9184000C28F05 /* YMUtilities.h */; };
 		63225D6D1BE91B3B00C28F05 /* YMLog.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D6B1BE91B3B00C28F05 /* YMLog.c */; };
 		63225D6E1BE91B3B00C28F05 /* YMLog.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D6C1BE91B3B00C28F05 /* YMLog.h */; };
 		63225D981BE92B6000C28F05 /* YMBase.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D971BE92B6000C28F05 /* YMBase.c */; };
@@ -87,8 +87,8 @@
 		63225D621BE90A6400C28F05 /* YMSecurityProvider.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMSecurityProvider.c; path = src/YMSecurityProvider.c; sourceTree = "<group>"; };
 		63225D631BE90A6400C28F05 /* YMSecurityProvider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMSecurityProvider.h; path = src/YMSecurityProvider.h; sourceTree = "<group>"; };
 		63225D661BE90B2D00C28F05 /* YMBase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMBase.h; path = src/YMBase.h; sourceTree = "<group>"; };
-		63225D671BE9184000C28F05 /* YMIO.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMIO.c; path = src/YMIO.c; sourceTree = "<group>"; };
-		63225D681BE9184000C28F05 /* YMIO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMIO.h; path = src/YMIO.h; sourceTree = "<group>"; };
+		63225D671BE9184000C28F05 /* YMUtilities.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMUtilities.c; path = src/YMUtilities.c; sourceTree = "<group>"; };
+		63225D681BE9184000C28F05 /* YMUtilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMUtilities.h; path = src/YMUtilities.h; sourceTree = "<group>"; };
 		63225D6B1BE91B3B00C28F05 /* YMLog.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMLog.c; path = src/YMLog.c; sourceTree = "<group>"; };
 		63225D6C1BE91B3B00C28F05 /* YMLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMLog.h; path = src/YMLog.h; sourceTree = "<group>"; };
 		63225D971BE92B6000C28F05 /* YMBase.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMBase.c; path = src/YMBase.c; sourceTree = "<group>"; };
@@ -104,6 +104,7 @@
 		63476A4E1BEB159C00D10081 /* YMDictionary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMDictionary.h; path = src/YMDictionary.h; sourceTree = "<group>"; };
 		63476A511BEB319000D10081 /* YMSemaphore.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMSemaphore.c; path = src/YMSemaphore.c; sourceTree = "<group>"; };
 		63476A521BEB319000D10081 /* YMSemaphore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMSemaphore.h; path = src/YMSemaphore.h; sourceTree = "<group>"; };
+		63476A551BEB9AB300D10081 /* YMStreamPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMStreamPriv.h; path = src/YMStreamPriv.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -181,16 +182,16 @@
 				630A5CF81BE95E36003292EE /* YMThreads.c */,
 				63225D531BE9074700C28F05 /* YMPipe.h */,
 				63225D521BE9074700C28F05 /* YMPipe.c */,
-				63225D681BE9184000C28F05 /* YMIO.h */,
-				63225D671BE9184000C28F05 /* YMIO.c */,
+				63225D681BE9184000C28F05 /* YMUtilities.h */,
+				63225D671BE9184000C28F05 /* YMUtilities.c */,
 				63476A431BEAF4DB00D10081 /* YMLock.h */,
 				63476A421BEAF4DB00D10081 /* YMLock.c */,
 				63476A4A1BEB074C00D10081 /* YMLinkedList.h */,
 				63476A491BEB074C00D10081 /* YMLinkedList.c */,
 				63476A4E1BEB159C00D10081 /* YMDictionary.h */,
 				63476A4D1BEB159C00D10081 /* YMDictionary.c */,
-				63476A511BEB319000D10081 /* YMSemaphore.c */,
 				63476A521BEB319000D10081 /* YMSemaphore.h */,
+				63476A511BEB319000D10081 /* YMSemaphore.c */,
 			);
 			name = Utility;
 			sourceTree = "<group>";
@@ -202,6 +203,7 @@
 				63225D971BE92B6000C28F05 /* YMBase.c */,
 				630A5D0B1BE96D6E003292EE /* Yammer.h */,
 				63225D5B1BE9092500C28F05 /* YMStream.h */,
+				63476A551BEB9AB300D10081 /* YMStreamPriv.h */,
 				63225D5A1BE9092500C28F05 /* YMStream.c */,
 				63225D631BE90A6400C28F05 /* YMSecurityProvider.h */,
 				63225D621BE90A6400C28F05 /* YMSecurityProvider.c */,
@@ -242,7 +244,7 @@
 			files = (
 				63476A451BEAF4DB00D10081 /* YMLock.h in Headers */,
 				630A5CF31BE950F1003292EE /* YMConnection.h in Headers */,
-				63225D6A1BE9184000C28F05 /* YMIO.h in Headers */,
+				63225D6A1BE9184000C28F05 /* YMUtilities.h in Headers */,
 				63476A501BEB159C00D10081 /* YMDictionary.h in Headers */,
 				630A5CFB1BE95E36003292EE /* YMThreads.h in Headers */,
 				63225D5D1BE9092500C28F05 /* YMStream.h in Headers */,
@@ -362,7 +364,7 @@
 				63225D981BE92B6000C28F05 /* YMBase.c in Sources */,
 				630A5D1C1BE98199003292EE /* YMmDNS.c in Sources */,
 				630A5D161BE9777C003292EE /* YMmDNSBrowser.c in Sources */,
-				63225D691BE9184000C28F05 /* YMIO.c in Sources */,
+				63225D691BE9184000C28F05 /* YMUtilities.c in Sources */,
 				63476A531BEB319000D10081 /* YMSemaphore.c in Sources */,
 				63476A441BEAF4DB00D10081 /* YMLock.c in Sources */,
 				63225D601BE909BB00C28F05 /* YMPlexer.c in Sources */,

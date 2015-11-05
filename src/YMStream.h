@@ -15,16 +15,14 @@
 
 typedef struct __YMStream *YMStreamRef;
 
-YMStreamRef YMStreamCreate(char *name);
+bool YMStreamWriteDown(YMStreamRef stream, uint8_t *buffer, uint32_t length);
+bool YMStreamReadDown(YMStreamRef stream, uint8_t *buffer, uint32_t length);
 
-bool YMStreamRead(YMStreamRef stream, void *buffer, size_t length);
-bool YMStreamWrite(YMStreamRef stream, void *buffer, size_t length);
+bool YMStreamWriteUp(YMStreamRef stream, uint8_t *buffer, uint32_t length);
+bool YMStreamReadUp(YMStreamRef stream, uint8_t *buffer, uint32_t length);
+
+#warning todo write up and read down should be private
 
 bool YMStreamClose(YMStreamRef stream);
-
-// for plexer only, these are not owned by the stream
-void _YMStreamSetUserInfo(YMStreamRef stream, const void *);
-const void *_YMStreamGetUserInfo(YMStreamRef stream);
-void _YMStreamSetDataAvailableSemaphore(YMStreamRef stream, YMSemaphoreRef semaphore);
 
 #endif /* YMStream_h */

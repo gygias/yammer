@@ -8,11 +8,21 @@
 
 #include "YMPlexer.h"
 #include "YMPrivate.h"
+#include "YMStreamPriv.h"
 
 #include "YMSecurityProvider.h"
 #include "YMDictionary.h"
 #include "YMLock.h"
 #include "YMThreads.h"
+
+#include <sys/select.h>
+
+#ifdef USE_FTIME
+#include <sys/timeb.h>
+#error todo
+#else
+#include <sys/time.h>
+#endif
 
 #define YMPlexerBuiltInVersion ((uint32_t)1)
 
@@ -26,12 +36,18 @@ typedef struct {
     uint32_t protocolVersion;
 } YMPlexerSlaveAck;
 
-typedef uint32_t YMPlexerStreamID;
+typedef uint32_t YMPlexerChunkSize;
+typedef struct {
+    YMStreamID streamID;
+    YMPlexerChunkSize length;
+} YMPlexerChunkHeader;
 
 bool _YMPlexerStartServiceThreads(YMPlexerRef plexer);
 bool _YMPlexerDoInitialization(YMPlexerRef plexer, bool master);
-void *_YMPlexerLocalServiceThread(void *context);
-void *_YMPlexerRemoteServiceThread(void *context);
+void *_YMPlexerServiceDownstreamThread(void *context);
+void *_YMPlexerServiceUpstreamThread(void *context);
+YMStreamRef _YMPlexerChooseDownstream(YMPlexerRef plexer);
+void _YMPlexerInterrupt();
 
 typedef struct __YMPlexer
 {
@@ -49,18 +65,18 @@ typedef struct __YMPlexer
     YMDictionaryRef localStreamsByID;
     YMLockRef localAccessLock;
     uint8_t *localPlexBuffer;
-    size_t localPlexBufferSize;
-    YMPlexerStreamID localStreamIDMin;
-    YMPlexerStreamID localStreamIDMax;
-    YMPlexerStreamID localStreamIDLast;
+    uint32_t localPlexBufferSize;
+    YMStreamID localStreamIDMin;
+    YMStreamID localStreamIDMax;
+    YMStreamID localStreamIDLast;
     
     // the upstream
     YMDictionaryRef remoteStreamsByID;
     YMLockRef remoteAccessLock;
     uint8_t *remotePlexBuffer;
-    size_t remotePlexBufferSize;
-    YMPlexerStreamID remoteStreamIDMin;
-    YMPlexerStreamID remoteStreamIDMax;
+    uint32_t remotePlexBufferSize;
+    YMStreamID remoteStreamIDMin;
+    YMStreamID remoteStreamIDMax;
     
     YMThreadRef localServiceThread;
     YMThreadRef remoteServiceThread;
@@ -97,8 +113,8 @@ YMPlexerRef YMPlexerCreate(int inFd, int outFd)
     plexer->remotePlexBufferSize = YMPlexerDefaultBufferSize;
     plexer->remotePlexBuffer = malloc(plexer->remotePlexBufferSize);
     
-    plexer->localServiceThread = YMThreadCreate(_YMPlexerLocalServiceThread, plexer);
-    plexer->remoteServiceThread = YMThreadCreate(_YMPlexerRemoteServiceThread, plexer);
+    plexer->localServiceThread = YMThreadCreate(_YMPlexerServiceDownstreamThread, plexer);
+    plexer->remoteServiceThread = YMThreadCreate(_YMPlexerServiceUpstreamThread, plexer);
     plexer->interruptionLock = YMLockCreate();
     plexer->localDataAvailableSemaphore = YMSemaphoreCreate();
     
@@ -190,10 +206,10 @@ bool _YMPlexerDoInitialization(YMPlexerRef plexer, bool master)
         }
         
         plexer->localStreamIDMin = 0;
-        plexer->localStreamIDMax = UINT32_MAX / 2;
+        plexer->localStreamIDMax = YMStreamIDMax / 2;
         plexer->localStreamIDLast = plexer->localStreamIDMax;
         plexer->remoteStreamIDMin = plexer->localStreamIDMax + 1;
-        plexer->remoteStreamIDMax = UINT32_MAX;
+        plexer->remoteStreamIDMax = YMStreamIDMax;
         
         YMPlexerMasterInitializer initializer = { YMPlexerBuiltInVersion, plexer->localStreamIDMin, plexer->localStreamIDMax };
         okay = YMSecurityProviderWrite(plexer->provider, (void *)&initializer, sizeof(initializer));
@@ -245,7 +261,7 @@ bool _YMPlexerDoInitialization(YMPlexerRef plexer, bool master)
         
         // todo, technically this should handle non-zero-based master min id, but doesn't
         plexer->localStreamIDMin = initializer.masterStreamIDMax + 1;
-        plexer->localStreamIDMax = UINT32_MAX;
+        plexer->localStreamIDMax = YMStreamIDMax;
         plexer->localStreamIDLast = plexer->localStreamIDMax;
         plexer->remoteStreamIDMin = initializer.masterStreamIDMin;
         plexer->remoteStreamIDMax = initializer.masterStreamIDMax;
@@ -280,25 +296,138 @@ bool _YMPlexerDoInitialization(YMPlexerRef plexer, bool master)
     return true;
 }
 
-void *_YMPlexerLocalServiceThread(void *context)
+void *_YMPlexerServiceDownstreamThread(void *context)
 {
-    YMPlexerRef plexer = (YMPlexerRef)context;
-    YMLog("YMPlexer (%s) has enteret its local service thread",plexer->master?"master":"slave");
+    struct __YMPlexer *plexer = (struct __YMPlexer *)context;
+    YMLog("plexer (%s): entered its local service thread",plexer->master?"master":"slave");
     while(1)
     {
-        YMLog("YMPlexer (%s) V data available wait...",plexer->master?"master":"slave");
+        YMLog("plexer (%s): awaiting signal",plexer->master?"master":"slave");
+        // there is only one thread consuming this semaphore, so i think it's ok not to actually lock around this loop iteration
         YMSemaphoreWait(plexer->localDataAvailableSemaphore);
-        YMLog("YMPlexer (%s) has woken up",plexer->master?"master":"slave");
+        YMLog("plexer (%s): downstream signalled",plexer->master?"master":"slave");
+        
+        YMStreamRef servicingStream = _YMPlexerChooseDownstream(plexer);
+        if ( ! servicingStream )
+        {
+            YMLog("warning: service downstream signaled but couldn't find a stream");
+            continue;
+        }
+        
+        YMStreamID streamID = _YMStreamGetUserInfo(servicingStream)->streamID;
+        YMLog("plexer (%s,%lu): chose stream for service",plexer->master?"master":"slave",streamID);
+        
+        // update last service time on stream
+        _YMStreamSetLastServiceTimeNow(servicingStream);
+        
+        YMStreamChunkHeader streamHeader;
+        bool okay = YMStreamReadDown(servicingStream, (void *)&streamHeader, sizeof(streamHeader));
+        if ( ! okay )
+        {
+            YMLog("plexer (%s,%lu): fatal: failed reading down stream header",plexer->master?"master":"slave",streamID);
+            _YMPlexerInterrupt();
+            return NULL;
+        }
+        
+        YMLog("plexer (%s,%lu): servicing down stream chunk size %lu",plexer->master?"master":"slave",streamID,streamHeader.length);
+        
+        while ( streamHeader.length > plexer->localPlexBufferSize )
+        {
+            plexer->localPlexBufferSize *= 2;
+            YMLog("plexer (%s,%lu) reallocating local plex buffer to %llu",plexer->master?"master":"slave",streamID,plexer->localPlexBufferSize);
+            plexer->localPlexBuffer = realloc(plexer->localPlexBuffer, plexer->localPlexBufferSize);
+        }
+        
+        okay = YMStreamReadDown(servicingStream, plexer->localPlexBuffer, plexer->localPlexBufferSize);
+        if ( ! okay )
+        {
+            YMLog("plexer (%s,%lu): fatal: reading down stream chunk size %lu",plexer->master?"master":"slave", streamID,streamHeader.length);
+            _YMPlexerInterrupt();
+            return NULL;
+        }
+        
+        YMLog("plexer (%s,%lu): read stream chunk for stream",plexer->master?"master":"slave",streamID);
+        
+#warning add hton ntoh to stuff across the wire
+        YMPlexerChunkHeader plexHeader = { streamID, streamHeader.length };
+        
+        okay = YMWriteFull(plexer->outFd, (void *)&plexHeader, sizeof(plexHeader));
+        if ( ! okay )
+        {
+            YMLog("plexer (%s,%lu): fatal: failed writing down plex header size %lu",plexer->master?"master":"slave",streamID,plexHeader.length);
+            _YMPlexerInterrupt();
+            return NULL;
+        }
+        
+        YMLog("plexer (%s,%lu): wrote down plex header",plexer->master?"master":"slave",streamID);
+        
+        okay = YMWriteFull(plexer->outFd, plexer->localPlexBuffer, plexer->localPlexBufferSize);
+        if ( ! okay )
+        {
+            YMLog("plexer (%s,%lu): fatal: failed writing down plex chunk size %lu",plexer->master?"master":"slave",streamID,plexHeader.length);
+            _YMPlexerInterrupt();
+            return NULL;
+        }
+        
+        YMLog("plexer (%s,%lu): wrote plex chunk size %lu",plexer->master?"master":"slave",streamID,plexHeader.length);
     }
+    
+#warning todo free user info of deallocated streams somewhere
     return NULL;
 }
 
-void *_YMPlexerRemoteServiceThread(void *context)
+YMStreamRef _YMPlexerChooseDownstream(YMPlexerRef plexer)
+{
+    YMStreamRef servicingStream = NULL;
+    struct timeval newestTime;
+    YMSetTheEndOfPosixTimeForCurrentPlatform(&newestTime);
+    YMLockLock(plexer->localAccessLock);
+    {
+        YMDictionaryEnumRef localStreamsEnum = YMDictionaryEnumeratorBegin(plexer->localStreamsByID);
+        while ( localStreamsEnum )
+        {
+            YMStreamRef aLocalStream = (YMStreamRef)localStreamsEnum->value;
+            int downRead = _YMStreamGetDownwardRead(aLocalStream);
+            
+            fd_set fdset;
+            FD_ZERO(&fdset);
+            FD_SET(downRead,&fdset);
+            // a zero'd timeval struct indicates a poll, which is what i think we want here
+            // if something goes "wrong" (todo) with one stream, don't starve the others
+            struct timeval timeout = { 0, 0 };
+            int nReadyFds = select(downRead + 1, &fdset, NULL, NULL, &timeout);
+            
+            if ( nReadyFds <= 0 ) // zero is a timeout
+            {
+                if ( nReadyFds == -1 )
+                    YMLog("warning: select(stream %lu) failed %d (%s)",errno,strerror(errno));
+                continue;
+            }
+            
+            struct timeval *thisStreamLastService = _YMStreamGetLastServiceTime(aLocalStream);
+            if ( YMTimevalCompare(thisStreamLastService, &newestTime ) != GreaterThan )
+                servicingStream = aLocalStream;
+            
+            localStreamsEnum = YMDictionaryEnumeratorGetNext(plexer->localStreamsByID, localStreamsEnum);
+        }
+    }
+    YMLockUnlock(plexer->localAccessLock);
+    
+    return servicingStream;
+}
+
+void *_YMPlexerServiceUpstreamThread(void *context)
 {
     YMPlexerRef plexer = (YMPlexerRef)context;
-    YMLog("YMPlexer (%s) has enteret its remote service thread and is going to sleep",plexer->master?"master":"slave");
+    YMLog("plexer (%s) has entered its remote service thread and is going to sleep",plexer->master?"master":"slave");
     sleep(1e+6);//todo receive signal from 'underlying medium'
+#warning todo free user info of deallocated streams somewhere
     return NULL;
+}
+
+void _YMPlexerInterrupt()
+{
+#warning todo
 }
 
 void YMPlexerStop(YMPlexerRef plexer)
@@ -314,14 +443,15 @@ void YMPlexerStop(YMPlexerRef plexer)
     plexer->running = false;
 }
 
-YMStreamRef YMPlexerNewStream(YMPlexerRef plexer, char *name, bool direct)
+YMStreamRef YMPlexerCreateNewStream(YMPlexerRef plexer, char *name, bool direct)
 {
     YMLockLock(plexer->localAccessLock);
-    YMPlexerStreamID newStreamID = ( plexer->localStreamIDLast == plexer->localStreamIDMax ) ? plexer->localStreamIDMin : ++(plexer->localStreamIDLast);
-    YMPlexerStreamID *userInfo = (YMPlexerStreamID *)malloc(sizeof(YMPlexerStreamID));
-    *userInfo = newStreamID;
-    YMStreamRef newStream = YMStreamCreate(name);
+    YMStreamID newStreamID = ( plexer->localStreamIDLast == plexer->localStreamIDMax ) ? plexer->localStreamIDMin : ++(plexer->localStreamIDLast);
+    YMStreamRef newStream = YMStreamCreate(name, true);
+    YMStreamUserInfoRef userInfo = (YMStreamUserInfoRef)malloc(sizeof(struct __YMStreamUserInfo));
+    userInfo->streamID = newStreamID;
     _YMStreamSetUserInfo(newStream, userInfo);
+    _YMStreamSetDataAvailableSemaphore(newStream, plexer->localDataAvailableSemaphore);
     if ( YMDictionaryContains(plexer->localStreamsByID, newStreamID) )
     {
         YMLog("fatal: YMPlexer has run out of streams");
@@ -335,9 +465,9 @@ YMStreamRef YMPlexerNewStream(YMPlexerRef plexer, char *name, bool direct)
     return newStream;
 }
 
-void YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream)
+bool YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream)
 {
-    YMPlexerStreamID streamID = *( (YMPlexerStreamID *)_YMStreamGetUserInfo(stream) );
+    YMStreamID streamID = _YMStreamGetUserInfo(stream)->streamID;
     
     YMStreamRef localStream;
     YMLockLock(plexer->localAccessLock);
@@ -356,14 +486,15 @@ void YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream)
         YMLockUnlock(plexer->remoteAccessLock);
         
         if ( isRemote )
-            YMLog("fatal: YMPlexer user requested closure of remote stream %llu",streamID);
+            YMLog("error: YMPlexer user requested closure of remote stream %llu",streamID);
         else
-            YMLog("fatal: YMPlexer user requested closure of unknown stream %llu",streamID);
-        abort();
-        return;
+            YMLog("error: YMPlexer user requested closure of unknown stream %llu",streamID);
+        return false;
     }
     
     YMLog("local stream %llu marked closed...",streamID);
     YMStreamClose(localStream);
     // local service thread to deallocate after it's able to flush data and pass off the close command to remote
+    
+    return true;
 }
