@@ -14,6 +14,8 @@
 #include "YMLock.h"
 #include "YMThreads.h"
 
+typedef uint64_t YMPlexerStreamID;
+
 typedef struct __YMPlexer
 {
     YMTypeID _typeID;
@@ -25,18 +27,24 @@ typedef struct __YMPlexer
     
     // the downstream
     YMDictionaryRef localStreamsByID;
+    YMLockRef localAccessLock;
     uint8_t *localPlexBuffer;
     size_t localPlexBufferSize;
+    YMPlexerStreamID localStreamIDMin;
+    YMPlexerStreamID localStreamIDMax;
+    YMPlexerStreamID localStreamIDLast;
     
     // the upstream
     YMDictionaryRef remoteStreamsByID;
+    YMLockRef remoteAccessLock;
     uint8_t *remotePlexBuffer;
     size_t remotePlexBufferSize;
+    YMPlexerStreamID remoteStreamIDMin;
+    YMPlexerStreamID remoteStreamIDMax;
+    YMPlexerStreamID remoteStreamIDLast;
     
-    // synchronization
     YMThreadRef localServiceThread;
     YMThreadRef remoteServiceThread;
-    YMLockRef listAccessLock;
     YMLockRef interruptionLock;
     
     // user
@@ -55,10 +63,12 @@ YMPlexerRef YMPlexerCreate(int fd)
     plexer->provider = YMSecurityProviderCreate(fd);
     
     plexer->localStreamsByID = YMDictionaryCreate();
+    plexer->localAccessLock = YMLockCreate();
     plexer->localPlexBufferSize = YMPlexerDefaultBufferSize;
     plexer->localPlexBuffer = malloc(plexer->localPlexBufferSize);
     
     plexer->remoteStreamsByID = YMDictionaryCreate();
+    plexer->remoteAccessLock = YMLockCreate();
     plexer->remotePlexBufferSize = YMPlexerDefaultBufferSize;
     plexer->remotePlexBuffer = malloc(plexer->remotePlexBufferSize);
     
@@ -167,6 +177,12 @@ void YMPlexerStop(YMPlexerRef plexer)
 YMStreamRef YMPlexerNewStream(YMPlexerRef plexer, char *name, bool direct)
 {
     YMStreamRef newStream = YMStreamCreate(name);
+    
+    YMLockLock(plexer->localAccessLock);
+    YMPlexerStreamID newStreamID = ( plexer->localStreamIDLast == plexer->localStreamIDMax ) ? plexer->localStreamIDMin : ++(plexer->localStreamIDLast);
+    YMDictionaryAdd(plexer->localStreamsByID, newStreamID, newStream);
+    YMLockUnlock(plexer->localAccessLock);
+    
     
 #warning todo fcntl direct.
     return NULL;

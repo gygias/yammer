@@ -10,27 +10,28 @@
 
 #include "YMPrivate.h"
 
-typedef struct _YMDictionaryItem
+typedef struct __YMDictionaryItem
 {
     int key;
-    void *representedItem;
+    const void *representedItem;
     struct _YMDictionaryItem *next;
-} YMDictionaryItem;
+} _YMDictionaryItem;
+typedef _YMDictionaryItem *YMDictionaryItemRef;
 
 typedef struct __YMDictionary
 {
     YMTypeID _typeID;
     
     bool isYMTypeDict;
-    YMDictionaryItem *head;
+    YMDictionaryItemRef head;
     size_t count;
 } _YMDictionary;
 
-YMDictionaryItem *_YMDictionaryFindItemWithIdentifier(YMDictionaryItem *head, int key, YMDictionaryItem **outPreviousItem);
+YMDictionaryItemRef _YMDictionaryFindItemWithIdentifier(YMDictionaryItemRef head, YMDictionaryKey key, YMDictionaryItemRef *outPreviousItem);
 
 YMDictionaryRef YMDictionaryCreate()
 {
-    _YMDictionary *dict = (_YMDictionary *)malloc(sizeof(_YMDictionary));
+    YMDictionaryRef dict = (YMDictionaryRef)malloc(sizeof(struct __YMDictionary));
     dict->_typeID = _YMDictionaryTypeID;
     
     dict->head = NULL;
@@ -41,51 +42,54 @@ YMDictionaryRef YMDictionaryCreate()
 
 void _YMDictionaryFree(YMTypeRef object)
 {
-    _YMDictionary *dict = (_YMDictionary *)object;
+    YMDictionaryRef dict = (YMDictionaryRef)object;
     // we don't assume ownership of dict members
-    YMDictionaryItem *itemIter = dict->head;
+    YMDictionaryItemRef itemIter = dict->head;
     
     while (itemIter)
     {
-        YMDictionaryItem *thisItem = itemIter;
-        itemIter = (YMDictionaryItem *)itemIter->next;
+        YMDictionaryItemRef thisItem = itemIter;
+        itemIter = (YMDictionaryItemRef)itemIter->next;
         free(thisItem);
     }
     
     free(dict);
 }
 
-void YMDictionaryAdd(YMDictionaryRef dict, int key, void *item)
+void YMDictionaryAdd(YMDictionaryRef dict, YMDictionaryKey key, const void *item)
 {
-    _YMDictionary *_dict = (_YMDictionary *)dict;
-    
-    YMDictionaryItem *newItem = (YMDictionaryItem *)malloc(sizeof(YMDictionaryItem));
+    if ( _YMDictionaryFindItemWithIdentifier(dict->head, key, NULL) )
+    {
+        YMLog("error: YMDictionary already contains item for key %d",key);
+        abort();
+    }
+    YMDictionaryItemRef newItem = (YMDictionaryItemRef)malloc(sizeof(struct __YMDictionaryItem));
     newItem->representedItem = item;
-    newItem->next = (struct _YMDictionaryItem *)_dict->head;
+    newItem->next = (struct _YMDictionaryItem *)dict->head;
 }
 
-bool YMDictionaryContains(YMDictionaryRef dict, int key)
+bool YMDictionaryContains(YMDictionaryRef dict, YMDictionaryKey key)
 {
-    return ( NULL != _YMDictionaryFindItemWithIdentifier(((_YMDictionary *)dict)->head, key, NULL) );
+    return ( NULL != _YMDictionaryFindItemWithIdentifier(dict->head, key, NULL) );
 }
 
-void *YMDictionaryGetItem(YMDictionaryRef dict, int key)
+void *YMDictionaryGetItem(YMDictionaryRef dict, YMDictionaryKey key)
 {
-    return _YMDictionaryFindItemWithIdentifier(((_YMDictionary *)dict)->head, key, NULL);
+    return _YMDictionaryFindItemWithIdentifier(dict->head, key, NULL);
 }
 
-YMDictionaryItem *_YMDictionaryFindItemWithIdentifier(YMDictionaryItem *head, int key, YMDictionaryItem **outPreviousItem)
+YMDictionaryItemRef _YMDictionaryFindItemWithIdentifier(YMDictionaryItemRef head, YMDictionaryKey key, YMDictionaryItemRef *outPreviousItem)
 {
-    YMDictionaryItem *itemIter = head,
-        *previousItem = NULL;
+    YMDictionaryItemRef itemIter = head,
+        previousItem = NULL;
     
     while (itemIter)
     {
-        YMDictionaryItem *thisItem = itemIter;
+        YMDictionaryItemRef thisItem = itemIter;
         if ( thisItem->key == key )
             return thisItem;
         previousItem = itemIter;
-        itemIter = (YMDictionaryItem *)itemIter->next;
+        itemIter = (YMDictionaryItemRef)itemIter->next;
     }
     
     if ( outPreviousItem )
@@ -94,17 +98,16 @@ YMDictionaryItem *_YMDictionaryFindItemWithIdentifier(YMDictionaryItem *head, in
     return NULL;
 }
 
-void * YMDictionaryRemove(YMDictionaryRef dict, int key)
+void * YMDictionaryRemove(YMDictionaryRef dict, YMDictionaryKey key)
 {
-    _YMDictionary *_dict = (_YMDictionary *)dict;
-    YMDictionaryItem *previousItem = NULL;
-    YMDictionaryItem *theItem = _YMDictionaryFindItemWithIdentifier(_dict->head, key, &previousItem);
+    YMDictionaryItemRef previousItem = NULL;
+    YMDictionaryItemRef theItem = _YMDictionaryFindItemWithIdentifier(dict->head, key, &previousItem);
     if ( theItem )
     {
         if ( previousItem )
             previousItem->next = theItem->next;
         else
-            _dict->head = NULL;
+            dict->head = NULL;
     }
     
     return theItem;
