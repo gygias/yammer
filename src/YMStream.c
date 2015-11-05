@@ -22,11 +22,13 @@ typedef struct __YMStream
     bool downstreamWidowed;
     bool downstreamClosed;
     char *name;
+    
+    const void *userInfo;
 } _YMStream;
 
-YMStreamRef YMStreamCreate(char *name)
+YMStreamRef YMStreamCreate(char *name, void *userInfo)
 {
-    _YMStream *stream = (_YMStream *)malloc(sizeof(_YMStream));
+    YMStreamRef stream = (YMStreamRef)malloc(sizeof(struct __YMStream));
     stream->name = strdup( name ? name : "ymstream" );
     
     size_t nameLen = strlen(name);
@@ -46,6 +48,8 @@ YMStreamRef YMStreamCreate(char *name)
     strncat(downStreamName, "-down", downSuffixLen);
     stream->downstream = YMPipeCreate(downStreamName);
     free(downStreamName);
+    
+    stream->userInfo = userInfo;
     
     return (YMStreamRef)stream;
 }
@@ -86,4 +90,14 @@ bool YMStreamClose(YMStreamRef stream)
     
     int result = close(downstreamWrite);
     return ( result == 0 );
+}
+
+void _YMStreamSetUserInfo(YMStreamRef stream, const void *userInfo)
+{
+    stream->userInfo = userInfo;
+}
+
+const void *_YMStreamGetUserInfo(YMStreamRef stream)
+{
+    return stream->userInfo;
 }

@@ -25,6 +25,8 @@ void _YMPlexerFree(YMPlexerRef plexer);
 void YMPlexerSetInterruptedFunc(YMPlexerRef plexer, ym_plexer_interrupted_func func);
 void YMPlexerSetNewIncomingStreamFunc(YMPlexerRef plexer, ym_plexer_new_upstream_func func);
 void YMPlexerSetStreamClosingFunc(YMPlexerRef plexer, ym_plexer_stream_closing_func func);
+
+// set an initialized security provider to wrap the plexed data
 void YMPlexerSetSecurityProvider(YMPlexerRef plexer, YMTypeRef provider); // unsure how to handle this poly in c (yet?)
 
 bool YMPlexerStart(YMPlexerRef plexer, bool master);

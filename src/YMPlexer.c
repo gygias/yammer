@@ -14,7 +14,19 @@
 #include "YMLock.h"
 #include "YMThreads.h"
 
-typedef uint64_t YMPlexerStreamID;
+#define YMPlexerBuiltInVersion ((uint32_t)1)
+
+typedef struct {
+    uint32_t protocolVersion;
+    uint32_t masterStreamIDMin;
+    uint32_t masterStreamIDMax;
+} YMPlexerMasterInitializer;
+
+typedef struct {
+    uint32_t protocolVersion;
+} YMPlexerSlaveAck;
+
+typedef uint32_t YMPlexerStreamID;
 
 typedef struct __YMPlexer
 {
@@ -41,7 +53,6 @@ typedef struct __YMPlexer
     size_t remotePlexBufferSize;
     YMPlexerStreamID remoteStreamIDMin;
     YMPlexerStreamID remoteStreamIDMax;
-    YMPlexerStreamID remoteStreamIDLast;
     
     YMThreadRef localServiceThread;
     YMThreadRef remoteServiceThread;
@@ -120,7 +131,7 @@ bool YMPlexerStart(YMPlexerRef plexer, bool master)
     char *error = "error: plexer initialization failed";
     if ( master )
     {
-        okay = YMWriteFull(plexer->fd, (void *)YMPlexerMasterHello, strlen(YMPlexerMasterHello));
+        okay = YMSecurityProviderWrite(plexer->provider, (void *)YMPlexerMasterHello, strlen(YMPlexerMasterHello));
         if ( ! okay )
         {
             YMLog(error);
@@ -129,10 +140,37 @@ bool YMPlexerStart(YMPlexerRef plexer, bool master)
         
         unsigned long inHelloLen = strlen(YMPlexerSlaveHello);
         char *inHello = (char *)calloc(sizeof(char),inHelloLen);
-        okay = YMReadFull(plexer->fd, (void *)inHello, inHelloLen);
+        okay = YMSecurityProviderRead(plexer->provider, (void *)inHello, inHelloLen);
         if ( ! okay || strcmp(YMPlexerSlaveHello,inHello) )
         {
             YMLog(error);
+            return false;
+        }
+        
+        plexer->localStreamIDMin = 0;
+        plexer->localStreamIDMax = UINT32_MAX / 2;
+        plexer->localStreamIDLast = plexer->localStreamIDMax;
+        plexer->remoteStreamIDMin = plexer->localStreamIDMax + 1;
+        plexer->remoteStreamIDMax = UINT32_MAX;
+        
+        YMPlexerMasterInitializer initializer = { YMPlexerBuiltInVersion, plexer->localStreamIDMin, plexer->localStreamIDMax };
+        okay = YMSecurityProviderWrite(plexer->provider, (void *)&initializer, sizeof(initializer));
+        if ( ! okay )
+        {
+            YMLog(error);
+            return false;
+        }
+        
+        YMPlexerSlaveAck ack;
+        okay = YMSecurityProviderRead(plexer->provider, (void *)&ack, sizeof(ack));
+        if ( ! okay )
+        {
+            YMLog(error);
+            return false;
+        }
+        if ( ack.protocolVersion > YMPlexerBuiltInVersion )
+        {
+            YMLog("error: slave requested unknown protocol");
             return false;
         }
     }
@@ -140,7 +178,7 @@ bool YMPlexerStart(YMPlexerRef plexer, bool master)
     {
         unsigned long inHelloLen = strlen(YMPlexerMasterHello);
         char *inHello = (char *)calloc(sizeof(char),inHelloLen);
-        okay = YMReadFull(plexer->fd, (void *)inHello, inHelloLen);
+        okay = YMSecurityProviderRead(plexer->provider, (void *)inHello, inHelloLen);
         
         if ( ! okay || strcmp(YMPlexerMasterHello,inHello) )
         {
@@ -148,13 +186,46 @@ bool YMPlexerStart(YMPlexerRef plexer, bool master)
             return false;
         }
         
-        okay = YMWriteFull(plexer->fd, (void *)YMPlexerSlaveHello, strlen(YMPlexerSlaveHello));
+        okay = YMSecurityProviderWrite(plexer->provider, (void *)YMPlexerSlaveHello, strlen(YMPlexerSlaveHello));
         if ( ! okay )
         {
             YMLog(error);
             return false;
         }
+        
+        YMPlexerMasterInitializer initializer;
+        okay = YMSecurityProviderRead(plexer->provider, (void *)&initializer, sizeof(initializer));
+        if ( ! okay )
+        {
+            YMLog(error);
+            return false;
+        }
+        
+        // todo, technically this should handle non-zero-based master min id, but doesn't
+        
+        
+        bool supported = initializer.protocolVersion <= YMPlexerBuiltInVersion;
+        YMPlexerSlaveAck ack = { YMPlexerBuiltInVersion };
+        okay = YMSecurityProviderWrite(plexer->provider, (void *)&ack, sizeof(ack));
+        if ( ! okay )
+        {
+            YMLog(error);
+            return false;
+        }
+        
+#warning todo renegotiate
+        if ( ! supported )
+        {
+            YMLog("error: master requested protocol newer than built-in %lu",YMPlexerBuiltInVersion);
+            return false;
+        }
     }
+    
+    YMLog("YMPlexer initialized as %s, m[%llu:%llu], s[%llu:%llu]", master?"master":"slave",
+          master ? plexer->localStreamIDMin : plexer->remoteStreamIDMin,
+          master ? plexer->localStreamIDMax : plexer->remoteStreamIDMax,
+          master ? plexer->remoteStreamIDMin : plexer->localStreamIDMin,
+          master ? plexer->remoteStreamIDMax : plexer->localStreamIDMax);
     
     plexer->running = true;
     
@@ -176,19 +247,53 @@ void YMPlexerStop(YMPlexerRef plexer)
 
 YMStreamRef YMPlexerNewStream(YMPlexerRef plexer, char *name, bool direct)
 {
-    YMStreamRef newStream = YMStreamCreate(name);
-    
     YMLockLock(plexer->localAccessLock);
     YMPlexerStreamID newStreamID = ( plexer->localStreamIDLast == plexer->localStreamIDMax ) ? plexer->localStreamIDMin : ++(plexer->localStreamIDLast);
+    YMPlexerStreamID *userInfo = (YMPlexerStreamID *)malloc(sizeof(YMPlexerStreamID));
+    *userInfo = newStreamID;
+    YMStreamRef newStream = YMStreamCreate(name,userInfo);
+    if ( YMDictionaryContains(plexer->localStreamsByID, newStreamID) )
+    {
+        YMLog("fatal: YMPlexer has run out of streams");
+        abort();
+    }
     YMDictionaryAdd(plexer->localStreamsByID, newStreamID, newStream);
     YMLockUnlock(plexer->localAccessLock);
     
-    
 #warning todo fcntl direct.
-    return NULL;
+    
+    return newStream;
 }
 
 void YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream)
 {
+    YMPlexerStreamID streamID = *( (YMPlexerStreamID *)_YMStreamGetUserInfo(stream) );
     
+    YMStreamRef localStream;
+    YMLockLock(plexer->localAccessLock);
+    {
+        localStream = YMDictionaryRemove(plexer->localStreamsByID, streamID);
+    }
+    YMLockUnlock(plexer->localAccessLock);
+    
+    if ( localStream == NULL )
+    {
+        bool isRemote;
+        YMLockLock(plexer->remoteAccessLock);
+        {
+            isRemote = YMDictionaryContains(plexer->remoteStreamsByID, streamID);
+        }
+        YMLockUnlock(plexer->remoteAccessLock);
+        
+        if ( isRemote )
+            YMLog("fatal: YMPlexer user requested closure of remote stream %llu",streamID);
+        else
+            YMLog("fatal: YMPlexer user requested closure of unknown stream %llu",streamID);
+        abort();
+        return;
+    }
+    
+    YMLog("local stream %llu marked closed...",streamID);
+    YMStreamClose(localStream);
+    // local service thread to deallocate after it's able to flush data and pass off the close command to remote
 }
