@@ -18,8 +18,8 @@ typedef void (*ym_plexer_interrupted_func)      (YMPlexerRef);
 typedef void (*ym_plexer_new_upstream_func)     (YMPlexerRef,YMStreamRef);
 typedef void (*ym_plexer_stream_closing_func)   (YMPlexerRef,YMStreamRef);
 
-YMPlexerRef YMPlexerCreate(int fd);
-void _YMPlexerFree(YMPlexerRef plexer);
+YMPlexerRef YMPlexerCreate(int inFd, int outFd);
+YMPlexerRef YMPlexerCreateWithFullDuplexFile(int fd);
 
 // init
 void YMPlexerSetInterruptedFunc(YMPlexerRef plexer, ym_plexer_interrupted_func func);
