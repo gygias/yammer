@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		630A5CE91BE93BEF003292EE /* YMSSLProvider.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CE71BE93BEF003292EE /* YMSSLProvider.c */; };
-		630A5CEA1BE93BEF003292EE /* YMSSLProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5CE81BE93BEF003292EE /* YMSSLProvider.h */; };
+		630A5CE91BE93BEF003292EE /* YMTLSProvider.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CE71BE93BEF003292EE /* YMTLSProvider.c */; };
+		630A5CEA1BE93BEF003292EE /* YMTLSProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5CE81BE93BEF003292EE /* YMTLSProvider.h */; };
 		630A5CED1BE9428C003292EE /* YMmDNSService.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CEB1BE9428C003292EE /* YMmDNSService.c */; };
 		630A5CEE1BE9428C003292EE /* YMmDNSService.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5CEC1BE9428C003292EE /* YMmDNSService.h */; };
 		630A5CF21BE950F1003292EE /* YMConnection.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CF01BE950F1003292EE /* YMConnection.c */; };
@@ -59,8 +59,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		630A5CE71BE93BEF003292EE /* YMSSLProvider.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMSSLProvider.c; path = src/YMSSLProvider.c; sourceTree = "<group>"; };
-		630A5CE81BE93BEF003292EE /* YMSSLProvider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMSSLProvider.h; path = src/YMSSLProvider.h; sourceTree = "<group>"; };
+		630A5CE71BE93BEF003292EE /* YMTLSProvider.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMTLSProvider.c; path = src/YMTLSProvider.c; sourceTree = "<group>"; };
+		630A5CE81BE93BEF003292EE /* YMTLSProvider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMTLSProvider.h; path = src/YMTLSProvider.h; sourceTree = "<group>"; };
 		630A5CEB1BE9428C003292EE /* YMmDNSService.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMmDNSService.c; path = src/YMmDNSService.c; sourceTree = "<group>"; };
 		630A5CEC1BE9428C003292EE /* YMmDNSService.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMmDNSService.h; path = src/YMmDNSService.h; sourceTree = "<group>"; };
 		630A5CF01BE950F1003292EE /* YMConnection.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMConnection.c; path = src/YMConnection.c; sourceTree = "<group>"; };
@@ -209,8 +209,8 @@
 				63225D5A1BE9092500C28F05 /* YMStream.c */,
 				63225D631BE90A6400C28F05 /* YMSecurityProvider.h */,
 				63225D621BE90A6400C28F05 /* YMSecurityProvider.c */,
-				630A5CE81BE93BEF003292EE /* YMSSLProvider.h */,
-				630A5CE71BE93BEF003292EE /* YMSSLProvider.c */,
+				630A5CE81BE93BEF003292EE /* YMTLSProvider.h */,
+				630A5CE71BE93BEF003292EE /* YMTLSProvider.c */,
 				630A5CF11BE950F1003292EE /* YMConnection.h */,
 				630A5CF01BE950F1003292EE /* YMConnection.c */,
 				630A5CF51BE9518A003292EE /* YMSession.h */,
@@ -254,7 +254,7 @@
 				63225D611BE909BB00C28F05 /* YMPlexer.h in Headers */,
 				63225D6E1BE91B3B00C28F05 /* YMLog.h in Headers */,
 				63225D551BE9074700C28F05 /* YMPipe.h in Headers */,
-				630A5CEA1BE93BEF003292EE /* YMSSLProvider.h in Headers */,
+				630A5CEA1BE93BEF003292EE /* YMTLSProvider.h in Headers */,
 				630A5CF71BE9518A003292EE /* YMSession.h in Headers */,
 				630A5D171BE9777C003292EE /* YMmDNSBrowser.h in Headers */,
 				63476A541BEB319000D10081 /* YMSemaphore.h in Headers */,
@@ -375,7 +375,7 @@
 				630A5CF21BE950F1003292EE /* YMConnection.c in Sources */,
 				630A5CED1BE9428C003292EE /* YMmDNSService.c in Sources */,
 				630A5CF61BE9518A003292EE /* YMSession.c in Sources */,
-				630A5CE91BE93BEF003292EE /* YMSSLProvider.c in Sources */,
+				630A5CE91BE93BEF003292EE /* YMTLSProvider.c in Sources */,
 				63225D641BE90A6400C28F05 /* YMSecurityProvider.c in Sources */,
 				63476A4F1BEB159C00D10081 /* YMDictionary.c in Sources */,
 				63225D5C1BE9092500C28F05 /* YMStream.c in Sources */,

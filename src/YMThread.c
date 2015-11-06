@@ -238,7 +238,7 @@ void *_YMThreadDispatchThreadProc(void *threadDefPtr)
     YMLockLock(gDispatchThreadListLock);
     {
 #warning todo stopFlag is the only way to terminate a dispatch thread, so we should be correct to free these guys here, but make sure \
-        sometime when you haven't written 500 lines in an hour.
+        sometime when you haven't written 500 lines of c code in an hour.
         _YMThreadDispatchThreadDef *threadDef = (_YMThreadDispatchThreadDef *)YMDictionaryRemove(gDispatchThreadDefsByID, thread->dispatchThreadID);
         
         if ( ! threadDef )

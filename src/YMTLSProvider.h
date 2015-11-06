@@ -1,16 +1,16 @@
 //
-//  YMSSLProvider.h
+//  YMTLSProvider.h
 //  yammer
 //
 //  Created by david on 11/3/15.
 //  Copyright © 2015 combobulated. All rights reserved.
 //
 
-#ifndef YMSSLProvider_h
-#define YMSSLProvider_h
+#ifndef YMTLSProvider_h
+#define YMTLSProvider_h
 
 #include "YMBase.h"
 
 #include "YMSecurityProvider.h"
 
-#endif /* YMSSLProvider_h */
+#endif /* YMTLSProvider_h */
