@@ -8,7 +8,7 @@
 
 #include "YMmDNSService.h"
 #include "YMPrivate.h"
-#include "YMThreads.h"
+#include "YMThread.h"
 
 #include <sys/socket.h>
 #include <dns_sd.h>
@@ -181,7 +181,11 @@ bool YMmDNSServiceStart( YMmDNSServiceRef service )
     
     service->dnsService = serviceRef;
     service->advertising = true;
-    YMThreadRef eventThread = YMThreadCreate(_YMmDNSEventThread, service);
+    
+    char *threadName = YMStringCreateWithFormat("mdns-event-%s-%s",service->type,service->name);
+    YMThreadRef eventThread = YMThreadCreate(threadName, _YMmDNSEventThread, service);
+    free(threadName);
+    
     YMThreadStart(eventThread);
 
     YMLog("YMmDNSService published %s/%s:%u",service->type,service->name,(unsigned)service->port);

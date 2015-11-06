@@ -12,7 +12,7 @@
 #include <stdarg.h>
 #include <pthread.h>
 
-pthread_once_t gYMLogLockOnce;
+pthread_once_t gYMLogLockOnce = PTHREAD_ONCE_INIT;
 YMLockRef gYMLogLock = NULL;
 
 void YMLogInitLock()

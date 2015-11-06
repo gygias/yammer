@@ -15,8 +15,8 @@
 		630A5CF31BE950F1003292EE /* YMConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5CF11BE950F1003292EE /* YMConnection.h */; };
 		630A5CF61BE9518A003292EE /* YMSession.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CF41BE9518A003292EE /* YMSession.c */; };
 		630A5CF71BE9518A003292EE /* YMSession.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5CF51BE9518A003292EE /* YMSession.h */; };
-		630A5CFA1BE95E36003292EE /* YMThreads.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CF81BE95E36003292EE /* YMThreads.c */; };
-		630A5CFB1BE95E36003292EE /* YMThreads.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5CF91BE95E36003292EE /* YMThreads.h */; };
+		630A5CFA1BE95E36003292EE /* YMThread.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CF81BE95E36003292EE /* YMThread.c */; };
+		630A5CFB1BE95E36003292EE /* YMThread.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5CF91BE95E36003292EE /* YMThread.h */; };
 		630A5D031BE96CE9003292EE /* YammerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 630A5D021BE96CE9003292EE /* YammerTests.m */; };
 		630A5D051BE96CE9003292EE /* libyammer.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63225D421BE9026200C28F05 /* libyammer.dylib */; };
 		630A5D161BE9777C003292EE /* YMmDNSBrowser.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5D141BE9777C003292EE /* YMmDNSBrowser.c */; };
@@ -67,8 +67,8 @@
 		630A5CF11BE950F1003292EE /* YMConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMConnection.h; path = src/YMConnection.h; sourceTree = "<group>"; };
 		630A5CF41BE9518A003292EE /* YMSession.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMSession.c; path = src/YMSession.c; sourceTree = "<group>"; };
 		630A5CF51BE9518A003292EE /* YMSession.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMSession.h; path = src/YMSession.h; sourceTree = "<group>"; };
-		630A5CF81BE95E36003292EE /* YMThreads.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMThreads.c; path = src/YMThreads.c; sourceTree = "<group>"; };
-		630A5CF91BE95E36003292EE /* YMThreads.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMThreads.h; path = src/YMThreads.h; sourceTree = "<group>"; };
+		630A5CF81BE95E36003292EE /* YMThread.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMThread.c; path = src/YMThread.c; sourceTree = "<group>"; };
+		630A5CF91BE95E36003292EE /* YMThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMThread.h; path = src/YMThread.h; sourceTree = "<group>"; };
 		630A5D001BE96CE9003292EE /* YammerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YammerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		630A5D021BE96CE9003292EE /* YammerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = YammerTests.m; sourceTree = "<group>"; };
 		630A5D041BE96CE9003292EE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -105,6 +105,7 @@
 		63476A511BEB319000D10081 /* YMSemaphore.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMSemaphore.c; path = src/YMSemaphore.c; sourceTree = "<group>"; };
 		63476A521BEB319000D10081 /* YMSemaphore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMSemaphore.h; path = src/YMSemaphore.h; sourceTree = "<group>"; };
 		63476A551BEB9AB300D10081 /* YMStreamPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMStreamPriv.h; path = src/YMStreamPriv.h; sourceTree = "<group>"; };
+		63A40EF81BEC239C0085ABD0 /* YMThreadPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMThreadPriv.h; path = src/YMThreadPriv.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -178,8 +179,9 @@
 		63476A461BEAF4E900D10081 /* Utility */ = {
 			isa = PBXGroup;
 			children = (
-				630A5CF91BE95E36003292EE /* YMThreads.h */,
-				630A5CF81BE95E36003292EE /* YMThreads.c */,
+				630A5CF91BE95E36003292EE /* YMThread.h */,
+				63A40EF81BEC239C0085ABD0 /* YMThreadPriv.h */,
+				630A5CF81BE95E36003292EE /* YMThread.c */,
 				63225D531BE9074700C28F05 /* YMPipe.h */,
 				63225D521BE9074700C28F05 /* YMPipe.c */,
 				63225D681BE9184000C28F05 /* YMUtilities.h */,
@@ -246,7 +248,7 @@
 				630A5CF31BE950F1003292EE /* YMConnection.h in Headers */,
 				63225D6A1BE9184000C28F05 /* YMUtilities.h in Headers */,
 				63476A501BEB159C00D10081 /* YMDictionary.h in Headers */,
-				630A5CFB1BE95E36003292EE /* YMThreads.h in Headers */,
+				630A5CFB1BE95E36003292EE /* YMThread.h in Headers */,
 				63225D5D1BE9092500C28F05 /* YMStream.h in Headers */,
 				63476A4C1BEB074C00D10081 /* YMLinkedList.h in Headers */,
 				63225D611BE909BB00C28F05 /* YMPlexer.h in Headers */,
@@ -360,7 +362,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				63225D6D1BE91B3B00C28F05 /* YMLog.c in Sources */,
-				630A5CFA1BE95E36003292EE /* YMThreads.c in Sources */,
+				630A5CFA1BE95E36003292EE /* YMThread.c in Sources */,
 				63225D981BE92B6000C28F05 /* YMBase.c in Sources */,
 				630A5D1C1BE98199003292EE /* YMmDNS.c in Sources */,
 				630A5D161BE9777C003292EE /* YMmDNSBrowser.c in Sources */,

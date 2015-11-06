@@ -18,8 +18,8 @@ typedef void (*ym_plexer_interrupted_func)      (YMPlexerRef);
 typedef void (*ym_plexer_new_upstream_func)     (YMPlexerRef,YMStreamRef);
 typedef void (*ym_plexer_stream_closing_func)   (YMPlexerRef,YMStreamRef);
 
-YMPlexerRef YMPlexerCreate(int inFd, int outFd);
-YMPlexerRef YMPlexerCreateWithFullDuplexFile(int fd);
+YMPlexerRef YMPlexerCreate(int inFd, int outFd, bool master);
+YMPlexerRef YMPlexerCreateWithFullDuplexFile(int fd, bool master);
 
 // init
 void YMPlexerSetInterruptedFunc(YMPlexerRef plexer, ym_plexer_interrupted_func func);
@@ -29,7 +29,7 @@ void YMPlexerSetStreamClosingFunc(YMPlexerRef plexer, ym_plexer_stream_closing_f
 // set an initialized security provider to wrap the plexed data
 void YMPlexerSetSecurityProvider(YMPlexerRef plexer, YMTypeRef provider); // unsure how to handle this poly in c (yet?)
 
-bool YMPlexerStart(YMPlexerRef plexer, bool master);
+bool YMPlexerStart(YMPlexerRef plexer);
 void YMPlexerStop(YMPlexerRef plexer);
 
 YMStreamRef YMPlexerCreateNewStream(YMPlexerRef plexer, char *name, bool direct);

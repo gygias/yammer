@@ -8,6 +8,8 @@
 
 #include "YMUtilities.h"
 
+#include <stdarg.h>
+
 //// Glyph from http://stackoverflow.com/questions/2053843/min-and-max-value-of-data-type-in-c
 //#define issigned(t) (((t)(-1)) < ((t) 0))
 //#define umaxof(t) (((0x1ULL << ((sizeof(t) * 8ULL) - 1ULL)) - 1ULL) | \
@@ -83,4 +85,41 @@ bool YMWriteFull(int fd, const uint8_t *buffer, size_t bytes)
         off += aWrite;
     }
     return true;
+}
+
+// todo inline these?
+char *YMStringCreateWithFormat(char *formatStr, ...)
+{
+    va_list args;
+    va_start(args,formatStr);
+    
+    int length = snprintf(NULL, 0, formatStr, args);
+    
+    char *newStr = NULL;
+    if ( length == 0 )
+        newStr = strdup("");
+    else if ( length < 0 )
+        YMLog("snprintf failed on format: %s", formatStr);
+    else
+    {
+        newStr = (char *)malloc(length);
+        snprintf(newStr, length, formatStr, args);
+    }
+    
+    va_end(args);
+    
+    return newStr;
+}
+
+char *YMStringCreateByAppendString(char *baseStr, char *appendStr)
+{
+    size_t baseLen = strlen(baseStr);
+    size_t appendLen = strlen(appendStr);
+    size_t newStringLen = baseLen + appendLen + 1;
+    char *newString = (char *)malloc(newStringLen);
+    memcpy(newString, baseStr, baseLen);
+    memcpy(newString + baseLen, appendStr, appendLen);
+    newString[newStringLen - 1] = '\0';
+    
+    return newString;
 }

@@ -9,7 +9,7 @@
 #include "YMmDNSBrowser.h"
 #include "YMPrivate.h"
 
-#include "YMThreads.h"
+#include "YMThread.h"
 
 #include <errno.h>
 
@@ -156,7 +156,9 @@ bool YMmDNSBrowserEnumeratingStart(YMmDNSBrowserRef browser)
     
     if ( browser->enumerateEventThread )
         YMFree(browser->enumerateEventThread);
-    browser->enumerateEventThread = YMThreadCreate(_YMmDNSBrowserThread, browser);
+    char *threadName = YMStringCreateWithFormat("mdns-enum-%s",browser->type);
+    browser->enumerateEventThread = YMThreadCreate(threadName, _YMmDNSBrowserThread, browser);
+    free(threadName);
     bool okay = YMThreadStart(_browser->enumerateEventThread);
     
     return okay;
@@ -198,7 +200,10 @@ bool YMmDNSBrowserStart(YMmDNSBrowserRef browser)
         return false;
     }
     
-    browser->browseEventThread = YMThreadCreate(_YMmDNSBrowserEventThread, browser);
+    char *threadName = YMStringCreateWithFormat("mdns-browse-%s",browser->type);
+    browser->browseEventThread = YMThreadCreate(threadName, _YMmDNSBrowserEventThread, browser);
+    free(threadName);
+    
     bool okay = YMThreadStart(browser->browseEventThread);
     
     return okay;

@@ -11,6 +11,9 @@
 
 #include "YMBase.h"
 
+#define YMMIN(a,b) ( (a<b) ? (a) : (b) )
+#define YMMAX(a,b) ( (a>b) ? (a) : (b) )
+
 typedef enum
 {
     LessThan = -1,
@@ -25,5 +28,8 @@ void YMSetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time);
 
 bool YMReadFull(int fd, uint8_t *buffer, size_t bytes);
 bool YMWriteFull(int fd, const uint8_t *buffer, size_t bytes);
+
+char *YMStringCreateWithFormat(char *formatStr, ...);
+char *YMStringCreateByAppendingString(char *baseStr, char *appendStr);
 
 #endif /* YMUtilities_h */

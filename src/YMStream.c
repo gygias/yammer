@@ -35,7 +35,7 @@ typedef struct __YMStream
     
     bool direct;
     
-    YMStreamUserInfoRef __userInfo; // weak
+    YMStreamUserInfoRef __userInfo; // weak, plexer
     YMSemaphoreRef __dataAvailableSemaphore; // weak, plexer
     struct timeval *__lastServiceTime;
 } _YMStream;
@@ -43,7 +43,7 @@ typedef struct __YMStream
 YMStreamRef YMStreamCreate(char *name, bool isLocal)
 {
     YMStreamRef stream = (YMStreamRef)malloc(sizeof(struct __YMStream));
-    stream->name = strdup( name ? name : "ymstream" );
+    stream->name = strdup( name ? name : "unnamed-stream" );
     
     stream->isLocal = isLocal;
     
@@ -80,13 +80,12 @@ YMStreamRef YMStreamCreate(char *name, bool isLocal)
 void _YMStreamFree(YMTypeRef object)
 {
     _YMStream *stream = (_YMStream *)object;
-    if ( stream->name )
-        free(stream->name);
-    if ( stream->upstream )
-        _YMStreamFree(stream->upstream);
-    if ( stream->downstream )
-        _YMStreamFree(stream->downstream);
+    
+    free(stream->name);
     free(stream->__lastServiceTime);
+    _YMStreamFree(stream->upstream);
+    _YMStreamFree(stream->downstream);
+    
     free(stream);
 }
 
