@@ -93,23 +93,23 @@ bool YMStreamWriteDown(YMStreamRef stream, uint8_t *buffer, uint32_t length)
 {
     int downstreamWrite = YMPipeGetInputFile(stream->downstream);
     YMStreamChunkHeader header = { length };
-    YMLog("stream[%s,%u,%d]: error: writing header for stream chunk size %u",stream->isLocal?"down":"up",stream->__userInfo->streamID,downstreamWrite,length);
+    
+    YMLog("stream[%s,%u,%d]: writing header for stream chunk size %u",stream->isLocal?"down":"up",stream->__userInfo->streamID,downstreamWrite,length);
     bool okay = YMWriteFull(downstreamWrite, (void *)&header, sizeof(header));
     if ( ! okay )
     {
         YMLog("stream[%s,%u,%d]: error: failed writing header for stream chunk size %u",stream->isLocal?"down":"up",stream->__userInfo->streamID,downstreamWrite,length);
         return false;
     }
-    YMLog("stream[%s,%u,%d]: error: wrote header for stream chunk size %u",stream->isLocal?"down":"up",stream->__userInfo->streamID,downstreamWrite,length);
+    YMLog("stream[%s,%u,%d]: wrote header for stream chunk size %u",stream->isLocal?"down":"up",stream->__userInfo->streamID,downstreamWrite,length);
     
-    YMLog("stream[%s,%u,%d]: error: writing buffer for stream chunk size %u",stream->isLocal?"down":"up",stream->__userInfo->streamID,downstreamWrite,length);
     okay = YMWriteFull(downstreamWrite, buffer, length);
     if ( ! okay )
     {
         YMLog("stream[%s,s%u,fd%d]: error: failed writing stream chunk with size %u",stream->isLocal?"down":"up",stream->__userInfo->streamID,downstreamWrite,length);
         return false;
     }
-    YMLog("stream[%s,s%u,fd%d]: error: wrote buffer for stream chunk size %u",stream->isLocal?"down":"up",stream->__userInfo->streamID,downstreamWrite,length);
+    YMLog("stream[%s,s%u,fd%d]: wrote buffer for stream chunk size %u",stream->isLocal?"down":"up",stream->__userInfo->streamID,downstreamWrite,length);
     
     // signal the plexer to wake and service this stream
     YMSemaphoreSignal(stream->__dataAvailableSemaphore);

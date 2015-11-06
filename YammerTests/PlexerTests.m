@@ -51,20 +51,20 @@ void local_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream)
     int remoteWrite = YMPipeGetInputFile(networkSimPipeOut);
     int localRead = YMPipeGetOutputFile(networkSimPipeOut);
     
-    YMPlexerRef localPlexer = YMPlexerCreate(localWrite,localRead);
+    YMPlexerRef localPlexer = YMPlexerCreate(localWrite,localRead,true);
     YMPlexerSetSecurityProvider(localPlexer, YMSecurityProviderCreate(localWrite,localRead));
     YMPlexerSetInterruptedFunc(localPlexer, local_plexer_interrupted);
     YMPlexerSetNewIncomingStreamFunc(localPlexer, local_plexer_new_stream);
     YMPlexerSetStreamClosingFunc(localPlexer, local_plexer_stream_closing);
     
-    YMPlexerRef fakeRemotePlexer = YMPlexerCreate(remoteWrite,remoteRead);
+    YMPlexerRef fakeRemotePlexer = YMPlexerCreate(remoteWrite,remoteRead,false);
     YMPlexerSetSecurityProvider(fakeRemotePlexer, YMSecurityProviderCreate(remoteWrite,remoteRead));
     YMPlexerSetInterruptedFunc(fakeRemotePlexer, remote_plexer_interrupted);
     YMPlexerSetNewIncomingStreamFunc(fakeRemotePlexer, remote_plexer_new_stream);
     YMPlexerSetStreamClosingFunc(fakeRemotePlexer, remote_plexer_stream_closing);
     
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
-        bool okay = YMPlexerStart(localPlexer,true);
+        bool okay = YMPlexerStart(localPlexer);
         XCTAssert(okay,@"master did not start");
         
         YMStreamRef aStream = YMPlexerCreateNewStream(localPlexer,"test stream 1",false);
@@ -74,13 +74,13 @@ void local_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream)
         XCTAssert(okay,@"failed to write message length");
         okay = YMStreamWriteDown(aStream, (void *)testMessage1, (uint32_t)strlen(testMessage1));
         XCTAssert(okay,@"failed to write message");
-#warning todo could YMStream provide a convenience for not framing these sizes twice \
-            like a 'write datagram of size' so that it could piggy-back off of the client's framing?
+#pragma message "todo could YMStream provide a convenience for not framing these sizes twice" \
+            "like a 'write datagram of size' so that it could piggy-back off of the client's framing?"
         
         YMLog("wrote user message");
     });
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
-        bool okay = YMPlexerStart(fakeRemotePlexer,false);
+        bool okay = YMPlexerStart(fakeRemotePlexer);
         XCTAssert(okay,@"slave did not start");
     });
     

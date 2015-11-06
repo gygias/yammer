@@ -92,8 +92,8 @@ char *YMStringCreateWithFormat(char *formatStr, ...)
 {
     va_list args;
     va_start(args,formatStr);
-    
-    int length = snprintf(NULL, 0, formatStr, args);
+    int length = snprintf(NULL, 0, formatStr, args) + 1;
+    va_end(args);
     
     char *newStr = NULL;
     if ( length == 0 )
@@ -103,10 +103,10 @@ char *YMStringCreateWithFormat(char *formatStr, ...)
     else
     {
         newStr = (char *)malloc(length);
+        va_start(args,formatStr);
         snprintf(newStr, length, formatStr, args);
+        va_end(args);
     }
-    
-    va_end(args);
     
     return newStr;
 }

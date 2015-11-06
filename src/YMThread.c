@@ -45,7 +45,7 @@ typedef struct
 
 typedef struct __YMThreadDispatchInternal
 {
-    YMThreadUserDispatchRef userDispatchRef;
+    YMThreadDispatchUserInfoRef userDispatchRef;
     YMThreadDispatchID dispatchID;
 } _YMThreadDispatchInternal;
 
@@ -58,7 +58,7 @@ YMLockRef gDispatchThreadListLock = NULL;
 void _YMThreadDispatchInit();
 void *_YMThreadDispatchThreadProc(void *);
 uint64_t _YMThreadGetCurrentThreadNumber();
-YMThreadUserDispatchRef _YMThreadCopyUserDispatch(YMThreadUserDispatchRef userDispatchRef);
+YMThreadDispatchUserInfoRef _YMThreadDispatchCopyUserInfo(YMThreadDispatchUserInfoRef userDispatchRef);
 void _YMThreadFreeDispatchInternal(_YMThreadDispatchInternal *dispatchInternal);
 
 YMThreadRef _YMThreadCreate(char *name, bool isDispatchThread, ym_thread_entry entryPoint, void *context)
@@ -118,7 +118,7 @@ void _YMThreadFree(YMTypeRef object)
         YMLockLock(gDispatchThreadListLock);
         {
             _YMThreadDispatchThreadDef *threadDef = (_YMThreadDispatchThreadDef *)YMDictionaryGetItem(gDispatchThreadDefsByID, thread->dispatchThreadID);
-            *(threadDef->stopFlag) = false;
+            *(threadDef->stopFlag) = true;
             YMLog("thread[%s,dispatch,dt%llu]: flagged pthread to exit on ymfree", thread->name, thread->dispatchThreadID);
         }
         YMLockUnlock(gDispatchThreadListLock);
@@ -150,7 +150,7 @@ bool YMThreadStart(YMThreadRef thread)
         return false;
     }
     
-    YMLog("thread[%s]: created", thread->isDispatchThread ? "dispatch" : "user");
+    YMLog("thread[%s,%s]: created", thread->name, thread->isDispatchThread ? "dispatch" : "user");
     thread->pthread = pthread;
     return true;
 }
@@ -168,7 +168,7 @@ bool YMThreadJoin(YMThreadRef thread)
     return true;
 }
 
-void YMThreadDispatchDispatch(YMThreadRef thread, YMThreadUserDispatchRef userDispatch)
+void YMThreadDispatchDispatch(YMThreadRef thread, YMThreadDispatchUserInfoRef userDispatch)
 {
     if ( ! thread->isDispatchThread )
     {
@@ -179,7 +179,7 @@ void YMThreadDispatchDispatch(YMThreadRef thread, YMThreadUserDispatchRef userDi
     YMLockLock(thread->dispatchListLock);
     {
         _YMThreadDispatchInternal *newDispatch = (_YMThreadDispatchInternal*)malloc(sizeof(struct __YMThreadDispatchInternal));
-        YMThreadUserDispatchRef userDispatchCopy = _YMThreadCopyUserDispatch(userDispatch);
+        YMThreadDispatchUserInfoRef userDispatchCopy = _YMThreadDispatchCopyUserInfo(userDispatch);
         
         newDispatch->userDispatchRef = userDispatchCopy;
         newDispatch->dispatchID = thread->dispatchIDNext++;
@@ -190,22 +190,24 @@ void YMThreadDispatchDispatch(YMThreadRef thread, YMThreadUserDispatchRef userDi
             abort();
         }
         
-        YMLog("thread[%s,dispatch,dt%llu]: adding new dispatch with description '%s'",thread->name,thread->dispatchThreadID,userDispatchCopy->description);
+        YMLog("thread[%s,dispatch,dt%llu]: adding new dispatch with description '%s', u %p ctx %p",thread->name,thread->dispatchThreadID,userDispatchCopy->description,userDispatchCopy,userDispatchCopy->context);
         YMDictionaryAdd(thread->dispatchesByID, newDispatch->dispatchID, newDispatch);
     }
     YMLockUnlock(thread->dispatchListLock);
     
     YMSemaphoreSignal(thread->dispatchSemaphore);
     
-#warning todo vet ownership of all this stuff
+#pragma message "todo vet ownership of all this stuff"
 }
 
-YMThreadUserDispatchRef _YMThreadCopyUserDispatch(YMThreadUserDispatchRef userDispatchRef)
+YMThreadDispatchUserInfoRef _YMThreadDispatchCopyUserInfo(YMThreadDispatchUserInfoRef userDispatchRef)
 {
-    YMThreadUserDispatch *copy = (YMThreadUserDispatch *)malloc(sizeof(YMThreadUserDispatch));
-    copy->func = userDispatchRef->func;
-    copy->description = strdup(userDispatchRef->description ? userDispatchRef->description : "unnamed-dispatch");
+    YMThreadDispatchUserInfo *copy = (YMThreadDispatchUserInfo *)malloc(sizeof(YMThreadDispatchUserInfo));
+    copy->dispatchProc = userDispatchRef->dispatchProc;
     copy->context = userDispatchRef->context;
+    copy->freeContextWhenDone = userDispatchRef->freeContextWhenDone;
+    copy->deallocProc = userDispatchRef->deallocProc;
+    copy->description = strdup(userDispatchRef->description ? userDispatchRef->description : "unnamed-dispatch");
     
     return copy;
 }
@@ -222,7 +224,7 @@ void *_YMThreadDispatchThreadProc(void *threadDefPtr)
     YMThreadRef thread = threadDef->ymThread;
     YMLog("thread[%s,dispatch,dt%llu,p%llu]: entered", thread->name, thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber());
     
-    while ( ! threadDef->stopFlag )
+    while ( ! *(threadDef->stopFlag) )
     {
         YMLog("thread[%s,dispatch,dt%llu,p%llu]: begin dispatch loop", thread->name, thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber());
         YMSemaphoreWait(thread->dispatchSemaphore);
@@ -242,7 +244,7 @@ void *_YMThreadDispatchThreadProc(void *threadDefPtr)
         YMLockUnlock(thread->dispatchListLock);
         
         YMLog("thread[%s,dispatch,dt%llu,p%llu]: entering user dispatch %llu '%s'", thread->name, thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber(), theDispatchID, theDispatch->userDispatchRef->description);
-        __unused void *result = *(ym_thread_dispatch_entry)(theDispatch->userDispatchRef->func)(theDispatch->userDispatchRef->context);
+        __unused void *result = *(ym_thread_dispatch_entry)(theDispatch->userDispatchRef->dispatchProc)(theDispatch->userDispatchRef);
         YMLog("thread[%s,dispatch,dt%llu,p%llu]: finished user dispatch %llu '%s'", thread->name, thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber(), theDispatchID, theDispatch->userDispatchRef->description);
         
         _YMThreadFreeDispatchInternal(theDispatch);
@@ -250,8 +252,8 @@ void *_YMThreadDispatchThreadProc(void *threadDefPtr)
     
     YMLockLock(gDispatchThreadListLock);
     {
-#warning todo stopFlag is the only way to terminate a dispatch thread, so we should be correct to free these guys here, but make sure \
-        sometime when you haven't written 500 lines of c code in an hour.
+#pragma message "todo stopFlag is the only way to terminate a dispatch thread, so we should be correct to free these guys here, but make sure " \
+        "sometime when you haven't written 500 lines of c code in an hour."
         _YMThreadDispatchThreadDef *threadDef = (_YMThreadDispatchThreadDef *)YMDictionaryRemove(gDispatchThreadDefsByID, thread->dispatchThreadID);
         
         if ( ! threadDef )
@@ -271,7 +273,14 @@ void *_YMThreadDispatchThreadProc(void *threadDefPtr)
 
 void _YMThreadFreeDispatchInternal(_YMThreadDispatchInternal *dispatchInternal)
 {
-    free(dispatchInternal->userDispatchRef->description);
+    if ( dispatchInternal->userDispatchRef->freeContextWhenDone )
+        free(dispatchInternal->userDispatchRef->context);
+    else if ( dispatchInternal->userDispatchRef->deallocProc )
+    {
+        __unused void *result = *(ym_thread_dispatch_dealloc)(dispatchInternal->userDispatchRef->deallocProc)(dispatchInternal->userDispatchRef->context);
+    }
+    
+    free((void *)dispatchInternal->userDispatchRef->description);
     free(dispatchInternal->userDispatchRef);
     free(dispatchInternal);
 }

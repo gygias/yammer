@@ -24,7 +24,7 @@ ComparisonResult YMTimevalCompare(struct timeval *a, struct timeval *b);
 // these functions modifies time
 void YMSetTheBeginningOfPosixTimeForCurrentPlatform(struct timeval *time);
 void YMSetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time);
-#warning todo add inlines
+#pragma message "todo add inlines"
 
 bool YMReadFull(int fd, uint8_t *buffer, size_t bytes);
 bool YMWriteFull(int fd, const uint8_t *buffer, size_t bytes);

@@ -21,7 +21,7 @@ bool YMStreamReadDown(YMStreamRef stream, uint8_t *buffer, uint32_t length);
 bool YMStreamWriteUp(YMStreamRef stream, uint8_t *buffer, uint32_t length);
 bool YMStreamReadUp(YMStreamRef stream, uint8_t *buffer, uint32_t length);
 
-#warning todo write up and read down should be private
+#pragma message "todo write up and read down should be private"
 
 bool YMStreamClose(YMStreamRef stream);
 

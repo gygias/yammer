@@ -63,7 +63,7 @@ void YMSecurityProviderSetInitFunc(YMSecurityProviderRef provider, ym_security_i
 
 bool YMSecurityProviderInit(YMSecurityProviderRef provider)
 {
-#warning todo note we're not casting providerRef here... fix everywhere else
+#pragma message "todo note we're not casting providerRef here... fix everywhere else"
     return provider->initFunc(provider->inFd, provider->outFd);
 }
 

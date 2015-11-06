@@ -24,7 +24,7 @@ typedef struct __YMDictionary
     
     bool isYMTypeDict;
     _YMDictionaryItemRef head;
-    size_t count;
+    ssize_t count;
 } _YMDictionary;
 
 _YMDictionaryItemRef _YMDictionaryFindItemWithIdentifier(_YMDictionaryItemRef head, YMDictionaryKey key, _YMDictionaryItemRef *outPreviousItem);
@@ -142,7 +142,7 @@ YMDictionaryEnumRef YMDictionaryEnumeratorGetNext(YMDictionaryRef dict, YMDictio
     _YMDictionaryItemRef item = (_YMDictionaryItemRef)aEnum; // overlapping
     _YMDictionaryItemRef next = item->next;
     
-#warning todo why bother reallocating our enum-cum-listitem each time?
+#pragma message "todo why bother reallocating our enum-cum-listitem each time?"
     free(item);
     
     if ( ! next )
@@ -179,9 +179,22 @@ bool YMDictionaryPopKeyValue(YMDictionaryRef dict, bool last, YMDictionaryKey *o
         *outValue = outItem->value;
     
     if ( last )
-        previous->next = NULL;
+    {
+#pragma message "todo this was done as i was about to go get chik-fil-a"
+        if ( outItem == dict->head )
+            dict->head = NULL;
+        else
+            previous->next = NULL;
+    }
     else
         dict->head = outItem->next;
+    dict->count--;
+    
+    if ( dict->count < 0 )
+    {
+        YMLog("ymdictionary is broken");
+        abort();
+    }
     
     free(outItem);
     return true;
