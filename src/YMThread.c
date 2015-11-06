@@ -65,6 +65,7 @@ YMThreadRef _YMThreadCreate(char *name, bool isDispatchThread, ym_thread_entry e
     thread->entryPoint = isDispatchThread ? _YMThreadDispatchThreadProc : entryPoint;
     thread->context = context;
     thread->pthread = NULL;
+    thread->isDispatchThread = isDispatchThread;
     
     if ( isDispatchThread )
     {
@@ -153,7 +154,7 @@ bool YMThreadJoin(YMThreadRef thread)
     int result;
     if ( ( result = pthread_join(_thread->pthread, NULL) ) )
     {
-        YMLog("thread[%s]: error: pthread_join %d %s", result, strerror(result));
+        YMLog("thread[%s,%s]: error: pthread_join %d %s", thread->name, thread->isDispatchThread ? "dispatch" : "user", result, strerror(result));
         return false;
     }
     
@@ -168,6 +169,12 @@ typedef struct __YMThreadDispatchInternal
 
 void YMThreadDispatchDispatch(YMThreadRef thread, YMThreadUserDispatchRef userDispatch)
 {
+    if ( ! thread->isDispatchThread )
+    {
+        YMLog("thread[%s,dispatch]: fatal: attempt to dispatch to non-dispatch thread",thread->name);
+        abort();
+    }
+    
     YMLockLock(thread->dispatchListLock);
     {
         _YMThreadDispatchInternal *newDispatch = (_YMThreadDispatchInternal*)malloc(sizeof(struct __YMThreadDispatchInternal));
@@ -178,11 +185,11 @@ void YMThreadDispatchDispatch(YMThreadRef thread, YMThreadUserDispatchRef userDi
         
         if ( YMDictionaryContains(thread->dispatchesByID, newDispatch->dispatchID) )
         {
-            YMLog("thread[dispatch,%llu]: fatal: thread is out of dispatch ids (%d)",thread->dispatchThreadID,YMDictionaryGetCount(thread->dispatchesByID));
+            YMLog("thread[%s,dispatch,%llu]: fatal: thread is out of dispatch ids (%zu)",thread->name,thread->dispatchThreadID,YMDictionaryGetCount(thread->dispatchesByID));
             abort();
         }
         
-        YMLog("thread[dispatch:%llu]: adding new dispatch with description '%s'",userDispatchCopy->description);
+        YMLog("thread[%s,dispatch,dt%llu,p%llu]: adding new dispatch with description '%s'",thread->name,thread->dispatchThreadID,_YMThreadGetCurrentThreadNumber(),userDispatchCopy->description);
         YMDictionaryAdd(thread->dispatchesByID, newDispatch->dispatchID, newDispatch);
     }
     YMLockUnlock(thread->dispatchListLock);

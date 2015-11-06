@@ -131,13 +131,13 @@ YMmDNSTxtRecordKeyPair **__YMmDNSCreateTxtKeyPairs(const unsigned char *txtRecor
         memcpy(keyStr,aPairWalker,keyLength);
         keyStr[keyLength] = '\0';
         aPairWalker += keyLength + 1; // skip past '='
-        YMLog("DECODE[%u]: key[%u]: %s",listSize,keyLength, keyStr);
+        YMLog("DECODE[%ld]: key[%ld]: %s",listSize,keyLength, keyStr);
         
         size_t valueLength = aPairLength - keyLength - 1;
         uint8_t *valueBuf = (uint8_t *)malloc(valueLength);
         memcpy(valueBuf, aPairWalker, valueLength);
         aPairWalker += valueLength;
-        YMLog("DECODE[%u]: value[%u]",listSize,valueLength);
+        YMLog("DECODE[%ld]: value[%ld]",listSize,valueLength);
         
         YMmDNSTxtRecordKeyPair *aKeyPair = (YMmDNSTxtRecordKeyPair *)malloc(sizeof(YMmDNSTxtRecordKeyPair));
         aKeyPair->key = keyStr;

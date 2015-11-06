@@ -61,7 +61,7 @@ void YMDictionaryAdd(YMDictionaryRef dict, YMDictionaryKey key, YMDictionaryValu
 {
     if ( _YMDictionaryFindItemWithIdentifier(dict->head, key, NULL) )
     {
-        YMLog("error: YMDictionary already contains item for key %d",key);
+        YMLog("error: YMDictionary already contains item for key %llu",key);
         abort();
     }
     _YMDictionaryItemRef newItem = (_YMDictionaryItemRef)malloc(sizeof(struct __YMDictionaryItem));

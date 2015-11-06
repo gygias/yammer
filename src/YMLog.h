@@ -11,6 +11,6 @@
 
 #include "YMBase.h"
 
-void YMLog( char* format, ... );
+void YMLog( char* format, ... ) __printflike(1, 2);
 
 #endif /* YMLog_h */

@@ -84,6 +84,7 @@ typedef struct __YMPlexer
     
     YMThreadRef localServiceThread;
     YMThreadRef remoteServiceThread;
+    YMThreadRef eventDeliveryThread;
     YMLockRef interruptionLock;
     YMSemaphoreRef localDataAvailableSemaphore;
     
@@ -123,6 +124,10 @@ YMPlexerRef YMPlexerCreate(int inFd, int outFd, bool master)
     
     threadName = YMStringCreateWithFormat("plex-%s-up",master?"m":"s");
     plexer->remoteServiceThread = YMThreadCreate(threadName, _YMPlexerServiceUpstreamThread, plexer);
+    free(threadName);
+    
+    threadName = YMStringCreateWithFormat("plex-%s-event",master?"m":"s");
+    plexer->eventDeliveryThread = YMThreadDispatchCreate(threadName);
     free(threadName);
     
     plexer->interruptionLock = YMLockCreate();
@@ -182,7 +187,7 @@ bool YMPlexerStart(YMPlexerRef plexer)
     if ( ! okay )
         goto catch_fail;
     
-    YMLog("plexer[%s]: initialized as %s, m[%llu:%llu], s[%llu:%llu]",plexer->master?"master":"slave",
+    YMLog("plexer[%s]: initialized m[%u:%u], s[%u:%u]",plexer->master?"master":"slave",
           plexer->master ? plexer->localStreamIDMin : plexer->remoteStreamIDMin,
           plexer->master ? plexer->localStreamIDMax : plexer->remoteStreamIDMax,
           plexer->master ? plexer->remoteStreamIDMin : plexer->localStreamIDMin,
@@ -370,6 +375,7 @@ YMStreamRef _YMPlexerChooseDownstream(YMPlexerRef plexer, int *outReadyStreams)
         while ( localStreamsEnum )
         {
             YMStreamRef aLocalStream = (YMStreamRef)localStreamsEnum->value;
+            YMStreamID aLocalStreamID = _YMStreamGetUserInfo(aLocalStream)->streamID;
             int downRead = _YMStreamGetDownwardRead(aLocalStream);
             
             fd_set fdset;
@@ -384,7 +390,7 @@ YMStreamRef _YMPlexerChooseDownstream(YMPlexerRef plexer, int *outReadyStreams)
             if ( nReadyFds <= 0 ) // zero is a timeout
             {
                 if ( nReadyFds == -1 )
-                    YMLog("warning: select(stream %lu) failed %d (%s)",errno,strerror(errno));
+                    YMLog("plexer[%s,s%u]: warning: select failed %d (%s)",plexer->master?"master":"slave",aLocalStreamID,errno,strerror(errno));
                 continue;
             }
             
@@ -409,7 +415,7 @@ bool _YMPlexerServiceDownstream(YMPlexerRef plexer, YMStreamRef servicingStream)
 {
     YMStreamID streamID = _YMStreamGetUserInfo(servicingStream)->streamID;
 #warning go through all of these logs and print fd before stream id where applicable
-    YMLog("plexer[%s,%lu]: chose stream for service",plexer->master?"master":"slave",streamID);
+    YMLog("plexer[%s,%u]: chose stream for service",plexer->master?"master":"slave",streamID);
     
     // update last service time on stream
     _YMStreamSetLastServiceTimeNow(servicingStream);
@@ -418,27 +424,27 @@ bool _YMPlexerServiceDownstream(YMPlexerRef plexer, YMStreamRef servicingStream)
     bool okay = YMStreamReadDown(servicingStream, (void *)&streamHeader, sizeof(streamHeader));
     if ( ! okay )
     {
-        YMLog("plexer[%s,%lu]: error: failed reading down stream header: %d (%s)",plexer->master?"master":"slave",streamID,errno,strerror(errno));
+        YMLog("plexer[%s,%u]: error: failed reading down stream header: %d (%s)",plexer->master?"master":"slave",streamID,errno,strerror(errno));
         return false;
     }
     
-    YMLog("plexer[%s,%lu]: servicing down stream chunk size %lu",plexer->master?"master":"slave",streamID,streamHeader.length);
+    YMLog("plexer[%s,%u]: servicing down stream chunk size %u",plexer->master?"master":"slave",streamID,streamHeader.length);
     
     while ( streamHeader.length > plexer->localPlexBufferSize )
     {
         plexer->localPlexBufferSize *= 2;
-        YMLog("plexer[%s,%lu] reallocating down plex buffer to %llu",plexer->master?"master":"slave",streamID,plexer->localPlexBufferSize);
+        YMLog("plexer[%s,%u] reallocating down plex buffer to %u",plexer->master?"master":"slave",streamID,plexer->localPlexBufferSize);
         plexer->localPlexBuffer = realloc(plexer->localPlexBuffer, plexer->localPlexBufferSize);
     }
     
     okay = YMStreamReadDown(servicingStream, plexer->localPlexBuffer, streamHeader.length);
     if ( ! okay )
     {
-        YMLog("plexer[%s,%lu]: error: reading down stream chunk size %lu: %d (%s)",plexer->master?"master":"slave", streamID,streamHeader.length,errno,strerror(errno));
+        YMLog("plexer[%s,%u]: error: reading down stream chunk size %u: %d (%s)",plexer->master?"master":"slave", streamID,streamHeader.length,errno,strerror(errno));
         return false;
     }
     
-    YMLog("plexer[%s,%lu]: read stream chunk for stream",plexer->master?"master":"slave",streamID);
+    YMLog("plexer[%s,%u]: read stream chunk for stream",plexer->master?"master":"slave",streamID);
     
 #warning add hton ntoh to stuff across the wire
     YMPlexerChunkHeader plexHeader = { streamID, streamHeader.length };
@@ -446,20 +452,20 @@ bool _YMPlexerServiceDownstream(YMPlexerRef plexer, YMStreamRef servicingStream)
     okay = YMWriteFull(plexer->inFd, (void *)&plexHeader, sizeof(plexHeader));
     if ( ! okay )
     {
-        YMLog("plexer[%s,%lu]: error: failed writing down plex header size %lu: %d (%s)",plexer->master?"master":"slave",streamID,plexHeader.length,errno,strerror(errno));
+        YMLog("plexer[%s,%u]: error: failed writing down plex header size %u: %d (%s)",plexer->master?"master":"slave",streamID,plexHeader.length,errno,strerror(errno));
         return false;
     }
     
-    YMLog("plexer[%s,%lu]: wrote down plex header",plexer->master?"master":"slave",streamID);
+    YMLog("plexer[%s,%u]: wrote down plex header",plexer->master?"master":"slave",streamID);
     
     okay = YMWriteFull(plexer->inFd, plexer->localPlexBuffer, streamHeader.length);
     if ( ! okay )
     {
-        YMLog("plexer[%s,%lu]: error: failed writing down plex chunk size %lu: %d (%s)",plexer->master?"master":"slave",streamID,plexHeader.length,errno,strerror(errno));
+        YMLog("plexer[%s,%u]: error: failed writing down plex chunk size %u: %d (%s)",plexer->master?"master":"slave",streamID,plexHeader.length,errno,strerror(errno));
         return false;
     }
     
-    YMLog("plexer[%s,%lu]: wrote plex chunk size %lu",plexer->master?"master":"slave",streamID,plexHeader.length);
+    YMLog("plexer[%s,%u]: wrote plex chunk size %u",plexer->master?"master":"slave",streamID,plexHeader.length);
     return true;
 }
 
@@ -480,23 +486,23 @@ void *_YMPlexerServiceUpstreamThread(void *context)
             break;
         }
         
-        YMLog("plexer[%s,%lu,%d] read plex header with length %llu",plexer->master?"master":"slave",plexer->outFd,header.streamID,header.length);
+        YMLog("plexer[%s,%d,%d] read plex header with length %u",plexer->master?"master":"slave",plexer->outFd,header.streamID,header.length);
         
         while ( header.length > plexer->remotePlexBufferSize )
         {
             plexer->remotePlexBufferSize *= 2;
-            YMLog("plexer[%s,%d,%lu] reallocating up plex buffer to %llu",plexer->master?"master":"slave",plexer->outFd,header.streamID,plexer->remotePlexBufferSize);
+            YMLog("plexer[%s,%d,%u] reallocating up plex buffer to %u",plexer->master?"master":"slave",plexer->outFd,header.streamID,plexer->remotePlexBufferSize);
             plexer->remotePlexBuffer = realloc(plexer->remotePlexBuffer, plexer->remotePlexBufferSize);
         }
         
         okay = YMReadFull(plexer->outFd, plexer->remotePlexBuffer, header.length);
         if ( ! okay )
         {
-            YMLog("plexer[%s,%d,%lu]: fatal: failed reading plex buffer of length %llu",plexer->master?"master":"slave",plexer->outFd,header.streamID,header.length);
+            YMLog("plexer[%s,%d,%u]: fatal: failed reading plex buffer of length %u",plexer->master?"master":"slave",plexer->outFd,header.streamID,header.length);
             _YMPlexerInterrupt(plexer);
             goto catch_break;
         }
-        YMLog("plexer[%s,%d,%lu] read plex header length %llu",plexer->master?"master":"slave",plexer->outFd,header.streamID,header.length);
+        YMLog("plexer[%s,%d,%u] read plex header length %u",plexer->master?"master":"slave",plexer->outFd,header.streamID,header.length);
         
     catch_break:
         ;
@@ -519,7 +525,7 @@ YMStreamRef _YMPlexerGetOrCreateStreamWithID(YMPlexerRef plexer, YMStreamID stre
             if ( enumerator->key == streamID )
             {
                 theStream = (YMStreamRef)enumerator->value;
-                YMLog("plexer[%s,%lu]: found existing remote stream",plexer->master?"master":"slave",streamID);
+                YMLog("plexer[%s,%u]: found existing remote stream",plexer->master?"master":"slave",streamID);
                 break;
             }
         }
@@ -527,7 +533,7 @@ YMStreamRef _YMPlexerGetOrCreateStreamWithID(YMPlexerRef plexer, YMStreamID stre
         // new stream
 #warning todo find a way to optimize passing of ownership for these cases?
         
-        YMLog("plexer[%s,%lu]: notifying new remote stream",plexer->master?"master":"slave",streamID);
+        YMLog("plexer[%s,%u]: notifying new remote stream",plexer->master?"master":"slave",streamID);
         char *streamName = YMStringCreateWithFormat("upstream-%lu", streamID);
         theStream = YMStreamCreate(streamName, false);
         free(streamName);
@@ -601,13 +607,13 @@ bool YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream)
         YMLockUnlock(plexer->remoteAccessLock);
         
         if ( isRemote )
-            YMLog("error: YMPlexer user requested closure of remote stream %llu",streamID);
+            YMLog("error: YMPlexer user requested closure of remote stream %u",streamID);
         else
-            YMLog("error: YMPlexer user requested closure of unknown stream %llu",streamID);
+            YMLog("error: YMPlexer user requested closure of unknown stream %u",streamID);
         return false;
     }
     
-    YMLog("local stream %llu marked closed...",streamID);
+    YMLog("local stream %u marked closed...",streamID);
     YMStreamClose(localStream);
     // local service thread to deallocate after it's able to flush data and pass off the close command to remote
     
