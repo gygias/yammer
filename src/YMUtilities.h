@@ -29,7 +29,7 @@ void YMSetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time);
 bool YMReadFull(int fd, uint8_t *buffer, size_t bytes);
 bool YMWriteFull(int fd, const uint8_t *buffer, size_t bytes);
 
-char *YMStringCreateWithFormat(char *formatStr, ...);
+char *YMStringCreateWithFormat(char *formatStr, ...) __printflike(1, 2);
 char *YMStringCreateByAppendingString(char *baseStr, char *appendStr);
 
 #endif /* YMUtilities_h */
