@@ -97,7 +97,9 @@ YMThreadRef _YMThreadCreate(char *name, bool isDispatchThread, ym_thread_entry e
         
         thread->dispatchListLock = YMLockCreate();
         thread->dispatchesByID = YMDictionaryCreate();
-        thread->dispatchSemaphore = YMSemaphoreCreate();
+        char *semName = YMStringCreateWithFormat("dispatch-%s",name);
+        thread->dispatchSemaphore = YMSemaphoreCreate(semName);
+        free(semName);
         thread->dispatchIDNext = 0;
     }
     

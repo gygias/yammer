@@ -130,7 +130,7 @@ YMPlexerRef YMPlexerCreate(int inFd, int outFd, bool master)
     free(threadName);
     
     plexer->interruptionLock = YMLockCreate();
-    plexer->localDataAvailableSemaphore = YMSemaphoreCreate();
+    plexer->localDataAvailableSemaphore = YMSemaphoreCreate("plexer-signal");
     
     plexer->inFd = inFd;
     plexer->outFd = outFd;
@@ -545,9 +545,9 @@ void *ym_notify_new_stream(void *context)
     YMPlexerRef plexer = notifyDef->plexer;
     YMStreamRef stream = notifyDef->stream;
     YMStreamID streamID = _YMStreamGetUserInfo(stream)->streamID;
-    YMLog("ym_notify_new_stream[%s,%u] entered", plexer->master?"master":"slave", streamID);
+    YMLog("user[%s,%u] ym_notify_new_stream entered", plexer->master?"master":"slave", streamID);
     plexer->newIncomingFunc(plexer,stream);
-    YMLog("ym_notify_new_stream[%s,%u] exiting", plexer->master?"master":"slave", streamID);
+    YMLog("user[%s,%u] ym_notify_new_stream exiting", plexer->master?"master":"slave", streamID);
     
     return NULL;
 }

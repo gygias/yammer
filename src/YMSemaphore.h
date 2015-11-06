@@ -13,7 +13,7 @@
 
 typedef struct __YMSemaphore *YMSemaphoreRef;
 
-YMSemaphoreRef YMSemaphoreCreate();
+YMSemaphoreRef YMSemaphoreCreate(const char*);
 
 void YMSemaphoreWait(YMSemaphoreRef semaphore);
 void YMSemaphoreSignal(YMSemaphoreRef semaphore);
