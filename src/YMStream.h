@@ -15,14 +15,11 @@
 
 typedef struct __YMStream *YMStreamRef;
 
-bool YMStreamWriteDown(YMStreamRef stream, uint8_t *buffer, uint32_t length);
-bool YMStreamReadDown(YMStreamRef stream, uint8_t *buffer, uint32_t length);
+bool YMStreamWriteDown(YMStreamRef stream, const void *buffer, uint32_t length);
 
-bool YMStreamWriteUp(YMStreamRef stream, uint8_t *buffer, uint32_t length);
-bool YMStreamReadUp(YMStreamRef stream, uint8_t *buffer, uint32_t length);
+bool YMStreamReadUp(YMStreamRef stream, void *buffer, uint32_t length);
 
 #pragma message "todo write up and read down should be private"
 
-bool YMStreamClose(YMStreamRef stream);
 
 #endif /* YMStream_h */

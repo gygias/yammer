@@ -28,6 +28,10 @@ void YMLog( char* format, ... )
     {
         va_list args;
         va_start(args,format);
+#pragma message "if __APPLE__ use syslog"
+        //int length = vsnprintf(NULL, 0, format, args) + 1;
+        //char *line = (char *)malloc(length);
+        //vsnprintf(line, length, format, args);
         vprintf(format, args);
         va_end(args);
         printf("\n");

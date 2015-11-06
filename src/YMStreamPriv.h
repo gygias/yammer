@@ -27,7 +27,12 @@ typedef struct __YMStreamUserInfo
     YMStreamID streamID;
 } _YMStreamUserInfo;
 
-YMStreamRef YMStreamCreate(char *name, bool isLocal);
+YMStreamRef YMStreamCreate(const char *name, bool isLocal);
+
+
+bool _YMStreamReadDown(YMStreamRef stream, void *buffer, uint32_t length);
+bool _YMStreamWriteUp(YMStreamRef stream, const void *buffer, uint32_t length);
+bool _YMStreamClose(YMStreamRef stream);
 
 int _YMStreamGetDownwardWrite(YMStreamRef);
 int _YMStreamGetDownwardRead(YMStreamRef);
