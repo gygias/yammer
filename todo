@@ -1,0 +1,32 @@
+- inlines (logs, string creation, timeval, 
+- stream isLocal redundant?
+- log levels, macro per .c so there aren't "type" functions
+- collection mod while enumerating guards
+- linked list
+- remove dictionary remote 'last' param
+- if __APPLE__ syslog?
+- vet ownership (!)
+- freeing _YMThreadDispatchThreadDef at the end of DispatchProc ok?
+- generic dispatch 'n pointer params' convenience definition in YMThreadDispatch
+- convenience for "take this fd and flush it to the plexer as user data" (the solution to "direct mode"!)
+- convenience for "i use length prefixes too, box this data with this integer type" from YMStream(Session)Read/Write"
+- plexers have one event delivery thread, yet that has the same starvation problem if client blocks in callout
+- null free()s in Free()s, be hard on user error, c library and shit
+- do a error/perror/fatal pass
+- mDNS should filter local services
+- typedef struct __X {} _X; and Ref pass
+- unions for variable length stream/plexer/dispatch structs?
+- dict enum start should check a previous enum was ended
+- dict protects its list during enumeration, but why bother reallocating the returned item?
+- dict list traversal review
+- clean up private function/struct/global definitions smattered at the top of .c's
+- try to renegotiate protocol on muxer init mismatch?
+- if client can pass more than [uint16] bytes in a single user data call, plexer should split it instead of that being the ceiling for internal buffer? or even don't realloc at all and sub-chunk
+- service all detected 'ready' streams on a single servicedown iteration, consuming sem each time? lock optimization
+- where does userinfo of free'd streams, get free'd?
+- {h,n}to{n,h} (is arm big endian?)
+- does order of remote stream close and note matter? (on ym_notify_stream_closing)
+- !!! fds are just leaking
+- consolidate mostly redundant dispatch procs, passing function ptr and log string in user info? notify_new and notify_closing are almost identical
+- get a better story for alloc some param->Create->copy->free ownership all over the place
+- 
