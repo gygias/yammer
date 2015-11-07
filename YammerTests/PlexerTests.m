@@ -19,8 +19,8 @@
 YMLockRef   gPlexerTest1Lock = NULL;
 BOOL        gPlexerTest1Running = YES;
 #define     PlexerTest1RoundTripThreads 1 // SATURDAY
-#define     PlexerTest1RoundTripsPerThread 10000
-#define     PlexerTest1NewStreamPerRoundTrip false // SATURDAY
+#define     PlexerTest1RoundTripsPerThread 2
+#define     PlexerTest1NewStreamPerRoundTrip true // SATURDAY
 #define     PlexerTest1StreamClosuresToObserve ( PlexerTest1RoundTripThreads * ( PlexerTest1NewStreamPerRoundTrip ? PlexerTest1RoundTripsPerThread : 1 ) )
 NSUInteger  gPlexerTest1AwaitingCloses = PlexerTest1StreamClosuresToObserve;
 
@@ -130,11 +130,9 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
 - (void)doLocalTest1:(YMPlexerRef)plexer
 {
     YMStreamRef aStream = NULL;
-    if ( ! PlexerTest1NewStreamPerRoundTrip )
-        aStream = YMPlexerCreateNewStream(plexer,__FUNCTION__,false);
     for ( unsigned idx = 0; idx < PlexerTest1RoundTripsPerThread; idx++ )
     {
-        if ( PlexerTest1NewStreamPerRoundTrip )
+        if ( ! aStream || PlexerTest1NewStreamPerRoundTrip )
         {
             NSLog(@"VVV LOCAL creating stream VVV");
             aStream = YMPlexerCreateNewStream(plexer,__FUNCTION__,false);
@@ -218,23 +216,28 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream)
 
 - (void)handleANewLocalStream:(YMPlexerRef)plexer :(YMStreamRef)stream
 {
-    NSLog(@"%s",__FUNCTION__);
+    YMStreamID streamID = _YMStreamGetUserInfo(stream)->streamID;
+    NSLog(@"VVV REMOTE -newStream[%u] entered",streamID);
+    
     char *inMessage;
     uint16_t length;
-    
-    for ( unsigned idx = 0; idx < PlexerTest1RoundTripsPerThread; idx++ )
+    unsigned iterations = PlexerTest1NewStreamPerRoundTrip ? 1 : PlexerTest1RoundTripsPerThread;
+    for ( unsigned idx = 0; idx < iterations; idx++ )
     {
-        NSLog(@"VVV REMOTE s%u receiving message m#%u VVV",_YMStreamGetUserInfo(stream)->streamID,idx);
+        NSLog(@"VVV REMOTE s%u receiving message m#%u VVV",streamID,idx);
         [self receiveMessage:stream :(void **)&inMessage :&length];
-        NSLog(@"^^^ REMOTE s%u received message m#%u ^^^",_YMStreamGetUserInfo(stream)->streamID,idx);
+        NSLog(@"^^^ REMOTE s%u received message m#%u ^^^",streamID,idx);
         
         int cmp = strcmp(inMessage, testLocalMessage);
         XCTAssert(cmp == 0,@"received %s",inMessage);
         
-        NSLog(@"VVV REMOTE s%u sending response m#%u VVV",_YMStreamGetUserInfo(stream)->streamID,idx);
+        NSLog(@"VVV REMOTE s%u sending response m#%u VVV",streamID,idx);
         [self sendMessage:stream :testRemoteResponse];
-        NSLog(@"^^^ REMOTE s%u sent response m#%u ^^^",_YMStreamGetUserInfo(stream)->streamID,idx);
+        NSLog(@"^^^ REMOTE s%u sent response m#%u ^^^",streamID,idx);
     }
+    
+    NSLog(@"^^^ REMOTE -newStream [%u] exiting (and remoteReleasing)",streamID);
+    YMPlexerRemoteStreamRelease(plexer, stream);
 }
 
 void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream)
@@ -248,13 +251,6 @@ void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream)
     YMLockLock(gPlexerTest1Lock);
     last = gPlexerTest1AwaitingCloses--;
     YMLockUnlock(gPlexerTest1Lock);
-    NSLog(@"%s: *********** gPlexerTest1AwaitingCloses %u->%u!! *****************",__FUNCTION__,last,gPlexerTest1AwaitingCloses);
-    NSLog(@"%s: *********** gPlexerTest1AwaitingCloses %u->%u!! *****************",__FUNCTION__,last,gPlexerTest1AwaitingCloses);
-    NSLog(@"%s: *********** gPlexerTest1AwaitingCloses %u->%u!! *****************",__FUNCTION__,last,gPlexerTest1AwaitingCloses);
-    NSLog(@"%s: *********** gPlexerTest1AwaitingCloses %u->%u!! *****************",__FUNCTION__,last,gPlexerTest1AwaitingCloses);
-    NSLog(@"%s: *********** gPlexerTest1AwaitingCloses %u->%u!! *****************",__FUNCTION__,last,gPlexerTest1AwaitingCloses);
-    NSLog(@"%s: *********** gPlexerTest1AwaitingCloses %u->%u!! *****************",__FUNCTION__,last,gPlexerTest1AwaitingCloses);
-    NSLog(@"%s: *********** gPlexerTest1AwaitingCloses %u->%u!! *****************",__FUNCTION__,last,gPlexerTest1AwaitingCloses);
     NSLog(@"%s: *********** gPlexerTest1AwaitingCloses %u->%u!! *****************",__FUNCTION__,last,gPlexerTest1AwaitingCloses);
     if ( last - 1 == 0 )
     {

@@ -27,14 +27,20 @@ YMThreadRef YMThreadDispatchCreate(char *name);
 typedef struct
 {
     ym_thread_dispatch_entry dispatchProc;
-    void *context; // weak
-    bool freeContextWhenDone; // optional, convenience for contexts pointers using YMMALLOC allocator and not nesting other allocations
     ym_thread_dispatch_dealloc deallocProc; // optional
-    const char *description; // copied, optional, for debugging
+    bool freeContextWhenDone; // optional convenience for YMALLOC'd context pointers. will be free'd after deallocProc, if it is specified.
+    void *context; // weak
+    const char *description; // optional, copied, assigns a name that will be included in logging from YMThreadDispatch
 } YMThreadDispatchUserInfo;
 typedef YMThreadDispatchUserInfo *YMThreadDispatchUserInfoRef;
 
 // description (and other non-opaque types) will be copied
+// todo, make dispatch api less boilerplate-y
+//void YMThreadDispatchDispatch(YMThreadRef thread,   ym_thread_dispatch_entry entryProc,
+//                                                    ym_thread_dispatch_finally finallyProc,
+//                                                    bool freeContextWhenDone, // convenience for YMALLOC contexts that don't nest other allocations. mutually exclusive with finallyProc.
+//                                                    const char *description,
+//                                                    void *context);
 void YMThreadDispatchDispatch(YMThreadRef thread, YMThreadDispatchUserInfoRef dispatch);
 
 bool YMThreadStart(YMThreadRef thread);

@@ -38,4 +38,6 @@
 - _PrivateMethod __InternalMethod
 - dispatch should wrap thread, reverse-naming getting a bit cumbersome
 - up/down -> user/medium, up/plex -> user/plex, or something
-- if __APPLE__ use syslog
+- give plex/stream a 'debug log name' so formatting doesn't cross my eyes
+- helper function at some level for the 6 or so lines per dispatch
+- do all those entry points really need to be void*?

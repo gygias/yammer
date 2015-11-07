@@ -51,6 +51,7 @@ YMPipeRef YMPipeCreate(char *name)
     return (YMPipeRef)ymPipe;
 }
 
+#pragma message "stream manages closure of files, but that should probably be actually done at this level"
 void _YMPipeFree(YMTypeRef object)
 {
     _YMPipe *pipe = (_YMPipe *)object;

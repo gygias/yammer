@@ -30,7 +30,7 @@ void YMLog( char* format, ... )
 {
     __YMLogInit();
     
-    if ( ! strstr(format,"plexer[") )
+    if ( false && ! strstr(format,"plexer[") && ! strstr(format, "stream[") )
         return;
     
     YMLockLock(gYMLogLock);

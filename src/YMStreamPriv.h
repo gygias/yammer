@@ -26,6 +26,7 @@ typedef struct _YMStreamChunkHeader
     YMStreamCommands command;
 } YMStreamCommand;
 
+#pragma message "when the other 5 things are put here, this should be defined by plexer not stream"
 typedef struct __YMStreamUserInfo
 {
     YMStreamID streamID;
@@ -41,6 +42,9 @@ void _YMStreamWriteUp(YMStreamRef stream, const void *buffer, uint32_t length);
 void _YMStreamClose(YMStreamRef stream);
 void _YMStreamCloseUp(YMStreamRef stream);
 bool _YMStreamIsClosed(YMStreamRef stream);
+// exposed to plexer, in order to synchronize 'final free-ing' floated streams with their notify_close notification
+void _YMStreamSetUserReleased(YMStreamRef stream);
+void _YMStreamFreeFinal(YMStreamRef stream, bool final);
 
 int _YMStreamGetDownwardWrite(YMStreamRef);
 int _YMStreamGetDownwardRead(YMStreamRef);
@@ -51,5 +55,7 @@ void _YMStreamSetDataAvailableSemaphore(YMStreamRef stream, YMSemaphoreRef semap
 
 void _YMStreamSetLastServiceTimeNow(YMStreamRef stream);
 struct timeval *_YMStreamGetLastServiceTime(YMStreamRef stream);
+
+bool _YMStreamIsLocallyOriginated(YMStreamRef stream);
 
 #endif /* YMStreamPriv_h */
