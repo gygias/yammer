@@ -193,7 +193,7 @@ void YMThreadDispatchDispatch(YMThreadRef thread, YMThreadDispatchUserInfoRef us
             abort();
         }
         
-        YMLog("thread[%s,dispatch,dt%llu]: adding new dispatch with description '%s', u %p ctx %p",thread->name,thread->dispatchThreadID,userDispatchCopy->description,userDispatchCopy,userDispatchCopy->context);
+        YMLog("thread[%s,dispatch,dt%llu]: adding dispatch '%s': u %p ctx %p",thread->name,thread->dispatchThreadID,userDispatchCopy->description,userDispatchCopy,userDispatchCopy->context);
         YMDictionaryAdd(thread->dispatchesByID, newDispatch->dispatchID, newDispatch);
     }
     YMLockUnlock(thread->dispatchListLock);
@@ -238,15 +238,15 @@ void *_YMThreadDispatchThreadProc(void *threadDefPtr)
             bool okay = YMDictionaryPopKeyValue(thread->dispatchesByID, true, &theDispatchID, (YMDictionaryValue *)&theDispatch);
             if ( ! okay )
             {
-                YMLog("thread[%s,dispatch,dt%llu,p%llu]: fatal: thread signaled without a user dispatch to execute", thread->name, thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber());
+                YMLog("thread[%s,dispatch,dt%llu,p%llu]: fatal: thread signaled without target", thread->name, thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber());
                 abort();
             }
         }
         YMLockUnlock(thread->dispatchListLock);
         
-        YMLog("thread[%s,dispatch,dt%llu,p%llu]: entering user dispatch %llu '%s'", thread->name, thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber(), theDispatchID, theDispatch->userDispatchRef->description);
+        YMLog("thread[%s,dispatch,dt%llu,p%llu]: entering user dispatch %llu '%s': u %p ctx %p", thread->name, thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber(), theDispatchID, theDispatch->userDispatchRef->description,theDispatch->userDispatchRef,theDispatch->userDispatchRef->context);
         __unused void *result = *(ym_thread_dispatch_entry)(theDispatch->userDispatchRef->dispatchProc)(theDispatch->userDispatchRef);
-        YMLog("thread[%s,dispatch,dt%llu,p%llu]: finished user dispatch %llu '%s'", thread->name, thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber(), theDispatchID, theDispatch->userDispatchRef->description);
+        YMLog("thread[%s,dispatch,dt%llu,p%llu]: finished user dispatch %llu '%s': u %p ctx %p", thread->name, thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber(), theDispatchID, theDispatch->userDispatchRef->description,theDispatch->userDispatchRef,theDispatch->userDispatchRef->context);
         
         _YMThreadFreeDispatchInternal(theDispatch);
     }

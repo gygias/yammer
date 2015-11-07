@@ -36,3 +36,6 @@
 - lock around stream/pipe/fd accessors? streams are the api and pipes/fds aren't public (barring direct mode), so that should be a bug not user error
 - test recursive lock
 - _PrivateMethod __InternalMethod
+- dispatch should wrap thread, reverse-naming getting a bit cumbersome
+- up/down -> user/medium, up/plex -> user/plex, or something
+- if __APPLE__ use syslog

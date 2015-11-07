@@ -70,7 +70,7 @@ YMStreamRef YMStreamCreate(const char *name, bool isLocal, YMStreamUserInfoRef u
         YMGetTheBeginningOfPosixTimeForCurrentPlatform(stream->__lastServiceTime);
     }
     
-    YMLog("  stream[%s,i%d->o%dV,^i%d<-o%d,s%u]: ALLOCATING",stream->name,
+    YMLog("  stream[%s,i%d->o%dV,^o%d<-i%d,s%u]: ALLOCATING",stream->name,
           YMPipeGetInputFile(stream->downstream),
           YMPipeGetOutputFile(stream->downstream),
           YMPipeGetOutputFile(stream->upstream),
@@ -84,7 +84,7 @@ void _YMStreamFree(YMTypeRef object)
 {
     _YMStream *stream = (_YMStream *)object;
     
-    YMLog("  stream[%s,i%d->o%dV,^i%d<-o%d,s%u]: DEALLOCATING",stream->name,
+    YMLog("  stream[%s,i%d->o%dV,^o%d<-i%d,s%u]: DEALLOCATING",stream->name,
           YMPipeGetInputFile(stream->downstream),
           YMPipeGetOutputFile(stream->downstream),
           YMPipeGetOutputFile(stream->upstream),
@@ -103,80 +103,89 @@ void YMStreamWriteDown(YMStreamRef stream, const void *buffer, uint16_t length)
 {
     int downstreamWrite = YMPipeGetInputFile(stream->downstream);
     int debugDownstreamRead = YMPipeGetOutputFile(stream->downstream);
+    int debugUpstreamWrite = YMPipeGetInputFile(stream->upstream);
+    int debugUpstreamRead = YMPipeGetOutputFile(stream->upstream);
     
     YMStreamCommand header = { length };
     
-    YMLog("  stream[%s,i%d->o%d!V,s%u]: writing header for command: %u",stream->name,downstreamWrite,debugDownstreamRead,stream->__userInfo->streamID,length);
+    YMLog("  stream[%s,i%d!->o%dV,^o%d<-i%d,s%u]: writing header for command: %ub",stream->name,downstreamWrite,debugDownstreamRead,debugUpstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,length);
     YMIOResult result = YMWriteFull(downstreamWrite, (void *)&header, sizeof(header));
     if ( result != YMIOSuccess )
     {
-        YMLog("  stream[%s,i%d->o%d!V,s%u]: fatal: failed writing header for stream chunk size %u",stream->name,downstreamWrite,debugDownstreamRead,stream->__userInfo->streamID,length);
+        YMLog("  stream[%s,i%d!->o%dV,^o%d<-i%d,s%u]: fatal: failed writing header for stream chunk size %ub",stream->name,downstreamWrite,debugDownstreamRead,debugUpstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,length);
         abort();
     }
-    YMLog("  stream[%s,i%d->o%d!V,s%u]: wrote header for command: %u",stream->name,downstreamWrite,debugDownstreamRead,stream->__userInfo->streamID,length);
+    YMLog("  stream[%s,i%d!->o%dV,^o%d<-i%d,s%u]: wrote header for command: %u",stream->name,downstreamWrite,debugDownstreamRead,debugUpstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,length);
     
     result = YMWriteFull(downstreamWrite, buffer, length);
     if ( result != YMIOSuccess )
     {
-        YMLog("  stream[%s,i%d->o%d!V,s%u]: fatal: failed writing stream chunk with size %u",stream->name,downstreamWrite,debugDownstreamRead,stream->__userInfo->streamID,length);
+        YMLog("  stream[%s,i%d!->o%dV,^o%d<-i%d,s%u]: fatal: failed writing stream chunk with size %ub",stream->name,downstreamWrite,debugDownstreamRead,debugUpstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,length);
         abort();
     }
-    YMLog("  stream[%s,i%d->o%d!V,s%u]: wrote buffer for command %u",stream->name,downstreamWrite,debugDownstreamRead,stream->__userInfo->streamID,length);
+    YMLog("  stream[%s,i%d!->o%dV,^o%d<-i%d,s%u]: wrote buffer for chunk with size %ub",stream->name,downstreamWrite,debugDownstreamRead,debugUpstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,length);
     
     // signal the plexer to wake and service this stream
     YMSemaphoreSignal(stream->__dataAvailableSemaphore);
     
-    YMLog("  stream[%s,i%d->o%d!V,s%u]: wrote %lu + %u command",stream->name,downstreamWrite,debugDownstreamRead,stream->__userInfo->streamID,sizeof(header),length);
+    YMLog("  stream[%s,i%d!->o%dV,^o%d<-i%d,s%u]: wrote %lub + %ub command",stream->name,downstreamWrite,debugDownstreamRead,debugUpstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,sizeof(header),length);
 }
 
 // void: only ever does in-process i/o
 void _YMStreamReadDown(YMStreamRef stream, void *buffer, uint32_t length)
 {
-    int downstreamRead = YMPipeGetOutputFile(stream->downstream);
     int debugDownstreamWrite = YMPipeGetInputFile(stream->downstream);
-    YMLog("  stream[%s,i%d!->o%dV,s%u]: reading %u bytes from downstream",stream->name,debugDownstreamWrite,downstreamRead,stream->__userInfo->streamID,length);
+    int downstreamRead = YMPipeGetOutputFile(stream->downstream);
+    int debugUpstreamWrite = YMPipeGetInputFile(stream->upstream);
+    int debugUpstreamRead = YMPipeGetOutputFile(stream->upstream);
+    YMLog("  stream[%s,i%d->o%d!V,^Vo%d<-i%d,s%u]: reading %ub from downstream",stream->name,debugDownstreamWrite,downstreamRead,debugUpstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,length);
     YMIOResult result = YMReadFull(downstreamRead, buffer, length);
     if ( result != YMIOSuccess )
     {
-        YMLog("  stream[%s,i%d!->o%dV,s%u]: error: failed reading %u bytes from downstream",stream->name,debugDownstreamWrite,downstreamRead,stream->__userInfo->streamID,length);
+        YMLog("  stream[%s,i%d->o%d!V,^Vo%d<-i%d,s%u]: error: failed reading %ub from downstream",stream->name,debugDownstreamWrite,downstreamRead,debugUpstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,length);
         abort();
     }
     
-    YMLog("  stream[%s,i%d!->o%dV,s%u]: read %u bytes from downstream",stream->name,debugDownstreamWrite,downstreamRead,stream->__userInfo->streamID,length);
+    YMLog("  stream[%s,i%d->o%d!V,^Vo%d<-i%d,s%u]: read %ub from downstream",stream->name,debugDownstreamWrite,downstreamRead,debugUpstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,length);
 }
 
 // void: only ever does in-process i/o
 void _YMStreamWriteUp(YMStreamRef stream, const void *buffer, uint32_t length)
 {
+    int debugDownstreamWrite = YMPipeGetInputFile(stream->downstream);
+    int downstreamRead = YMPipeGetOutputFile(stream->downstream);
     int upstreamWrite = YMPipeGetInputFile(stream->upstream);
     int debugUpstreamRead = YMPipeGetOutputFile(stream->upstream);
     
     YMIOResult result = YMWriteFull(upstreamWrite, buffer, length);
     if ( result == YMIOError )
     {
-        YMLog("  stream[%s,i%d->o%d!^,s%u]: fatal: failed writing %u bytes to upstream",stream->name,upstreamWrite,debugUpstreamRead,stream->__userInfo->streamID,length);
+        YMLog("  stream[%s,i%d!->o%dV,^Vo%d<-i%d,s%u]: fatal: failed writing %u bytes to upstream",stream->name,debugDownstreamWrite,downstreamRead,debugUpstreamRead,upstreamWrite,stream->__userInfo->streamID,length);
         abort();
     }
 }
 
-void YMStreamReadUp(YMStreamRef stream, void *buffer, uint16_t length)
+// because user data is opaque (even to user), this should expose eof
+YMIOResult YMStreamReadUp(YMStreamRef stream, void *buffer, uint16_t length)
 {
-    int upstreamRead = YMPipeGetOutputFile(stream->upstream);
+    int debugDownstreamWrite = YMPipeGetInputFile(stream->downstream);
+    int downstreamRead = YMPipeGetOutputFile(stream->downstream);
     int debugUpstreamWrite = YMPipeGetInputFile(stream->upstream);
+    int upstreamRead = YMPipeGetOutputFile(stream->upstream);
     
-    YMLog("  stream[%s,i%d!->o%d^,s%u]: reading %ub user data",stream->name,debugUpstreamWrite,upstreamRead,stream->__userInfo->streamID,length);
+    YMLog("  stream[%s,i%d->o%dV,^Vo%d!<-i%d,s%u]: reading %ub user data",stream->name,debugDownstreamWrite,downstreamRead,upstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,length);
     YMIOResult result = YMReadFull(upstreamRead, buffer, length);
     if ( result != YMIOSuccess ) // in-process i/o errors are fatal
     {
-        YMLog("  stream[%s,i%d!->o%d^,s%u]: fatal: reading %ub user data: %d (%s)",stream->name,debugUpstreamWrite,upstreamRead,stream->__userInfo->streamID,length,errno,strerror(errno));
+        YMLog("  stream[%s,i%d->o%dV,^Vo%d!<-i%d,s%u]: fatal: reading %ub user data: %d (%s)",stream->name,debugDownstreamWrite,downstreamRead,upstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,length,errno,strerror(errno));
         abort();
     }
-    //else if ( result == YMIOEOF )
-    //    YMLog("  stream[%s,i%d,o%d,s%u]: EOF from upstream",stream->name,debugUpstreamWrite,upstreamRead,stream->__userInfo->streamID);
-    //else
-        YMLog("  stream[%s,i%d!->o%d^,s%u]: read %u bytes from upstream",stream->name,debugUpstreamWrite,upstreamRead,stream->__userInfo->streamID,length);
+    else if ( result == YMIOEOF )
+        YMLog("  stream[%s,i%d->o%dV,^Vo%d!<-i%d,s%u]: EOF from upstream",stream->name,debugDownstreamWrite,downstreamRead,upstreamRead,debugUpstreamWrite,stream->__userInfo->streamID);
+    else
+        YMLog("  stream[%s,i%d->o%dV,^Vo%d!<-i%d,s%u]: read %ub from upstream",stream->name,debugDownstreamWrite,downstreamRead,upstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,length);
     
-    //return result;
+    return result;
 }
 
 void _YMStreamClose(YMStreamRef stream)
@@ -195,16 +204,7 @@ void _YMStreamClose(YMStreamRef stream)
     }
     YMSemaphoreSignal(stream->__dataAvailableSemaphore);
     
-//    int posixResult = close(downstreamWrite);
-//    if ( posixResult != 0 )
-//    {
-//        YMLog("  stream[%s,%d!->%d,s%u]: fatal: failed closing downstream write: %d (%s) (internally %s)",stream->name,downstreamWrite,debugDownstreamRead,stream->__userInfo->streamID,errno,strerror(errno),stream->downstreamWriteClosed?"closed":"open");
-//        abort();
-//        return false;
-//    }
-    
     YMLog("  stream[%s,Vi%d!->o%d,^o%d<-i%d,s%u]: CLOSED downstream",stream->name,downstreamWrite,debugDownstreamRead,debugUpstreamRead,debugUpstreamWrite,stream->__userInfo->streamID);
-    //return ( result == 0 );
 }
 
 void _YMStreamCloseUp(YMStreamRef stream)

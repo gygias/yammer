@@ -59,8 +59,8 @@ void local_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream)
     NSLog(@"%s",__FUNCTION__);
 }
 
-const char *testMessage = "this is a test message. one, two, three. four. sometimes five.";
-const char *testResponse = "もしもし。you are coming in loud and clear, rangoon! ご機嫌よ。";
+const char *testLocalMessage = "this is a test message. one, two, three. four. sometimes five.";
+const char *testRemoteResponse = "もしもし。you are coming in loud and clear, rangoon! ご機嫌よ。";
 
 - (void)testManyPlexerRoundTrips {
     gRunningPlexerTest = self;
@@ -125,17 +125,17 @@ const char *testResponse = "もしもし。you are coming in loud and clear, ran
         NSLog(@"^^^ LOCAL %u created stream ^^^",_YMStreamGetUserInfo(aStream)->streamID);
         
         NSLog(@"VVV LOCAL %u sending message %u VVV",_YMStreamGetUserInfo(aStream)->streamID,idx);
-        [self sendMessage:aStream :testMessage];
+        [self sendMessage:aStream :testLocalMessage];
         NSLog(@"^^^ LOCAL %u sent message %u ^^^",_YMStreamGetUserInfo(aStream)->streamID,idx);
         
-        void *response;
+        char *response;
         uint16_t responseLen;
         NSLog(@"VVV LOCAL %u receiving response %u VVV",_YMStreamGetUserInfo(aStream)->streamID,idx);
-        [self receiveMessage:aStream :&response :&responseLen];
+        [self receiveMessage:aStream :(void **)&response :&responseLen];
         NSLog(@"^^^ LOCAL %u received response %u ^^^",_YMStreamGetUserInfo(aStream)->streamID,idx);
         
-        int cmp = strcmp(response,testResponse);
-        XCTAssert(cmp == 0, @"response: %@",response);
+        int cmp = strcmp(response,testRemoteResponse);
+        XCTAssert(cmp == 0, @"response: %s",response);
         
         NSLog(@"VVV LOCAL %u closing stream VVV",_YMStreamGetUserInfo(aStream)->streamID);
         YMPlexerCloseStream(plexer, aStream);
@@ -154,7 +154,7 @@ const char *testResponse = "もしもし。you are coming in loud and clear, ran
     UserMessageHeader header = { length };
     YMStreamWriteDown(stream, (void *)&header, sizeof(header));
     //XCTAssert(okay,@"failed to write message length");
-    YMStreamWriteDown(stream, (void *)testMessage, length);
+    YMStreamWriteDown(stream, (void *)message, length);
     //XCTAssert(okay,@"failed to write message");
 }
 
@@ -204,7 +204,7 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream)
         [self receiveMessage:stream :(void **)&inMessage :&length];
         NSLog(@"^^^ REMOTE %u received message %u ^^^",_YMStreamGetUserInfo(stream)->streamID,idx);
         
-        int cmp = strcmp(inMessage, testMessage);
+        int cmp = strcmp(inMessage, testLocalMessage);
         XCTAssert(cmp == 0,@"received %s",inMessage);
         
         // made a hard user error
@@ -214,7 +214,7 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream)
         //            NSLog(@"^^^ REMOTE %u going rogue ^^^",_YMStreamGetUserInfo(stream)->streamID);
         
         NSLog(@"VVV REMOTE %u sending response %u VVV",_YMStreamGetUserInfo(stream)->streamID,idx);
-        [self sendMessage:stream :testResponse];
+        [self sendMessage:stream :testRemoteResponse];
         NSLog(@"^^^ REMOTE %u sent response %u ^^^",_YMStreamGetUserInfo(stream)->streamID,idx);
     }
 }
