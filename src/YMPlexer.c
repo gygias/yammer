@@ -24,6 +24,8 @@
 #include <sys/time.h>
 #endif
 
+#include <pthread.h> // explicit for sigpipe
+
 #pragma message "SEMAPHORE DEBACLE"
 #include "YMSemaphore.h"
 
@@ -123,6 +125,18 @@ typedef struct __YMPlexer
 
 #define YMPlexerDefaultBufferSize (1e+6)
 
+pthread_once_t gYMRegisterSigpipeOnce = PTHREAD_ONCE_INIT;
+void sigpipe_handler (__unused int signum)
+{
+    YMLog("sigpipe happened");
+    abort();
+}
+
+void _YMRegisterSigpipe()
+{
+    signal(SIGPIPE,sigpipe_handler);
+}
+
 YMPlexerRef YMPlexerCreateWithFullDuplexFile(char *name, int file, bool master)
 {
     return YMPlexerCreate(name, file, file, master);
@@ -130,6 +144,8 @@ YMPlexerRef YMPlexerCreateWithFullDuplexFile(char *name, int file, bool master)
 
 YMPlexerRef YMPlexerCreate(char *name, int inputFile, int outputFile, bool master)
 {
+    pthread_once(&gYMRegisterSigpipeOnce, _YMRegisterSigpipe);
+    
     _YMPlexer *plexer = (_YMPlexer *)calloc(1,sizeof(_YMPlexer));
     plexer->_typeID = _YMPlexerTypeID;
     
