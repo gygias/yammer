@@ -21,9 +21,9 @@ typedef enum
     GreaterThan = 1
 } ComparisonResult;
 ComparisonResult YMTimevalCompare(struct timeval *a, struct timeval *b);
-// these functions modifies time
-void YMSetTheBeginningOfPosixTimeForCurrentPlatform(struct timeval *time);
-void YMSetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time);
+// ensure portability of the end of time for the watchtower platform
+void YMGetTheBeginningOfPosixTimeForCurrentPlatform(struct timeval *time);
+void YMGetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time);
 
 typedef enum
 {

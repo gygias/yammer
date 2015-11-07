@@ -67,7 +67,7 @@ YMStreamRef YMStreamCreate(const char *name, bool isLocal, YMStreamUserInfoRef u
     if ( 0 != gettimeofday(stream->__lastServiceTime, NULL) )
     {
         YMLog("warning: error setting initial service time for stream: %d (%s)",errno,strerror(errno));
-        YMSetTheBeginningOfPosixTimeForCurrentPlatform(stream->__lastServiceTime);
+        YMGetTheBeginningOfPosixTimeForCurrentPlatform(stream->__lastServiceTime);
     }
     
     YMLog("  stream[%s,i%d->o%dV,^i%d<-o%d,s%u]: ALLOCATING",stream->name,
@@ -265,7 +265,7 @@ void _YMStreamSetLastServiceTimeNow(YMStreamRef stream)
     if ( 0 != gettimeofday(stream->__lastServiceTime, NULL) )
     {
         YMLog("warning: error setting initial service time for stream: %d (%s)",errno,strerror(errno));
-        YMSetTheBeginningOfPosixTimeForCurrentPlatform(stream->__lastServiceTime);
+        YMGetTheBeginningOfPosixTimeForCurrentPlatform(stream->__lastServiceTime);
     }
 }
 

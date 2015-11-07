@@ -1,5 +1,5 @@
-- inlines (logs, string creation, timeval, 
-- stream isLocal redundant?
+- inlines (logs, string creation, timeval)
+- stream isLocal redundant? or lookup of stream on removal
 - log levels, macro per .c so there aren't "type" functions
 - collection mod while enumerating guards
 - linked list
@@ -29,4 +29,10 @@
 - !!! fds are just leaking
 - consolidate mostly redundant dispatch procs, passing function ptr and log string in user info? notify_new and notify_closing are almost identical
 - get a better story for alloc some param->Create->copy->free ownership all over the place
-- 
+- plexer interrupt needs to be synchronized between service up/down (first one to get a bad i/o from underlying)
+- fcntl direct? hopefully not
+- a way to prevent enum vs. literal/bool would be swell, cursory reading says can't do it in c
+- upstream read should expose EOF not return void, user data might be opaque, and error (implying disconnect, or via session note?)
+- lock around stream/pipe/fd accessors? streams are the api and pipes/fds aren't public (barring direct mode), so that should be a bug not user error
+- test recursive lock
+- _PrivateMethod __InternalMethod

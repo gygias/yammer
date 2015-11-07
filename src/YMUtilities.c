@@ -24,13 +24,13 @@
 #define MIN_OF(type) \
 (((type)(1LLU<<((sizeof(type)<<3)-1)) < (type)1) ? (long long int)((~0LLU)-((1LLU<<((sizeof(type)<<3)-1))-1LLU)) : 0LL)
 
-void YMSetTheBeginningOfPosixTimeForCurrentPlatform(struct timeval *time)
+void YMGetTheBeginningOfPosixTimeForCurrentPlatform(struct timeval *time)
 {
     time->tv_sec = MIN_OF(typeof(time->tv_sec));
     time->tv_usec = MIN_OF(typeof(time->tv_usec));
 }
 
-void YMSetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time)
+void YMGetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time)
 {
     time->tv_sec = MAX_OF(typeof(time->tv_sec));
     time->tv_usec = MAX_OF(typeof(time->tv_usec));

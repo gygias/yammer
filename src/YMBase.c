@@ -14,18 +14,18 @@ typedef struct __YMType
     YMTypeID _type;
 } _YMType;
 
-YMTypeID _YMPipeTypeID = 'i';
-YMTypeID _YMStreamTypeID = 'r';
-YMTypeID _YMConnectionTypeID = 'c';
-YMTypeID _YMSecurityProviderTypeID = 'p';
-YMTypeID _YMPlexerTypeID = 'x';
-YMTypeID _YMSessionTypeID = 's';
-YMTypeID _YMmDNSServiceTypeID = 'm';
 YMTypeID _YMmDNSBrowserTypeID = 'b';
-YMTypeID _YMThreadTypeID = 't';
+YMTypeID _YMConnectionTypeID = 'c';
+YMTypeID _YMPipeTypeID = 'i';
 YMTypeID _YMLockTypeID = 'k';
-YMTypeID _YMSemaphoreTypeID = 'p';
 YMTypeID _YMLinkedListTypeID = 'l';
+YMTypeID _YMmDNSServiceTypeID = 'm';
+YMTypeID _YMSemaphoreTypeID = 'p';
+YMTypeID _YMStreamTypeID = 'r';
+YMTypeID _YMSessionTypeID = 's';
+YMTypeID _YMThreadTypeID = 't';
+YMTypeID _YMSecurityProviderTypeID = 'v';
+YMTypeID _YMPlexerTypeID = 'x';
 YMTypeID _YMDictionaryTypeID = 'y';
 
 extern void _YMPipeFree(YMTypeRef);
@@ -71,7 +71,9 @@ void YMFree(YMTypeRef object)
         _YMLinkedListFree(object);
     else if ( type == _YMDictionaryTypeID )
         _YMDictionaryFree(object);
-    
-    YMLog("YMFree unknown type %c",((_YMType *)object)->_type);
-    abort();
+    else
+    {
+        YMLog("YMFree unknown type %c",((_YMType *)object)->_type);
+        abort();
+    }
 }

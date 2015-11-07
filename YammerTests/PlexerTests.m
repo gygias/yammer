@@ -17,7 +17,7 @@
 
 BOOL        gPlexerTest1Running = YES;
 #define     PlexerTest1ConcurrentRoundTrips 1
-#define     PlexerTest1RoundTripsPerThread 10
+#define     PlexerTest1RoundTripsPerThread 1
 #define     PlexerTest1StreamClosuresToObserve ( PlexerTest1ConcurrentRoundTrips * PlexerTest1RoundTripsPerThread )
 NSUInteger  gPlexerTest1AwaitingCloses = PlexerTest1StreamClosuresToObserve;
 
@@ -100,32 +100,8 @@ const char *testResponse = "もしもし。you are coming in loud and clear, ran
     NSUInteger nSpawnConcurrentStreams = gPlexerTest1AwaitingCloses;
     while (nSpawnConcurrentStreams--)
     {
-        const char *caller = __FUNCTION__;
         dispatch_async(dispatch_get_global_queue(0, 0), ^{
-            
-            for ( NSUInteger idx = 0; idx < PlexerTest1RoundTripsPerThread; idx++ )
-            {                
-                NSLog(@"VVV LOCAL CREATING STREAM VVV");
-                YMStreamRef aStream = YMPlexerCreateNewStream(localPlexer,caller,false);
-                NSLog(@"^^^ LOCAL %u CREATING STREAM ^^^",_YMStreamGetUserInfo(aStream)->streamID);
-                
-                NSLog(@"VVV LOCAL %u WRITING A USER MESSAGE VVV",_YMStreamGetUserInfo(aStream)->streamID);
-                [self sendMessage:aStream :testMessage];
-                NSLog(@"^^^ LOCAL %u WRITING A USER MESSAGE ^^^",_YMStreamGetUserInfo(aStream)->streamID);
-                
-                void *response;
-                uint16_t responseLen;
-                NSLog(@"VVV MASTER %u READING A USER MESSAGE VVV",_YMStreamGetUserInfo(aStream)->streamID);
-                [self receiveMessage:aStream :&response :&responseLen];
-                NSLog(@"^^^ MASTER %u READING A USER MESSAGE ^^^",_YMStreamGetUserInfo(aStream)->streamID);
-                
-                int cmp = strcmp(response,testResponse);
-                XCTAssert(cmp == 0, @"response: %@",response);
-
-                NSLog(@"VVV LOCAL %u CLOSING STREAM VVV",_YMStreamGetUserInfo(aStream)->streamID);
-                YMPlexerCloseStream(localPlexer, aStream);
-                NSLog(@"^^^ LOCAL %u CLOSING STREAM ^^^",_YMStreamGetUserInfo(aStream)->streamID);
-            }
+            [self doLocalTest1:localPlexer];
         });
     }
 
@@ -140,6 +116,33 @@ const char *testResponse = "もしもし。you are coming in loud and clear, ran
 #endif
 }
 
+- (void)doLocalTest1:(YMPlexerRef)plexer
+{
+    for ( unsigned idx = 0; idx < PlexerTest1RoundTripsPerThread; idx++ )
+    {
+        NSLog(@"VVV LOCAL creating stream VVV");
+        YMStreamRef aStream = YMPlexerCreateNewStream(plexer,__FUNCTION__,false);
+        NSLog(@"^^^ LOCAL %u created stream ^^^",_YMStreamGetUserInfo(aStream)->streamID);
+        
+        NSLog(@"VVV LOCAL %u sending message %u VVV",_YMStreamGetUserInfo(aStream)->streamID,idx);
+        [self sendMessage:aStream :testMessage];
+        NSLog(@"^^^ LOCAL %u sent message %u ^^^",_YMStreamGetUserInfo(aStream)->streamID,idx);
+        
+        void *response;
+        uint16_t responseLen;
+        NSLog(@"VVV LOCAL %u receiving response %u VVV",_YMStreamGetUserInfo(aStream)->streamID,idx);
+        [self receiveMessage:aStream :&response :&responseLen];
+        NSLog(@"^^^ LOCAL %u received response %u ^^^",_YMStreamGetUserInfo(aStream)->streamID,idx);
+        
+        int cmp = strcmp(response,testResponse);
+        XCTAssert(cmp == 0, @"response: %@",response);
+        
+        NSLog(@"VVV LOCAL %u closing stream VVV",_YMStreamGetUserInfo(aStream)->streamID);
+        YMPlexerCloseStream(plexer, aStream);
+        NSLog(@"^^^ LOCAL %u closing stream ^^^",_YMStreamGetUserInfo(aStream)->streamID);
+    }
+}
+
 - (void)sendMessage:(YMStreamRef)stream :(const char *)message
 {
     uint16_t length = (uint16_t)strlen(message) + 1;
@@ -151,7 +154,7 @@ const char *testResponse = "もしもし。you are coming in loud and clear, ran
     UserMessageHeader header = { length };
     YMStreamWriteDown(stream, (void *)&header, sizeof(header));
     //XCTAssert(okay,@"failed to write message length");
-    YMStreamWriteDown(stream, (void *)testMessage, (uint32_t)strlen(testMessage));
+    YMStreamWriteDown(stream, (void *)testMessage, length);
     //XCTAssert(okay,@"failed to write message");
 }
 
@@ -186,28 +189,34 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream)
 - (void)newStream:(YMPlexerRef)plexer :(YMStreamRef)stream
 {
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
-        for ( NSUInteger idx = 0; idx < PlexerTest1RoundTripsPerThread; idx++ )
-        {
-            NSLog(@"%s",__FUNCTION__);
-            char *inMessage;
-            uint16_t length;
-            NSLog(@"VVV REMOTE %u receiving message VVV",_YMStreamGetUserInfo(stream)->streamID);
-            [self receiveMessage:stream :(void **)&inMessage :&length];
-            NSLog(@"^^^ REMOTE %u receiving message ^^^",_YMStreamGetUserInfo(stream)->streamID);
-            
-            int cmp = strcmp(inMessage, testMessage);
-            XCTAssert(cmp == 0,@"received %s",inMessage);
-            
-            NSLog(@"VVV REMOTE %u going rogue VVV",_YMStreamGetUserInfo(stream)->streamID);
-            YMPlexerCloseStream(plexer, stream);
-            //XCTAssert(!badClose,@"receiver allowed to close stream");
-            NSLog(@"^^^ REMOTE %u going rogue ^^^",_YMStreamGetUserInfo(stream)->streamID);
-            
-            NSLog(@"VVV SLAVE %u receiving message VVV",_YMStreamGetUserInfo(stream)->streamID);
-            [self sendMessage:stream :testResponse];
-            NSLog(@"^^^ REMOTE %u receiving message ^^^",_YMStreamGetUserInfo(stream)->streamID);
-        }
+        [self handleANewLocalStream:plexer :stream];
     });
+}
+
+- (void)handleANewLocalStream:(YMPlexerRef)plexer :(YMStreamRef)stream
+{
+    for ( unsigned idx = 0; idx < PlexerTest1RoundTripsPerThread; idx++ )
+    {
+        NSLog(@"%s",__FUNCTION__);
+        char *inMessage;
+        uint16_t length;
+        NSLog(@"VVV REMOTE %u receiving message %u VVV",_YMStreamGetUserInfo(stream)->streamID,idx);
+        [self receiveMessage:stream :(void **)&inMessage :&length];
+        NSLog(@"^^^ REMOTE %u received message %u ^^^",_YMStreamGetUserInfo(stream)->streamID,idx);
+        
+        int cmp = strcmp(inMessage, testMessage);
+        XCTAssert(cmp == 0,@"received %s",inMessage);
+        
+        // made a hard user error
+        //            NSLog(@"VVV REMOTE %u going rogue VVV",_YMStreamGetUserInfo(stream)->streamID);
+        //            YMPlexerCloseStream(plexer, stream);
+        //            //XCTAssert(!badClose,@"receiver allowed to close stream");
+        //            NSLog(@"^^^ REMOTE %u going rogue ^^^",_YMStreamGetUserInfo(stream)->streamID);
+        
+        NSLog(@"VVV REMOTE %u sending response %u VVV",_YMStreamGetUserInfo(stream)->streamID,idx);
+        [self sendMessage:stream :testResponse];
+        NSLog(@"^^^ REMOTE %u sent response %u ^^^",_YMStreamGetUserInfo(stream)->streamID,idx);
+    }
 }
 
 void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream)

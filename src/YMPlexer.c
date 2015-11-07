@@ -65,15 +65,23 @@ typedef struct {
     YMStreamID streamID;
 } YMPlexerMessage;
 
+#define __YMDownstreamListIdx 0
+#define __YMUpstreamListIdx 1
+#define __YMListMax 2
+#define __YMLockListIdx 0
+#define __YMListListIdx 1
+
+#pragma message "_Private __Internal"
+YMStreamRef __YMPlexerChooseReadyStream(YMPlexerRef plexer, YMTypeRef **list, int *outReadyStreamsByIdx);
+
 bool _YMPlexerStartServiceThreads(YMPlexerRef plexer);
 bool _YMPlexerDoInitialization(YMPlexerRef plexer, bool master);
 bool _YMPlexerInitAsMaster(YMPlexerRef plexer);
 bool _YMPlexerInitAsSlave(YMPlexerRef plexer);
 void *_YMPlexerServiceDownstreamThread(void *context);
 void *_YMPlexerServiceUpstreamThread(void *context);
-YMStreamRef _YMPlexerChooseDownstream(YMPlexerRef plexer, int *outReadyStreams);
 bool _YMPlexerServiceDownstream(YMPlexerRef plexer, YMStreamRef servicingStream);
-YMStreamRef _YMPlexerGetOrCreateStreamWithID(YMPlexerRef plexer, YMStreamID streamID);
+YMStreamRef _YMPlexerGetOrCreateRemoteStreamWithID(YMPlexerRef plexer, YMStreamID streamID);
 void _YMPlexerInterrupt(YMPlexerRef plexer);
 
 typedef struct __YMPlexer
@@ -383,16 +391,18 @@ void *_YMPlexerServiceDownstreamThread(void *context)
         // there is only one thread consuming this semaphore, so i think it's ok not to actually lock around this loop iteration
         YMSemaphoreWait(plexer->streamMessageSemaphore);
         
-        int readyStreams = 0;
-        YMStreamRef servicingStream = _YMPlexerChooseDownstream(plexer, &readyStreams);
+        YMTypeRef *listOfLocksAndLists[] = { (YMTypeRef[]) { plexer->localAccessLock, plexer->localStreamsByID },
+            (YMTypeRef[]) { plexer->remoteAccessLock, plexer->remoteStreamsByID } };
+        int readyStreamsByList[2] = { 0, 0 };
+        YMStreamRef servicingStream = __YMPlexerChooseReadyStream(plexer, listOfLocksAndLists, readyStreamsByList);
         
-        YMLog(" plexer[%s-V]: signaled, %d streams ready",plexer->name,readyStreams);
+        YMLog(" plexer[%s-V]: signaled, [d%d,u%d] streams ready",plexer->name,readyStreamsByList[__YMDownstreamListIdx],readyStreamsByList[__YMUpstreamListIdx]);
         
         //while ( --readyStreams )
         {
             if ( ! servicingStream )
             {
-                YMLog(" plexer[%s-V]: warning: signaled but couldn't find a stream",plexer->name);
+                YMLog(" plexer[%s-V]: warning: signaled but nothing available",plexer->name);
                 continue;
             }
             
@@ -410,57 +420,63 @@ void *_YMPlexerServiceDownstreamThread(void *context)
     return NULL;
 }
 
-YMStreamRef _YMPlexerChooseDownstream(YMPlexerRef plexer, int *outReadyStreams)
+YMStreamRef __YMPlexerChooseReadyStream(YMPlexerRef plexer, YMTypeRef **list, int *outReadyStreamsByIdx)
 {
-    int readyStreams = 0;
-    YMStreamRef servicingStream = NULL;
+    YMStreamRef oldestStream = NULL;
     struct timeval newestTime;
-    YMSetTheEndOfPosixTimeForCurrentPlatform(&newestTime);
-    YMLockLock(plexer->localAccessLock);
+    YMGetTheEndOfPosixTimeForCurrentPlatform(&newestTime);
+    
+    int idx = 0;
+    for( ; idx < __YMListMax; idx++ )
     {
-        YMDictionaryEnumRef localStreamsEnum = YMDictionaryEnumeratorBegin(plexer->localStreamsByID);
-        while ( localStreamsEnum )
+        YMLockRef aLock = (YMLockRef)list[idx][__YMLockListIdx];
+        YMDictionaryRef aStreamsById = (YMDictionaryRef)list[idx][__YMListListIdx];
+        
+        YMLockLock(aLock);
         {
-            YMStreamRef aLocalStream = (YMStreamRef)localStreamsEnum->value;
-            
-            YMStreamID aLocalStreamID = _YMStreamGetUserInfo(aLocalStream)->streamID;
-            int downRead = _YMStreamGetDownwardRead(aLocalStream);
-            
-            fd_set fdset;
-            FD_ZERO(&fdset);
-            FD_SET(downRead,&fdset);
-            // a zero'd timeval struct indicates a poll, which is what i think we want here
-            // if something goes "wrong" (todo) with one stream, don't starve the others
-            struct timeval timeout = { 0, 0 };
-            
-            int nReadyFds = select(downRead + 1, &fdset, NULL, NULL, &timeout);
-            
-            if ( nReadyFds <= 0 ) // zero is a timeout
+            YMDictionaryEnumRef aStreamsEnum = YMDictionaryEnumeratorBegin(aStreamsById);
+            while ( aStreamsEnum )
             {
-                if ( nReadyFds == -1 )
+                YMStreamRef aStream = (YMStreamRef)aStreamsEnum->value;
+                YMStreamID aStreamID = _YMStreamGetUserInfo(aStream)->streamID;
+                int downRead = _YMStreamGetDownwardRead(aStream);
+                
+                fd_set fdset;
+                FD_ZERO(&fdset);
+                FD_SET(downRead,&fdset);
+                // a zero'd timeval struct indicates a poll, which is what i think we want here
+                // if something goes "wrong" (todo) with one stream, don't starve the others
+                struct timeval timeout = { 0, 0 };
+                
+                int nReadyFds = select(downRead + 1, &fdset, NULL, NULL, &timeout);
+                
+                if ( nReadyFds <= 0 ) // zero is a timeout
                 {
-                    YMLog(" plexer[%s-V,s%u]: fatal: select failed %d (%s)",plexer->name,aLocalStreamID,errno,strerror(errno));
-                    abort();
+                    if ( nReadyFds == -1 )
+                    {
+                        YMLog(" plexer[%s-V-choose]: fatal: select failed %d (%s)",plexer->name,errno,strerror(errno));
+                        abort();
+                    }
+                    goto catch_continue;
                 }
-                goto catch_continue;
+                
+                YMLog(" plexer[%s-V-choose]: %s %u reports it is ready!",plexer->name,idx==__YMDownstreamListIdx?"down stream":"up stream",aStreamID);
+                
+                if ( outReadyStreamsByIdx )
+                    outReadyStreamsByIdx[idx]++;
+                
+                struct timeval *thisStreamLastService = _YMStreamGetLastServiceTime(aStream);
+                if ( YMTimevalCompare(thisStreamLastService, &newestTime ) != GreaterThan )
+                    oldestStream = aStream;
+            catch_continue:
+                aStreamsEnum = YMDictionaryEnumeratorGetNext(aStreamsEnum);
             }
-            
-            readyStreams ++;
-            
-            struct timeval *thisStreamLastService = _YMStreamGetLastServiceTime(aLocalStream);
-            if ( YMTimevalCompare(thisStreamLastService, &newestTime ) != GreaterThan )
-                servicingStream = aLocalStream;
-        catch_continue:
-            localStreamsEnum = YMDictionaryEnumeratorGetNext(localStreamsEnum);
+            YMDictionaryEnumeratorEnd(aStreamsEnum);
         }
-        YMDictionaryEnumeratorEnd(localStreamsEnum);
+        YMLockUnlock(plexer->localAccessLock);
     }
-    YMLockUnlock(plexer->localAccessLock);
     
-    if ( outReadyStreams )
-        *outReadyStreams = readyStreams;
-    
-    return servicingStream;
+    return oldestStream;
 }
 
 bool _YMPlexerServiceDownstream(YMPlexerRef plexer, YMStreamRef servicingStream)
@@ -572,7 +588,7 @@ void *_YMPlexerServiceUpstreamThread(void *context)
         }
         
         YMStreamID streamID = plexerMessage.streamID;
-        YMStreamRef theStream = _YMPlexerGetOrCreateStreamWithID(plexer, streamID);
+        YMStreamRef theStream = _YMPlexerGetOrCreateRemoteStreamWithID(plexer, streamID);
         if ( ! theStream )
         {
             YMLog(" plexer[%s-^,i%d!,s%u]: fatal: stream lookup",plexer->name,plexer->inputFile,streamID);
@@ -653,7 +669,7 @@ void *ym_notify_stream_closing(void *context)
     return NULL;
 }
 
-YMStreamRef _YMPlexerGetOrCreateStreamWithID(YMPlexerRef plexer, YMStreamID streamID)
+YMStreamRef _YMPlexerGetOrCreateRemoteStreamWithID(YMPlexerRef plexer, YMStreamID streamID)
 {
     YMStreamRef theStream = NULL;
     
@@ -681,6 +697,8 @@ YMStreamRef _YMPlexerGetOrCreateStreamWithID(YMPlexerRef plexer, YMStreamID stre
             char *memberName = YMStringCreateWithFormat("plex-^-%u", streamID);
             theStream = YMStreamCreate(memberName, false, userInfo);
             free(memberName);
+            
+            _YMStreamSetDataAvailableSemaphore(theStream, plexer->streamMessageSemaphore);
             
             YMDictionaryAdd(plexer->remoteStreamsByID, streamID, theStream);
             
@@ -736,6 +754,11 @@ YMStreamRef YMPlexerCreateNewStream(YMPlexerRef plexer, const char *name, bool d
     {
         plexer->localStreamIDLast = ( ++plexer->localStreamIDLast >= plexer->localStreamIDMax ) ? plexer->localStreamIDMin : plexer->localStreamIDLast;
         YMStreamID newStreamID = plexer->localStreamIDLast;
+        if ( YMDictionaryContains(plexer->localStreamsByID, newStreamID) )
+        {
+            YMLog(" plexer[%s]: fatal: YMPlexer has run out of streams",plexer->name);
+            abort();
+        }
         
         YMStreamUserInfoRef userInfo = (YMStreamUserInfoRef)YMMALLOC(sizeof(struct __YMStreamUserInfo));
         userInfo->streamID = newStreamID;
@@ -743,11 +766,6 @@ YMStreamRef YMPlexerCreateNewStream(YMPlexerRef plexer, const char *name, bool d
         newStream = YMStreamCreate(memberName, true, userInfo);
         free(memberName);
         _YMStreamSetDataAvailableSemaphore(newStream, plexer->streamMessageSemaphore);
-        if ( YMDictionaryContains(plexer->localStreamsByID, newStreamID) )
-        {
-            YMLog(" plexer[%s]: fatal: YMPlexer has run out of streams",plexer->name);
-            abort();
-        }
         YMDictionaryAdd(plexer->localStreamsByID, newStreamID, newStream);
         
         if ( direct )
