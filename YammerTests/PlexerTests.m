@@ -19,7 +19,7 @@
 YMLockRef   gPlexerTest1Lock = NULL;
 BOOL        gPlexerTest1Running = YES;
 #define     PlexerTest1RoundTripThreads 1 // SATURDAY
-#define     PlexerTest1RoundTripsPerThread 100
+#define     PlexerTest1RoundTripsPerThread 10000
 #define     PlexerTest1NewStreamPerRoundTrip false // SATURDAY
 #define     PlexerTest1StreamClosuresToObserve ( PlexerTest1RoundTripThreads * ( PlexerTest1NewStreamPerRoundTrip ? PlexerTest1RoundTripsPerThread : 1 ) )
 NSUInteger  gPlexerTest1AwaitingCloses = PlexerTest1StreamClosuresToObserve;
