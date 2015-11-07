@@ -166,11 +166,11 @@ void YMStreamReadUp(YMStreamRef stream, void *buffer, uint16_t length)
     int upstreamRead = YMPipeGetOutputFile(stream->upstream);
     int debugUpstreamWrite = YMPipeGetInputFile(stream->upstream);
     
-    YMLog("  stream[%s,i%d!->o%d^,s%u]: reading %u bytes from upstream",stream->name,debugUpstreamWrite,upstreamRead,stream->__userInfo->streamID,length);
+    YMLog("  stream[%s,i%d!->o%d^,s%u]: reading %ub user data",stream->name,debugUpstreamWrite,upstreamRead,stream->__userInfo->streamID,length);
     YMIOResult result = YMReadFull(upstreamRead, buffer, length);
     if ( result != YMIOSuccess ) // in-process i/o errors are fatal
     {
-        YMLog("  stream[%s,i%d!->o%d^,s%u]: fatal: failed reading %u bytes from upstream",stream->name,debugUpstreamWrite,upstreamRead,stream->__userInfo->streamID,length);
+        YMLog("  stream[%s,i%d!->o%d^,s%u]: fatal: reading %ub user data: %d (%s)",stream->name,debugUpstreamWrite,upstreamRead,stream->__userInfo->streamID,length,errno,strerror(errno));
         abort();
     }
     //else if ( result == YMIOEOF )
@@ -265,6 +265,12 @@ YMStreamUserInfoRef _YMStreamGetUserInfo(YMStreamRef stream)
 void _YMStreamSetDataAvailableSemaphore(YMStreamRef stream, YMSemaphoreRef semaphore)
 {
     stream->__dataAvailableSemaphore = semaphore;
+}
+
+#pragma message "SEMAPHORE DEBACLE"
+YMSemaphoreRef __YMStreamGetSemaphore(YMStreamRef stream)
+{
+    return stream->__dataAvailableSemaphore;
 }
 
 void _YMStreamSetLastServiceTimeNow(YMStreamRef stream)

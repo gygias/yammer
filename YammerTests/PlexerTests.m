@@ -13,11 +13,14 @@
 #include "YMPipe.h"
 #include "YMPlexer.h"
 #include "YMSecurityProvider.h"
+#include "YMStreamPriv.h"
 
 BOOL        gPlexerTest1Running = YES;
 #pragma message "will crash in realloc"
-#define     PlexerTest1ConcurrentRoundTrips 1
-NSUInteger  gPlexerTest1AwaitingCloses = PlexerTest1ConcurrentRoundTrips;
+#define     PlexerTest1ConcurrentRoundTrips 10
+#define     PlexerTest1RoundTripsPerThread 1
+#define     PlexerTest1StreamClosuresToObserve ( PlexerTest1ConcurrentRoundTrips * PlexerTest1RoundTripsPerThread )
+NSUInteger  gPlexerTest1AwaitingCloses = PlexerTest1StreamClosuresToObserve;
 
 typedef struct
 {
@@ -101,32 +104,35 @@ const char *testResponse = "もしもし。you are coming in loud and clear, ran
         const char *caller = __FUNCTION__;
         dispatch_async(dispatch_get_global_queue(0, 0), ^{
             
-            NSLog(@"VVV LOCAL CREATING STREAM VVV");
-            YMStreamRef aStream = YMPlexerCreateNewStream(localPlexer,caller,false);
-            NSLog(@"^^^ LOCAL CREATING STREAM ^^^");
-            
-            NSLog(@"VVV LOCAL WRITING A USER MESSAGE VVV");
-            [self sendMessage:aStream :testMessage];
-            NSLog(@"^^^ LOCAL WRITING A USER MESSAGE ^^^");
-            
-//            void *response;
-//            uint16_t responseLen;
-//            NSLog(@"VVV MASTER READING A USER MESSAGE VVV");
-//            [self receiveMessage:aStream :&response :&responseLen];
-//            NSLog(@"^^^ MASTER READING A USER MESSAGE ^^^");
-//            
-//            int cmp = strcmp(response,testResponse);
-//            XCTAssert(cmp == 0, @"response: %@",response);
-            
-            NSLog(@"VVV LOCAL CLOSING STREAM VVV");
-            YMPlexerCloseStream(localPlexer, aStream);
-            NSLog(@"^^^ LOCAL CLOSING STREAM ^^^");
-            
-#pragma message "THE THING YOU SPENT THE LAST 12 HOURS ON IS THAT SIGNAL BEFORE WAIT DOESN'T RELEASE WAIT"
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_global_queue(0, 0), ^{
-                NSLog(@" YOLO SWAGG");
+            for ( NSUInteger idx = 0; idx < PlexerTest1RoundTripsPerThread; idx++ )
+            {                
+                NSLog(@"VVV LOCAL CREATING STREAM VVV");
+                YMStreamRef aStream = YMPlexerCreateNewStream(localPlexer,caller,false);
+                NSLog(@"^^^ LOCAL CREATING STREAM ^^^");
+                
+                NSLog(@"VVV LOCAL WRITING A USER MESSAGE VVV");
+                [self sendMessage:aStream :testMessage];
+                NSLog(@"^^^ LOCAL WRITING A USER MESSAGE ^^^");
+                
+    //            void *response;
+    //            uint16_t responseLen;
+    //            NSLog(@"VVV MASTER READING A USER MESSAGE VVV");
+    //            [self receiveMessage:aStream :&response :&responseLen];
+    //            NSLog(@"^^^ MASTER READING A USER MESSAGE ^^^");
+    //            
+    //            int cmp = strcmp(response,testResponse);
+    //            XCTAssert(cmp == 0, @"response: %@",response);
+                
+    #pragma message "THE THING YOU SPENT THE LAST 12 HOURS ON IS THAT SIGNAL BEFORE WAIT DOESN'T RELEASE WAIT"
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_global_queue(0, 0), ^{
+                    NSLog(@" YOLO SWAGG DELAYED SIGNALING FUCKFUCK %u",_YMStreamGetUserInfo(aStream)->streamID);
+                    YMSemaphoreSignal(__YMStreamGetSemaphore(aStream));
+                });
+                
+                NSLog(@"VVV LOCAL CLOSING STREAM VVV");
                 YMPlexerCloseStream(localPlexer, aStream);
-            });
+                NSLog(@"^^^ LOCAL CLOSING STREAM ^^^");
+            }
             
             
     #pragma message "what about a convenience for 'take this (new opaque 3rd-party file) and stream it automatically"
@@ -191,24 +197,30 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream)
 
 - (void)newStream:(YMPlexerRef)plexer :(YMStreamRef)stream
 {
-    NSLog(@"%s",__FUNCTION__);
-    char *message;
-    uint16_t length;
-    NSLog(@"VVV REMOTE receiving message VVV");
-    [self receiveMessage:stream :(void **)&message :&length];
-    NSLog(@"^^^ REMOTE receiving message ^^^");
-    
-    int cmp = strcmp(message, testMessage);
-    XCTAssert(cmp == 0,@"received %s",message);
-    
-    NSLog(@"VVV REMOTE going rogue VVV");
-    YMPlexerCloseStream(plexer, stream);
-    //XCTAssert(!badClose,@"receiver allowed to close stream");
-    NSLog(@"^^^ REMOTE going rogue ^^^");
-    
-    NSLog(@"VVV SLAVE receiving message VVV");
-    [self sendMessage:stream :testResponse];
-    NSLog(@"^^^ REMOTE receiving message ^^^");
+#pragma message "how to handle event starvation by doing this via dispatch thread? is it a user bug?"
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        for ( NSUInteger idx = 0; idx < PlexerTest1RoundTripsPerThread; idx++ )
+        {
+            NSLog(@"%s",__FUNCTION__);
+            char *message;
+            uint16_t length;
+            NSLog(@"VVV REMOTE receiving message VVV");
+            [self receiveMessage:stream :(void **)&message :&length];
+            NSLog(@"^^^ REMOTE receiving message ^^^");
+            
+            int cmp = strcmp(message, testMessage);
+            XCTAssert(cmp == 0,@"received %s",message);
+            
+            NSLog(@"VVV REMOTE going rogue VVV");
+            YMPlexerCloseStream(plexer, stream);
+            //XCTAssert(!badClose,@"receiver allowed to close stream");
+            NSLog(@"^^^ REMOTE going rogue ^^^");
+            
+            NSLog(@"VVV SLAVE receiving message VVV");
+            [self sendMessage:stream :testResponse];
+            NSLog(@"^^^ REMOTE receiving message ^^^");
+        }
+    });
 }
 
 void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream)
@@ -218,7 +230,8 @@ void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream)
 
 - (void)closing:(YMPlexerRef)plexer :(YMStreamRef)stream
 {
-    if ( gPlexerTest1AwaitingCloses-- )
+    NSLog(@"%s: gPlexerTest1AwaitingCloses %lu",__FUNCTION__,(unsigned long)gPlexerTest1AwaitingCloses);
+    if ( --gPlexerTest1AwaitingCloses == 0 )
     {
         NSLog(@"%s last stream closed, signaling runloop spin",__FUNCTION__);
         gPlexerTest1Running = NO;

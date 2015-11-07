@@ -81,7 +81,10 @@ bool YMDictionaryContains(YMDictionaryRef dict, YMDictionaryKey key)
 
 YMDictionaryValue YMDictionaryGetItem(YMDictionaryRef dict, YMDictionaryKey key)
 {
-    return _YMDictionaryFindItemWithIdentifier(dict->head, key, NULL)->value;
+    _YMDictionaryItemRef foundItem = _YMDictionaryFindItemWithIdentifier(dict->head, key, NULL);
+    if ( foundItem )
+        return foundItem->value;
+    return NULL;
 }
 
 _YMDictionaryItemRef _YMDictionaryFindItemWithIdentifier(_YMDictionaryItemRef head, YMDictionaryKey key, _YMDictionaryItemRef *outPreviousItem)
