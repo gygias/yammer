@@ -24,11 +24,9 @@ ComparisonResult YMTimevalCompare(struct timeval *a, struct timeval *b);
 // these functions modifies time
 void YMSetTheBeginningOfPosixTimeForCurrentPlatform(struct timeval *time);
 void YMSetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time);
-#pragma message "todo add inlines"
 
 typedef enum
 {
-#pragma message "is there a way to guard against YMIOResult* == int?"
     YMIOSuccess = 1,
     YMIOEOF = 0,
     YMIOError = -1

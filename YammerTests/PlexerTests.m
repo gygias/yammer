@@ -16,9 +16,8 @@
 #include "YMStreamPriv.h"
 
 BOOL        gPlexerTest1Running = YES;
-#pragma message "will crash in realloc"
-#define     PlexerTest1ConcurrentRoundTrips 10
-#define     PlexerTest1RoundTripsPerThread 1
+#define     PlexerTest1ConcurrentRoundTrips 1
+#define     PlexerTest1RoundTripsPerThread 10
 #define     PlexerTest1StreamClosuresToObserve ( PlexerTest1ConcurrentRoundTrips * PlexerTest1RoundTripsPerThread )
 NSUInteger  gPlexerTest1AwaitingCloses = PlexerTest1StreamClosuresToObserve;
 
@@ -108,36 +107,25 @@ const char *testResponse = "もしもし。you are coming in loud and clear, ran
             {                
                 NSLog(@"VVV LOCAL CREATING STREAM VVV");
                 YMStreamRef aStream = YMPlexerCreateNewStream(localPlexer,caller,false);
-                NSLog(@"^^^ LOCAL CREATING STREAM ^^^");
+                NSLog(@"^^^ LOCAL %u CREATING STREAM ^^^",_YMStreamGetUserInfo(aStream)->streamID);
                 
-                NSLog(@"VVV LOCAL WRITING A USER MESSAGE VVV");
+                NSLog(@"VVV LOCAL %u WRITING A USER MESSAGE VVV",_YMStreamGetUserInfo(aStream)->streamID);
                 [self sendMessage:aStream :testMessage];
-                NSLog(@"^^^ LOCAL WRITING A USER MESSAGE ^^^");
+                NSLog(@"^^^ LOCAL %u WRITING A USER MESSAGE ^^^",_YMStreamGetUserInfo(aStream)->streamID);
                 
-    //            void *response;
-    //            uint16_t responseLen;
-    //            NSLog(@"VVV MASTER READING A USER MESSAGE VVV");
-    //            [self receiveMessage:aStream :&response :&responseLen];
-    //            NSLog(@"^^^ MASTER READING A USER MESSAGE ^^^");
-    //            
-    //            int cmp = strcmp(response,testResponse);
-    //            XCTAssert(cmp == 0, @"response: %@",response);
+                void *response;
+                uint16_t responseLen;
+                NSLog(@"VVV MASTER %u READING A USER MESSAGE VVV",_YMStreamGetUserInfo(aStream)->streamID);
+                [self receiveMessage:aStream :&response :&responseLen];
+                NSLog(@"^^^ MASTER %u READING A USER MESSAGE ^^^",_YMStreamGetUserInfo(aStream)->streamID);
                 
-    #pragma message "THE THING YOU SPENT THE LAST 12 HOURS ON IS THAT SIGNAL BEFORE WAIT DOESN'T RELEASE WAIT"
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_global_queue(0, 0), ^{
-                    NSLog(@" YOLO SWAGG DELAYED SIGNALING FUCKFUCK %u",_YMStreamGetUserInfo(aStream)->streamID);
-                    YMSemaphoreSignal(__YMStreamGetSemaphore(aStream));
-                });
-                
-                NSLog(@"VVV LOCAL CLOSING STREAM VVV");
+                int cmp = strcmp(response,testResponse);
+                XCTAssert(cmp == 0, @"response: %@",response);
+
+                NSLog(@"VVV LOCAL %u CLOSING STREAM VVV",_YMStreamGetUserInfo(aStream)->streamID);
                 YMPlexerCloseStream(localPlexer, aStream);
-                NSLog(@"^^^ LOCAL CLOSING STREAM ^^^");
+                NSLog(@"^^^ LOCAL %u CLOSING STREAM ^^^",_YMStreamGetUserInfo(aStream)->streamID);
             }
-            
-            
-    #pragma message "what about a convenience for 'take this (new opaque 3rd-party file) and stream it automatically"
-    #pragma message "todo could YMStream provide a convenience for not framing these sizes twice" \
-                "like a 'write datagram of size' so that it could piggy-back off of the client's framing?"
         });
     }
 
@@ -154,11 +142,11 @@ const char *testResponse = "もしもし。you are coming in loud and clear, ran
 
 - (void)sendMessage:(YMStreamRef)stream :(const char *)message
 {
-    uint16_t length = (uint16_t)strlen(message);
+    uint16_t length = (uint16_t)strlen(message) + 1;
     [self sendMessage:stream :message :length];
 }
 
-- (void)sendMessage:(YMStreamRef)stream:(const void *)message :(uint16_t)length
+- (void)sendMessage:(YMStreamRef)stream :(const void *)message :(uint16_t)length
 {
     UserMessageHeader header = { length };
     YMStreamWriteDown(stream, (void *)&header, sizeof(header));
@@ -197,28 +185,27 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream)
 
 - (void)newStream:(YMPlexerRef)plexer :(YMStreamRef)stream
 {
-#pragma message "how to handle event starvation by doing this via dispatch thread? is it a user bug?"
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         for ( NSUInteger idx = 0; idx < PlexerTest1RoundTripsPerThread; idx++ )
         {
             NSLog(@"%s",__FUNCTION__);
-            char *message;
+            char *inMessage;
             uint16_t length;
-            NSLog(@"VVV REMOTE receiving message VVV");
-            [self receiveMessage:stream :(void **)&message :&length];
-            NSLog(@"^^^ REMOTE receiving message ^^^");
+            NSLog(@"VVV REMOTE %u receiving message VVV",_YMStreamGetUserInfo(stream)->streamID);
+            [self receiveMessage:stream :(void **)&inMessage :&length];
+            NSLog(@"^^^ REMOTE %u receiving message ^^^",_YMStreamGetUserInfo(stream)->streamID);
             
-            int cmp = strcmp(message, testMessage);
-            XCTAssert(cmp == 0,@"received %s",message);
+            int cmp = strcmp(inMessage, testMessage);
+            XCTAssert(cmp == 0,@"received %s",inMessage);
             
-            NSLog(@"VVV REMOTE going rogue VVV");
+            NSLog(@"VVV REMOTE %u going rogue VVV",_YMStreamGetUserInfo(stream)->streamID);
             YMPlexerCloseStream(plexer, stream);
             //XCTAssert(!badClose,@"receiver allowed to close stream");
-            NSLog(@"^^^ REMOTE going rogue ^^^");
+            NSLog(@"^^^ REMOTE %u going rogue ^^^",_YMStreamGetUserInfo(stream)->streamID);
             
-            NSLog(@"VVV SLAVE receiving message VVV");
+            NSLog(@"VVV SLAVE %u receiving message VVV",_YMStreamGetUserInfo(stream)->streamID);
             [self sendMessage:stream :testResponse];
-            NSLog(@"^^^ REMOTE receiving message ^^^");
+            NSLog(@"^^^ REMOTE %u receiving message ^^^",_YMStreamGetUserInfo(stream)->streamID);
         }
     });
 }

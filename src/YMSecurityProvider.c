@@ -63,7 +63,6 @@ void YMSecurityProviderSetInitFunc(YMSecurityProviderRef provider, ym_security_i
 
 bool YMSecurityProviderInit(YMSecurityProviderRef provider)
 {
-#pragma message "todo note we're not casting providerRef here... fix everywhere else"
     return provider->initFunc(provider->inputFile, provider->outputFile);
 }
 

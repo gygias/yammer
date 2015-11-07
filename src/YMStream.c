@@ -124,7 +124,6 @@ void YMStreamWriteDown(YMStreamRef stream, const void *buffer, uint16_t length)
     YMLog("  stream[%s,i%d->o%d!V,s%u]: wrote buffer for command %u",stream->name,downstreamWrite,debugDownstreamRead,stream->__userInfo->streamID,length);
     
     // signal the plexer to wake and service this stream
-#pragma message "should this lock, then ensure the sempahore isn't currently signaled before signaling again? wouldn't think so with stream chunk making each read 1-1"
     YMSemaphoreSignal(stream->__dataAvailableSemaphore);
     
     YMLog("  stream[%s,i%d->o%d!V,s%u]: wrote %lu + %u command",stream->name,downstreamWrite,debugDownstreamRead,stream->__userInfo->streamID,sizeof(header),length);
@@ -160,7 +159,6 @@ void _YMStreamWriteUp(YMStreamRef stream, const void *buffer, uint32_t length)
     }
 }
 
-#pragma message "NOW allow EOF here, after reviewing the rest NOW"
 void YMStreamReadUp(YMStreamRef stream, void *buffer, uint16_t length)
 {
     int upstreamRead = YMPipeGetOutputFile(stream->upstream);
@@ -187,9 +185,6 @@ void _YMStreamClose(YMStreamRef stream)
     int debugDownstreamRead = YMPipeGetOutputFile(stream->downstream);
     int debugUpstreamRead = YMPipeGetInputFile(stream->upstream);
     int debugUpstreamWrite = YMPipeGetOutputFile(stream->upstream);
-    
-#pragma message "does it make more sense to just write a 'close stream command' and then close the fd, rather than force plexer to literally 'read eof'?"
-    //stream->downstreamWriteClosed = true;
     
     YMStreamCommand command = { YMStreamClose };
     YMIOResult result = YMWriteFull(downstreamWrite, (void *)&command, sizeof(YMStreamClose));
@@ -219,7 +214,6 @@ void _YMStreamCloseUp(YMStreamRef stream)
     int debugUpstreamRead = YMPipeGetInputFile(stream->upstream);
     int upstreamWrite = YMPipeGetOutputFile(stream->upstream);
     
-#pragma message "does it make more sense to just write a 'close stream command' and then close the fd, rather than force plexer to literally 'read eof'?"
     stream->upstreamWriteClosed = true;
     int result = close(upstreamWrite);
     if ( result != 0 )
@@ -233,7 +227,6 @@ void _YMStreamCloseUp(YMStreamRef stream)
 
 bool _YMStreamIsClosed(YMStreamRef stream)
 {
-#pragma message "should we lock around methods which touch/read fd state?"
     return stream->downstreamWriteClosed;
 }
 
@@ -265,12 +258,6 @@ YMStreamUserInfoRef _YMStreamGetUserInfo(YMStreamRef stream)
 void _YMStreamSetDataAvailableSemaphore(YMStreamRef stream, YMSemaphoreRef semaphore)
 {
     stream->__dataAvailableSemaphore = semaphore;
-}
-
-#pragma message "SEMAPHORE DEBACLE"
-YMSemaphoreRef __YMStreamGetSemaphore(YMStreamRef stream)
-{
-    return stream->__dataAvailableSemaphore;
 }
 
 void _YMStreamSetLastServiceTimeNow(YMStreamRef stream)

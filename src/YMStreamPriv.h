@@ -48,8 +48,6 @@ int _YMStreamGetUpstreamWrite(YMStreamRef);
 int _YMStreamGetUpstreamRead(YMStreamRef);
 YMStreamUserInfoRef _YMStreamGetUserInfo(YMStreamRef);
 void _YMStreamSetDataAvailableSemaphore(YMStreamRef stream, YMSemaphoreRef semaphore);
-#pragma message "SEMAPHORE DEBACLE"
-YMSemaphoreRef __YMStreamGetSemaphore(YMStreamRef stream);
 
 void _YMStreamSetLastServiceTimeNow(YMStreamRef stream);
 struct timeval *_YMStreamGetLastServiceTime(YMStreamRef stream);

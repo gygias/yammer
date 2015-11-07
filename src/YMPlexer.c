@@ -26,9 +26,6 @@
 
 #include <pthread.h> // explicit for sigpipe
 
-#pragma message "SEMAPHORE DEBACLE"
-#include "YMSemaphore.h"
-
 #define YMPlexerBuiltInVersion ((uint32_t)1)
 
 // initialization
@@ -49,8 +46,6 @@ typedef enum YMPlexerCommandType
     YMPlexerCommandCloseStream = -1
 } YMPlexerCommand;
 
-#pragma message "todo clean these smattered things up AND all the structs at the top of YMThread.c"
-#pragma message "and unions... or even generic nPointers definitions from YMThreadDispatch!"
 typedef struct __ym_notify_plexer_def
 {
     YMPlexerRef plexer;
@@ -65,7 +60,6 @@ typedef struct __ym_notify_plexer_stream_def
 void *ym_notify_new_stream(void *context);
 void *ym_notify_stream_closing(void *context);
 
-#pragma message "for fanciness, have [command,(variable)] and make a union struct for streamID, etc?"
 typedef struct {
     YMPlexerCommand command;
     YMStreamID streamID;
@@ -115,7 +109,7 @@ typedef struct __YMPlexer
     YMThreadRef remoteServiceThread;
     YMThreadRef eventDeliveryThread;
     YMLockRef interruptionLock;
-    YMSemaphoreRef localDataAvailableSemaphore;
+    YMSemaphoreRef streamMessageSemaphore;
     
     // user
     ym_plexer_interrupted_func interruptedFunc;
@@ -180,7 +174,7 @@ YMPlexerRef YMPlexerCreate(char *name, int inputFile, int outputFile, bool maste
     plexer->interruptionLock = YMLockCreate();
     
     memberName = YMStringCreateWithFormat("plex-%s-signal",plexer->name);
-    plexer->localDataAvailableSemaphore = YMSemaphoreCreate(memberName);
+    plexer->streamMessageSemaphore = YMSemaphoreCreate(memberName,0);
     free(memberName);
     
     plexer->inputFile = inputFile;
@@ -368,7 +362,6 @@ bool _YMPlexerInitAsSlave(YMPlexerRef plexer)
         return false;
     }
     
-#pragma message "todo renegotiate"
     if ( ! supported )
     {
         YMLog(errorTemplate,"master requested protocol newer than built-in %lu",YMPlexerBuiltInVersion);
@@ -388,14 +381,13 @@ void *_YMPlexerServiceDownstreamThread(void *context)
     {
         YMLog(" plexer[%s-V]: awaiting signal",plexer->name);
         // there is only one thread consuming this semaphore, so i think it's ok not to actually lock around this loop iteration
-        YMSemaphoreWait(plexer->localDataAvailableSemaphore);
+        YMSemaphoreWait(plexer->streamMessageSemaphore);
         
         int readyStreams = 0;
         YMStreamRef servicingStream = _YMPlexerChooseDownstream(plexer, &readyStreams);
         
         YMLog(" plexer[%s-V]: signaled, %d streams ready",plexer->name,readyStreams);
         
-#pragma message "todo, choose should probably return an ordered list, because this is awkward at this level"
         //while ( --readyStreams )
         {
             if ( ! servicingStream )
@@ -414,7 +406,6 @@ void *_YMPlexerServiceDownstreamThread(void *context)
         }
     }
     
-#pragma message "todo free user info of deallocated streams somewhere"
     YMLog(" plexer[%s]: down service thread exiting",plexer->name);
     return NULL;
 }
@@ -441,7 +432,7 @@ YMStreamRef _YMPlexerChooseDownstream(YMPlexerRef plexer, int *outReadyStreams)
             // a zero'd timeval struct indicates a poll, which is what i think we want here
             // if something goes "wrong" (todo) with one stream, don't starve the others
             struct timeval timeout = { 0, 0 };
-#pragma message "todo unsure of this, but select(all) and note how many times this loop should iterate before sleeping again?"
+            
             int nReadyFds = select(downRead + 1, &fdset, NULL, NULL, &timeout);
             
             if ( nReadyFds <= 0 ) // zero is a timeout
@@ -451,8 +442,6 @@ YMStreamRef _YMPlexerChooseDownstream(YMPlexerRef plexer, int *outReadyStreams)
                     YMLog(" plexer[%s-V,s%u]: fatal: select failed %d (%s)",plexer->name,aLocalStreamID,errno,strerror(errno));
                     abort();
                 }
-                
-#pragma message "this should probably be FATAL, once SEMAPHORE DEBACLE delayed signal cheese is removed"
                 goto catch_continue;
             }
             
@@ -461,7 +450,6 @@ YMStreamRef _YMPlexerChooseDownstream(YMPlexerRef plexer, int *outReadyStreams)
             struct timeval *thisStreamLastService = _YMStreamGetLastServiceTime(aLocalStream);
             if ( YMTimevalCompare(thisStreamLastService, &newestTime ) != GreaterThan )
                 servicingStream = aLocalStream;
-            
         catch_continue:
             localStreamsEnum = YMDictionaryEnumeratorGetNext(localStreamsEnum);
         }
@@ -478,7 +466,6 @@ YMStreamRef _YMPlexerChooseDownstream(YMPlexerRef plexer, int *outReadyStreams)
 bool _YMPlexerServiceDownstream(YMPlexerRef plexer, YMStreamRef servicingStream)
 {
     YMStreamID streamID = _YMStreamGetUserInfo(servicingStream)->streamID;
-#pragma message "todo go through all of these logs and print fd before stream id where applicable"
     YMLog(" plexer[%s-V,V]: chose stream %u for service",plexer->name,streamID);
     
     // update last service time on stream
@@ -525,7 +512,6 @@ bool _YMPlexerServiceDownstream(YMPlexerRef plexer, YMStreamRef servicingStream)
     
     YMLog(" plexer[%s-V,s%u]: read stream chunk",plexer->name,streamID);
     
-#pragma message "todo add hton ntoh to stuff across the wire"
     YMPlexerMessage plexMessage = {closing ? YMPlexerCommandCloseStream : chunkLength, streamID };
     size_t plexMessageLen = sizeof(plexMessage);
     YMIOResult ioResult = YMWriteFull(plexer->outputFile, (void *)&plexMessage, plexMessageLen);
@@ -567,7 +553,6 @@ void *_YMPlexerServiceUpstreamThread(void *context)
         size_t chunkLength = 0;
         YMPlexerMessage plexerMessage;
         
-#pragma message "IMPORTANT: go through and reconcile 'internal' io errors (hard) from network (disconnect) from coordinated (close command)"
         result = YMReadFull(plexer->inputFile, (void *)&plexerMessage, sizeof(plexerMessage));
         if ( result != YMIOSuccess )
         {
@@ -605,20 +590,10 @@ void *_YMPlexerServiceUpstreamThread(void *context)
             YMThreadDispatchUserInfo userDispatch = { ym_notify_stream_closing, notifyDef, true, NULL, memberName };
             YMThreadDispatchDispatch(plexer->eventDeliveryThread, &userDispatch);
             
-#pragma message "does order of note and CloseUp matter?"
             _YMStreamCloseUp(theStream);
-//            {
-//                YMLog(" plexer[%s-^,%d,s%u]: fatal: stream closing",plexer->name,plexer->outFd,header.streamID);
-//                _YMPlexerInterrupt(plexer);
-//                abort();
-//                break;
-//            }
-            YMLog("******* TODO CLEAN UP LOCAL SHIT (UPSTREAM) ******");
             continue;
         }
         
-#pragma message "improvement: due to some bug on day 3, this was growing out of control and guard YMMALLOC was eventually barfing" \
-                "seems like this should be able to split large user chunks into smaller plexer chunks"
         while ( chunkLength > plexer->remotePlexBufferSize )
         {
             plexer->remotePlexBufferSize *= 2;
@@ -646,7 +621,6 @@ void *_YMPlexerServiceUpstreamThread(void *context)
         }
     }
     
-#pragma message "todo free user info of deallocated streams somewhere"
     YMLog(" plexer[%s-^]: remote service thread exiting",plexer->name);
     return NULL;
 }
@@ -665,7 +639,6 @@ void *ym_notify_new_stream(void *context)
     return NULL;
 }
 
-#pragma message "consolidate these, add a function ptr and string for logging?"
 void *ym_notify_stream_closing(void *context)
 {
     YMThreadDispatchUserInfoRef userDispatch = context;
@@ -701,8 +674,6 @@ YMStreamRef _YMPlexerGetOrCreateStreamWithID(YMPlexerRef plexer, YMStreamID stre
         // new stream
         if ( ! theStream )
         {
-#pragma message "todo find a way to optimize passing of ownership for these cases?"
-        
             YMLog(" plexer[%s,s%u]: notifying new remote stream",plexer->name,streamID);
             
             YMStreamUserInfoRef userInfo = (YMStreamUserInfoRef)YMMALLOC(sizeof(struct __YMStreamUserInfo));
@@ -711,12 +682,11 @@ YMStreamRef _YMPlexerGetOrCreateStreamWithID(YMPlexerRef plexer, YMStreamID stre
             theStream = YMStreamCreate(memberName, false, userInfo);
             free(memberName);
             
+            YMDictionaryAdd(plexer->remoteStreamsByID, streamID, theStream);
+            
             _ym_notify_plexer_stream_def *notifyDef = (_ym_notify_plexer_stream_def *)YMMALLOC(sizeof(_ym_notify_plexer_stream_def));
             notifyDef->plexer = plexer;
             notifyDef->stream = theStream;
-            
-            if ( streamID == 62 )
-                YMLog("WTF");
             
             memberName = YMStringCreateWithFormat("plex-%s-notify-new-%u",plexer->name,streamID);
             YMThreadDispatchUserInfo userDispatch = { ym_notify_new_stream, notifyDef, true, NULL, memberName };
@@ -730,7 +700,6 @@ YMStreamRef _YMPlexerGetOrCreateStreamWithID(YMPlexerRef plexer, YMStreamID stre
 
 void _YMPlexerInterrupt(YMPlexerRef plexer)
 {
-#pragma message "todo, needs synchronization between up and down"
     YMLog(" plexer[%s]: *** _YMPlexerInterrupt, todo",plexer->name);
     
     if ( ! plexer->active )
@@ -773,7 +742,7 @@ YMStreamRef YMPlexerCreateNewStream(YMPlexerRef plexer, const char *name, bool d
         char *memberName = YMStringCreateWithFormat("plex-V-%u:%s",newStreamID,name);
         newStream = YMStreamCreate(memberName, true, userInfo);
         free(memberName);
-        _YMStreamSetDataAvailableSemaphore(newStream, plexer->localDataAvailableSemaphore);
+        _YMStreamSetDataAvailableSemaphore(newStream, plexer->streamMessageSemaphore);
         if ( YMDictionaryContains(plexer->localStreamsByID, newStreamID) )
         {
             YMLog(" plexer[%s]: fatal: YMPlexer has run out of streams",plexer->name);
@@ -787,7 +756,6 @@ YMStreamRef YMPlexerCreateNewStream(YMPlexerRef plexer, const char *name, bool d
         }
     }
     YMLockUnlock(plexer->localAccessLock);
-#pragma message "todo fcntl direct."
     
     return newStream;
 }
@@ -798,7 +766,6 @@ void YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream)
     YMStreamID streamID = _YMStreamGetUserInfo(stream)->streamID;
     
     YMStreamRef localStream;
-#pragma message "stream knows whether it's 'local', so something is reundant here"
     YMLockLock(plexer->localAccessLock);
     {
         localStream = (YMStreamRef)YMDictionaryGetItem(plexer->localStreamsByID, streamID);
@@ -818,10 +785,8 @@ void YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream)
             YMLog(" plexer[%s]: error: user requested closure of remote stream %u",plexer->name,streamID);
         else
             YMLog(" plexer[%s]: error: user requested closure of unknown stream %u",plexer->name,streamID);
-#pragma message "THIS IS COMMENTED OUT ONLY UNTIL SIGNAL->WAIT IS FIGURED OUT (dispatch_after in test case)!!!!!!!"
-        YMSemaphoreSignal(__YMStreamGetSemaphore(stream));
-        return;
-        //abort();
+        
+        abort();
     }
     
     _YMStreamClose(localStream);

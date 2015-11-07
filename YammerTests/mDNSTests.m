@@ -183,7 +183,7 @@ void test_service_removed(YMmDNSBrowserRef browser, const char *serviceName, voi
                         @[ @"resolution", [NSValue valueWithPointer:&waitingOnResolution] ],
                         @[ @"disappearance", [NSValue valueWithPointer:&waitingOnDisappearance] ] ];
     
-    [steps enumerateObjectsUsingBlock:^(id  _Nonnull obj, __unused NSUInteger _idx, BOOL * _Nonnull stop) {
+    [steps enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger _idx, BOOL * _Nonnull stop) {
         NSArray *stepArray = (NSArray *)obj;
         NSString *stepName = stepArray[0];
         BOOL *flag = [(NSValue *)stepArray[1] pointerValue];

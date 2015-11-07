@@ -89,7 +89,6 @@ YMIOResult YMWriteFull(int fd, const uint8_t *buffer, size_t bytes)
     return YMIOSuccess;
 }
 
-#pragma message "todo inline these?"
 char *YMStringCreateWithFormat(char *formatStr, ...)
 {
     va_list testArgs,formatArgs;

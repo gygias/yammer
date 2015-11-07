@@ -261,7 +261,6 @@ bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser, const char *serviceName)
     return true;
 }
 
-#pragma message "todo filter or otherwise flag local services"
 void _YMmDNSBrowserAddOrUpdateService(_YMmDNSBrowser *browser, YMmDNSServiceRecord *record)
 {
     YMmDNSServiceList *aListItem = (YMmDNSServiceList *)browser->serviceList;

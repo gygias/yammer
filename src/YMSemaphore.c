@@ -21,9 +21,11 @@ typedef struct __YMSemaphore
     pthread_cond_t cond;
     YMLockRef lock;
     const char *name;
+    
+    int value;
 } _YMSemaphore;
 
-YMSemaphoreRef YMSemaphoreCreate(const char *name)
+YMSemaphoreRef YMSemaphoreCreate(const char *name, int initialValue)
 {
     pthread_cond_t cond;
     int result = pthread_cond_init(&cond, NULL); // "FreeBSD doesn't support non-default attributes"
@@ -38,6 +40,7 @@ YMSemaphoreRef YMSemaphoreCreate(const char *name)
     
     semaphore->lock = YMLockCreateWithOptionsAndName(YMLockDefault, "__ymsemaphore_mutex");
     semaphore->cond = cond;
+    semaphore->value = initialValue;
     
     semaphore->name = strdup( name ? name : "unnamed" );
     

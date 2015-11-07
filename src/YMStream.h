@@ -18,7 +18,4 @@ typedef struct __YMStream *YMStreamRef;
 void YMStreamWriteDown(YMStreamRef stream, const void *buffer, uint16_t length);
 void YMStreamReadUp(YMStreamRef stream, void *buffer, uint16_t length);
 
-#pragma message "todo write up and read down should be private"
-
-
 #endif /* YMStream_h */

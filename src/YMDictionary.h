@@ -38,9 +38,7 @@ YMDictionaryEnumRef YMDictionaryEnumeratorBegin(YMDictionaryRef);
 YMDictionaryEnumRef YMDictionaryEnumeratorGetNext(YMDictionaryEnumRef aEnum);
 // call only if cancelling incomplete enumeration, if GetNext returns NULL there is nothing more for the caller to do.
 void YMDictionaryEnumeratorEnd(YMDictionaryEnumRef aEnum);
-#pragma message "todo add 'modified while being enumerated' guard? should be easy"
 
-#pragma message "TODO: 'last' is here, for popping dispatches in YMThread in FIFO, because LinkedList isn't finished"
 bool YMDictionaryPopKeyValue(YMDictionaryRef, bool last, YMDictionaryKey *outKey, YMDictionaryValue *outValue);
 
 #endif /* YMDictionary_h */

@@ -98,7 +98,7 @@ YMThreadRef _YMThreadCreate(char *name, bool isDispatchThread, ym_thread_entry e
         thread->dispatchListLock = YMLockCreate();
         thread->dispatchesByID = YMDictionaryCreate();
         char *semName = YMStringCreateWithFormat("%s-dispatch",name);
-        thread->dispatchSemaphore = YMSemaphoreCreate(semName);
+        thread->dispatchSemaphore = YMSemaphoreCreate(semName,0);
         free(semName);
         thread->dispatchIDNext = 0;
     }
@@ -199,8 +199,6 @@ void YMThreadDispatchDispatch(YMThreadRef thread, YMThreadDispatchUserInfoRef us
     YMLockUnlock(thread->dispatchListLock);
     
     YMSemaphoreSignal(thread->dispatchSemaphore);
-    
-#pragma message "todo vet ownership of all this stuff"
 }
 
 YMThreadDispatchUserInfoRef _YMThreadDispatchCopyUserInfo(YMThreadDispatchUserInfoRef userDispatchRef)
@@ -255,8 +253,6 @@ void *_YMThreadDispatchThreadProc(void *threadDefPtr)
     
     YMLockLock(gDispatchThreadListLock);
     {
-#pragma message "todo stopFlag is the only way to terminate a dispatch thread, so we should be correct to free these guys here, but make sure " \
-        "sometime when you haven't written 500 lines of c code in an hour."
         threadDef = (_YMThreadDispatchThreadDef *)YMDictionaryRemove(gDispatchThreadDefsByID, thread->dispatchThreadID);
         
         if ( ! threadDef )

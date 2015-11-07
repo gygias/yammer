@@ -146,7 +146,6 @@ YMDictionaryEnumRef YMDictionaryEnumeratorGetNext(YMDictionaryEnumRef aEnum)
     _YMDictionaryItemRef item = (_YMDictionaryItemRef)aEnum; // overlapping
     _YMDictionaryItemRef next = item->next;
     
-#pragma message "todo why bother reallocating our enum-cum-listitem each time?"
     free(item);
     
     if ( ! next )
@@ -184,7 +183,6 @@ bool YMDictionaryPopKeyValue(YMDictionaryRef dict, bool last, YMDictionaryKey *o
     
     if ( last )
     {
-#pragma message "todo this was done as i was about to go get chik-fil-a"
         if ( outItem == dict->head )
             dict->head = NULL;
         else
