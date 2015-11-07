@@ -283,7 +283,7 @@ void _YMmDNSBrowserAddOrUpdateService(_YMmDNSBrowser *browser, YMmDNSServiceReco
     
     // add
     aListItem = browser->serviceList;
-    YMmDNSServiceList *newItem = (YMmDNSServiceList *)malloc(sizeof(YMmDNSServiceList));
+    YMmDNSServiceList *newItem = (YMmDNSServiceList *)YMMALLOC(sizeof(YMmDNSServiceList));
     newItem->service = record;
     newItem->next = aListItem;
     browser->serviceList = newItem;
@@ -341,11 +341,17 @@ void DNSSD_API _YMmDNSEnumerateReply(DNSServiceRef sdRef, DNSServiceFlags flags,
 }
 #endif
 
-static void DNSSD_API _YMmDNSBrowseCallback(DNSServiceRef serviceRef, DNSServiceFlags flags, uint32_t ifIdx, DNSServiceErrorType result, const char *name, const char *type,
+static void DNSSD_API _YMmDNSBrowseCallback(__unused DNSServiceRef serviceRef, DNSServiceFlags flags, __unused uint32_t ifIdx, DNSServiceErrorType result, const char *name, const char *type,
                                             const char *domain, void *context)
 {
+    
     //YMLog("_YMmDNSBrowseCallback: %s/%s:?: if: %u flags: %04x", type, name, ifIdx, result);
     _YMmDNSBrowser *browser = (_YMmDNSBrowser *)context;
+    if ( result != kDNSServiceErr_NoError )
+    {
+        YMLog("mDNS[%s]: error: browse callback: %d",browser->type,result);
+        return;
+    }
     
     // "An enumeration callback with the "Add" flag NOT set indicates a "Remove", i.e. the domain is no longer valid.
     bool remove = (flags & kDNSServiceFlagsAdd) == 0;
@@ -359,7 +365,7 @@ static void DNSSD_API _YMmDNSBrowseCallback(DNSServiceRef serviceRef, DNSService
     }    
 }
 
-void DNSSD_API _YMmDNSResolveCallback(DNSServiceRef serviceRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType result, const char *fullname,
+void DNSSD_API _YMmDNSResolveCallback(__unused DNSServiceRef serviceRef,__unused DNSServiceFlags flags, __unused uint32_t interfaceIndex, DNSServiceErrorType result, const char *fullname,
                                       const char *host, uint16_t port, uint16_t txtLength, const unsigned char *txtRecord, void *context )
 {
     _YMmDNSBrowser *browser = (_YMmDNSBrowser *)context;
@@ -372,8 +378,7 @@ void DNSSD_API _YMmDNSResolveCallback(DNSServiceRef serviceRef, DNSServiceFlags 
     if ( okay )
     {
         // fullname:        The full service domain name, in the form <servicename>.<protocol>.<domain>.
-        char *name = strdup(fullname);
-        char *firstDotPtr = strstr(name, ".");
+        char *firstDotPtr = strstr(fullname, ".");
         if ( ! firstDotPtr )
         {
             YMLog("_YMmDNSResolveCallback doesn't know how to parse name '%s'",fullname);
@@ -382,7 +387,7 @@ void DNSSD_API _YMmDNSResolveCallback(DNSServiceRef serviceRef, DNSServiceFlags 
         }
         firstDotPtr[0] = '\0';
         
-        record = _YMmDNSCreateServiceRecord(name, browser->type,
+        record = _YMmDNSCreateServiceRecord(fullname, browser->type,
 #ifdef YMmDNS_ENUMERATION
 #error fixme
 #else

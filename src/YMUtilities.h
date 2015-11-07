@@ -26,8 +26,16 @@ void YMSetTheBeginningOfPosixTimeForCurrentPlatform(struct timeval *time);
 void YMSetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time);
 #pragma message "todo add inlines"
 
-bool YMReadFull(int fd, uint8_t *buffer, size_t bytes);
-bool YMWriteFull(int fd, const uint8_t *buffer, size_t bytes);
+typedef enum
+{
+#pragma message "is there a way to guard against YMIOResult* == int?"
+    YMIOSuccess = 1,
+    YMIOEOF = 0,
+    YMIOError = -1
+} YMIOResult;
+
+YMIOResult YMReadFull(int fd, uint8_t *buffer, size_t bytes);
+YMIOResult YMWriteFull(int fd, const uint8_t *buffer, size_t bytes);
 
 char *YMStringCreateWithFormat(char *formatStr, ...) __printflike(1, 2);
 char *YMStringCreateByAppendingString(char *baseStr, char *appendStr);

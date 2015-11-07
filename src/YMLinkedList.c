@@ -29,7 +29,7 @@ YMLinkedListItem *_YMLinkedListFindItemWithIdentifier(YMLinkedListItem *head, bo
 
 YMLinkedListRef YMLinkedListCreate()
 {
-    _YMLinkedList *list = (_YMLinkedList *)malloc(sizeof(_YMLinkedList));
+    _YMLinkedList *list = (_YMLinkedList *)YMMALLOC(sizeof(_YMLinkedList));
     list->_typeID = _YMLinkedListTypeID;
     
     list->head = NULL;
@@ -58,9 +58,10 @@ void YMLinkedListAdd(YMLinkedListRef list, void *item)
 {
     _YMLinkedList *_list = (_YMLinkedList *)list;
     
-    YMLinkedListItem *newItem = (YMLinkedListItem *)malloc(sizeof(YMLinkedListItem));
+    YMLinkedListItem *newItem = (YMLinkedListItem *)YMMALLOC(sizeof(YMLinkedListItem));
     newItem->representedItem = item;
     newItem->next = (struct _YMLinkedListItem *)_list->head;
+    _list->head = newItem;
 }
 
 bool YMLinkedListContains(YMLinkedListRef list, bool (*identifierFunc)(void *))

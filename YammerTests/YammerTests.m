@@ -8,6 +8,8 @@
 
 #import <XCTest/XCTest.h>
 
+#import "YammerTestUtilities.h"
+
 @interface YammerTests : XCTestCase
 {
 }

@@ -11,6 +11,8 @@
 
 #include "YMBase.h"
 
+#include <pthread.h>
+
 typedef enum
 {
     YMLockDefault = 0,

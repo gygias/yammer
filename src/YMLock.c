@@ -29,7 +29,7 @@ YMLockRef YMLockCreate()
 
 YMLockRef YMLockCreateWithOptions(YMLockOptions options)
 {
-    return YMLockCreateWithOptionsAndName(YMLockDefault, NULL);
+    return YMLockCreateWithOptionsAndName(options, NULL);
 }
 
 YMLockRef YMLockCreateWithOptionsAndName(YMLockOptions options, char *name)
@@ -38,7 +38,7 @@ YMLockRef YMLockCreateWithOptionsAndName(YMLockOptions options, char *name)
     if ( ! _YMLockGetNewMutexWithOptions(options, &mutex) )
         return NULL;
     
-    _YMLock *lock = (_YMLock *)malloc(sizeof(_YMLock));
+    _YMLock *lock = (_YMLock *)YMMALLOC(sizeof(_YMLock));
     lock->_typeID = _YMLockTypeID;
     
     lock->mutex = mutex;

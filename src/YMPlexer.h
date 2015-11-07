@@ -18,8 +18,8 @@ typedef void (*ym_plexer_interrupted_func)      (YMPlexerRef);
 typedef void (*ym_plexer_new_upstream_func)     (YMPlexerRef,YMStreamRef);
 typedef void (*ym_plexer_stream_closing_func)   (YMPlexerRef,YMStreamRef);
 
-YMPlexerRef YMPlexerCreate(int inFd, int outFd, bool master);
-YMPlexerRef YMPlexerCreateWithFullDuplexFile(int fd, bool master);
+YMPlexerRef YMPlexerCreate(char *name, int inputFile, int outputFile, bool master);
+YMPlexerRef YMPlexerCreateWithFullDuplexFile(char *name, int file, bool master);
 
 // init
 void YMPlexerSetInterruptedFunc(YMPlexerRef plexer, ym_plexer_interrupted_func func);
@@ -33,6 +33,6 @@ bool YMPlexerStart(YMPlexerRef plexer);
 void YMPlexerStop(YMPlexerRef plexer);
 
 YMStreamRef YMPlexerCreateNewStream(YMPlexerRef plexer, const char *name, bool direct);
-bool YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream);
+void YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream);
 
 #endif /* YMPlexer_h */

@@ -19,5 +19,6 @@ YMSessionRef YMSessionCreate()
 
 void _YMSessionFree(YMTypeRef object)
 {
-    
+    YMSessionRef session = (YMSessionRef)object;
+    free(session);
 }

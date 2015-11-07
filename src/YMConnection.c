@@ -19,5 +19,6 @@ YMConnectionRef YMConnectionCreate()
 
 void _YMConnectionFree(YMTypeRef object)
 {
-    
+    YMConnectionRef connection = (YMConnectionRef)object;
+    free(connection);
 }

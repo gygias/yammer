@@ -8,6 +8,8 @@
 
 #include "YMUtilities.h"
 
+#include "YMPrivate.h"
+
 #include <stdarg.h>
 
 //// Glyph from http://stackoverflow.com/questions/2053843/min-and-max-value-of-data-type-in-c
@@ -51,22 +53,22 @@ ComparisonResult YMTimevalCompare(struct timeval *a, struct timeval *b)
     return EqualTo;
 }
 
-bool YMReadFull(int fd, uint8_t *buffer, size_t bytes)
+YMIOResult YMReadFull(int fd, uint8_t *buffer, size_t bytes)
 {
     size_t off = 0;
     while ( off < bytes )
     {
         ssize_t aRead = read(fd, (void *)buffer + off, bytes - off);
         if ( aRead == 0 )
-            return false;
+            return YMIOEOF;
         else if ( aRead == -1 )
-            return false;
+            return YMIOError;
         off += aRead;
     }
-    return true;
+    return YMIOSuccess;
 }
 
-bool YMWriteFull(int fd, const uint8_t *buffer, size_t bytes)
+YMIOResult YMWriteFull(int fd, const uint8_t *buffer, size_t bytes)
 {
     size_t off = 0;
     while ( off < bytes )
@@ -77,14 +79,14 @@ bool YMWriteFull(int fd, const uint8_t *buffer, size_t bytes)
             case 0:
                 printf("YMWrite: aWrite=0?");
             case -1:
-                return false;
+                return YMIOError;
                 break;
             default:
                 break;
         }
         off += aWrite;
     }
-    return true;
+    return YMIOSuccess;
 }
 
 #pragma message "todo inline these?"
@@ -102,7 +104,7 @@ char *YMStringCreateWithFormat(char *formatStr, ...)
         YMLog("snprintf failed on format: %s", formatStr);
     else
     {
-        newStr = (char *)malloc(length);
+        newStr = (char *)YMMALLOC(length);
         //va_start(formatArgs,formatStr);
         vsnprintf(newStr, length, formatStr, formatArgs);
         va_end(formatArgs);
@@ -118,7 +120,7 @@ char *YMStringCreateByAppendString(char *baseStr, char *appendStr)
     size_t baseLen = strlen(baseStr);
     size_t appendLen = strlen(appendStr);
     size_t newStringLen = baseLen + appendLen + 1;
-    char *newString = (char *)malloc(newStringLen);
+    char *newString = (char *)YMMALLOC(newStringLen);
     memcpy(newString, baseStr, baseLen);
     memcpy(newString + baseLen, appendStr, appendLen);
     newString[newStringLen - 1] = '\0';

@@ -8,6 +8,8 @@
 
 #import <XCTest/XCTest.h>
 
+#import "YammerTestUtilities.h"
+
 #import "YMmDNS.h"
 #import "YMmDNSService.h"
 #import "YMmDNSBrowser.h"
@@ -41,40 +43,6 @@ mDNSTests *gGlobalSelf;
 #else
 #define testTimeout 10
 #endif
-
-- (NSString *)_randomASCIIStringWithMaxLength:(uint8_t)maxLength :(BOOL)forServiceName
-{
-    NSMutableString *string = [NSMutableString string];
-    
-    uint8_t randomLength = arc4random_uniform(maxLength);
-    if ( randomLength == 0 ) randomLength = 1;
-    uint8_t maxChar = forServiceName ? 'z' : 0x7E, minChar = forServiceName ? 'a' : 0x20;
-    uint8_t range = maxChar - minChar;
-    
-    while ( randomLength-- )
-    {
-        char aChar;
-        while ( ( aChar = arc4random_uniform(range + 1) + minChar ) == '=' );
-        [string appendFormat:@"%c",aChar];
-    }
-    
-    return string;
-}
-
-- (NSData *)_randomValueWithMaxLength:(uint8_t)maxLength
-{
-    NSMutableData *data = [NSMutableData data];
-    
-    uint8_t randomLength = arc4random_uniform(maxLength);
-    
-    while ( randomLength-- )
-    {
-        uint8_t aByte = arc4random_uniform(0x100);
-        [data appendBytes:&aByte length:sizeof(aByte)];
-    }
-    
-    return data;
-}
 
 - (void)setUp {
     [super setUp];
@@ -181,7 +149,7 @@ void test_service_removed(YMmDNSBrowserRef browser, const char *serviceName, voi
 - (void)testBonjourCreateServiceDiscoverAndResolve
 {
     BOOL okay;
-    testServiceName = [self _randomASCIIStringWithMaxLength:mDNS_SERVICE_NAME_LENGTH_MAX :YES];
+    testServiceName = YMRandomASCIIStringWithMaxLength(mDNS_SERVICE_NAME_LENGTH_MAX, YES);
     service = YMmDNSServiceCreate(testServiceType, [testServiceName UTF8String], 5050);
     
     nTestKeyPairs = arc4random_uniform(10);
@@ -191,12 +159,12 @@ void test_service_removed(YMmDNSBrowserRef browser, const char *serviceName, voi
     for ( ; idx < nTestKeyPairs; idx++ )
     {
         testKeyPairs[idx] = calloc(1,sizeof(YMmDNSTxtRecordKeyPair));
-        NSString *randomKey = [self _randomASCIIStringWithMaxLength:testKeyLengthBound :NO];
+        NSString *randomKey = YMRandomASCIIStringWithMaxLength(testKeyLengthBound, NO);
         testKeyPairs[idx]->key = strdup((char *)[randomKey cStringUsingEncoding:NSASCIIStringEncoding]);//"test-key";
-        NSData *valueData = [self _randomValueWithMaxLength:(254 - [randomKey lengthOfBytesUsingEncoding:NSASCIIStringEncoding])]; // 256 - '=' - size prefix, ok?
+        NSData *valueData = YMRandomDataWithMaxLength((uint8_t)(254 - [randomKey lengthOfBytesUsingEncoding:NSASCIIStringEncoding])); // 256 - '=' - size prefix, ok?
         testKeyPairs[idx]->value = malloc([valueData length]);
         memcpy((void *)testKeyPairs[idx]->value, [valueData bytes], [valueData length]);
-        testKeyPairs[idx]->valueLen = [valueData length];
+        testKeyPairs[idx]->valueLen = (uint8_t)[valueData length];
         
         NSLog(@"aKeyPair[%u]: [%u]%s => [%d]", (unsigned)idx, (unsigned)[randomKey length], [randomKey UTF8String], (int)[valueData length]);
     }
@@ -215,7 +183,7 @@ void test_service_removed(YMmDNSBrowserRef browser, const char *serviceName, voi
                         @[ @"resolution", [NSValue valueWithPointer:&waitingOnResolution] ],
                         @[ @"disappearance", [NSValue valueWithPointer:&waitingOnDisappearance] ] ];
     
-    [steps enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+    [steps enumerateObjectsUsingBlock:^(id  _Nonnull obj, __unused NSUInteger _idx, BOOL * _Nonnull stop) {
         NSArray *stepArray = (NSArray *)obj;
         NSString *stepName = stepArray[0];
         BOOL *flag = [(NSValue *)stepArray[1] pointerValue];

@@ -63,12 +63,12 @@ void _YMThreadFreeDispatchInternal(_YMThreadDispatchInternal *dispatchInternal);
 
 YMThreadRef _YMThreadCreate(char *name, bool isDispatchThread, ym_thread_entry entryPoint, void *context)
 {
-    _YMThread *thread = (_YMThread *)malloc(sizeof(struct __YMThread));
+    _YMThread *thread = (_YMThread *)YMMALLOC(sizeof(struct __YMThread));
     thread->_typeID = _YMThreadTypeID;
     
     pthread_once(&gDispatchInitOnce, _YMThreadDispatchInit);
     
-    thread->name = strdup(name ? name : "unnamed-thread");
+    thread->name = strdup(name ? name : "unnamed");
     thread->entryPoint = isDispatchThread ? _YMThreadDispatchThreadProc : entryPoint;
     thread->context = context;
     thread->pthread = NULL;
@@ -85,7 +85,7 @@ YMThreadRef _YMThreadCreate(char *name, bool isDispatchThread, ym_thread_entry e
                 abort();
             }
             
-            _YMThreadDispatchThreadDef *dispatchThreadDef = (_YMThreadDispatchThreadDef *)malloc(sizeof(_YMThreadDispatchThreadDef));
+            _YMThreadDispatchThreadDef *dispatchThreadDef = (_YMThreadDispatchThreadDef *)YMMALLOC(sizeof(_YMThreadDispatchThreadDef));
             dispatchThreadDef->ymThread = thread;
             dispatchThreadDef->stopFlag = calloc(1, sizeof(bool));
             
@@ -97,7 +97,7 @@ YMThreadRef _YMThreadCreate(char *name, bool isDispatchThread, ym_thread_entry e
         
         thread->dispatchListLock = YMLockCreate();
         thread->dispatchesByID = YMDictionaryCreate();
-        char *semName = YMStringCreateWithFormat("dispatch-%s",name);
+        char *semName = YMStringCreateWithFormat("%s-dispatch",name);
         thread->dispatchSemaphore = YMSemaphoreCreate(semName);
         free(semName);
         thread->dispatchIDNext = 0;
@@ -109,7 +109,6 @@ YMThreadRef _YMThreadCreate(char *name, bool isDispatchThread, ym_thread_entry e
 void _YMThreadFree(YMTypeRef object)
 {
     YMThreadRef thread = (YMThreadRef)object;
-    free(thread->name);
     
     if ( thread->isDispatchThread )
     {
@@ -127,6 +126,7 @@ void _YMThreadFree(YMTypeRef object)
     }
     // todo is there anything we should reasonably do to user threads here?
     
+    free(thread->name);
     free(thread);
 }
 
@@ -178,9 +178,10 @@ void YMThreadDispatchDispatch(YMThreadRef thread, YMThreadDispatchUserInfoRef us
         abort();
     }
     
+    _YMThreadDispatchInternal *newDispatch = NULL;
     YMLockLock(thread->dispatchListLock);
     {
-        _YMThreadDispatchInternal *newDispatch = (_YMThreadDispatchInternal*)malloc(sizeof(struct __YMThreadDispatchInternal));
+        newDispatch = (_YMThreadDispatchInternal*)YMMALLOC(sizeof(struct __YMThreadDispatchInternal));
         YMThreadDispatchUserInfoRef userDispatchCopy = _YMThreadDispatchCopyUserInfo(userDispatch);
         
         newDispatch->userDispatchRef = userDispatchCopy;
@@ -204,12 +205,12 @@ void YMThreadDispatchDispatch(YMThreadRef thread, YMThreadDispatchUserInfoRef us
 
 YMThreadDispatchUserInfoRef _YMThreadDispatchCopyUserInfo(YMThreadDispatchUserInfoRef userDispatchRef)
 {
-    YMThreadDispatchUserInfo *copy = (YMThreadDispatchUserInfo *)malloc(sizeof(YMThreadDispatchUserInfo));
+    YMThreadDispatchUserInfo *copy = (YMThreadDispatchUserInfo *)YMMALLOC(sizeof(YMThreadDispatchUserInfo));
     copy->dispatchProc = userDispatchRef->dispatchProc;
     copy->context = userDispatchRef->context;
     copy->freeContextWhenDone = userDispatchRef->freeContextWhenDone;
     copy->deallocProc = userDispatchRef->deallocProc;
-    copy->description = strdup(userDispatchRef->description ? userDispatchRef->description : "unnamed-dispatch");
+    copy->description = strdup(userDispatchRef->description ? userDispatchRef->description : "unnamed");
     
     return copy;
 }
@@ -256,7 +257,7 @@ void *_YMThreadDispatchThreadProc(void *threadDefPtr)
     {
 #pragma message "todo stopFlag is the only way to terminate a dispatch thread, so we should be correct to free these guys here, but make sure " \
         "sometime when you haven't written 500 lines of c code in an hour."
-        _YMThreadDispatchThreadDef *threadDef = (_YMThreadDispatchThreadDef *)YMDictionaryRemove(gDispatchThreadDefsByID, thread->dispatchThreadID);
+        threadDef = (_YMThreadDispatchThreadDef *)YMDictionaryRemove(gDispatchThreadDefsByID, thread->dispatchThreadID);
         
         if ( ! threadDef )
         {

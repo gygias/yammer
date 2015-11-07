@@ -8,7 +8,9 @@
 
 #include "YMmDNS.h"
 
-#include <dns_sd.h>
+#include "YMPrivate.h"
+
+//#include <dns_sd.h>
 
 // mDNS rules:
 //
@@ -59,7 +61,7 @@ void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record)
 YMmDNSServiceRecord *_YMmDNSCreateServiceRecord(const char *name, const char*type, const char *domain, bool resolved, const char *address,
                                                 uint16_t port, const unsigned char *txtRecord, uint16_t txtLength)
 {
-    YMmDNSServiceRecord *record = (YMmDNSServiceRecord *)malloc(sizeof(struct _YMmDNSServiceRecord));
+    YMmDNSServiceRecord *record = (YMmDNSServiceRecord *)YMMALLOC(sizeof(struct _YMmDNSServiceRecord));
     if ( name )
         record->name = strdup(name);
     else
@@ -103,7 +105,7 @@ YMmDNSTxtRecordKeyPair **__YMmDNSCreateTxtKeyPairs(const unsigned char *txtRecor
 {
     size_t  allocatedListSize = 20,
             listSize = 0;
-    YMmDNSTxtRecordKeyPair **keyPairList = (YMmDNSTxtRecordKeyPair **)malloc(allocatedListSize * sizeof(YMmDNSTxtRecordKeyPair*));
+    YMmDNSTxtRecordKeyPair **keyPairList = (YMmDNSTxtRecordKeyPair **)YMMALLOC(allocatedListSize * sizeof(YMmDNSTxtRecordKeyPair*));
     
     size_t currentPairOffset = 0;
     uint8_t aPairLength = txtRecord[currentPairOffset];
@@ -115,7 +117,7 @@ YMmDNSTxtRecordKeyPair **__YMmDNSCreateTxtKeyPairs(const unsigned char *txtRecor
         if ( listSize == allocatedListSize )
         {
             allocatedListSize *= 2;
-            keyPairList = (YMmDNSTxtRecordKeyPair **)realloc(keyPairList, allocatedListSize * sizeof(struct YMmDNSTxtRecordKeyPair*)); // could be optimized
+            keyPairList = (YMmDNSTxtRecordKeyPair **)realloc(keyPairList, allocatedListSize * sizeof(YMmDNSTxtRecordKeyPair*)); // could be optimized
         }
         
         char *equalsPtr = strstr((const char *)aPairWalker,"=");
@@ -126,30 +128,24 @@ YMmDNSTxtRecordKeyPair **__YMmDNSCreateTxtKeyPairs(const unsigned char *txtRecor
             return NULL;
         }
         
-        size_t keyLength = equalsPtr - (char *)aPairWalker;
-        char *keyStr = (char *)malloc(keyLength + 1);
+        size_t keyLength = (size_t)(equalsPtr - (char *)aPairWalker);
+        char *keyStr = (char *)YMMALLOC(keyLength + 1);
         memcpy(keyStr,aPairWalker,keyLength);
         keyStr[keyLength] = '\0';
         aPairWalker += keyLength + 1; // skip past '='
-        YMLog("DECODE[%ld]: key[%ld]: %s",listSize,keyLength, keyStr);
         
         size_t valueLength = aPairLength - keyLength - 1;
-        uint8_t *valueBuf = (uint8_t *)malloc(valueLength);
+        uint8_t *valueBuf = (uint8_t *)YMMALLOC(valueLength);
         memcpy(valueBuf, aPairWalker, valueLength);
-        aPairWalker += valueLength;
-        YMLog("DECODE[%ld]: value[%ld]",listSize,valueLength);
         
-        YMmDNSTxtRecordKeyPair *aKeyPair = (YMmDNSTxtRecordKeyPair *)malloc(sizeof(YMmDNSTxtRecordKeyPair));
+        YMmDNSTxtRecordKeyPair *aKeyPair = (YMmDNSTxtRecordKeyPair *)YMMALLOC(sizeof(YMmDNSTxtRecordKeyPair));
         aKeyPair->key = keyStr;
         aKeyPair->value = valueBuf;
-        aKeyPair->valueLen = valueLength;
+        aKeyPair->valueLen = (uint8_t)valueLength;
         keyPairList[listSize] = aKeyPair;
         
         currentPairOffset += aPairLength + 1;
         aPairLength = txtRecord[currentPairOffset];
-        
-        if ( txtRecord + currentPairOffset != aPairWalker )
-            YMLog("WTF");
         
         listSize++;
     }

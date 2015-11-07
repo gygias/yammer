@@ -23,11 +23,26 @@ YMPipeRef YMPipeCreate(char *name)
     _YMPipe *ymPipe = (_YMPipe *)calloc(1,sizeof(_YMPipe));
     ymPipe->_typeID = _YMPipeTypeID;
     
-    ymPipe->name = strdup(name);
+    ymPipe->name = strdup(name?name:"unnamed");
     
+    uint64_t iter = 1;
     int fds[2];
     while ( pipe(fds) == -1 )
     {
+        if ( errno == EFAULT )
+        {
+            YMLog("pipe[%s]: error: invalid address space",name);
+            free(ymPipe->name);
+            free(ymPipe);
+            return NULL;
+        }
+        usleep(10000);
+        if ( iter )
+        {
+            iter++;
+            if ( iter > 100 )
+                YMLog("pipe[%s]: warning: new files unavailable for pipe()",name);
+        }
     }
     
     ymPipe->outFd = fds[0];

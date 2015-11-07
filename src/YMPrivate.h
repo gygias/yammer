@@ -11,6 +11,12 @@
 
 #include "YMBase.h"
 
+#ifdef YM_EFFICIENT_ALLOC
+#define YMMALLOC(x) malloc(x)
+#else
+#define YMMALLOC(x) calloc(1,(x))
+#endif
+
 extern YMTypeID _YMPipeTypeID;
 extern YMTypeID _YMStreamTypeID;
 extern YMTypeID _YMConnectionTypeID;

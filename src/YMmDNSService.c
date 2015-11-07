@@ -29,13 +29,13 @@ typedef struct __YMmDNSService
     YMThreadRef eventThread;
 } _YMmDNSService;
 
-void _YMmDNSRegisterCallback(  DNSServiceRef sdRef,
-                            DNSServiceFlags flags,
+void _YMmDNSRegisterCallback(__unused DNSServiceRef sdRef,
+                            __unused DNSServiceFlags flags,
                             DNSServiceErrorType errorCode,
-                            const char                          *name,
-                            const char                          *regtype,
-                            const char                          *domain,
-                            void                                *context )
+                            __unused const char *name,
+                            __unused const char *regtype,
+                            __unused const char *domain,
+                            void *context )
 {
     YMmDNSServiceRef service = (YMmDNSServiceRef)context;
     YMLog("_YMmDNSRegisterCallback: %s/%s:%u: %d", service->type, service->name, service->port, errorCode);
@@ -85,7 +85,7 @@ void _YMmDNSServiceFree(YMTypeRef object)
 // todo this should be replaced by the TxtRecord* family in dns_sd.h
 bool YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPair *keyPairs[], size_t nPairs )
 {
-    int idx;
+    size_t idx;
 #ifdef MANUAL_TXT
     size_t  offset = 0,
             bufferSize = 1024;
@@ -93,7 +93,7 @@ bool YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPair
             *bufferWalker = buffer; // debugging, delete later
 #endif
     
-    TXTRecordRef *txtRecord = (TXTRecordRef *)malloc(sizeof(TXTRecordRef));
+    TXTRecordRef *txtRecord = (TXTRecordRef *)YMMALLOC(sizeof(TXTRecordRef));
     TXTRecordCreate(txtRecord, 0, NULL);
     for ( idx = 0; idx < nPairs; idx++ )
     {

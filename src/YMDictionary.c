@@ -32,7 +32,7 @@ _YMDictionaryItemRef _YMDictionaryCopyItem(_YMDictionaryItemRef item);
 
 YMDictionaryRef YMDictionaryCreate()
 {
-    YMDictionaryRef dict = (YMDictionaryRef)malloc(sizeof(struct __YMDictionary));
+    YMDictionaryRef dict = (YMDictionaryRef)YMMALLOC(sizeof(struct __YMDictionary));
     dict->_typeID = _YMDictionaryTypeID;
     
     dict->head = NULL;
@@ -57,15 +57,16 @@ void _YMDictionaryFree(YMTypeRef object)
     free(dict);
 }
 
-void YMDictionaryAdd(YMDictionaryRef dict, YMDictionaryKey key, YMDictionaryValue item)
+void YMDictionaryAdd(YMDictionaryRef dict, YMDictionaryKey key, YMDictionaryValue value)
 {
     if ( _YMDictionaryFindItemWithIdentifier(dict->head, key, NULL) )
     {
         YMLog("error: YMDictionary already contains item for key %llu",key);
         abort();
     }
-    _YMDictionaryItemRef newItem = (_YMDictionaryItemRef)malloc(sizeof(struct __YMDictionaryItem));
-    newItem->value = item;
+    _YMDictionaryItemRef newItem = (_YMDictionaryItemRef)YMMALLOC(sizeof(struct __YMDictionaryItem));
+    newItem->key = key;
+    newItem->value = value;
     newItem->next = dict->head; // nulls or prepends
     if ( ! dict->head )
         dict->head = newItem;    
@@ -80,7 +81,7 @@ bool YMDictionaryContains(YMDictionaryRef dict, YMDictionaryKey key)
 
 YMDictionaryValue YMDictionaryGetItem(YMDictionaryRef dict, YMDictionaryKey key)
 {
-    return _YMDictionaryFindItemWithIdentifier(dict->head, key, NULL);
+    return _YMDictionaryFindItemWithIdentifier(dict->head, key, NULL)->value;
 }
 
 _YMDictionaryItemRef _YMDictionaryFindItemWithIdentifier(_YMDictionaryItemRef head, YMDictionaryKey key, _YMDictionaryItemRef *outPreviousItem)
@@ -120,7 +121,7 @@ YMDictionaryValue YMDictionaryRemove(YMDictionaryRef dict, YMDictionaryKey key)
         free(theItem);
     }
     
-    return theItem;
+    return outValue;
 }
 
 size_t YMDictionaryGetCount(YMDictionaryRef dict)
@@ -137,7 +138,7 @@ YMDictionaryEnumRef YMDictionaryEnumeratorBegin(YMDictionaryRef dict)
     return (YMDictionaryEnumRef)_YMDictionaryCopyItem(dict->head);
 }
 
-YMDictionaryEnumRef YMDictionaryEnumeratorGetNext(YMDictionaryRef dict, YMDictionaryEnumRef aEnum)
+YMDictionaryEnumRef YMDictionaryEnumeratorGetNext(YMDictionaryEnumRef aEnum)
 {
     _YMDictionaryItemRef item = (_YMDictionaryItemRef)aEnum; // overlapping
     _YMDictionaryItemRef next = item->next;
@@ -151,7 +152,7 @@ YMDictionaryEnumRef YMDictionaryEnumeratorGetNext(YMDictionaryRef dict, YMDictio
     return (YMDictionaryEnumRef)_YMDictionaryCopyItem(next);
 }
 
-void YMDictionaryEnumeratorEnd(YMDictionaryRef dict, YMDictionaryEnumRef aEnum)
+void YMDictionaryEnumeratorEnd(YMDictionaryEnumRef aEnum)
 {
     free(aEnum);
 }
@@ -202,7 +203,7 @@ bool YMDictionaryPopKeyValue(YMDictionaryRef dict, bool last, YMDictionaryKey *o
 
 _YMDictionaryItemRef _YMDictionaryCopyItem(_YMDictionaryItemRef item)
 {
-    _YMDictionaryItemRef itemCopy = (_YMDictionaryItemRef)malloc(sizeof(struct __YMDictionaryItem));
+    _YMDictionaryItemRef itemCopy = (_YMDictionaryItemRef)YMMALLOC(sizeof(struct __YMDictionaryItem));
     itemCopy->key = item->key;
     itemCopy->value = item->value;
     itemCopy->next = item->next;

@@ -23,12 +23,12 @@ typedef void *(*ym_thread_dispatch_dealloc)(void *);
 YMThreadRef YMThreadCreate(char *name, ym_thread_entry entryPoint, void *context);
 YMThreadRef YMThreadDispatchCreate(char *name);
 
-// if context contains nested allocations, or doesn't use the malloc allocator, use ym_thread_dispatch_dealloc
+// if context contains nested allocations, or doesn't use the YMMALLOC allocator, use ym_thread_dispatch_dealloc
 typedef struct
 {
     ym_thread_dispatch_entry dispatchProc;
     void *context; // weak
-    bool freeContextWhenDone; // optional, convenience for contexts pointers using malloc allocator and not nesting other allocations
+    bool freeContextWhenDone; // optional, convenience for contexts pointers using YMMALLOC allocator and not nesting other allocations
     ym_thread_dispatch_dealloc deallocProc; // optional
     const char *description; // copied, optional, for debugging
 } YMThreadDispatchUserInfo;

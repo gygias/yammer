@@ -33,13 +33,13 @@ YMSemaphoreRef YMSemaphoreCreate(const char *name)
         return NULL;
     }
     
-    YMSemaphoreRef semaphore = (YMSemaphoreRef)malloc(sizeof(struct __YMSemaphore));
+    YMSemaphoreRef semaphore = (YMSemaphoreRef)YMMALLOC(sizeof(struct __YMSemaphore));
     semaphore->_typeID = _YMSemaphoreTypeID;
     
     semaphore->lock = YMLockCreateWithOptionsAndName(YMLockDefault, "__ymsemaphore_mutex");
     semaphore->cond = cond;
     
-    semaphore->name = strdup( name ? name : "unnamed-sema" );
+    semaphore->name = strdup( name ? name : "unnamed" );
     
     return semaphore;
 }
