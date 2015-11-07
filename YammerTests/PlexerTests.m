@@ -14,11 +14,14 @@
 #include "YMPlexer.h"
 #include "YMSecurityProvider.h"
 #include "YMStreamPriv.h"
+#include "YMLock.h"
 
+YMLockRef   gPlexerTest1Lock = NULL;
 BOOL        gPlexerTest1Running = YES;
-#define     PlexerTest1ConcurrentRoundTrips 1
-#define     PlexerTest1RoundTripsPerThread 1
-#define     PlexerTest1StreamClosuresToObserve ( PlexerTest1ConcurrentRoundTrips * PlexerTest1RoundTripsPerThread )
+#define     PlexerTest1RoundTripThreads 1 // SATURDAY
+#define     PlexerTest1RoundTripsPerThread 100
+#define     PlexerTest1NewStreamPerRoundTrip false // SATURDAY
+#define     PlexerTest1StreamClosuresToObserve ( PlexerTest1RoundTripThreads * ( PlexerTest1NewStreamPerRoundTrip ? PlexerTest1RoundTripsPerThread : 1 ) )
 NSUInteger  gPlexerTest1AwaitingCloses = PlexerTest1StreamClosuresToObserve;
 
 typedef struct
@@ -33,6 +36,14 @@ typedef struct
 PlexerTests *gRunningPlexerTest; // xctest seems to make a new object for each -test
 
 @implementation PlexerTests
+
++ (void)initialize
+{
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        gPlexerTest1Lock = YMLockCreateWithOptionsAndName(YMLockDefault, [[self className] UTF8String]);
+    });
+}
 
 - (void)setUp {
     [super setUp];
@@ -97,7 +108,7 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
         XCTAssert(okay,@"slave did not start");
     });
     
-    NSUInteger nSpawnConcurrentStreams = gPlexerTest1AwaitingCloses;
+    NSUInteger nSpawnConcurrentStreams = PlexerTest1RoundTripThreads;
     while (nSpawnConcurrentStreams--)
     {
         dispatch_async(dispatch_get_global_queue(0, 0), ^{
@@ -118,29 +129,40 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
 
 - (void)doLocalTest1:(YMPlexerRef)plexer
 {
+    YMStreamRef aStream = NULL;
+    if ( ! PlexerTest1NewStreamPerRoundTrip )
+        aStream = YMPlexerCreateNewStream(plexer,__FUNCTION__,false);
     for ( unsigned idx = 0; idx < PlexerTest1RoundTripsPerThread; idx++ )
     {
-        NSLog(@"VVV LOCAL creating stream VVV");
-        YMStreamRef aStream = YMPlexerCreateNewStream(plexer,__FUNCTION__,false);
-        NSLog(@"^^^ LOCAL %u created stream ^^^",_YMStreamGetUserInfo(aStream)->streamID);
+        if ( PlexerTest1NewStreamPerRoundTrip )
+        {
+            NSLog(@"VVV LOCAL creating stream VVV");
+            aStream = YMPlexerCreateNewStream(plexer,__FUNCTION__,false);
+            NSLog(@"^^^ LOCAL s%u created stream ^^^",_YMStreamGetUserInfo(aStream)->streamID);
+        }
         
-        NSLog(@"VVV LOCAL %u sending message %u VVV",_YMStreamGetUserInfo(aStream)->streamID,idx);
+        NSLog(@"VVV LOCAL s%u sending message #%u VVV",_YMStreamGetUserInfo(aStream)->streamID,idx);
         [self sendMessage:aStream :testLocalMessage];
-        NSLog(@"^^^ LOCAL %u sent message %u ^^^",_YMStreamGetUserInfo(aStream)->streamID,idx);
+        NSLog(@"^^^ LOCAL s%u sent message #%u ^^^",_YMStreamGetUserInfo(aStream)->streamID,idx);
         
         char *response;
         uint16_t responseLen;
-        NSLog(@"VVV LOCAL %u receiving response %u VVV",_YMStreamGetUserInfo(aStream)->streamID,idx);
+        NSLog(@"VVV LOCAL s%u receiving response #%u VVV",_YMStreamGetUserInfo(aStream)->streamID,idx);
         [self receiveMessage:aStream :(void **)&response :&responseLen];
-        NSLog(@"^^^ LOCAL %u received response %u ^^^",_YMStreamGetUserInfo(aStream)->streamID,idx);
+        NSLog(@"^^^ LOCAL s%u received response #%u ^^^",_YMStreamGetUserInfo(aStream)->streamID,idx);
         
         int cmp = strcmp(response,testRemoteResponse);
         XCTAssert(cmp == 0, @"response: %s",response);
         
-        NSLog(@"VVV LOCAL %u closing stream VVV",_YMStreamGetUserInfo(aStream)->streamID);
-        YMPlexerCloseStream(plexer, aStream);
-        NSLog(@"^^^ LOCAL %u closing stream ^^^",_YMStreamGetUserInfo(aStream)->streamID);
+        if ( PlexerTest1NewStreamPerRoundTrip )
+        {
+            NSLog(@"VVV LOCAL s%u closing stream VVV",_YMStreamGetUserInfo(aStream)->streamID);
+            YMPlexerCloseStream(plexer, aStream);
+            NSLog(@"^^^ LOCAL s%u closing stream ^^^",_YMStreamGetUserInfo(aStream)->streamID);
+        }
     }
+    if ( ! PlexerTest1NewStreamPerRoundTrip )
+        YMPlexerCloseStream(plexer, aStream);
 }
 
 - (void)sendMessage:(YMStreamRef)stream :(const char *)message
@@ -188,6 +210,7 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream)
 
 - (void)newStream:(YMPlexerRef)plexer :(YMStreamRef)stream
 {
+    NSLog(@"%s",__FUNCTION__);
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         [self handleANewLocalStream:plexer :stream];
     });
@@ -195,27 +218,22 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream)
 
 - (void)handleANewLocalStream:(YMPlexerRef)plexer :(YMStreamRef)stream
 {
+    NSLog(@"%s",__FUNCTION__);
+    char *inMessage;
+    uint16_t length;
+    
     for ( unsigned idx = 0; idx < PlexerTest1RoundTripsPerThread; idx++ )
     {
-        NSLog(@"%s",__FUNCTION__);
-        char *inMessage;
-        uint16_t length;
-        NSLog(@"VVV REMOTE %u receiving message %u VVV",_YMStreamGetUserInfo(stream)->streamID,idx);
+        NSLog(@"VVV REMOTE s%u receiving message m#%u VVV",_YMStreamGetUserInfo(stream)->streamID,idx);
         [self receiveMessage:stream :(void **)&inMessage :&length];
-        NSLog(@"^^^ REMOTE %u received message %u ^^^",_YMStreamGetUserInfo(stream)->streamID,idx);
+        NSLog(@"^^^ REMOTE s%u received message m#%u ^^^",_YMStreamGetUserInfo(stream)->streamID,idx);
         
         int cmp = strcmp(inMessage, testLocalMessage);
         XCTAssert(cmp == 0,@"received %s",inMessage);
         
-        // made a hard user error
-        //            NSLog(@"VVV REMOTE %u going rogue VVV",_YMStreamGetUserInfo(stream)->streamID);
-        //            YMPlexerCloseStream(plexer, stream);
-        //            //XCTAssert(!badClose,@"receiver allowed to close stream");
-        //            NSLog(@"^^^ REMOTE %u going rogue ^^^",_YMStreamGetUserInfo(stream)->streamID);
-        
-        NSLog(@"VVV REMOTE %u sending response %u VVV",_YMStreamGetUserInfo(stream)->streamID,idx);
+        NSLog(@"VVV REMOTE s%u sending response m#%u VVV",_YMStreamGetUserInfo(stream)->streamID,idx);
         [self sendMessage:stream :testRemoteResponse];
-        NSLog(@"^^^ REMOTE %u sent response %u ^^^",_YMStreamGetUserInfo(stream)->streamID,idx);
+        NSLog(@"^^^ REMOTE s%u sent response m#%u ^^^",_YMStreamGetUserInfo(stream)->streamID,idx);
     }
 }
 
@@ -226,8 +244,19 @@ void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream)
 
 - (void)closing:(YMPlexerRef)plexer :(YMStreamRef)stream
 {
-    NSLog(@"%s: gPlexerTest1AwaitingCloses %lu",__FUNCTION__,(unsigned long)gPlexerTest1AwaitingCloses);
-    if ( --gPlexerTest1AwaitingCloses == 0 )
+    int last;
+    YMLockLock(gPlexerTest1Lock);
+    last = gPlexerTest1AwaitingCloses--;
+    YMLockUnlock(gPlexerTest1Lock);
+    NSLog(@"%s: *********** gPlexerTest1AwaitingCloses %u->%u!! *****************",__FUNCTION__,last,gPlexerTest1AwaitingCloses);
+    NSLog(@"%s: *********** gPlexerTest1AwaitingCloses %u->%u!! *****************",__FUNCTION__,last,gPlexerTest1AwaitingCloses);
+    NSLog(@"%s: *********** gPlexerTest1AwaitingCloses %u->%u!! *****************",__FUNCTION__,last,gPlexerTest1AwaitingCloses);
+    NSLog(@"%s: *********** gPlexerTest1AwaitingCloses %u->%u!! *****************",__FUNCTION__,last,gPlexerTest1AwaitingCloses);
+    NSLog(@"%s: *********** gPlexerTest1AwaitingCloses %u->%u!! *****************",__FUNCTION__,last,gPlexerTest1AwaitingCloses);
+    NSLog(@"%s: *********** gPlexerTest1AwaitingCloses %u->%u!! *****************",__FUNCTION__,last,gPlexerTest1AwaitingCloses);
+    NSLog(@"%s: *********** gPlexerTest1AwaitingCloses %u->%u!! *****************",__FUNCTION__,last,gPlexerTest1AwaitingCloses);
+    NSLog(@"%s: *********** gPlexerTest1AwaitingCloses %u->%u!! *****************",__FUNCTION__,last,gPlexerTest1AwaitingCloses);
+    if ( last - 1 == 0 )
     {
         NSLog(@"%s last stream closed, signaling runloop spin",__FUNCTION__);
         gPlexerTest1Running = NO;

@@ -23,7 +23,7 @@ typedef struct __YMLock *YMLockRef;
 
 YMLockRef YMLockCreate();
 YMLockRef YMLockCreateWithOptions(YMLockOptions options);
-YMLockRef YMLockCreateWithOptionsAndName(YMLockOptions options, char *name);
+YMLockRef YMLockCreateWithOptionsAndName(YMLockOptions options, const char *name);
 
 // avoid 'try lock'
 void YMLockLock(YMLockRef lock);

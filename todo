@@ -1,4 +1,4 @@
-- inlines (logs, string creation, timeval)
+- inlines (logs, string creation, timeval) __YMLogInit
 - stream isLocal redundant? or lookup of stream on removal
 - log levels, macro per .c so there aren't "type" functions
 - collection mod while enumerating guards

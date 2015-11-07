@@ -32,7 +32,7 @@ YMLockRef YMLockCreateWithOptions(YMLockOptions options)
     return YMLockCreateWithOptionsAndName(options, NULL);
 }
 
-YMLockRef YMLockCreateWithOptionsAndName(YMLockOptions options, char *name)
+YMLockRef YMLockCreateWithOptionsAndName(YMLockOptions options, const char *name)
 {
     pthread_mutex_t mutex;
     if ( ! _YMLockGetNewMutexWithOptions(options, &mutex) )

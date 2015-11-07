@@ -175,7 +175,7 @@ YMIOResult YMStreamReadUp(YMStreamRef stream, void *buffer, uint16_t length)
     
     YMLog("  stream[%s,i%d->o%dV,^Vo%d!<-i%d,s%u]: reading %ub user data",stream->name,debugDownstreamWrite,downstreamRead,upstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,length);
     YMIOResult result = YMReadFull(upstreamRead, buffer, length);
-    if ( result != YMIOSuccess ) // in-process i/o errors are fatal
+    if ( result == YMIOError ) // in-process i/o errors are fatal
     {
         YMLog("  stream[%s,i%d->o%dV,^Vo%d!<-i%d,s%u]: fatal: reading %ub user data: %d (%s)",stream->name,debugDownstreamWrite,downstreamRead,upstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,length,errno,strerror(errno));
         abort();
