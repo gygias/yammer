@@ -35,6 +35,7 @@ void YMLog( char* format, ... )
         vprintf(format, args);
         va_end(args);
         printf("\n");
+        fflush(stdout);
     }
     YMLockUnlock(gYMLogLock);
 }
