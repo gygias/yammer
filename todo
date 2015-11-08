@@ -41,3 +41,4 @@
 - give plex/stream a 'debug log name' so formatting doesn't cross my eyes
 - helper function at some level for the 6 or so lines per dispatch
 - do all those entry points really need to be void*?
+- standardize per-class log prefixes and indents

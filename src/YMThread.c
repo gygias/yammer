@@ -95,7 +95,7 @@ YMThreadRef _YMThreadCreate(char *name, bool isDispatchThread, ym_thread_entry e
         }
         YMLockUnlock(gDispatchThreadListLock);
         
-        thread->dispatchListLock = YMLockCreate();
+        thread->dispatchListLock = YMLockCreate("dispatch-list");
         thread->dispatchesByID = YMDictionaryCreate();
         char *semName = YMStringCreateWithFormat("%s-dispatch",name);
         thread->dispatchSemaphore = YMSemaphoreCreate(semName,0);
@@ -216,7 +216,7 @@ YMThreadDispatchUserInfoRef _YMThreadDispatchCopyUserInfo(YMThreadDispatchUserIn
 void _YMThreadDispatchInit()
 {
     gDispatchThreadDefsByID = YMDictionaryCreate();
-    gDispatchThreadListLock = YMLockCreate();
+    gDispatchThreadListLock = YMLockCreate("g-dispatch-list");
 }
 
 void *_YMThreadDispatchThreadProc(void *threadDefPtr)
@@ -231,12 +231,13 @@ void *_YMThreadDispatchThreadProc(void *threadDefPtr)
         YMSemaphoreWait(thread->dispatchSemaphore);
         YMLog("thread[%s,dispatch,dt%llu,p%llu]: woke for user dispatch", thread->name, thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber());
         
-        YMThreadDispatchID theDispatchID;
+        YMThreadDispatchID theDispatchID = -1;
         _YMThreadDispatchInternal *theDispatch = NULL;
         YMLockLock(thread->dispatchListLock);
         {
-            bool okay = YMDictionaryPopKeyValue(thread->dispatchesByID, true, &theDispatchID, (YMDictionaryValue *)&theDispatch);
-            if ( ! okay )
+            YMDictionaryKey randomKey = YMDictionaryRandomKey(thread->dispatchesByID);
+            theDispatch = (_YMThreadDispatchInternal *)YMDictionaryRemove(thread->dispatchesByID,randomKey);
+            if ( ! theDispatch )
             {
                 YMLog("thread[%s,dispatch,dt%llu,p%llu]: fatal: thread signaled without target", thread->name, thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber());
                 abort();

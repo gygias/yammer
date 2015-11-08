@@ -73,7 +73,7 @@ YMSemaphoreRef YMSemaphoreCreate(const char *name, int initialValue)
     YMLockLock(gYMSemaphoreIndexLock);
     uint16_t thisIndex = gYMSemaphoreIndex++;
     if ( gYMSemaphoreIndex == 0 )
-        YMLog("semaphore[%s]: warning: semaphore name index reset",semaphore->userName);
+        YMLog("semaphore[%s,%s]: warning: semaphore name index reset",semaphore->semName,semaphore->userName);
     semaphore->semName = YMStringCreateWithFormat("ym-%u",thisIndex);
     YMLog("semaphore[%s,%s]: created",semaphore->semName,semaphore->userName);
     YMLockUnlock(gYMSemaphoreIndexLock);
@@ -85,7 +85,7 @@ YMSemaphoreRef YMSemaphoreCreate(const char *name, int initialValue)
     semaphore->sem = sem_open(semaphore->semName, O_CREAT, 0700, initialValue); // todo mode?
     if ( semaphore->sem == SEM_FAILED )
     {
-        YMLog("semaphore[%s]: fatal: sem_open failed: %d (%s)",semaphore->userName,errno,strerror(errno));
+        YMLog("semaphore[%s,%s]: fatal: sem_open failed: %d (%s)",semaphore->semName,semaphore->userName,errno,strerror(errno));
         abort(); // since we handle names internally
     }
 #endif
@@ -96,18 +96,19 @@ YMSemaphoreRef YMSemaphoreCreate(const char *name, int initialValue)
 void _YMSemaphoreFree(YMTypeRef object)
 {
     YMSemaphoreRef semaphore = (YMSemaphoreRef)object;
+    YMLog("semaphore[%s,%s]: deallocating",semaphore->semName,semaphore->userName);
     
 #ifdef PTHREAD_SEMAPHORE
     int result = pthread_cond_destroy(&semaphore->cond);
     if ( result != 0 )
     {
-        YMLog("semaphore[%s]: fatal: pthread_cond_destroy failed: %d (%s)",semaphore->userName,result,strerror(result));
+        YMLog("semaphore[%s,%s]: fatal: pthread_cond_destroy failed: %d (%s)",semaphore->semName,semaphore->userName,result,strerror(result));
         abort();
     }
 #else
     int result = sem_unlink(semaphore->semName);
     if ( result == -1 )
-        YMLog("semaphore[%s]: warning: sem_unlink failed: %d (%s)",semaphore->userName,errno,strerror(errno));
+        YMLog("semaphore[%s,%s]: warning: sem_unlink failed: %d (%s)",semaphore->semName,semaphore->userName,errno,strerror(errno));
 #endif
     
     YMFree(semaphore->lock);
@@ -126,26 +127,26 @@ void YMSemaphoreWait(YMSemaphoreRef semaphore)
     if ( semaphore->value < 0 )
     {
         pthread_mutex_t mutex = _YMLockGetMutex(semaphore->lock);
-        YMLog("semaphore[%s]: waiting on %p...",semaphore->name,semaphore);
+        YMLog("semaphore[%s,%s]: waiting on %p...",semaphore->name,semaphore);
         int result = pthread_cond_wait(&semaphore->cond, &mutex);
         if ( result != 0 )
         {
-            YMLog("semaphore[%s]: fatal: pthread_cond_wait failed: %d (%s)",semaphore->name,result,strerror(result));
+            YMLog("semaphore[%s,%s]: fatal: pthread_cond_wait failed: %d (%s)",semaphore->semName,semaphore->name,result,strerror(result));
             abort();
         }
-        YMLog("semaphore[%s]: received signal %p...",semaphore->name,semaphore);
+        YMLog("semaphore[%s,%s]: received signal %p...",semaphore->semName,semaphore->name,semaphore);
     }
     
     YMLockUnlock(semaphore->lock);
 #else
-    YMLog("semaphore[%s]: waiting",semaphore->userName);
+    YMLog("semaphore[%s,%s]: waiting",semaphore->semName,semaphore->userName);
     int result = sem_wait(semaphore->sem);
     if ( result != 0 )
     {
-        YMLog("semaphore[%s]: fatal: sem_wait failed: %d (%s)",semaphore->userName,errno,strerror(errno));
+        YMLog("semaphore[%s,%s]: fatal: sem_wait failed: %d (%s)",semaphore->semName,semaphore->userName,errno,strerror(errno));
         abort();
     }
-    YMLog("semaphore[%s]: waited",semaphore->userName);
+    YMLog("semaphore[%s,%s]: waited",semaphore->semName,semaphore->userName);
 #endif
 }
 
@@ -158,24 +159,24 @@ void YMSemaphoreSignal(YMSemaphoreRef semaphore)
     
     if ( semaphore->value <= 0 )
     {
-        YMLog("semaphore[%s]: signaling %p",semaphore->name,semaphore);
+        YMLog("semaphore[%s,%s]: signaling %p",semaphore->semName,semaphore->name,semaphore);
         int result = pthread_cond_signal(&(semaphore->cond));
         if ( result != 0 )
         {
-            YMLog("semaphore[%s]: fatal: pthread_cond_signal failed: %d (%s)",semaphore->name,result,strerror(result));
+            YMLog("semaphore[%s,%s]: fatal: pthread_cond_signal failed: %d (%s)",semaphore->semName,semaphore->name,result,strerror(result));
             abort();
         }
     }
     
     YMLockUnlock(semaphore->lock);
 #else
-    YMLog("semaphore[%s]: posting",semaphore->userName);
+    YMLog("semaphore[%s,%s]: posting",semaphore->semName,semaphore->userName);
     int result = sem_post(semaphore->sem);
     if ( result != 0 )
     {
-        YMLog("semaphore[%s]: fatal: sem_post failed: %d (%s)",semaphore->userName,errno,strerror(errno));
+        YMLog("semaphore[%s,%s]: fatal: sem_post failed: %d (%s)",semaphore->semName,semaphore->userName,errno,strerror(errno));
         abort();
     }
-    YMLog("semaphore[%s]: posted",semaphore->userName);
+    YMLog("semaphore[%s,%s]: posted",semaphore->semName,semaphore->userName);
 #endif
 }

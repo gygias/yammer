@@ -8,7 +8,7 @@
 
 #include "YammerTestUtilities.h"
 
-NSString *YMRandomASCIIStringWithMaxLength(uint8_t maxLength, BOOL for_mDNSServiceName)
+NSString *YMRandomASCIIStringWithMaxLength(uint32_t maxLength, BOOL for_mDNSServiceName)
 {
     NSMutableString *string = [NSMutableString string];
     
@@ -27,7 +27,7 @@ NSString *YMRandomASCIIStringWithMaxLength(uint8_t maxLength, BOOL for_mDNSServi
     return string;
 }
 
-NSData *YMRandomDataWithMaxLength(uint8_t length)
+NSData *YMRandomDataWithMaxLength(uint32_t length)
 {
     NSMutableData *data = [NSMutableData data];
     

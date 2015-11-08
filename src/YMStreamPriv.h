@@ -42,9 +42,13 @@ void _YMStreamWriteUp(YMStreamRef stream, const void *buffer, uint32_t length);
 void _YMStreamClose(YMStreamRef stream);
 void _YMStreamCloseUp(YMStreamRef stream);
 bool _YMStreamIsClosed(YMStreamRef stream);
-// exposed to plexer, in order to synchronize 'final free-ing' floated streams with their notify_close notification
-void _YMStreamSetUserReleased(YMStreamRef stream);
-void _YMStreamFreeFinal(YMStreamRef stream, bool final);
+
+// exposed to plexer and user, in order to synchronize actually deallocating the object
+// if remote is the last to write to a stream, we may get the close command before the user is done
+// flushing the upstream. if the user is the last to write to the stream, we need to wait for the plexer
+// to forward the user message.
+void _YMStreamRemoteSetPlexerReleased(YMStreamRef stream);
+void _YMStreamRemoteSetUserReleased(YMStreamRef stream);
 
 int _YMStreamGetDownwardWrite(YMStreamRef);
 int _YMStreamGetDownwardRead(YMStreamRef);
@@ -57,5 +61,7 @@ void _YMStreamSetLastServiceTimeNow(YMStreamRef stream);
 struct timeval *_YMStreamGetLastServiceTime(YMStreamRef stream);
 
 bool _YMStreamIsLocallyOriginated(YMStreamRef stream);
+
+const char *_YMStreamGetName(YMStreamRef stream);
 
 #endif /* YMStreamPriv_h */

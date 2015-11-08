@@ -8,9 +8,10 @@
 
 #include "YMStream.h"
 #include "YMPrivate.h"
-#include "YMStreamPriv.h"
 
+#include "YMStreamPriv.h"
 #include "YMPipe.h"
+#include "YMLock.h"
 
 #ifdef USE_FTIME
 #include <sys/timeb.h>
@@ -36,14 +37,18 @@ typedef struct __YMStream
 #pragma message "these should be userInfo, but that would entail plexer (session) being passed around by the client in order to WriteDown and signal the semaphore" \
         "instead add a 'write down happened' function ptr that the plexer can use to signal the sema, and a debugUserLogString (for stream id, etc) and all this can truly be opaque 'user data'"
     bool isLocallyOriginated;
-    bool isFloating; // has been 'non-final' released, awaiting client RemoteRelease
     YMStreamUserInfoRef __userInfo; // weak, plexer
     YMSemaphoreRef __dataAvailableSemaphore; // weak, plexer
-    struct timeval *__lastServiceTime;
+    struct timeval *__lastServiceTime; // free me
     
     // also userInfo?
+    YMLockRef retainLock;
+    bool isPlexerReleased;
     bool isUserReleased;
 } _YMStream;
+
+void __YMStreamFree(YMStreamRef stream);
+void __YMStreamCloseFiles(YMStreamRef stream);
 
 YMStreamRef YMStreamCreate(const char *name, bool isLocallyOriginated, YMStreamUserInfoRef userInfo)
 {
@@ -74,28 +79,29 @@ YMStreamRef YMStreamCreate(const char *name, bool isLocallyOriginated, YMStreamU
         YMGetTheBeginningOfPosixTimeForCurrentPlatform(stream->__lastServiceTime);
     }
     
+    stream->retainLock = YMLockCreateWithOptionsAndName(YMLockDefault, stream->name);
     stream->isUserReleased = false;
+    stream->isPlexerReleased = false;
     
-    YMLog("  stream[%s,i%d->o%dV,^o%d<-i%d,s%u]: ALLOCATING",stream->name,
+    YMLog("  stream[%s,i%d->o%dV,^o%d<-i%d,s%u]: %p ALLOCATING",stream->name,
           YMPipeGetInputFile(stream->downstream),
           YMPipeGetOutputFile(stream->downstream),
           YMPipeGetOutputFile(stream->upstream),
           YMPipeGetInputFile(stream->upstream),
-          stream->__userInfo->streamID);
+          stream->__userInfo->streamID,
+          stream);
     
     return (YMStreamRef)stream;
 }
 
-void __YMStreamCloseFiles(YMStreamRef stream, bool floatUpRead)
+void __YMStreamCloseFiles(YMStreamRef stream)
 {
     int downWrite = YMPipeGetInputFile(stream->downstream);
     int downRead = YMPipeGetOutputFile(stream->downstream);
     int upWrite = YMPipeGetInputFile(stream->upstream);
     int upRead = YMPipeGetOutputFile(stream->upstream);
-    YMLog("  stream[%s,i%d->o%dV,^o%d<-i%d,s%u]: DEALLOCATING(%s)",stream->name, downWrite, downRead, upRead, upWrite, stream->__userInfo->streamID,floatUpRead?"float":"final");
     
     int aClose;
-    YMLog("  stream[%s]: CLOSING %d",stream->name,upWrite);
     aClose = close(upWrite);
     if ( aClose != 0 )
     {
@@ -103,17 +109,12 @@ void __YMStreamCloseFiles(YMStreamRef stream, bool floatUpRead)
         abort();
     }
     
-    if ( ! floatUpRead )
+    aClose = close(upRead);
+    if ( aClose != 0 )
     {
-        aClose = close(upRead);
-        if ( aClose != 0 )
-        {
-            YMLog("  stream[%s,i%d->o%dV,^o%d!<-i%d,s%u]: fatal: close failed: %d (%s)",stream->name, downWrite, downRead, upRead, upWrite, stream->__userInfo->streamID,errno,strerror(errno));
-            abort();
-        }
+        YMLog("  stream[%s,i%d->o%dV,^o%d!<-i%d,s%u]: fatal: close failed: %d (%s)",stream->name, downWrite, downRead, upRead, upWrite, stream->__userInfo->streamID,errno,strerror(errno));
+        abort();
     }
-    else
-        YMLog("  stream[%s,i%d->o%dV,^o%d!<-i%d,s%u]: floating remotely originated up read %d, client to close",stream->name, downWrite, downRead, upRead, upWrite, stream->__userInfo->streamID, upRead);
     
     aClose = close(downWrite);
     if ( aClose != 0 )
@@ -130,32 +131,36 @@ void __YMStreamCloseFiles(YMStreamRef stream, bool floatUpRead)
     }
 }
 
-void _YMStreamFreeFinal(YMStreamRef stream, bool final)
-{
-    if ( ! stream->isFloating )
-    {
-        __YMStreamCloseFiles(stream, !final);
-        YMFree(stream->downstream);
-    }
-    
-    if ( final )
-    {
-        free(stream->name);
-        free(stream->__lastServiceTime);
-        YMFree(stream->upstream);
-        free(stream);
-    }
-    else
-    {
-        stream->isFloating = true;
-        YMLog("  stream[%s,s%u]: floating remotely originated stream %u",stream->name,stream->__userInfo->streamID,stream->__userInfo->streamID);
-    }
-}
-
 void _YMStreamFree(YMTypeRef object)
 {
-    _YMStream *stream = (_YMStream *)object;
-    _YMStreamFreeFinal(stream,stream->isLocallyOriginated);
+    YMStreamRef stream = (YMStreamRef)object;
+    if ( ! stream->isLocallyOriginated )
+    {
+        YMLog("  stream[%s,s%u]: fatal: _YMStreamFree called on remote-originated",stream->name,stream->__userInfo->streamID);
+        abort();
+    }
+    __YMStreamFree(stream);
+}
+
+void __YMStreamFree(YMStreamRef stream)
+{
+    YMLog("  stream[%s,i%d->o%dV,^o%d<-i%d,s%u]: %p DEALLOCATING",stream->name,
+          YMPipeGetInputFile(stream->downstream),
+          YMPipeGetOutputFile(stream->downstream),
+          YMPipeGetOutputFile(stream->upstream),
+          YMPipeGetInputFile(stream->upstream),
+          stream->__userInfo->streamID,
+          stream);
+    
+    __YMStreamCloseFiles(stream);
+    YMFree(stream->retainLock);
+    YMFree(stream->downstream);
+    YMFree(stream->upstream);
+    
+    free(stream->name);
+    free(stream->__lastServiceTime);
+    free(stream);
+    
 }
 
 void YMStreamWriteDown(YMStreamRef stream, const void *buffer, uint16_t length)
@@ -261,9 +266,10 @@ void _YMStreamClose(YMStreamRef stream)
         YMLog("  stream[%s,Vi%d!->o%d,^o%d<-i%d,s%u]: fatal: writing close byte to plexer: %d (%s)",stream->name,downstreamWrite,debugDownstreamRead,debugUpstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,errno,strerror(errno));
         abort();
     }
+    
+    YMLog("  stream[%s,Vi%d!->o%d,^o%d<-i%d,s%u]: closing stream",stream->name,downstreamWrite,debugDownstreamRead,debugUpstreamRead,debugUpstreamWrite,stream->__userInfo->streamID);
     YMSemaphoreSignal(stream->__dataAvailableSemaphore);
     
-    YMLog("  stream[%s,Vi%d!->o%d,^o%d<-i%d,s%u]: CLOSED downstream",stream->name,downstreamWrite,debugDownstreamRead,debugUpstreamRead,debugUpstreamWrite,stream->__userInfo->streamID);
 }
 
 void _YMStreamCloseUp(YMStreamRef stream)
@@ -338,7 +344,40 @@ bool _YMStreamIsLocallyOriginated(YMStreamRef stream)
     return stream->isLocallyOriginated;
 }
 
-void _YMStreamSetUserReleased(YMStreamRef stream)
+const char *_YMStreamGetName(YMStreamRef stream)
+{
+    return stream->name;
+}
+
+#pragma mark stream retain & release
+
+void __YMStreamCheckAndRelease(YMStreamRef stream)
+{
+    bool dealloc = false;
+    YMLockLock(stream->retainLock);
+    {
+        if ( stream->isPlexerReleased && stream->isUserReleased )
+        {
+            YMLog("  stream[%s,s%u]: RELEASED, time to DEALLOCATE",stream->name,stream->__userInfo->streamID);
+            dealloc = true;
+        }
+    }
+    YMLockUnlock(stream->retainLock);
+    
+    if ( dealloc )
+        __YMStreamFree(stream);
+}
+
+void _YMStreamRemoteSetPlexerReleased(YMStreamRef stream)
+{
+    stream->isPlexerReleased = true;
+    YMLog("  stream[%s,s%u]: plexer released",stream->name,stream->__userInfo->streamID);
+    __YMStreamCheckAndRelease(stream);
+}
+
+void _YMStreamRemoteSetUserReleased(YMStreamRef stream)
 {
     stream->isUserReleased = true;
+    YMLog("  stream[%s,s%u]: user released",stream->name,stream->__userInfo->streamID);
+    __YMStreamCheckAndRelease(stream);
 }

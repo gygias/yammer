@@ -14,6 +14,18 @@
 #define YMMIN(a,b) ( (a<b) ? (a) : (b) )
 #define YMMAX(a,b) ( (a>b) ? (a) : (b) )
 
+//// Glyph from http://stackoverflow.com/questions/2053843/min-and-max-value-of-data-type-in-c
+//#define issigned(t) (((t)(-1)) < ((t) 0))
+//#define umaxof(t) (((0x1ULL << ((sizeof(t) * 8ULL) - 1ULL)) - 1ULL) | \
+//(0xFULL << ((sizeof(t) * 8ULL) - 4ULL)))
+//#define smaxof(t) (((0x1ULL << ((sizeof(t) * 8ULL) - 1ULL)) - 1ULL) | \
+//(0x7ULL << ((sizeof(t) * 8ULL) - 4ULL)))
+//#define maxof(t) ((unsigned long long) (issigned(t) ? smaxof(t) : umaxof(t)))
+#define MAX_OF(type) \
+(((type)(~0LLU) > (type)((1LLU<<((sizeof(type)<<3)-1))-1LLU)) ? (long long unsigned int)(type)(~0LLU) : (long long unsigned int)(type)((1LLU<<((sizeof(type)<<3)-1))-1LLU))
+#define MIN_OF(type) \
+(((type)(1LLU<<((sizeof(type)<<3)-1)) < (type)1) ? (long long int)((~0LLU)-((1LLU<<((sizeof(type)<<3)-1))-1LLU)) : 0LL)
+
 typedef enum
 {
     LessThan = -1,

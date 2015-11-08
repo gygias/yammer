@@ -10,6 +10,8 @@
 
 #include "YMPrivate.h"
 
+#include "YMUtilities.h"
+
 typedef struct __YMDictionaryItem
 {
     uint64_t key;
@@ -24,7 +26,7 @@ typedef struct __YMDictionary
     
     bool isYMTypeDict;
     _YMDictionaryItemRef head;
-    ssize_t count;
+    size_t count;
 } _YMDictionary;
 
 _YMDictionaryItemRef _YMDictionaryFindItemWithIdentifier(_YMDictionaryItemRef head, YMDictionaryKey key, _YMDictionaryItemRef *outPreviousItem);
@@ -59,6 +61,12 @@ void _YMDictionaryFree(YMTypeRef object)
 
 void YMDictionaryAdd(YMDictionaryRef dict, YMDictionaryKey key, YMDictionaryValue value)
 {
+    if ( dict->count == MAX_OF(typeof(dict->count)) )
+    {
+        YMLog("error: YMDictionary is full");
+        abort();
+    }
+    
     if ( _YMDictionaryFindItemWithIdentifier(dict->head, key, NULL) )
     {
         YMLog("error: YMDictionary already contains item for key %llu",key);
@@ -68,8 +76,7 @@ void YMDictionaryAdd(YMDictionaryRef dict, YMDictionaryKey key, YMDictionaryValu
     newItem->key = key;
     newItem->value = value;
     newItem->next = dict->head; // nulls or prepends
-    if ( ! dict->head )
-        dict->head = newItem;    
+    dict->head = newItem;
     
     dict->count++;
 }
@@ -77,6 +84,21 @@ void YMDictionaryAdd(YMDictionaryRef dict, YMDictionaryKey key, YMDictionaryValu
 bool YMDictionaryContains(YMDictionaryRef dict, YMDictionaryKey key)
 {
     return ( NULL != _YMDictionaryFindItemWithIdentifier(dict->head, key, NULL) );
+}
+
+YMDictionaryKey YMDictionaryRandomKey(YMDictionaryRef dict)
+{
+    if ( dict->count == 0 || dict->head == NULL )
+    {
+        YMLog("error: YMDictionary is empty and has no keys");
+        abort();
+    }
+    
+    uint32_t chosenIdx = arc4random_uniform((uint32_t)dict->count), countdown = chosenIdx; // unsure of portability
+    _YMDictionaryItemRef iter = dict->head;
+    while (countdown-- != 0)
+        iter = iter->next;
+    return iter->key;
 }
 
 YMDictionaryValue YMDictionaryGetItem(YMDictionaryRef dict, YMDictionaryKey key)
@@ -94,9 +116,9 @@ _YMDictionaryItemRef _YMDictionaryFindItemWithIdentifier(_YMDictionaryItemRef he
     
     while (itemIter)
     {
-        _YMDictionaryItemRef thisItem = itemIter;
-        if ( thisItem->key == key )
-            return thisItem;
+        if ( itemIter->key == key )
+            break;
+        
         previousItem = itemIter;
         itemIter = (_YMDictionaryItemRef)itemIter->next;
     }
@@ -104,25 +126,39 @@ _YMDictionaryItemRef _YMDictionaryFindItemWithIdentifier(_YMDictionaryItemRef he
     if ( outPreviousItem )
         *outPreviousItem = previousItem;
     
-    return NULL;
+    return itemIter;
 }
 
 YMDictionaryValue YMDictionaryRemove(YMDictionaryRef dict, YMDictionaryKey key)
 {
+    if ( dict->count == 0 || dict->head == NULL )
+    {
+        YMLog("error: YMDictionary is empty");
+        abort();
+    }
+    
+    YMDictionaryValue outValue = NULL;
     _YMDictionaryItemRef previousItem = NULL;
     _YMDictionaryItemRef theItem = _YMDictionaryFindItemWithIdentifier(dict->head, key, &previousItem);
-    YMDictionaryValue outValue = NULL;
-    if ( theItem )
+    if ( ! theItem )
+    {
+        YMLog("error: key does not exist to remove");
+        abort();
+    }
+    else
     {
         if ( previousItem )
             previousItem->next = theItem->next;
-        else
-            dict->head = NULL;
+        else // removed item is head
+            dict->head = theItem->next;
         dict->count--;
         
         outValue = theItem->value;
         free(theItem);
     }
+    
+    if ( dict->count == 0 ^ dict->head == NULL )
+        abort();
     
     return outValue;
 }
@@ -135,14 +171,19 @@ size_t YMDictionaryGetCount(YMDictionaryRef dict)
 
 YMDictionaryEnumRef YMDictionaryEnumeratorBegin(YMDictionaryRef dict)
 {
+#ifdef YM_DICT_MAYBE_SAFE_ENUM
     if ( ! dict->head )
         return NULL;
     
     return (YMDictionaryEnumRef)_YMDictionaryCopyItem(dict->head);
+#else
+    return (YMDictionaryEnumRef)dict->head;
+#endif
 }
 
 YMDictionaryEnumRef YMDictionaryEnumeratorGetNext(YMDictionaryEnumRef aEnum)
 {
+#ifdef YM_DICT_MAYBE_SAFE_ENUM
     _YMDictionaryItemRef item = (_YMDictionaryItemRef)aEnum; // overlapping
     _YMDictionaryItemRef next = item->next;
     
@@ -152,15 +193,21 @@ YMDictionaryEnumRef YMDictionaryEnumeratorGetNext(YMDictionaryEnumRef aEnum)
         return NULL;
     
     return (YMDictionaryEnumRef)_YMDictionaryCopyItem(next);
+#else
+    return (YMDictionaryEnumRef)((_YMDictionaryItemRef)aEnum)->next;
+#endif
 }
 
-void YMDictionaryEnumeratorEnd(YMDictionaryEnumRef aEnum)
+void YMDictionaryEnumeratorEnd(__unused YMDictionaryEnumRef aEnum) // xxx
 {
+#ifdef YM_DICT_MAYBE_SAFE_ENUM
     free(aEnum);
+#endif
 }
 
-bool YMDictionaryPopKeyValue(YMDictionaryRef dict, bool last, YMDictionaryKey *outKey, YMDictionaryValue *outValue)
-{
+bool __Broken_YMDictionaryPopKeyValue(YMDictionaryRef dict, bool last, YMDictionaryKey *outKey, YMDictionaryValue *outValue);
+bool __Broken_YMDictionaryPopKeyValue(YMDictionaryRef dict, bool last, YMDictionaryKey *outKey, YMDictionaryValue *outValue)
+{    
     _YMDictionaryItemRef outItem = dict->head,
                             previous = NULL;
     
@@ -190,13 +237,14 @@ bool YMDictionaryPopKeyValue(YMDictionaryRef dict, bool last, YMDictionaryKey *o
     }
     else
         dict->head = outItem->next;
-    dict->count--;
     
-    if ( dict->count < 0 )
+    if ( dict->count == 0 )
     {
         YMLog("ymdictionary is broken");
         abort();
     }
+    
+    dict->count--;
     
     free(outItem);
     return true;

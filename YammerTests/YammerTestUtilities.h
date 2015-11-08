@@ -11,7 +11,7 @@
 
 #import <Foundation/Foundation.h>
 
-NSString *YMRandomASCIIStringWithMaxLength(uint8_t maxLength, BOOL for_mDNSServiceName);
-NSData *YMRandomDataWithMaxLength(uint8_t length);
+NSString *YMRandomASCIIStringWithMaxLength(uint32_t maxLength, BOOL for_mDNSServiceName);
+NSData *YMRandomDataWithMaxLength(uint32_t length);
 
 #endif /* YammerTestUtilities_h */

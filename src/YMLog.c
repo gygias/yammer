@@ -17,7 +17,7 @@ YMLockRef gYMLogLock = NULL;
 
 void YMLogInitLock()
 {
-    gYMLogLock = YMLockCreate();
+    gYMLogLock = YMLockCreate("ymlog");
 }
 
 // inline
@@ -30,7 +30,7 @@ void YMLog( char* format, ... )
 {
     __YMLogInit();
     
-    if ( false && ! strstr(format,"plexer[") && ! strstr(format, "stream[") )
+    if ( /* ! strstr(format,"plexer[") && ! strstr(format, "user[") && ! strstr(format, "thread[") */ ! strstr(format,"semaphore[") && ! strstr(format, "thread["))
         return;
     
     YMLockLock(gYMLogLock);

@@ -16,13 +16,10 @@
 #include "YMStreamPriv.h"
 #include "YMLock.h"
 
-YMLockRef   gPlexerTest1Lock = NULL;
-BOOL        gPlexerTest1Running = YES;
-#define     PlexerTest1RoundTripThreads 1 // SATURDAY
-#define     PlexerTest1RoundTripsPerThread 2
+#define     PlexerTest1RoundTripThreads 10 // SATURDAY
+#define     PlexerTest1RoundTripsPerThread 10
 #define     PlexerTest1NewStreamPerRoundTrip true // SATURDAY
 #define     PlexerTest1StreamClosuresToObserve ( PlexerTest1RoundTripThreads * ( PlexerTest1NewStreamPerRoundTrip ? PlexerTest1RoundTripsPerThread : 1 ) )
-NSUInteger  gPlexerTest1AwaitingCloses = PlexerTest1StreamClosuresToObserve;
 
 typedef struct
 {
@@ -30,6 +27,13 @@ typedef struct
 } UserMessageHeader;
 
 @interface PlexerTests : XCTestCase
+{
+    NSUInteger incomingStreamRoundTrips;
+    YMLockRef plexerTest1Lock;
+    BOOL plexerTest1Running;
+    
+    NSUInteger awaitingClosures;
+}
 
 @end
 
@@ -37,17 +41,12 @@ PlexerTests *gRunningPlexerTest; // xctest seems to make a new object for each -
 
 @implementation PlexerTests
 
-+ (void)initialize
-{
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        gPlexerTest1Lock = YMLockCreateWithOptionsAndName(YMLockDefault, [[self className] UTF8String]);
-    });
-}
-
 - (void)setUp {
     [super setUp];
-    // Put setup code here. This method is called before the invocation of each test method in the class.
+    
+    plexerTest1Running = YES;
+    plexerTest1Lock = YMLockCreateWithOptionsAndName(YMLockDefault, [[self className] UTF8String]);
+    awaitingClosures = PlexerTest1StreamClosuresToObserve;
 }
 
 - (void)tearDown {
@@ -74,6 +73,7 @@ const char *testLocalMessage = "this is a test message. one, two, three. four. s
 const char *testRemoteResponse = "もしもし。you are coming in loud and clear, rangoon! ご機嫌よ。";
 
 - (void)testManyPlexerRoundTrips {
+    
     gRunningPlexerTest = self;
     
     YMPipeRef networkSimPipeIn = YMPipeCreate("test-network-sim-pipe-in");
@@ -120,7 +120,7 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
 #ifdef AND_MEASURE
     [self measureBlock:^{
 #endif
-        while ( gPlexerTest1Running )
+        while ( plexerTest1Running )
             CFRunLoopRunInMode(kCFRunLoopDefaultMode,0.5,false);
 #ifdef AND_MEASURE
     }];
@@ -234,6 +234,8 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream)
         NSLog(@"VVV REMOTE s%u sending response m#%u VVV",streamID,idx);
         [self sendMessage:stream :testRemoteResponse];
         NSLog(@"^^^ REMOTE s%u sent response m#%u ^^^",streamID,idx);
+        
+        incomingStreamRoundTrips++;
     }
     
     NSLog(@"^^^ REMOTE -newStream [%u] exiting (and remoteReleasing)",streamID);
@@ -247,15 +249,15 @@ void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream)
 
 - (void)closing:(YMPlexerRef)plexer :(YMStreamRef)stream
 {
-    int last;
-    YMLockLock(gPlexerTest1Lock);
-    last = gPlexerTest1AwaitingCloses--;
-    YMLockUnlock(gPlexerTest1Lock);
-    NSLog(@"%s: *********** gPlexerTest1AwaitingCloses %u->%u!! *****************",__FUNCTION__,last,gPlexerTest1AwaitingCloses);
+    NSUInteger last;
+    YMLockLock(plexerTest1Lock);
+    last = awaitingClosures--;
+    YMLockUnlock(plexerTest1Lock);
+    NSLog(@"%s: *********** gPlexerTest1AwaitingCloses %zu->%zu!! *****************",__FUNCTION__,last,awaitingClosures);
     if ( last - 1 == 0 )
     {
         NSLog(@"%s last stream closed, signaling runloop spin",__FUNCTION__);
-        gPlexerTest1Running = NO;
+        plexerTest1Running = NO;
     }
     
 }

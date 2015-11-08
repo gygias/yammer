@@ -24,6 +24,7 @@
 		630A5D161BE9777C003292EE /* YMmDNSBrowser.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5D141BE9777C003292EE /* YMmDNSBrowser.c */; };
 		630A5D171BE9777C003292EE /* YMmDNSBrowser.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5D151BE9777C003292EE /* YMmDNSBrowser.h */; };
 		630A5D1C1BE98199003292EE /* YMmDNS.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5D1B1BE98199003292EE /* YMmDNS.c */; };
+		631683941BEEF1FB00F6AB99 /* DictionaryTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 631683931BEEF1FB00F6AB99 /* DictionaryTest.m */; };
 		63225D541BE9074700C28F05 /* YMPipe.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D521BE9074700C28F05 /* YMPipe.c */; };
 		63225D551BE9074700C28F05 /* YMPipe.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D531BE9074700C28F05 /* YMPipe.h */; };
 		63225D5C1BE9092500C28F05 /* YMStream.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D5A1BE9092500C28F05 /* YMStream.c */; };
@@ -83,6 +84,7 @@
 		630A5D151BE9777C003292EE /* YMmDNSBrowser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMmDNSBrowser.h; path = src/YMmDNSBrowser.h; sourceTree = "<group>"; };
 		630A5D1A1BE97D5A003292EE /* YMmDNS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMmDNS.h; path = src/YMmDNS.h; sourceTree = "<group>"; };
 		630A5D1B1BE98199003292EE /* YMmDNS.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMmDNS.c; path = src/YMmDNS.c; sourceTree = "<group>"; };
+		631683931BEEF1FB00F6AB99 /* DictionaryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DictionaryTest.m; sourceTree = "<group>"; };
 		63225D421BE9026200C28F05 /* libyammer.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libyammer.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		63225D521BE9074700C28F05 /* YMPipe.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMPipe.c; path = src/YMPipe.c; sourceTree = "<group>"; };
 		63225D531BE9074700C28F05 /* YMPipe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMPipe.h; path = src/YMPipe.h; sourceTree = "<group>"; };
@@ -142,6 +144,7 @@
 				63476A401BEAEFC500D10081 /* PlexerTests.m */,
 				6307F7801BED7891009C64CD /* YammerTestUtilities.h */,
 				6307F77F1BED7891009C64CD /* YammerTestUtilities.m */,
+				631683931BEEF1FB00F6AB99 /* DictionaryTest.m */,
 			);
 			path = YammerTests;
 			sourceTree = "<group>";
@@ -362,6 +365,7 @@
 			files = (
 				630A5D031BE96CE9003292EE /* YammerTests.m in Sources */,
 				6307F7811BED7891009C64CD /* YammerTestUtilities.m in Sources */,
+				631683941BEEF1FB00F6AB99 /* DictionaryTest.m in Sources */,
 				63476A411BEAEFC500D10081 /* PlexerTests.m in Sources */,
 				63476A3F1BEAE54100D10081 /* mDNSTests.m in Sources */,
 			);

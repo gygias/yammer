@@ -83,7 +83,7 @@ void _YMmDNSServiceFree(YMTypeRef object)
 }
 
 // todo this should be replaced by the TxtRecord* family in dns_sd.h
-bool YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPair *keyPairs[], size_t nPairs )
+ymbool YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPair *keyPairs[], size_t nPairs )
 {
     size_t idx;
 #ifdef MANUAL_TXT
@@ -148,7 +148,7 @@ bool YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPair
     return true;
 }
 
-bool YMmDNSServiceStart( YMmDNSServiceRef service )
+ymbool YMmDNSServiceStart( YMmDNSServiceRef service )
 {
     DNSServiceRef *serviceRef = (DNSServiceRef *)calloc( 1, sizeof(DNSServiceRef) );
     uint16_t netPort = htons(service->port);
@@ -192,14 +192,14 @@ bool YMmDNSServiceStart( YMmDNSServiceRef service )
     return true;
 }
 
-bool YMmDNSServiceStop( YMmDNSServiceRef service, bool synchronous )
+ymbool YMmDNSServiceStop( YMmDNSServiceRef service, ymbool synchronous )
 {
     if ( ! service->advertising )
         return false;
     
     service->advertising = false; // let event thread fall out
     
-    bool okay = true;
+    ymbool okay = true;
     
     DNSServiceRefDeallocate(*(service->dnsService));
     free(service->dnsService);

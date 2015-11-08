@@ -20,6 +20,7 @@ YMDictionaryRef YMDictionaryCreate();
 
 void YMDictionaryAdd(YMDictionaryRef, YMDictionaryKey key, YMDictionaryValue item);
 bool YMDictionaryContains(YMDictionaryRef, YMDictionaryKey key);
+YMDictionaryKey YMDictionaryRandomKey(YMDictionaryRef dict);
 YMDictionaryValue YMDictionaryGetItem(YMDictionaryRef, YMDictionaryKey key);
 YMDictionaryValue YMDictionaryRemove(YMDictionaryRef, YMDictionaryKey key);
 
@@ -38,7 +39,5 @@ YMDictionaryEnumRef YMDictionaryEnumeratorBegin(YMDictionaryRef);
 YMDictionaryEnumRef YMDictionaryEnumeratorGetNext(YMDictionaryEnumRef aEnum);
 // call only if cancelling incomplete enumeration, if GetNext returns NULL there is nothing more for the caller to do.
 void YMDictionaryEnumeratorEnd(YMDictionaryEnumRef aEnum);
-
-bool YMDictionaryPopKeyValue(YMDictionaryRef, bool last, YMDictionaryKey *outKey, YMDictionaryValue *outValue);
 
 #endif /* YMDictionary_h */
