@@ -12,6 +12,8 @@
 #include <stdarg.h>
 #include <pthread.h>
 
+void YMLog( char* format, ... ) __printflike(1, 2);
+
 pthread_once_t gYMLogLockOnce = PTHREAD_ONCE_INIT;
 YMLockRef gYMLogLock = NULL;
 
@@ -26,12 +28,9 @@ void __YMLogInit()
     pthread_once(&gYMLogLockOnce, YMLogInitLock);
 }
 
-void YMLog( char* format, ... )
+void _YMLog( char* format, ... )
 {
     __YMLogInit();
-    
-    if ( /* ! strstr(format,"plexer[") && ! strstr(format, "user[") && ! strstr(format, "thread[") */ ! strstr(format,"semaphore[") && ! strstr(format, "thread["))
-        return;
     
     YMLockLock(gYMLogLock);
     {
@@ -51,14 +50,14 @@ void YMLogType( YMLogLevel level, char* format, ... )
     
     switch(level)
     {
-        case YMLogSession:
-        case YMLogConnection:
+        case YMLogThread:
+        case YMLogLock:
         case YMLogPlexer:
-            break;
         case YMLogStream:
         case YMLogPipe:
-        default:
             return;
+        default:
+            break;
     }
     
 #pragma message "copied code, forward vargs"

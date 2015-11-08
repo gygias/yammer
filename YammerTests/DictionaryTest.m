@@ -6,9 +6,7 @@
 //  Copyright © 2015 Combobulated Software. All rights reserved.
 //
 
-#import <XCTest/XCTest.h>
-
-#import "YammerTestUtilities.h"
+#import "YammerTests.h"
 
 #include "YMBase.h"
 #include "YMDictionary.h"
@@ -41,6 +39,7 @@
     theDictionary = YMDictionaryCreate();
     existingKeys = [NSMutableArray array];
     completedTests = 0;
+    self.continueAfterFailure = NO;
 }
 
 - (void)tearDown {

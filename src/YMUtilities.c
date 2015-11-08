@@ -88,7 +88,7 @@ char *YMStringCreateWithFormat(char *formatStr, ...)
     if ( length == 0 )
         newStr = strdup("");
     else if ( length < 0 )
-        YMLog("snprintf failed on format: %s", formatStr);
+        ymlog("snprintf failed on format: %s", formatStr);
     else
     {
         newStr = (char *)YMMALLOC(length);

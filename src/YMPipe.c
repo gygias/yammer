@@ -31,7 +31,7 @@ YMPipeRef YMPipeCreate(char *name)
     {
         if ( errno == EFAULT )
         {
-            YMLog("pipe[%s]: error: invalid address space",name);
+            ymlog("pipe[%s]: error: invalid address space",name);
             free(ymPipe->name);
             free(ymPipe);
             return NULL;
@@ -41,7 +41,7 @@ YMPipeRef YMPipeCreate(char *name)
         {
             iter++;
             if ( iter > 100 )
-                YMLog("pipe[%s]: warning: new files unavailable for pipe()",name);
+                ymlog("pipe[%s]: warning: new files unavailable for pipe()",name);
         }
     }
     

@@ -13,14 +13,21 @@
 
 typedef enum
 {
-    YMLogSession = 0,
+    YMLogDefault = 0,
+    YMLogSession,
+    YMLogTypemDNS,
     YMLogConnection,
+    YMLogThread,
+    YMLogLock,
     YMLogPlexer,
     YMLogStream,
     YMLogPipe
 } YMLogLevel;
 
-void YMLog( char* format, ... ) __printflike(1, 2);
+
+#define ymLogType YMLogDefault
+#define ymlog(x,...) YMLogType(ymLogType,(x),##__VA_ARGS__)
+
 void YMLogType( YMLogLevel, char* format, ... ) __printflike(2, 3);
 
 #endif /* YMLog_h */

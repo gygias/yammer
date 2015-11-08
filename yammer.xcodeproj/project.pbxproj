@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		6307F77E1BECA44A009C64CD /* YMStreamPriv.h in Headers */ = {isa = PBXBuildFile; fileRef = 6307F77D1BECA44A009C64CD /* YMStreamPriv.h */; };
-		6307F7811BED7891009C64CD /* YammerTestUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 6307F77F1BED7891009C64CD /* YammerTestUtilities.m */; };
 		630A5CE91BE93BEF003292EE /* YMTLSProvider.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CE71BE93BEF003292EE /* YMTLSProvider.c */; };
 		630A5CEA1BE93BEF003292EE /* YMTLSProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5CE81BE93BEF003292EE /* YMTLSProvider.h */; };
 		630A5CED1BE9428C003292EE /* YMmDNSService.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CEB1BE9428C003292EE /* YMmDNSService.c */; };
@@ -64,8 +63,6 @@
 /* Begin PBXFileReference section */
 		6307F77C1BECA2D0009C64CD /* YMPipePriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMPipePriv.h; path = src/YMPipePriv.h; sourceTree = "<group>"; };
 		6307F77D1BECA44A009C64CD /* YMStreamPriv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMStreamPriv.h; path = src/YMStreamPriv.h; sourceTree = "<group>"; };
-		6307F77F1BED7891009C64CD /* YammerTestUtilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = YammerTestUtilities.m; sourceTree = "<group>"; };
-		6307F7801BED7891009C64CD /* YammerTestUtilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = YammerTestUtilities.h; sourceTree = "<group>"; };
 		630A5CE71BE93BEF003292EE /* YMTLSProvider.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMTLSProvider.c; path = src/YMTLSProvider.c; sourceTree = "<group>"; };
 		630A5CE81BE93BEF003292EE /* YMTLSProvider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMTLSProvider.h; path = src/YMTLSProvider.h; sourceTree = "<group>"; };
 		630A5CEB1BE9428C003292EE /* YMmDNSService.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMmDNSService.c; path = src/YMmDNSService.c; sourceTree = "<group>"; };
@@ -102,6 +99,7 @@
 		63225D971BE92B6000C28F05 /* YMBase.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMBase.c; path = src/YMBase.c; sourceTree = "<group>"; };
 		63225D991BE92CBA00C28F05 /* YMPrivate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMPrivate.h; path = src/YMPrivate.h; sourceTree = "<group>"; };
 		63225D9D1BE9372800C28F05 /* libssl.1.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libssl.1.0.0.dylib; path = /opt/local/lib/libssl.1.0.0.dylib; sourceTree = "<absolute>"; };
+		6332A4B91BEFCDCF004BB764 /* YammerTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = YammerTests.h; sourceTree = "<group>"; };
 		63476A3E1BEAE54100D10081 /* mDNSTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = mDNSTests.m; sourceTree = "<group>"; };
 		63476A401BEAEFC500D10081 /* PlexerTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PlexerTests.m; sourceTree = "<group>"; };
 		63476A421BEAF4DB00D10081 /* YMLock.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMLock.c; path = src/YMLock.c; sourceTree = "<group>"; };
@@ -138,12 +136,11 @@
 		630A5D011BE96CE9003292EE /* YammerTests */ = {
 			isa = PBXGroup;
 			children = (
+				6332A4B91BEFCDCF004BB764 /* YammerTests.h */,
 				630A5D021BE96CE9003292EE /* YammerTests.m */,
 				63476A3E1BEAE54100D10081 /* mDNSTests.m */,
 				630A5D041BE96CE9003292EE /* Info.plist */,
 				63476A401BEAEFC500D10081 /* PlexerTests.m */,
-				6307F7801BED7891009C64CD /* YammerTestUtilities.h */,
-				6307F77F1BED7891009C64CD /* YammerTestUtilities.m */,
 				631683931BEEF1FB00F6AB99 /* DictionaryTest.m */,
 			);
 			path = YammerTests;
@@ -364,7 +361,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				630A5D031BE96CE9003292EE /* YammerTests.m in Sources */,
-				6307F7811BED7891009C64CD /* YammerTestUtilities.m in Sources */,
 				631683941BEEF1FB00F6AB99 /* DictionaryTest.m in Sources */,
 				63476A411BEAEFC500D10081 /* PlexerTests.m in Sources */,
 				63476A3F1BEAE54100D10081 /* mDNSTests.m in Sources */,

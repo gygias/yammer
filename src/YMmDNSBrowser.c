@@ -13,6 +13,9 @@
 
 #include <errno.h>
 
+#undef ymLogType
+#define ymLogType YMLogTypemDNS
+
 typedef struct __YMmDNSBrowser
 {
     YMTypeID _typeID;
@@ -150,7 +153,7 @@ bool YMmDNSBrowserEnumeratingStart(YMmDNSBrowserRef browser)
                                                             browser ); // context
     if( result != kDNSServiceErr_NoError )
     {
-        YMLog("YMmDNSBrowserStartEnumerating: %ld ", result);
+        ymlog("YMmDNSBrowserStartEnumerating: %ld ", result);
         return false;
     }
     
@@ -196,7 +199,7 @@ bool YMmDNSBrowserStart(YMmDNSBrowserRef browser)
     
     if( result != kDNSServiceErr_NoError )
     {
-        YMLog("YMmDNSBrowserStartEnumerating: %d", result);
+        ymlog("YMmDNSBrowserStartEnumerating: %d", result);
         return false;
     }
     
@@ -226,7 +229,7 @@ bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser, const char *serviceName)
     YMmDNSServiceRecord *theService = _YMmDNSBrowserGetServiceWithName(browser, serviceName, false);
     if ( ! theService )
     {
-        YMLog("YMmDNS asked to resolve '%s', but it doesn't have a record of this service",serviceName);
+        ymlog("YMmDNS asked to resolve '%s', but it doesn't have a record of this service",serviceName);
         return false;
     }
     
@@ -241,7 +244,7 @@ bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser, const char *serviceName)
                                                     browser );
     if ( result != kDNSServiceErr_NoError )
     {
-        YMLog("DNSServiceResolve failed: %d",result);
+        ymlog("DNSServiceResolve failed: %d",result);
         // on error "the callback is never invoked and the DNSServiceRef is not initialized"
         // leading me to believe we free not DNSServiceRefDeallocate here
         free(browser->resolveServiceRef);
@@ -252,7 +255,7 @@ bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser, const char *serviceName)
     result = DNSServiceProcessResult( *(browser->resolveServiceRef) );
     if ( result != kDNSServiceErr_NoError )
     {
-        YMLog("DNSServiceProcessResult failed: %d",result);
+        ymlog("DNSServiceProcessResult failed: %d",result);
         free(browser->resolveServiceRef);
         browser->resolveServiceRef = NULL;
         return false;
@@ -336,7 +339,7 @@ void _YMmDNSBrowserRemoveServiceNamed(_YMmDNSBrowser *browser, const char *name)
 #ifdef YMmDNS_ENUMERATION
 void DNSSD_API _YMmDNSEnumerateReply(DNSServiceRef sdRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *replyDomain, void *context)
 {
-    YMLog("YMmDNSEnumerateReply: flags: %04x", flags);
+    ymlog("YMmDNSEnumerateReply: flags: %04x", flags);
 }
 #endif
 
@@ -344,11 +347,11 @@ static void DNSSD_API _YMmDNSBrowseCallback(__unused DNSServiceRef serviceRef, D
                                             const char *domain, void *context)
 {
     
-    //YMLog("_YMmDNSBrowseCallback: %s/%s:?: if: %u flags: %04x", type, name, ifIdx, result);
+    //ymlog("_YMmDNSBrowseCallback: %s/%s:?: if: %u flags: %04x", type, name, ifIdx, result);
     _YMmDNSBrowser *browser = (_YMmDNSBrowser *)context;
     if ( result != kDNSServiceErr_NoError )
     {
-        YMLog("mDNS[%s]: error: browse callback: %d",browser->type,result);
+        ymlog("mDNS[%s]: error: browse callback: %d",browser->type,result);
         return;
     }
     
@@ -368,7 +371,7 @@ void DNSSD_API _YMmDNSResolveCallback(__unused DNSServiceRef serviceRef,__unused
                                       const char *host, uint16_t port, uint16_t txtLength, const unsigned char *txtRecord, void *context )
 {
     _YMmDNSBrowser *browser = (_YMmDNSBrowser *)context;
-    //YMLog("_YMmDNSResolveCallback: %s/%s -> %s:%u",browser->type,fullname,host,(unsigned)port);
+    //ymlog("_YMmDNSResolveCallback: %s/%s -> %s:%u",browser->type,fullname,host,(unsigned)port);
     uint16_t hostPort = ntohs(port);
     
     bool okay = ( result == kDNSServiceErr_NoError );
@@ -380,7 +383,7 @@ void DNSSD_API _YMmDNSResolveCallback(__unused DNSServiceRef serviceRef,__unused
         char *firstDotPtr = strstr(fullname, ".");
         if ( ! firstDotPtr )
         {
-            YMLog("_YMmDNSResolveCallback doesn't know how to parse name '%s'",fullname);
+            ymlog("_YMmDNSResolveCallback doesn't know how to parse name '%s'",fullname);
             okay = false;
             goto catch_callback_and_release;
         }
@@ -463,11 +466,11 @@ void *_YMmDNSBrowserEventThread( void *context )
         }
         else
         {
-            YMLog("mDNS browser event select returned: %d: %d (%s)",result,errno,strerror(errno));
+            ymlog("mDNS browser event select returned: %d: %d (%s)",result,errno,strerror(errno));
             keepGoing = false;
         }
     }
     
-    YMLog("mDNS event thread exiting");
+    ymlog("mDNS event thread exiting");
     return 0;
 }

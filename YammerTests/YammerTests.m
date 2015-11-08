@@ -6,38 +6,39 @@
 //  Copyright © 2015 combobulated. All rights reserved.
 //
 
-#import <XCTest/XCTest.h>
+#import "YammerTests.h"
 
-#import "YammerTestUtilities.h"
-
-@interface YammerTests : XCTestCase
+NSString *YMRandomASCIIStringWithMaxLength(uint16_t maxLength, BOOL for_mDNSServiceName)
 {
+    NSMutableString *string = [NSMutableString string];
+    
+    uint8_t randomLength = (uint8_t)arc4random_uniform(maxLength + 1);
+    if ( randomLength == 0 ) randomLength = 1;
+    uint8_t maxChar = for_mDNSServiceName ? 'z' : 0x7E, minChar = for_mDNSServiceName ? 'a' : 0x20;
+    uint8_t range = maxChar - minChar;
+    
+    while ( randomLength-- )
+    {
+        char aChar;
+        while ( ( aChar = (uint8_t)(arc4random_uniform(range + 1) + minChar) ) == '=' );
+        [string appendFormat:@"%c",aChar];
+    }
+    
+    return string;
 }
 
-@end
-
-@implementation YammerTests
-
-- (void)setUp {
-    [super setUp];
-    // Put setup code here. This method is called before the invocation of each test method in the class.
+NSData *YMRandomDataWithMaxLength(uint16_t length)
+{
+    NSMutableData *data = [NSMutableData data];
+    
+    uint16_t randomLength = (uint16_t)arc4random_uniform(length+1);
+    if ( randomLength == 0 ) randomLength = 1;
+    
+    while ( randomLength-- )
+    {
+        uint8_t aByte = (uint8_t)arc4random_uniform(0x100);
+        [data appendBytes:&aByte length:sizeof(aByte)];
+    }
+    
+    return data;
 }
-
-- (void)tearDown {
-    // Put teardown code here. This method is called after the invocation of each test method in the class.
-    [super tearDown];
-}
-
-- (void)testExample {
-    // This is an example of a functional test case.
-    // Use XCTAssert and related functions to verify your tests produce the correct results.
-}
-
-- (void)testPerformanceExample {
-    // This is an example of a performance test case.
-    [self measureBlock:^{
-        // Put the code you want to measure the time of here.
-    }];
-}
-
-@end

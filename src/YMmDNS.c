@@ -123,7 +123,7 @@ YMmDNSTxtRecordKeyPair **__YMmDNSCreateTxtKeyPairs(const unsigned char *txtRecor
         char *equalsPtr = strstr((const char *)aPairWalker,"=");
         if ( equalsPtr == NULL )
         {
-            YMLog("__YMmDNSCreateTxtKeyPairs failed to parse txt record");
+            ymlog("__YMmDNSCreateTxtKeyPairs failed to parse txt record");
             _YMmDNSTxtRecordKeyPairsFree(keyPairList, listSize);
             return NULL;
         }

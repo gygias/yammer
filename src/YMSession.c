@@ -9,6 +9,9 @@
 #include "YMSession.h"
 #include "YMPrivate.h"
 
+#undef ymLogType
+#define ymLogType YMLogTypeSession
+
 YMSessionRef YMSessionCreate()
 {
     _YMSession *session = (_YMSession *)calloc(1,sizeof(_YMSession));

@@ -6,9 +6,7 @@
 //  Copyright © 2015 combobulated. All rights reserved.
 //
 
-#import <XCTest/XCTest.h>
-
-#import "YammerTestUtilities.h"
+#import "YammerTests.h"
 
 #import "YMmDNS.h"
 #import "YMmDNSService.h"
@@ -52,6 +50,7 @@ mDNSTests *gGlobalSelf;
     waitingOnResolution = YES;
     waitingOnDisappearance = YES;
     gGlobalSelf = self;
+    self.continueAfterFailure = NO;
 }
 
 - (void)tearDown {

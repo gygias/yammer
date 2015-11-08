@@ -9,6 +9,9 @@
 #include "YMConnection.h"
 #include "YMPrivate.h"
 
+#undef ymLogType
+#define ymLogType YMLogTypeConnection
+
 YMConnectionRef YMConnectionCreate()
 {
     _YMConnection *connection = (_YMConnection *)calloc(1,sizeof(_YMConnection));

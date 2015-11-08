@@ -63,13 +63,13 @@ void YMDictionaryAdd(YMDictionaryRef dict, YMDictionaryKey key, YMDictionaryValu
 {
     if ( dict->count == MAX_OF(typeof(dict->count)) )
     {
-        YMLog("error: YMDictionary is full");
+        ymlog("error: YMDictionary is full");
         abort();
     }
     
     if ( _YMDictionaryFindItemWithIdentifier(dict->head, key, NULL) )
     {
-        YMLog("error: YMDictionary already contains item for key %llu",key);
+        ymlog("error: YMDictionary already contains item for key %llu",key);
         abort();
     }
     _YMDictionaryItemRef newItem = (_YMDictionaryItemRef)YMMALLOC(sizeof(struct __YMDictionaryItem));
@@ -90,7 +90,7 @@ YMDictionaryKey YMDictionaryRandomKey(YMDictionaryRef dict)
 {
     if ( dict->count == 0 || dict->head == NULL )
     {
-        YMLog("error: YMDictionary is empty and has no keys");
+        ymlog("error: YMDictionary is empty and has no keys");
         abort();
     }
     
@@ -133,7 +133,7 @@ YMDictionaryValue YMDictionaryRemove(YMDictionaryRef dict, YMDictionaryKey key)
 {
     if ( dict->count == 0 || dict->head == NULL )
     {
-        YMLog("error: YMDictionary is empty");
+        ymlog("error: YMDictionary is empty");
         abort();
     }
     
@@ -142,7 +142,7 @@ YMDictionaryValue YMDictionaryRemove(YMDictionaryRef dict, YMDictionaryKey key)
     _YMDictionaryItemRef theItem = _YMDictionaryFindItemWithIdentifier(dict->head, key, &previousItem);
     if ( ! theItem )
     {
-        YMLog("error: key does not exist to remove");
+        ymlog("error: key does not exist to remove");
         abort();
     }
     else
@@ -240,7 +240,7 @@ bool __Broken_YMDictionaryPopKeyValue(YMDictionaryRef dict, bool last, YMDiction
     
     if ( dict->count == 0 )
     {
-        YMLog("ymdictionary is broken");
+        ymlog("ymdictionary is broken");
         abort();
     }
     

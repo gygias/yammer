@@ -13,6 +13,9 @@
 #include <sys/socket.h>
 #include <dns_sd.h>
 
+#undef ymLogType
+#define ymLogType YMLogTypemDNS
+
 typedef struct __YMmDNSService
 {
     YMTypeID _typeID;
@@ -38,7 +41,7 @@ void _YMmDNSRegisterCallback(__unused DNSServiceRef sdRef,
                             void *context )
 {
     YMmDNSServiceRef service = (YMmDNSServiceRef)context;
-    YMLog("_YMmDNSRegisterCallback: %s/%s:%u: %d", service->type, service->name, service->port, errorCode);
+    ymlog("_YMmDNSRegisterCallback: %s/%s:%u: %d", service->type, service->name, service->port, errorCode);
     // DNSServiceRefDeallocate?
 }
 
@@ -51,7 +54,7 @@ YMmDNSServiceRef YMmDNSServiceCreate(const char *type, const char *name, uint16_
         || strlen(name) >= mDNS_SERVICE_NAME_LENGTH_MAX
         || strlen(name) < mDNS_SERVICE_NAME_LENGTH_MIN )
     {
-        YMLog("invalid service name specified to YMmDNSServiceCreate");
+        ymlog("invalid service name specified to YMmDNSServiceCreate");
         return NULL;
     }
     
@@ -118,11 +121,11 @@ ymbool YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPa
             buffer = realloc(buffer, bufferSize);
         }
         
-        YMLog("writing %dth keypair to %p + %u",idx,buffer,offset);
+        ymlog("writing %dth keypair to %p + %u",idx,buffer,offset);
 //        int written = snprintf(bufferWalker, prefixedKeyEqualsLen + 2, "%c%s=", tupleLen, key);
 //        if ( written != prefixedKeyEqualsLen )
 //        {
-//            YMLog("YMmDNSServiceSetTXTRecord failed to format key '%s'",key);
+//            ymlog("YMmDNSServiceSetTXTRecord failed to format key '%s'",key);
 //            return false;
 //        }
         memcpy(buffer + offset, &tupleLen, sizeof(tupleLen));
@@ -175,7 +178,7 @@ ymbool YMmDNSServiceStart( YMmDNSServiceRef service )
         // on error "the callback is never invoked and the DNSServiceRef is not initialized"
         // leading me to think we free instead of DNSServiceRefDeallocate
         free(serviceRef);
-        YMLog("DNSServiceRegister failed: %d",result);
+        ymlog("DNSServiceRegister failed: %d",result);
         return false;
     }
     
@@ -188,7 +191,7 @@ ymbool YMmDNSServiceStart( YMmDNSServiceRef service )
     
     YMThreadStart(eventThread);
 
-    YMLog("YMmDNSService published %s/%s:%u",service->type,service->name,(unsigned)service->port);
+    ymlog("YMmDNSService published %s/%s:%u",service->type,service->name,(unsigned)service->port);
     return true;
 }
 
@@ -208,17 +211,17 @@ ymbool YMmDNSServiceStop( YMmDNSServiceRef service, ymbool synchronous )
     if ( synchronous )
         okay = YMThreadJoin(service->eventThread);
     
-    YMLog("YMmDNSService stopping");
+    ymlog("YMmDNSService stopping");
     return okay;
 }
 
 void *_YMmDNSEventThread(void *context)
 {
     YMmDNSServiceRef service = (YMmDNSServiceRef)context;
-    YMLog("event thread for %s entered...",service->name);
+    ymlog("event thread for %s entered...",service->name);
     while (service->advertising) {
         sleep(1);
     }
-    YMLog("event thread for %s exiting...",service->name);
+    ymlog("event thread for %s exiting...",service->name);
     return NULL;
 }

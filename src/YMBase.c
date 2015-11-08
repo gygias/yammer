@@ -73,7 +73,7 @@ void YMFree(YMTypeRef object)
         _YMDictionaryFree(object);
     else
     {
-        YMLog("YMFree unknown type %c",((_YMType *)object)->_type);
+        ymlog("YMFree unknown type %c",((_YMType *)object)->_type);
         abort();
     }
 }
