@@ -408,10 +408,8 @@ void *__YMPlexerServiceDownstreamThread(void *context)
         {
             if ( ! servicingStream )
             {
-#pragma message "this should be fatal, happens intermittently on in-process test case, always to remote"
                 YMLog(" plexer[%s-V]: fatal: signaled but nothing available",plexer->name);
-                continue;
-                //abort();
+                abort();
             }
             
             okay = __YMPlexerServiceADownstream(plexer, servicingStream, listOfLocksAndLists[listIdx], streamIdx);

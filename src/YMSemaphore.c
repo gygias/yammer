@@ -12,6 +12,7 @@
 
 #include "YMLock.h"
 
+#include <fcntl.h>
 //#define PTHREAD_SEMAPHORE
 #ifdef PTHREAD_SEMAPHORE
 #include <pthread.h>
@@ -35,7 +36,7 @@ typedef struct __YMSemaphore
 #endif
 } _YMSemaphore;
 
-uint16_t gYMSemaphoreIndex = 0;
+uint16_t gYMSemaphoreIndex = 40;
 YMLockRef gYMSemaphoreIndexLock = NULL;
 pthread_once_t gYMSemaphoreIndexInit = PTHREAD_ONCE_INIT;
 
@@ -82,10 +83,31 @@ YMSemaphoreRef YMSemaphoreCreate(const char *name, int initialValue)
     semaphore->cond = cond;
     semaphore->value = initialValue;
 #else
-    semaphore->sem = sem_open(semaphore->semName, O_CREAT, 0700, initialValue); // todo mode?
+    bool triedUnlink = false;
+    
+try_again:;
+    
+#pragma message "i feel like i'm doing it wrong"
+    int open_error;
+    semaphore->sem = sem_open(semaphore->semName, O_CREAT|O_EXCL, S_IRUSR|S_IWUSR, initialValue); // todo mode?
     if ( semaphore->sem == SEM_FAILED )
     {
-        YMLog("semaphore[%s,%s]: fatal: sem_open failed: %d (%s)",semaphore->semName,semaphore->userName,errno,strerror(errno));
+        open_error = errno;
+        if ( errno == EEXIST )
+        {
+            triedUnlink = true;
+            if ( sem_unlink(semaphore->semName) == 0 )
+            {
+                YMLog("sem_unlink[%s]",semaphore->semName);
+                goto try_again;
+            }
+            else
+            {
+                YMLog("sem_unlink[%s] failed: %d (%s)",semaphore->semName,errno,strerror(errno));
+                abort();
+            }
+        }
+        YMLog("semaphore[%s,%s]: fatal: sem_open failed: %d (%s)",semaphore->semName,semaphore->userName,open_error,strerror(open_error));
         abort(); // since we handle names internally
     }
 #endif
@@ -146,7 +168,7 @@ void YMSemaphoreWait(YMSemaphoreRef semaphore)
         YMLog("semaphore[%s,%s]: fatal: sem_wait failed: %d (%s)",semaphore->semName,semaphore->userName,errno,strerror(errno));
         abort();
     }
-    YMLog("semaphore[%s,%s]: waited",semaphore->semName,semaphore->userName);
+    YMLog("semaphore[%s,%s]: waited!->",semaphore->semName,semaphore->userName);
 #endif
 }
 

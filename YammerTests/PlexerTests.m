@@ -17,8 +17,9 @@
 #include "YMLock.h"
 
 #define     PlexerTest1RoundTripThreads 10 // SATURDAY
-#define     PlexerTest1RoundTripsPerThread 10
+#define     PlexerTest1RoundTripsPerThread 50
 #define     PlexerTest1NewStreamPerRoundTrip true // SATURDAY
+#define     PlexerTest1RandomMessages false
 #define     PlexerTest1StreamClosuresToObserve ( PlexerTest1RoundTripThreads * ( PlexerTest1NewStreamPerRoundTrip ? PlexerTest1RoundTripsPerThread : 1 ) )
 
 typedef struct
@@ -132,31 +133,33 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
     YMStreamRef aStream = NULL;
     for ( unsigned idx = 0; idx < PlexerTest1RoundTripsPerThread; idx++ )
     {
+        YMStreamID streamID;
         if ( ! aStream || PlexerTest1NewStreamPerRoundTrip )
         {
             NSLog(@"VVV LOCAL creating stream VVV");
             aStream = YMPlexerCreateNewStream(plexer,__FUNCTION__,false);
-            NSLog(@"^^^ LOCAL s%u created stream ^^^",_YMStreamGetUserInfo(aStream)->streamID);
+            streamID = _YMStreamGetUserInfo(aStream)->streamID;
+            NSLog(@"^^^ LOCAL s%u created stream ^^^",streamID);
         }
         
-        NSLog(@"VVV LOCAL s%u sending message #%u VVV",_YMStreamGetUserInfo(aStream)->streamID,idx);
+        NSLog(@"VVV LOCAL s%u sending message #%u VVV",streamID,idx);
         [self sendMessage:aStream :testLocalMessage];
-        NSLog(@"^^^ LOCAL s%u sent message #%u ^^^",_YMStreamGetUserInfo(aStream)->streamID,idx);
+        NSLog(@"^^^ LOCAL s%u sent message #%u ^^^",streamID,idx);
         
         char *response;
         uint16_t responseLen;
-        NSLog(@"VVV LOCAL s%u receiving response #%u VVV",_YMStreamGetUserInfo(aStream)->streamID,idx);
+        NSLog(@"VVV LOCAL s%u receiving response #%u VVV",streamID,idx);
         [self receiveMessage:aStream :(void **)&response :&responseLen];
-        NSLog(@"^^^ LOCAL s%u received response #%u ^^^",_YMStreamGetUserInfo(aStream)->streamID,idx);
+        NSLog(@"^^^ LOCAL s%u received response #%u ^^^",streamID,idx);
         
         int cmp = strcmp(response,testRemoteResponse);
         XCTAssert(cmp == 0, @"response: %s",response);
         
         if ( PlexerTest1NewStreamPerRoundTrip )
         {
-            NSLog(@"VVV LOCAL s%u closing stream VVV",_YMStreamGetUserInfo(aStream)->streamID);
+            NSLog(@"VVV LOCAL s%u closing stream VVV",streamID);
             YMPlexerCloseStream(plexer, aStream);
-            NSLog(@"^^^ LOCAL s%u closing stream ^^^",_YMStreamGetUserInfo(aStream)->streamID);
+            NSLog(@"^^^ LOCAL s%u closing stream ^^^",streamID);
         }
     }
     if ( ! PlexerTest1NewStreamPerRoundTrip )
