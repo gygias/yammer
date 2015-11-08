@@ -246,7 +246,10 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream)
 
 - (void)handleANewLocalStream:(YMPlexerRef)plexer :(YMStreamRef)stream
 {
+#ifdef TestLogging
     YMStreamID streamID = _YMStreamGetUserInfo(stream)->streamID;
+#endif
+    
     TestLog(@"VVV REMOTE -newStream[%u] entered",streamID);
     
     unsigned iterations = PlexerTest1NewStreamPerRoundTrip ? 1 : PlexerTest1RoundTripsPerThread;
