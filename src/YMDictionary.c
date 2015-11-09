@@ -3,14 +3,17 @@
 //  yammer
 //
 //  Created by david on 11/4/15.
-//  Copyright © 2015 Combobulated Software. All rights reserved.
+//  Copyright © 2015 combobulated. All rights reserved.
 //
 
 #include "YMDictionary.h"
 
 #include "YMPrivate.h"
-
 #include "YMUtilities.h"
+
+#undef ymlogType
+#define ymlogType YMLogDefault
+#include "YMLog.h"
 
 typedef struct __YMDictionaryItem
 {
@@ -63,13 +66,13 @@ void YMDictionaryAdd(YMDictionaryRef dict, YMDictionaryKey key, YMDictionaryValu
 {
     if ( dict->count == MAX_OF(typeof(dict->count)) )
     {
-        ymlog("error: YMDictionary is full");
+        ymerr("error: YMDictionary is full");
         abort();
     }
     
     if ( _YMDictionaryFindItemWithIdentifier(dict->head, key, NULL) )
     {
-        ymlog("error: YMDictionary already contains item for key %llu",key);
+        ymerr("error: YMDictionary already contains item for key %llu",key);
         abort();
     }
     _YMDictionaryItemRef newItem = (_YMDictionaryItemRef)YMMALLOC(sizeof(struct __YMDictionaryItem));
@@ -90,7 +93,7 @@ YMDictionaryKey YMDictionaryRandomKey(YMDictionaryRef dict)
 {
     if ( dict->count == 0 || dict->head == NULL )
     {
-        ymlog("error: YMDictionary is empty and has no keys");
+        ymerr("error: YMDictionary is empty and has no keys");
         abort();
     }
     
@@ -133,7 +136,7 @@ YMDictionaryValue YMDictionaryRemove(YMDictionaryRef dict, YMDictionaryKey key)
 {
     if ( dict->count == 0 || dict->head == NULL )
     {
-        ymlog("error: YMDictionary is empty");
+        ymerr("error: YMDictionary is empty");
         abort();
     }
     
@@ -142,7 +145,7 @@ YMDictionaryValue YMDictionaryRemove(YMDictionaryRef dict, YMDictionaryKey key)
     _YMDictionaryItemRef theItem = _YMDictionaryFindItemWithIdentifier(dict->head, key, &previousItem);
     if ( ! theItem )
     {
-        ymlog("error: key does not exist to remove");
+        ymerr("error: key does not exist to remove");
         abort();
     }
     else

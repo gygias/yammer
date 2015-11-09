@@ -9,8 +9,6 @@
 #ifndef YMmDNS_h
 #define YMmDNS_h
 
-#include "YMBase.h"
-
 #define mDNS_SERVICE_NAME_LENGTH_MAX 63
 #define mDNS_SERVICE_NAME_LENGTH_MIN 1
 

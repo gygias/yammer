@@ -3,12 +3,20 @@
 //  yammer
 //
 //  Created by david on 11/4/15.
-//  Copyright © 2015 Combobulated Software. All rights reserved.
+//  Copyright © 2015 combobulated. All rights reserved.
 //
 
 #include "YMLinkedList.h"
 
 #include "YMPrivate.h"
+
+#include "YMLog.h"
+#undef ymlogType
+#define ymlogType YMLogDefault
+#if ( ymlogType >= ymLogTarget )
+#undef ymlog
+#define ymlog(x,...)
+#endif
 
 typedef struct _YMLinkedListItem
 {

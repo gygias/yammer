@@ -9,8 +9,6 @@
 #ifndef YMPipe_h
 #define YMPipe_h
 
-#include "YMBase.h"
-
 typedef struct _YMPipe *YMPipeRef;
 
 YMPipeRef YMPipeCreate(char *name);

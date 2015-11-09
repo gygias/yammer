@@ -9,8 +9,13 @@
 #include "YMSession.h"
 #include "YMPrivate.h"
 
-#undef ymLogType
-#define ymLogType YMLogTypeSession
+#include "YMLog.h"
+#undef ymlogType
+#define ymlogType YMLogSession
+#if ( ymlogType >= ymLogTarget )
+#undef ymlog
+#define ymlog(x,...)
+#endif
 
 YMSessionRef YMSessionCreate()
 {

@@ -10,6 +10,14 @@
 
 #include "YMPrivate.h"
 
+#include "YMLog.h"
+#undef ymlogType
+#define ymlogType YMLogDefault
+#if ( ymlogType >= ymLogTarget )
+#undef ymlog
+#define ymlog(x,...)
+#endif
+
 #include <stdarg.h>
 
 void YMGetTheBeginningOfPosixTimeForCurrentPlatform(struct timeval *time)
@@ -65,7 +73,7 @@ YMIOResult YMWriteFull(int fd, const uint8_t *buffer, size_t bytes)
         switch(aWrite)
         {
             case 0:
-                printf("YMWrite: aWrite=0?");
+                ymerr("YMWrite: aWrite=0?");
             case -1:
                 return YMIOError;
                 break;
@@ -88,7 +96,7 @@ char *YMStringCreateWithFormat(char *formatStr, ...)
     if ( length == 0 )
         newStr = strdup("");
     else if ( length < 0 )
-        ymlog("snprintf failed on format: %s", formatStr);
+        ymerr("snprintf failed on format: %s", formatStr);
     else
     {
         newStr = (char *)YMMALLOC(length);

@@ -9,6 +9,14 @@
 #include "YMPipe.h"
 #include "YMPrivate.h"
 
+#include "YMLog.h"
+#undef ymlogType
+#define ymlogType YMLogPipe
+#if ( ymlogType >= ymLogTarget )
+#undef ymlog
+#define ymlog(x,...)
+#endif
+
 typedef struct __YMPipe
 {
     YMTypeID _typeID;
@@ -31,7 +39,7 @@ YMPipeRef YMPipeCreate(char *name)
     {
         if ( errno == EFAULT )
         {
-            ymlog("pipe[%s]: error: invalid address space",name);
+            ymerr("pipe[%s]: error: invalid address space",name);
             free(ymPipe->name);
             free(ymPipe);
             return NULL;
@@ -41,7 +49,7 @@ YMPipeRef YMPipeCreate(char *name)
         {
             iter++;
             if ( iter > 100 )
-                ymlog("pipe[%s]: warning: new files unavailable for pipe()",name);
+                ymerr("pipe[%s]: warning: new files unavailable for pipe()",name);
         }
     }
     

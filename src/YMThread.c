@@ -6,17 +6,24 @@
 //  Copyright © 2015 combobulated. All rights reserved.
 //
 
-#include "YMThread.h"
+#include "YMBase.h"
 #include "YMPrivate.h"
+#include "YMUtilities.h"
 
+#include "YMThread.h"
 #include "YMDictionary.h"
 #include "YMSemaphore.h"
 #include "YMLock.h"
 
 #include <pthread.h>
 
-#undef ymLogType
-#define ymLogType YMLogThread
+#include "YMLog.h"
+#undef ymlogType
+#define ymlogType YMLogThread
+#if ( ymlogType >= ymLogTarget )
+#undef ymlog
+#define ymlog(x,...) ;
+#endif
 
 typedef uint64_t YMThreadDispatchID;
 typedef uint64_t YMThreadDispatchThreadID;
@@ -84,7 +91,7 @@ YMThreadRef _YMThreadCreate(char *name, bool isDispatchThread, ym_thread_entry e
             thread->dispatchThreadID = gDispatchThreadIDNext++;
             if ( YMDictionaryContains(gDispatchThreadDefsByID, thread->dispatchThreadID) ) // either a bug or pathological
             {
-                ymlog("thread[%s,dispatch]: fatal: out of dispatch thread ids",thread->name);
+                ymerr("thread[%s,dispatch]: fatal: out of dispatch thread ids",thread->name);
                 abort();
             }
             
@@ -151,7 +158,7 @@ bool YMThreadStart(YMThreadRef thread)
     
     if ( ( result = pthread_create(&pthread, NULL, thread->entryPoint, thread->context) ) )
     {
-        ymlog("thread[%s,%s]: error: pthread_create %d %s", thread->name, thread->isDispatchThread?"dispatch":"user", result, strerror(result));
+        ymerr("thread[%s,%s]: error: pthread_create %d %s", thread->name, thread->isDispatchThread?"dispatch":"user", result, strerror(result));
         return false;
     }
     
@@ -166,7 +173,7 @@ bool YMThreadJoin(YMThreadRef thread)
     int result;
     if ( ( result = pthread_join(_thread->pthread, NULL) ) )
     {
-        ymlog("thread[%s,%s]: error: pthread_join %d %s", thread->name, thread->isDispatchThread ? "dispatch" : "user", result, strerror(result));
+        ymerr("thread[%s,%s]: error: pthread_join %d %s", thread->name, thread->isDispatchThread ? "dispatch" : "user", result, strerror(result));
         return false;
     }
     
@@ -177,7 +184,7 @@ void YMThreadDispatchDispatch(YMThreadRef thread, YMThreadDispatchUserInfoRef us
 {
     if ( ! thread->isDispatchThread )
     {
-        ymlog("thread[%s,dispatch,dt%llu]: fatal: attempt to dispatch to non-dispatch thread",thread->name,thread->dispatchThreadID);
+        ymerr("thread[%s,dispatch,dt%llu]: fatal: attempt to dispatch to non-dispatch thread",thread->name,thread->dispatchThreadID);
         abort();
     }
     
@@ -192,7 +199,7 @@ void YMThreadDispatchDispatch(YMThreadRef thread, YMThreadDispatchUserInfoRef us
         
         if ( YMDictionaryContains(thread->dispatchesByID, newDispatch->dispatchID) )
         {
-            ymlog("thread[%s,dispatch,dt%llu]: fatal: thread is out of dispatch ids (%zu)",thread->name,thread->dispatchThreadID,YMDictionaryGetCount(thread->dispatchesByID));
+            ymerr("thread[%s,dispatch,dt%llu]: fatal: thread is out of dispatch ids (%zu)",thread->name,thread->dispatchThreadID,YMDictionaryGetCount(thread->dispatchesByID));
             abort();
         }
         
@@ -234,7 +241,7 @@ void *_YMThreadDispatchThreadProc(void *threadDefPtr)
         YMSemaphoreWait(thread->dispatchSemaphore);
         ymlog("thread[%s,dispatch,dt%llu,p%llu]: woke for user dispatch", thread->name, thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber());
         
-        YMThreadDispatchID theDispatchID = -1;
+        __unused YMThreadDispatchID theDispatchID = -1;
         _YMThreadDispatchInternal *theDispatch = NULL;
         YMLockLock(thread->dispatchListLock);
         {
@@ -242,7 +249,7 @@ void *_YMThreadDispatchThreadProc(void *threadDefPtr)
             theDispatch = (_YMThreadDispatchInternal *)YMDictionaryRemove(thread->dispatchesByID,randomKey);
             if ( ! theDispatch )
             {
-                ymlog("thread[%s,dispatch,dt%llu,p%llu]: fatal: thread signaled without target", thread->name, thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber());
+                ymerr("thread[%s,dispatch,dt%llu,p%llu]: fatal: thread signaled without target", thread->name, thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber());
                 abort();
             }
         }
@@ -261,7 +268,7 @@ void *_YMThreadDispatchThreadProc(void *threadDefPtr)
         
         if ( ! threadDef )
         {
-            ymlog("thread[%s,dispatch,dt%llu,p%llu]: fatal: dispatch thread def not found on exit", thread->name, thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber());
+            ymerr("thread[%s,dispatch,dt%llu,p%llu]: fatal: dispatch thread def not found on exit", thread->name, thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber());
             abort();
         }
         

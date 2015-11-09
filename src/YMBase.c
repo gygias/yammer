@@ -9,6 +9,8 @@
 #include "YMBase.h"
 #include "YMPrivate.h"
 
+#include "YMLog.h"
+
 typedef struct __YMType
 {
     YMTypeID _type;

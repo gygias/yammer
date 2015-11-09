@@ -9,8 +9,6 @@
 #ifndef YMUtilities_h
 #define YMUtilities_h
 
-#include "YMBase.h"
-
 #define YMMIN(a,b) ( (a<b) ? (a) : (b) )
 #define YMMAX(a,b) ( (a>b) ? (a) : (b) )
 

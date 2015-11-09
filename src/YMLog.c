@@ -28,39 +28,13 @@ void __YMLogInit()
     pthread_once(&gYMLogLockOnce, YMLogInitLock);
 }
 
-void _YMLog( char* format, ... )
-{
-    __YMLogInit();
-    
-    YMLockLock(gYMLogLock);
-    {
-        va_list args;
-        va_start(args,format);
-        vprintf(format, args);
-        va_end(args);
-        printf("\n");
-        fflush(stdout);
-    }
-    YMLockUnlock(gYMLogLock);
-}
-
 void YMLogType( YMLogLevel level, char* format, ... )
 {
     __YMLogInit();
     
-    switch(level)
-    {
-        case YMLogThread:
-        case YMLogLock:
-        case YMLogPlexer:
-        case YMLogStream:
-        case YMLogPipe:
-            return;
-        default:
-            break;
-    }
+    if ( level > ymlogTarget )
+        abort();
     
-#pragma message "copied code, forward vargs"
     YMLockLock(gYMLogLock);
     {
         va_list args;

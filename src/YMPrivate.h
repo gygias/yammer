@@ -17,8 +17,6 @@
 #define YMMALLOC(x) calloc(1,(x))
 #endif
 
-#define YM_TOKEN_STRING(x) #x
-
 extern YMTypeID _YMPipeTypeID;
 extern YMTypeID _YMStreamTypeID;
 extern YMTypeID _YMConnectionTypeID;

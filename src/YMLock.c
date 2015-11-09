@@ -3,7 +3,7 @@
 //  yammer
 //
 //  Created by david on 11/4/15.
-//  Copyright © 2015 Combobulated Software. All rights reserved.
+//  Copyright © 2015 combobulated. All rights reserved.
 //
 
 #include "YMLock.h"
@@ -11,8 +11,13 @@
 
 #include <pthread.h>
 
-#undef ymLogType
-#define ymLogType YMLogLock
+#include "YMLog.h"
+#undef ymlogType
+#define ymlogType YMLogLock
+#if ( ymlogType >= ymLogTarget )
+#undef ymlog
+#define ymlog(x,...)
+#endif
 
 typedef struct __YMLock
 {
@@ -63,13 +68,13 @@ bool _YMLockGetNewMutexWithOptions(YMLockOptions options, pthread_mutex_t *outMu
         result = pthread_mutexattr_init(attributesPtr);
         if ( result != 0 )
         {
-            ymlog("YMLock: pthread_mutexattr_init failed: %d (%s)", result, strerror(result));
+            ymerr("YMLock: pthread_mutexattr_init failed: %d (%s)", result, strerror(result));
             return false;
         }
         result = pthread_mutexattr_settype(attributesPtr, PTHREAD_MUTEX_RECURSIVE);
         if ( result != 0 )
         {
-            ymlog("YMLock: pthread_mutexattr_settype failed: %d (%s)", result, strerror(result));
+            ymerr("YMLock: pthread_mutexattr_settype failed: %d (%s)", result, strerror(result));
             goto catch_release;
         }
     }
@@ -77,7 +82,7 @@ bool _YMLockGetNewMutexWithOptions(YMLockOptions options, pthread_mutex_t *outMu
     result = pthread_mutex_init(&mutex, attributesPtr);
     if ( result != 0 )
     {
-        ymlog("YMLock: pthread_mutex_init failed: %d (%s)", result, strerror(result));
+        ymerr("YMLock: pthread_mutex_init failed: %d (%s)", result, strerror(result));
         goto catch_release;
     }
     
@@ -98,15 +103,15 @@ void YMLockLock(YMLockRef lock)
         case 0:
             break;
         case EDEADLK:
-            ymlog("fatal: user of YMLock (%s) created deadlock", lock->name);
+            ymerr("fatal: user of YMLock (%s) created deadlock", lock->name);
             okay = false;
             break;
         case EINVAL:
-            ymlog("fatal: invalid parameter to YMLock (%s)", lock->name);
+            ymerr("fatal: invalid parameter to YMLock (%s)", lock->name);
             okay = false;
             break;
         default:
-            ymlog("warning: unknown error on YMLockLock (%s): %d (%s)", lock->name, result, strerror(result));
+            ymerr("warning: unknown error on YMLockLock (%s): %d (%s)", lock->name, result, strerror(result));
             break;
     }
     
@@ -125,22 +130,20 @@ void YMLockUnlock(YMLockRef lock)
         case 0:
             break;
         case EPERM:
-            ymlog("fatal: unlocking thread does not hold YMLock (%s)", lock->name);
+            ymerr("fatal: unlocking thread does not hold YMLock (%s)", lock->name);
             okay = false;
             break;
         case EINVAL:
-            ymlog("fatal: invalid parameter to YMLock (%s)", lock->name);
+            ymerr("fatal: invalid parameter to YMLock (%s)", lock->name);
             okay = false;
             break;
         default:
-            ymlog("warning: unknown error on YMLockLock (%s): %d (%s)", lock->name, result, strerror(result));
+            ymerr("warning: unknown error on YMLockLock (%s): %d (%s)", lock->name, result, strerror(result));
             break;
     }
     
-#ifndef DUMB_AND_DUMBER
     if ( ! okay )
         abort();
-#endif
 }
 
 void _YMLockFree(YMTypeRef object)
@@ -149,7 +152,7 @@ void _YMLockFree(YMTypeRef object)
     
     int result = pthread_mutex_destroy(&lock->mutex);
     if ( result != 0 )
-        ymlog("warning: cannot destroy mutex (%s), something may be deadlocked", lock->name ? lock->name : "unnamed");
+        ymerr("warning: cannot destroy mutex (%s), something may deadlock", lock->name ? lock->name : "unnamed");
     free(lock->name);
     lock->name = NULL;
     

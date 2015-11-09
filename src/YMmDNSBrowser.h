@@ -9,7 +9,6 @@
 #ifndef YMmDNSBrowser_h
 #define YMmDNSBrowser_h
 
-#include "YMBase.h"
 #include "YMmDNS.h"
 
 #include <dns_sd.h>

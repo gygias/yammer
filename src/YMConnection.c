@@ -9,8 +9,13 @@
 #include "YMConnection.h"
 #include "YMPrivate.h"
 
-#undef ymLogType
-#define ymLogType YMLogTypeConnection
+#include "YMLog.h"
+#undef ymlogType
+#define ymlogType YMLogConnection
+#if ( ymlogType >= ymLogTarget )
+#undef ymlog
+#define ymlog(x,...)
+#endif
 
 YMConnectionRef YMConnectionCreate()
 {

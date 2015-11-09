@@ -9,8 +9,6 @@
 #ifndef YMTLSProvider_h
 #define YMTLSProvider_h
 
-#include "YMBase.h"
-
 #include "YMSecurityProvider.h"
 
 #endif /* YMTLSProvider_h */

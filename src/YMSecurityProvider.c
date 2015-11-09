@@ -11,8 +11,13 @@
 
 #include "YMUtilities.h"
 
-#undef ymLogType
-#define ymLogType YMLogTypeSecurity
+#include "YMLog.h"
+#undef ymlogType
+#define ymlogType YMLogSecurity
+#if ( ymlogType >= ymLogTarget )
+#undef ymlog
+#define ymlog(x,...)
+#endif
 
 typedef bool (*ym_security_init_func)(int,int);
 typedef bool (*ym_security_read_func)(int,int,uint8_t*,size_t);

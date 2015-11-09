@@ -9,8 +9,6 @@
 #ifndef YMThread_h
 #define YMThread_h
 
-#include "YMBase.h"
-
 typedef struct __YMThread *YMThreadRef;
 
 // entry point definition for standard threads

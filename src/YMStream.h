@@ -9,7 +9,7 @@
 #ifndef YMStream_h
 #define YMStream_h
 
-#include "YMBase.h"
+#include "YMUtilities.h"
 
 #include "YMSemaphore.h"
 

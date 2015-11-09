@@ -8,13 +8,20 @@
 
 #include "YMmDNSService.h"
 #include "YMPrivate.h"
+#include "YMUtilities.h"
+
 #include "YMThread.h"
 
 #include <sys/socket.h>
 #include <dns_sd.h>
 
-#undef ymLogType
-#define ymLogType YMLogTypemDNS
+#include "YMLog.h"
+#undef ymlogType
+#define ymlogType YMLogmDNS
+#if ( ymlogType >= ymLogTarget )
+#undef ymlog
+#define ymlog(x,...)
+#endif
 
 typedef struct __YMmDNSService
 {
@@ -34,13 +41,13 @@ typedef struct __YMmDNSService
 
 void _YMmDNSRegisterCallback(__unused DNSServiceRef sdRef,
                             __unused DNSServiceFlags flags,
-                            DNSServiceErrorType errorCode,
+                            __unused DNSServiceErrorType errorCode,
                             __unused const char *name,
                             __unused const char *regtype,
                             __unused const char *domain,
                             void *context )
 {
-    YMmDNSServiceRef service = (YMmDNSServiceRef)context;
+    __unused YMmDNSServiceRef service = (YMmDNSServiceRef)context;
     ymlog("_YMmDNSRegisterCallback: %s/%s:%u: %d", service->type, service->name, service->port, errorCode);
     // DNSServiceRefDeallocate?
 }

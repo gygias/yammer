@@ -3,13 +3,15 @@
 //  yammer
 //
 //  Created by david on 11/5/15.
-//  Copyright © 2015 Combobulated Software. All rights reserved.
+//  Copyright © 2015 combobulated. All rights reserved.
 //
 
 #ifndef YMStreamPriv_h
 #define YMStreamPriv_h
 
 #include "YMStream.h"
+
+#include "YMLock.h" // for _GetRetainLock only, which should be refactored to work like incoming close/free coordination
 
 typedef uint32_t YMStreamID;
 #define YMStreamIDMax UINT32_MAX
@@ -49,6 +51,7 @@ bool _YMStreamIsClosed(YMStreamRef stream);
 // to forward the user message.
 void _YMStreamRemoteSetPlexerReleased(YMStreamRef stream);
 void _YMStreamRemoteSetUserReleased(YMStreamRef stream);
+YMLockRef _YMStreamGetRetainLock(YMStreamRef stream); // for coordinating outgoing closure and deallocation, should probably be used for, or converted to, the remote stream _Set*Released model
 
 int _YMStreamGetDownwardWrite(YMStreamRef);
 int _YMStreamGetDownwardRead(YMStreamRef);

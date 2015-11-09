@@ -8,13 +8,19 @@
 
 #include "YMmDNSBrowser.h"
 #include "YMPrivate.h"
+#include "YMUtilities.h"
 
 #include "YMThread.h"
 
 #include <errno.h>
 
-#undef ymLogType
-#define ymLogType YMLogTypemDNS
+#include "YMLog.h"
+#undef ymlogType
+#define ymlogType YMLogmDNS
+#if ( ymlogType >= ymLogTarget )
+#undef ymlog
+#define ymlog(x,...)
+#endif
 
 typedef struct __YMmDNSBrowser
 {
@@ -351,7 +357,7 @@ static void DNSSD_API _YMmDNSBrowseCallback(__unused DNSServiceRef serviceRef, D
     _YMmDNSBrowser *browser = (_YMmDNSBrowser *)context;
     if ( result != kDNSServiceErr_NoError )
     {
-        ymlog("mDNS[%s]: error: browse callback: %d",browser->type,result);
+        ymerr("mDNS[%s]: error: browse callback: %d",browser->type,result);
         return;
     }
     

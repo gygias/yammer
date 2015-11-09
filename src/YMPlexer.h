@@ -10,6 +10,7 @@
 #define YMPlexer_h
 
 #include "YMBase.h"
+
 #include "YMStream.h"
 
 typedef struct __YMPlexer *YMPlexerRef; // CF defines const, how to shadow writeable struct?

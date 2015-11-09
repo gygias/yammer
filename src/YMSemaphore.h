@@ -3,13 +3,11 @@
 //  yammer
 //
 //  Created by david on 11/4/15.
-//  Copyright © 2015 Combobulated Software. All rights reserved.
+//  Copyright © 2015 combobulated. All rights reserved.
 //
 
 #ifndef YMSemaphore_h
 #define YMSemaphore_h
-
-#include "YMBase.h"
 
 typedef struct __YMSemaphore *YMSemaphoreRef;
 

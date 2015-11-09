@@ -8,17 +8,18 @@
 
 #import "YammerTests.h"
 
+#include "YMBase.h"
 #include "YMPipe.h"
 #include "YMPlexer.h"
 #include "YMSecurityProvider.h"
 #include "YMStreamPriv.h"
 #include "YMLock.h"
 
-#define     PlexerTest1RoundTripThreads 16
-#define     PlexerTest1RoundTripsPerThread 500
+#define     PlexerTest1RoundTripThreads 4
+#define     PlexerTest1RoundTripsPerThread 5000
 #define     PlexerTest1NewStreamPerRoundTrip true
 #define     PlexerTest1RandomMessages true // todo
-#define     PlexerTest1RandomMessageMaxLength 1024
+#define     PlexerTest1RandomMessageMaxLength 256
 #define     PlexerTest1StreamClosuresToObserve ( PlexerTest1RoundTripThreads * ( PlexerTest1NewStreamPerRoundTrip ? PlexerTest1RoundTripsPerThread : 1 ) )
 
 typedef struct
@@ -246,9 +247,7 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream)
 
 - (void)handleANewLocalStream:(YMPlexerRef)plexer :(YMStreamRef)stream
 {
-#ifdef TestLogging
-    YMStreamID streamID = _YMStreamGetUserInfo(stream)->streamID;
-#endif
+    __unused YMStreamID streamID = _YMStreamGetUserInfo(stream)->streamID;
     
     TestLog(@"VVV REMOTE -newStream[%u] entered",streamID);
     

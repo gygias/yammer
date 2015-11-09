@@ -9,8 +9,6 @@
 #ifndef YMSecurityProvider_h
 #define YMSecurityProvider_h
 
-#include "YMBase.h"
-
 typedef struct __YMSecurityProvider *YMSecurityProviderRef;
 
 YMSecurityProviderRef YMSecurityProviderCreateWithFullDuplexFile(int fd);

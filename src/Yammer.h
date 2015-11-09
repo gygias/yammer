@@ -9,6 +9,6 @@
 #ifndef Yammer_h
 #define Yammer_h
 
-#include "YMBase.h"
+#include <YMBase.h>
 
 #endif /* Yammer_h */

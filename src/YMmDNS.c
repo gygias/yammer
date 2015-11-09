@@ -33,6 +33,14 @@
 // *                  RFC 1035 doesn't allow a TXT record to contain *zero* strings, so a single empty
 // *                  string is the smallest legal DNS TXT record.
 
+#include "YMLog.h"
+#undef ymlogType
+#define ymlogType YMLogmDNS
+#if ( ymlogType >= ymLogTarget )
+#undef ymlog
+#define ymlog(x,...)
+#endif
+
 void _YMmDNSServiceListFree(YMmDNSServiceList *serviceList)
 {
     YMmDNSServiceList *aListItem = serviceList;

@@ -10,7 +10,12 @@
 
 #include <openssl/err.h>
 
-#undef ymLogType
-#define ymLogType YMLogTypeSecurity
+#include "YMLog.h"
+#undef ymlogType
+#define ymlogType YMLogSecurity
+#if ( ymlogType >= ymLogTarget )
+#undef ymlog
+#define ymlog(x,...)
+#endif
 
 bool YMTLSProviderInit(YMSecurityProviderRef provider);
