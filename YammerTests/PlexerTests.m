@@ -15,16 +15,16 @@
 #include "YMStreamPriv.h"
 #include "YMLock.h"
 
-#define     PlexerTest1Threads 4
+#define     PlexerTest1Threads 8
 #define     PlexerTest1NewStreamPerRoundTrip true
-#define     PlexerTest1RoundTripsPerThread 5000
+#define     PlexerTest1RoundTripsPerThread 50
 
 #define PlexerTest1TimeBased
 #define PlexerTest1EndDate ([NSDate distantFuture])
 BOOL    gTimeBasedEnd = NO;
 
 #define     PlexerTest1RandomMessages true // todo
-#define     PlexerTest1RandomMessageMaxLength 256
+#define     PlexerTest1RandomMessageMaxLength 1024
 #define     PlexerTest1StreamClosuresToObserve ( PlexerTest1Threads * ( PlexerTest1NewStreamPerRoundTrip ? PlexerTest1RoundTripsPerThread : 1 ) )
 
 typedef struct
@@ -41,6 +41,8 @@ typedef struct
     NSUInteger awaitingClosures;
     NSUInteger streamsCompleted;
     NSUInteger bytesIn, bytesOut;
+    
+    NSMutableDictionary *lastMessageWrittenByStreamID;
 }
 
 @end
@@ -57,6 +59,7 @@ PlexerTests *gRunningPlexerTest; // xctest seems to make a new object for each -
     awaitingClosures = PlexerTest1StreamClosuresToObserve;
     self.continueAfterFailure = NO;
     streamsCompleted = 0;
+    lastMessageWrittenByStreamID = [NSMutableDictionary dictionary];
 }
 
 - (void)tearDown {
@@ -93,8 +96,9 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
     int writeToLocal = YMPipeGetInputFile(networkSimPipeOut);
     int readFromRemote = YMPipeGetOutputFile(networkSimPipeOut);
     
-    bool localIsMaster = (bool)arc4random_uniform(2);
+    BOOL localIsMaster = (BOOL)arc4random_uniform(2);
     NSLog(@"plexer test using pipes: L(%s)-i%d-o%d <-> i%d-o%d R(%s)",localIsMaster?"M":"S",readFromRemote,writeToRemote,readFromLocal,writeToLocal,localIsMaster?"S":"M");
+    NSLog(@"plexer test using %u threads, %u trips per thread, %@ rounds per thread, %@ messages",PlexerTest1Threads,PlexerTest1RoundTripsPerThread,PlexerTest1NewStreamPerRoundTrip?@"new":@"one",PlexerTest1RandomMessages?@"random":@"fixed");
     
     YMPlexerRef localPlexer = YMPlexerCreate("L",readFromRemote,writeToRemote,localIsMaster);
     YMPlexerSetSecurityProvider(localPlexer, YMSecurityProviderCreate(readFromRemote,writeToRemote));
@@ -158,79 +162,54 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
         YMStreamID streamID;
         if ( ! aStream || PlexerTest1NewStreamPerRoundTrip )
         {
-            TestLog(@"VVV LOCAL creating stream VVV");
             aStream = YMPlexerCreateNewStream(plexer,__FUNCTION__,false);
             streamID = _YMStreamGetUserInfo(aStream)->streamID;
-            TestLog(@"^^^ LOCAL s%u created stream ^^^",streamID);
         }
         
-        uint16_t messageLen;
-        const void *message;
+        NSData *outgoingMessage;
         if ( PlexerTest1RandomMessages )
-        {
-            NSData *randomMessage = YMRandomDataWithMaxLength(PlexerTest1RandomMessageMaxLength);
-            message = [randomMessage bytes];
-            messageLen = [randomMessage length];
-        }
+            outgoingMessage = YMRandomDataWithMaxLength(PlexerTest1RandomMessageMaxLength);
         else
-        {
-            message = testLocalMessage;
-            messageLen = strlen(testLocalMessage) + 1;
-        }
+            outgoingMessage = [NSData dataWithBytesNoCopy:(void *)testLocalMessage length:strlen(testLocalMessage) + 1];
         
-        TestLog(@"VVV LOCAL s%u sending message #%u VVV",streamID,idx);
-        [self sendMessage:aStream :message :messageLen];
-        TestLog(@"^^^ LOCAL s%u sent message #%u ^^^",streamID,idx);
+        BOOL protectTheList = ( PlexerTest1Threads > 1 );
+        if ( protectTheList )
+            YMLockLock(plexerTest1Lock);
+        [lastMessageWrittenByStreamID setObject:outgoingMessage forKey:@(streamID)];
+        if ( protectTheList )
+            YMLockUnlock(plexerTest1Lock);
+        [self sendMessage:aStream :outgoingMessage];
         
-        const void *response;
-        uint16_t responseLen;
-        TestLog(@"VVV LOCAL s%u receiving response #%u VVV",streamID,idx);
-        [self receiveMessage:aStream :(void **)&response :&responseLen];
-        TestLog(@"^^^ LOCAL s%u received response #%u ^^^",streamID,idx);
-        
-        if ( ! PlexerTest1RandomMessages )
-        {
-            int cmp = strcmp(response,testRemoteResponse);
-            XCTAssert(cmp == 0, @"response: %s",response);
-        }
-        else
-        {
-            // todo way to comp these
-            TestLog(@"--- LOCAL s%u received random response %ub",streamID,responseLen);
-        }
+        NSData *incomingMessage = [self receiveMessage:aStream];
+        if ( protectTheList )
+            YMLockLock(plexerTest1Lock);
+        NSData *lastMessageWritten = [lastMessageWrittenByStreamID objectForKey:@(streamID)];
+        if ( protectTheList )
+            YMLockUnlock(plexerTest1Lock);
+        XCTAssert([incomingMessage length]&&[lastMessageWritten length]&&[incomingMessage isEqualToData:lastMessageWritten],@"incoming and last written do not match (i%zu o%zu)",[incomingMessage length],[lastMessageWritten length]);
         
         if ( PlexerTest1NewStreamPerRoundTrip )
-        {
-            TestLog(@"VVV LOCAL s%u closing stream VVV",streamID);
             YMPlexerCloseStream(plexer, aStream);
-            TestLog(@"^^^ LOCAL s%u closing stream ^^^",streamID);
-        }
         
         YMLockLock(plexerTest1Lock);
-        bytesOut += messageLen;
-        bytesIn += responseLen;
+        bytesOut += [outgoingMessage length];
+        bytesIn += [incomingMessage length];
         YMLockUnlock(plexerTest1Lock);
     }
     if ( ! PlexerTest1NewStreamPerRoundTrip )
         YMPlexerCloseStream(plexer, aStream);
 }
 
-- (void)sendMessage:(YMStreamRef)stream :(const char *)message
+- (void)sendMessage:(YMStreamRef)stream :(NSData *)message
 {
-    uint16_t length = (uint16_t)strlen(message) + 1;
-    [self sendMessage:stream :message :length];
-}
-
-- (void)sendMessage:(YMStreamRef)stream :(const void *)message :(uint16_t)length
-{
-    UserMessageHeader header = { length };
+    UserMessageHeader header = { [message length] };
     YMStreamWriteDown(stream, (void *)&header, sizeof(header));
     //XCTAssert(okay,@"failed to write message length");
-    YMStreamWriteDown(stream, (void *)message, length);
+    YMStreamWriteDown(stream, [message bytes], [message length]);
     //XCTAssert(okay,@"failed to write message");
 }
 
-- (void)receiveMessage:(YMStreamRef)stream :(void **)outMessage :(uint16_t *)outLength
+- (NSData *)receiveMessage:(YMStreamRef)stream
 {
     UserMessageHeader header;
     YMStreamReadUp(stream, &header, sizeof(header));
@@ -239,8 +218,7 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
     YMStreamReadUp(stream, buffer, header.length);
     //XCTAssert(okay,@"failed to read buffer");
     
-    *outMessage = buffer;
-    *outLength = header.length;
+    return [NSData dataWithBytesNoCopy:buffer length:header.length freeWhenDone:YES];
 }
 
 void remote_plexer_interrupted(YMPlexerRef plexer)
@@ -268,46 +246,34 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream)
 
 - (void)handleANewLocalStream:(YMPlexerRef)plexer :(YMStreamRef)stream
 {
-    __unused YMStreamID streamID = _YMStreamGetUserInfo(stream)->streamID;
-    
-    TestLog(@"VVV REMOTE -newStream[%u] entered",streamID);
+    YMStreamID streamID = _YMStreamGetUserInfo(stream)->streamID;
+    BOOL protectTheList = ( PlexerTest1Threads > 1 );
     
     unsigned iterations = PlexerTest1NewStreamPerRoundTrip ? 1 : PlexerTest1RoundTripsPerThread;
     for ( unsigned idx = 0; idx < iterations; idx++ )
     {
-        uint16_t messageLen;
-        void *message;
+        NSData *incomingMessage = [self receiveMessage:stream];
         
-        TestLog(@"VVV REMOTE s%u receiving message m#%u VVV",streamID,idx);
-        [self receiveMessage:stream :&message :&messageLen];
-        TestLog(@"^^^ REMOTE s%u received message m#%u ^^^",streamID,idx);
+        if ( protectTheList )
+            YMLockLock(plexerTest1Lock);
+        NSData *lastMessageWritten = [lastMessageWrittenByStreamID objectForKey:@(streamID)];
+        if ( protectTheList )
+            YMLockUnlock(plexerTest1Lock);
         
-        if ( ! PlexerTest1RandomMessages )
-        {
-            int cmp = strcmp(message,testLocalMessage);
-            XCTAssert(cmp == 0, @"response: %s",(char *)message);
-        }
-        else
-        {
-            // todo way to comp these?
-            TestLog(@"--- REMOTE s%u received random message %ub",streamID,messageLen);
-        }
+        XCTAssert([incomingMessage length]&&[lastMessageWritten length]&&[incomingMessage isEqualToData:lastMessageWritten],@"incoming and last written do not match (i%zu o%zu)",[incomingMessage length],[lastMessageWritten length]);
         
+        NSData *outgoingMessage;
         if ( PlexerTest1RandomMessages )
-        {
-            NSData *randomMessage = YMRandomDataWithMaxLength(PlexerTest1RandomMessageMaxLength);
-            message = (void *)[randomMessage bytes];
-            messageLen = [randomMessage length];
-        }
+            outgoingMessage = YMRandomDataWithMaxLength(PlexerTest1RandomMessageMaxLength);
         else
-        {
-            message = (void *)testRemoteResponse;
-            messageLen = strlen(testRemoteResponse) + 1;
-        }
+            outgoingMessage = [NSData dataWithBytesNoCopy:(void*)testRemoteResponse length:strlen(testRemoteResponse) + 1];
         
-        TestLog(@"VVV REMOTE s%u sending response m#%u VVV",streamID,idx);
-        [self sendMessage:stream :message :messageLen];
-        TestLog(@"^^^ REMOTE s%u sent response m#%u ^^^",streamID,idx);
+        if ( protectTheList )
+            YMLockLock(plexerTest1Lock);
+        [lastMessageWrittenByStreamID setObject:outgoingMessage forKey:@(streamID)];
+        if ( protectTheList )
+            YMLockUnlock(plexerTest1Lock);
+        [self sendMessage:stream :outgoingMessage];
         
         incomingStreamRoundTrips++;
     }
@@ -323,12 +289,11 @@ void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream)
 
 - (void)closing:(YMPlexerRef)plexer :(YMStreamRef)stream
 {
-    NSUInteger last;
     YMLockLock(plexerTest1Lock);
 #ifdef PlexerTest1TimeBased
     streamsCompleted++;
 #else
-    last = awaitingClosures--;
+    NSUInteger last = awaitingClosures--;
 #endif
     YMLockUnlock(plexerTest1Lock);
     TestLog(@"%s: *********** gPlexerTest1AwaitingCloses %zu->%zu!! *****************",__FUNCTION__,last,awaitingClosures);

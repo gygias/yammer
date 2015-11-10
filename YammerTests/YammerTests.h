@@ -15,7 +15,7 @@
 #ifdef      Logging
 #define     TestLog(x,...) NSLog((x),##__VA_ARGS__)
 #else
-#define     TestLog(x,...)
+#define     TestLog(x,...) ;
 #endif
 
 NSString *YMRandomASCIIStringWithMaxLength(uint16_t maxLength, BOOL for_mDNSServiceName);
