@@ -153,7 +153,7 @@ void test_service_removed(YMmDNSBrowserRef browser, const char *serviceName, voi
     
     nTestKeyPairs = arc4random_uniform(10);
     size_t idx = 0;
-    testKeyPairs = (YMmDNSTxtRecordKeyPair **)malloc(nTestKeyPairs * sizeof(YMmDNSTxtRecordKeyPair *));
+    testKeyPairs = (YMmDNSTxtRecordKeyPair **)YMMALLOC(nTestKeyPairs * sizeof(YMmDNSTxtRecordKeyPair *));
     
     for ( ; idx < nTestKeyPairs; idx++ )
     {
@@ -161,7 +161,7 @@ void test_service_removed(YMmDNSBrowserRef browser, const char *serviceName, voi
         NSString *randomKey = YMRandomASCIIStringWithMaxLength(testKeyLengthBound, NO);
         testKeyPairs[idx]->key = strdup((char *)[randomKey cStringUsingEncoding:NSASCIIStringEncoding]);//"test-key";
         NSData *valueData = YMRandomDataWithMaxLength((uint8_t)(254 - [randomKey lengthOfBytesUsingEncoding:NSASCIIStringEncoding])); // 256 - '=' - size prefix, ok?
-        testKeyPairs[idx]->value = malloc([valueData length]);
+        testKeyPairs[idx]->value = YMMALLOC([valueData length]);
         memcpy((void *)testKeyPairs[idx]->value, [valueData bytes], [valueData length]);
         testKeyPairs[idx]->valueLen = (uint8_t)[valueData length];
         

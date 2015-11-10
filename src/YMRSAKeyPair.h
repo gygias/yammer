@@ -16,4 +16,6 @@ YMRSAKeyPairRef YMRSAKeyPairCreateWithModuloSize(int moduloBits, int publicExpon
 
 bool YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair); // blocking
 
+void *YMRSAKeyPairGetRSA(YMRSAKeyPairRef keyPair); // meh
+
 #endif /* YMRSAKeyPair_h */

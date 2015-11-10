@@ -48,6 +48,8 @@
 		63476A501BEB159C00D10081 /* YMDictionary.h in Headers */ = {isa = PBXBuildFile; fileRef = 63476A4E1BEB159C00D10081 /* YMDictionary.h */; };
 		63476A531BEB319000D10081 /* YMSemaphore.c in Sources */ = {isa = PBXBuildFile; fileRef = 63476A511BEB319000D10081 /* YMSemaphore.c */; };
 		63476A541BEB319000D10081 /* YMSemaphore.h in Headers */ = {isa = PBXBuildFile; fileRef = 63476A521BEB319000D10081 /* YMSemaphore.h */; };
+		637E3D5D1BF262EE00D702ED /* YMX509Certificate.c in Sources */ = {isa = PBXBuildFile; fileRef = 637E3D5B1BF262EE00D702ED /* YMX509Certificate.c */; };
+		637E3D5E1BF262EE00D702ED /* YMX509Certificate.h in Headers */ = {isa = PBXBuildFile; fileRef = 637E3D5C1BF262EE00D702ED /* YMX509Certificate.h */; };
 		63FD5B5A1BF1899800174824 /* YMRSAKeyPair.c in Sources */ = {isa = PBXBuildFile; fileRef = 63FD5B581BF1899800174824 /* YMRSAKeyPair.c */; };
 		63FD5B5B1BF1899800174824 /* YMRSAKeyPair.h in Headers */ = {isa = PBXBuildFile; fileRef = 63FD5B591BF1899800174824 /* YMRSAKeyPair.h */; };
 		63FD5B5D1BF1B93400174824 /* libcrypto.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 63FD5B5C1BF1B93400174824 /* libcrypto.tbd */; };
@@ -116,6 +118,9 @@
 		63476A4E1BEB159C00D10081 /* YMDictionary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMDictionary.h; path = src/YMDictionary.h; sourceTree = "<group>"; };
 		63476A511BEB319000D10081 /* YMSemaphore.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMSemaphore.c; path = src/YMSemaphore.c; sourceTree = "<group>"; };
 		63476A521BEB319000D10081 /* YMSemaphore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMSemaphore.h; path = src/YMSemaphore.h; sourceTree = "<group>"; };
+		637E3D5B1BF262EE00D702ED /* YMX509Certificate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMX509Certificate.c; path = src/YMX509Certificate.c; sourceTree = "<group>"; };
+		637E3D5C1BF262EE00D702ED /* YMX509Certificate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMX509Certificate.h; path = src/YMX509Certificate.h; sourceTree = "<group>"; };
+		637E3D5F1BF2680B00D702ED /* YMOpenssl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMOpenssl.h; path = src/YMOpenssl.h; sourceTree = "<group>"; };
 		63A40EF81BEC239C0085ABD0 /* YMThreadPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMThreadPriv.h; path = src/YMThreadPriv.h; sourceTree = "<group>"; };
 		63FD5B581BF1899800174824 /* YMRSAKeyPair.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMRSAKeyPair.c; path = src/YMRSAKeyPair.c; sourceTree = "<group>"; };
 		63FD5B591BF1899800174824 /* YMRSAKeyPair.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMRSAKeyPair.h; path = src/YMRSAKeyPair.h; sourceTree = "<group>"; };
@@ -256,8 +261,11 @@
 				630A5D141BE9777C003292EE /* YMmDNSBrowser.c */,
 				630A5CEC1BE9428C003292EE /* YMmDNSService.h */,
 				630A5CEB1BE9428C003292EE /* YMmDNSService.c */,
+				637E3D5F1BF2680B00D702ED /* YMOpenssl.h */,
 				63FD5B591BF1899800174824 /* YMRSAKeyPair.h */,
 				63FD5B581BF1899800174824 /* YMRSAKeyPair.c */,
+				637E3D5C1BF262EE00D702ED /* YMX509Certificate.h */,
+				637E3D5B1BF262EE00D702ED /* YMX509Certificate.c */,
 			);
 			name = Private;
 			sourceTree = "<group>";
@@ -274,6 +282,7 @@
 				63225D6A1BE9184000C28F05 /* YMUtilities.h in Headers */,
 				63476A501BEB159C00D10081 /* YMDictionary.h in Headers */,
 				630A5CFB1BE95E36003292EE /* YMThread.h in Headers */,
+				637E3D5E1BF262EE00D702ED /* YMX509Certificate.h in Headers */,
 				63225D5D1BE9092500C28F05 /* YMStream.h in Headers */,
 				63476A4C1BEB074C00D10081 /* YMLinkedList.h in Headers */,
 				63225D611BE909BB00C28F05 /* YMPlexer.h in Headers */,
@@ -401,6 +410,7 @@
 				63476A441BEAF4DB00D10081 /* YMLock.c in Sources */,
 				63225D601BE909BB00C28F05 /* YMPlexer.c in Sources */,
 				63476A4B1BEB074C00D10081 /* YMLinkedList.c in Sources */,
+				637E3D5D1BF262EE00D702ED /* YMX509Certificate.c in Sources */,
 				63225D541BE9074700C28F05 /* YMPipe.c in Sources */,
 				630A5CF21BE950F1003292EE /* YMConnection.c in Sources */,
 				630A5CED1BE9428C003292EE /* YMmDNSService.c in Sources */,

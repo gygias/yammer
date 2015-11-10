@@ -9,6 +9,8 @@
 #include "YMRSAKeyPair.h"
 #include "YMPrivate.h"
 
+#include "YMOpenssl.h"
+
 #include "YMLog.h"
 #undef ymlog_type
 #define ymlog_type YMLogSecurity
@@ -28,8 +30,6 @@
 // private key (d)
 // message^e must be greater than N
 
-#define openssl_success 1
-
 typedef struct __YMRSAKeyPair
 {
     YMTypeID _typeID;
@@ -45,15 +45,22 @@ void _YMRSAKeyPairSeed();
 
 YMRSAKeyPairRef YMRSAKeyPairCreateWithModuloSize(int moduloBits, int publicExponent)
 {
+    if ( moduloBits > OPENSSL_RSA_MAX_MODULUS_BITS )
+    {
+        ymerr("rsa: requested modulus bits exceeds max");
+        return NULL;
+    }
+    // there's also OPENSSL_RSA_MAX_PUBEXP_BITS
+    
     RSA* rsa = RSA_new();
     if ( ! rsa )
     {
         unsigned long error = ERR_get_error();
-        ymlog("RSA_new failed: %lu (%s)", error, ERR_error_string(error,NULL));
+        ymerr("RSA_new failed: %lu (%s)", error, ERR_error_string(error,NULL));
         return NULL;
     }
     
-    YMRSAKeyPairRef keyPair = (YMRSAKeyPairRef)malloc(sizeof(struct __YMRSAKeyPair));
+    YMRSAKeyPairRef keyPair = (YMRSAKeyPairRef)YMMALLOC(sizeof(struct __YMRSAKeyPair));
     keyPair->_typeID = _YMRSAKeyPairTypeID;
     
     keyPair->rsa = rsa;
@@ -64,7 +71,7 @@ YMRSAKeyPairRef YMRSAKeyPairCreateWithModuloSize(int moduloBits, int publicExpon
 
 YMRSAKeyPairRef YMRSAKeyPairCreate()
 {
-    return YMRSAKeyPairCreateWithModuloSize(1024, 65537);
+    return YMRSAKeyPairCreateWithModuloSize(4096, RSA_F4);
 }
 
 void _YMRSAKeyPairFree(YMRSAKeyPairRef keyPair)
@@ -133,7 +140,7 @@ bool YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair)
     int timeResult = gettimeofday(&then,NULL);
 #endif
     unsigned long rsaErr = 0;
-    const char* rsaErrFunc = "";
+    const char* rsaErrFunc = NULL;
     
     BIGNUM *e = BN_new();
     if ( ! e )
@@ -143,7 +150,7 @@ bool YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair)
     }
     
     int result = BN_set_word(e, keyPair->publicE);
-    if ( openssl_success != result )
+    if ( ERR_LIB_NONE != result )
     {
         rsaErrFunc = "BN_set_word";
         goto catch_return;
@@ -151,9 +158,9 @@ bool YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair)
     
     BN_set_word(e, keyPair->publicE);
     
-    // os x man page doesn't actually state that 1 is success for _ex.
+    // os x man page doesn't actually state that 1 is success for _ex #yolo
     result = RSA_generate_key_ex(keyPair->rsa, keyPair->moduloNBits, e	, NULL /*BN_GENCB *cb callback struct*/);
-    if ( openssl_success != result )
+    if ( ERR_LIB_NONE != result )
     {
         rsaErrFunc = "RSA_generate_key_ex";
         goto catch_return;
@@ -168,14 +175,14 @@ bool YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair)
             ymlog("rsa: it took %ld seconds to generate rsa keypair with %d modulo bits",now.tv_sec - then.tv_sec,keyPair->moduloNBits);
     }
     if ( timeResult != 0 )
-        ymlog("rsa: gettimeofday failed");
+        ymerr("rsa: gettimeofday failed");
 #endif
     
 catch_return:
-    if ( result != openssl_success )
+    if ( ERR_LIB_NONE != result )
     {
         rsaErr = ERR_get_error();
-        ymlog("rsa: %s failed: %lu (%s)", rsaErrFunc, rsaErr, ERR_error_string(rsaErr,NULL));
+        ymerr("rsa: %s failed: %lu (%s)", rsaErrFunc, rsaErr, ERR_error_string(rsaErr,NULL));
     }
     
     if ( e )
@@ -210,4 +217,9 @@ void _YMRSAKeyPairSeed()
     if ( timeResult != 0 )
         ymlog("rsa: gettimeofday failed");
 #endif
+}
+
+void *YMRSAKeyPairGetRSA(YMRSAKeyPairRef keyPair)
+{
+    return keyPair->rsa;
 }

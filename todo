@@ -1,3 +1,5 @@
+- way to wrap object->_typeID = myTypeID?
+- does init and generate keypair really need to be separated? if so x509 signing probably should be too
 - consolidate DEBUG_INFO and ifdef out relevant logs (based on target log level?)
 - nice way to consolidate indentations
 - make constructor copies/assumes ownership consistent

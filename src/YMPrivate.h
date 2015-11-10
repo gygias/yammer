@@ -11,11 +11,11 @@
 
 #include "YMBase.h"
 
-#define YM_EFFICIENT_ALLOC 1
-#ifdef YM_EFFICIENT_ALLOC
-#define YMMALLOC(x) malloc(x)
-#else
+#define YM_USE_CALLOC
+#ifdef YM_USE_CALLOC
 #define YMMALLOC(x) calloc(1,(x))
+#else
+#define YMMALLOC(x) malloc(x)
 #endif
 
 #define YM_DEBUG_INFO // consolidate extra-curricular stuff under here so it doesn't get forgotten
@@ -34,6 +34,7 @@ extern YMTypeID _YMSemaphoreTypeID;
 extern YMTypeID _YMLinkedListTypeID;
 extern YMTypeID _YMDictionaryTypeID;
 extern YMTypeID _YMRSAKeyPairTypeID;
+extern YMTypeID _YMX509CertificateTypeID;
 
 typedef struct __YMTypeRef
 {

@@ -7,7 +7,6 @@
 //
 
 #include "YMBase.h"
-#include "YMPrivate.h"
 
 #include "YMLog.h"
 
@@ -29,6 +28,7 @@ YMTypeID _YMSessionTypeID = 's';
 YMTypeID _YMThreadTypeID = 't';
 YMTypeID _YMSecurityProviderTypeID = 'v';
 YMTypeID _YMPlexerTypeID = 'x';
+YMTypeID _YMX509CertificateTypeID = 'X';
 YMTypeID _YMDictionaryTypeID = 'y';
 
 extern void _YMPipeFree(YMTypeRef);
@@ -45,6 +45,7 @@ extern void _YMSemaphoreFree(YMTypeRef);
 extern void _YMLinkedListFree(YMTypeRef);
 extern void _YMDictionaryFree(YMTypeRef);
 extern void _YMRSAKeyPairFree(YMTypeRef);
+extern void _YMX509CertificateFree(YMTypeRef);
 
 void YMFree(YMTypeRef object)
 {
@@ -77,6 +78,8 @@ void YMFree(YMTypeRef object)
         _YMDictionaryFree(object);
     else if ( type == _YMRSAKeyPairTypeID )
         _YMRSAKeyPairFree(object);
+    else if ( type == _YMX509CertificateTypeID )
+        _YMX509CertificateFree(object);
     else
     {
         ymlog("YMFree unknown type %c",((_YMType *)object)->_type);
