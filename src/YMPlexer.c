@@ -80,7 +80,6 @@ typedef struct {
 #define __YMLockListIdx 0
 #define __YMListListIdx 1
 
-#pragma message "_Private __Internal"
 YMStreamRef __YMPlexerChooseReadyStream(YMPlexerRef plexer, YMTypeRef **list, int *outReadyStreamsByIdx, int *outStreamListIdx, int *outStreamIdx);
 void __YMPlexerDispatchFunctionWithName(YMPlexerRef plexer, YMStreamRef stream, YMThreadRef targetThread, void *(*function)(void *), char *name );
 bool __YMPlexerStartServiceThreads(YMPlexerRef plexer);

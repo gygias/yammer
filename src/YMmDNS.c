@@ -117,7 +117,7 @@ YMmDNSTxtRecordKeyPair **__YMmDNSCreateTxtKeyPairs(const unsigned char *txtRecor
     
     size_t currentPairOffset = 0;
     uint8_t aPairLength = txtRecord[currentPairOffset];
-    while ( currentPairOffset < txtLength - 1 )
+    while ( currentPairOffset < txtLength )
     {
         const unsigned char* aPairWalker = txtRecord + currentPairOffset + 1;
         __unused const char* debugThisKey = (char *)aPairWalker;
@@ -151,6 +151,9 @@ YMmDNSTxtRecordKeyPair **__YMmDNSCreateTxtKeyPairs(const unsigned char *txtRecor
         aKeyPair->value = valueBuf;
         aKeyPair->valueLen = (uint8_t)valueLength;
         keyPairList[listSize] = aKeyPair;
+        
+        if ( currentPairOffset == txtLength )
+            break;
         
         currentPairOffset += aPairLength + 1;
         aPairLength = txtRecord[currentPairOffset];

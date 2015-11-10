@@ -20,7 +20,13 @@
 #define     PlexerTest1RoundTripsPerThread 50
 
 #define PlexerTest1TimeBased
+//#define PlexerTest1Indefinite
+#ifdef PlexerTest1Indefinite
 #define PlexerTest1EndDate ([NSDate distantFuture])
+#else
+#define PlexerTest1EndDate ([NSDate dateWithTimeIntervalSinceNow:10])
+#endif
+
 BOOL    gTimeBasedEnd = NO;
 
 #define     PlexerTest1RandomMessages true // todo
