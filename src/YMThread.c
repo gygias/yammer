@@ -18,9 +18,9 @@
 #include <pthread.h>
 
 #include "YMLog.h"
-#undef ymlogType
-#define ymlogType YMLogThread
-#if ( ymlogType >= ymLogTarget )
+#undef ymlog_type
+#define ymlog_type YMLogThread
+#if ( ymlog_type >= ymlog_target )
 #undef ymlog
 #define ymlog(x,...) ;
 #endif

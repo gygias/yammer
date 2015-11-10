@@ -10,9 +10,9 @@
 #include "YMPrivate.h"
 
 #include "YMLog.h"
-#undef ymlogType
-#define ymlogType YMLogPipe
-#if ( ymlogType >= ymLogTarget )
+#undef ymlog_type
+#define ymlog_type YMLogPipe
+#if ( ymlog_type >= ymlog_target )
 #undef ymlog
 #define ymlog(x,...)
 #endif

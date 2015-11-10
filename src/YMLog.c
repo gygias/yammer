@@ -32,7 +32,8 @@ void YMLogType( YMLogLevel level, char* format, ... )
 {
     __YMLogInit();
     
-    if ( level > ymlogTarget )
+    if ( level > ymlog_target
+        && ( ymlog_stream_lifecycle && level != YMLogStreamLifecycle ) )
         abort();
     
     YMLockLock(gYMLogLock);

@@ -13,9 +13,9 @@
 #include "YMLock.h"
 
 #include "YMLog.h"
-#undef ymlogType
-#define ymlogType YMLogLock
-#if ( ymlogType >= ymLogTarget )
+#undef ymlog_type
+#define ymlog_type YMLogLock
+#if ( ymlog_type >= ymlog_target )
 #undef ymlog
 #define ymlog(x,...)
 #endif

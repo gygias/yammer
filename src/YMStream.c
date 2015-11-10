@@ -21,9 +21,9 @@
 #endif
 
 #include "YMLog.h"
-#undef ymlogType
-#define ymlogType YMLogStream
-#if ( ymlogType >= ymLogTarget )
+#undef ymlog_type
+#define ymlog_type YMLogStream
+#if ( ymlog_type >= ymlog_target )
 #undef ymlog
 #define ymlog(x,...)
 #endif
@@ -93,7 +93,8 @@ YMStreamRef YMStreamCreate(const char *name, bool isLocallyOriginated, YMStreamU
     stream->isPlexerReleased = false;
     stream->isDeallocated = false;
     
-    ymlog("  stream[%s,i%d->o%dV,^o%d<-i%d,s%u]: %p ALLOCATING",stream->name,
+    if ( ymlog_stream_lifecycle )
+        YMLogType(YMLogStreamLifecycle,"  stream[%s,i%d->o%dV,^o%d<-i%d,s%u]: %p allocating",stream->name,
           YMPipeGetInputFile(stream->downstream),
           YMPipeGetOutputFile(stream->downstream),
           YMPipeGetOutputFile(stream->upstream),
@@ -154,7 +155,8 @@ void _YMStreamFree(YMTypeRef object)
 
 void __YMStreamFree(YMStreamRef stream)
 {
-    ymlog("  stream[%s,i%d->o%dV,^o%d<-i%d,s%u]: %p DEALLOCATING",stream->name,
+    if ( ymlog_stream_lifecycle )
+        YMLogType(YMLogStreamLifecycle,"  stream[%s,i%d->o%dV,^o%d<-i%d,s%u]: %p deallocating",stream->name,
           YMPipeGetInputFile(stream->downstream),
           YMPipeGetOutputFile(stream->downstream),
           YMPipeGetOutputFile(stream->upstream),
@@ -378,7 +380,6 @@ void __YMStreamCheckAndRelease(YMStreamRef stream)
         
         if ( stream->isPlexerReleased && stream->isUserReleased )
         {
-            ymlog("  stream[%s,s%u]: RELEASED, time to DEALLOCATE",stream->name,stream->__userInfo->streamID);
             dealloc = true;
             stream->isDeallocated = true;
         }

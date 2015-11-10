@@ -34,9 +34,9 @@
 // *                  string is the smallest legal DNS TXT record.
 
 #include "YMLog.h"
-#undef ymlogType
-#define ymlogType YMLogmDNS
-#if ( ymlogType >= ymLogTarget )
+#undef ymlog_type
+#define ymlog_type YMLogmDNS
+#if ( ymlog_type >= ymlog_target )
 #undef ymlog
 #define ymlog(x,...)
 #endif

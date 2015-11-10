@@ -11,8 +11,8 @@
 #include "YMPrivate.h"
 #include "YMUtilities.h"
 
-#undef ymlogType
-#define ymlogType YMLogDefault
+#undef ymlog_type
+#define ymlog_type YMLogDefault
 #include "YMLog.h"
 
 typedef struct __YMDictionaryItem

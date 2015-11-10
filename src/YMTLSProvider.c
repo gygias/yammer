@@ -11,9 +11,9 @@
 #include <openssl/err.h>
 
 #include "YMLog.h"
-#undef ymlogType
-#define ymlogType YMLogSecurity
-#if ( ymlogType >= ymLogTarget )
+#undef ymlog_type
+#define ymlog_type YMLogSecurity
+#if ( ymlog_type >= ymlog_target )
 #undef ymlog
 #define ymlog(x,...)
 #endif

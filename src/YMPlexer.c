@@ -17,9 +17,9 @@
 #include "YMThread.h"
 
 #include "YMLog.h"
-#undef ymlogType
-#define ymlogType YMLogPlexer
-#if ( ymlogType >= ymLogTarget )
+#undef ymlog_type
+#define ymlog_type YMLogPlexer
+#if ( ymlog_type >= ymlog_target )
 #undef ymlog
 #define ymlog(x,...)
 #endif
@@ -37,8 +37,8 @@
 
 #define YMPlexerBuiltInVersion ((uint32_t)1)
 
-#undef ymlogType
-#define ymlogType YMLogPlexer
+#undef ymlog_type
+#define ymlog_type YMLogPlexer
 
 // initialization
 typedef struct {
@@ -548,7 +548,7 @@ bool __YMPlexerServiceADownstream(YMPlexerRef plexer, YMStreamRef servicingStrea
     while ( chunkLength > plexer->localPlexBufferSize )
     {
         plexer->localPlexBufferSize *= 2;
-        ymlog(" plexer[%s-V,s%u] REALLOCATING plex buffer to %ub",plexer->name,streamID,plexer->localPlexBufferSize);
+        ymerr(" plexer[%s-V,s%u] reallocating buffer to %ub",plexer->name,streamID,plexer->localPlexBufferSize);
         plexer->localPlexBuffer = realloc(plexer->localPlexBuffer, plexer->localPlexBufferSize);
     }
     
@@ -679,7 +679,7 @@ void *__YMPlexerServiceUpstreamThread(void *context)
         while ( chunkLength > plexer->remotePlexBufferSize )
         {
             plexer->remotePlexBufferSize *= 2;
-            ymlog(" plexer[%s-^,i%d->o%d,s%u] REALLOCATING plex buffer for %u",plexer->name,plexer->inputFile,plexer->outputFile,streamID,plexer->remotePlexBufferSize);
+            ymerr(" plexer[%s-^,i%d->o%d,s%u] reallocating plex buffer for %u",plexer->name,plexer->inputFile,plexer->outputFile,streamID,plexer->remotePlexBufferSize);
             plexer->remotePlexBuffer = realloc(plexer->remotePlexBuffer, plexer->remotePlexBufferSize);
         }
         

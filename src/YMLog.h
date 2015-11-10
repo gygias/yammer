@@ -6,14 +6,16 @@
 //  Copyright © 2015 combobulated. All rights reserved.
 //
 
-#ifndef ymlogType
-#define ymlogType YMLogDefault
+#ifndef ymlog_type
+#define ymlog_type YMLogDefault
 #endif
-#ifndef ymlogTarget
-#define ymlogTarget YMLogConnection
-#define ymlog(x,...) if ( ymlogType <= ymlogTarget ) YMLogType(ymlogType,(x),##__VA_ARGS__)
+#ifndef ymlog_target
+#define ymlog_target YMLogConnection
+#define ymlog(x,...) if ( ymlog_type <= ymlog_target ) YMLogType(ymlog_type,(x),##__VA_ARGS__)
+// it might be nice if this postpended errno/strerror (or had a designated version for cases that errno is relevant)
 #define ymerr(x,...) YMLogType(YMLogError,(x),##__VA_ARGS__)
 #endif
+#define ymlog_stream_lifecycle true // this might be hairy enough to warrant a special case
 
 #ifndef YMLog_h
 #define YMLog_h
@@ -29,6 +31,7 @@ typedef enum
     YMLogThread,
     YMLogLock,
     YMLogPlexer,
+    YMLogStreamLifecycle,
     YMLogStream,
     YMLogPipe
 } YMLogLevel;
