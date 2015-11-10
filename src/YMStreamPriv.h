@@ -37,7 +37,10 @@ typedef struct __YMStreamUserInfo
 // for plexer only, these are not owned by the stream
 typedef struct __YMStreamUserInfo *YMStreamUserInfoRef;
 
+// takes ownership of userInfo
 YMStreamRef YMStreamCreate(const char *name, bool isLocal, YMStreamUserInfoRef userInfo);
+
+void _YMStreamDesignatedFree(YMStreamRef stream );
 
 void _YMStreamReadDown(YMStreamRef stream, void *buffer, uint32_t length);
 void _YMStreamWriteUp(YMStreamRef stream, const void *buffer, uint32_t length);

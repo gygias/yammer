@@ -599,7 +599,7 @@ bool __YMPlexerServiceADownstream(YMPlexerRef plexer, YMStreamRef servicingStrea
         {
         }
         YMLockUnlock(_YMStreamGetRetainLock(servicingStream));
-        YMFree(servicingStream);
+        _YMStreamDesignatedFree(servicingStream);
         
         return true;
     }
@@ -822,11 +822,12 @@ void YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream)
     YMStreamID streamID = _YMStreamGetUserInfo(stream)->streamID;
     
     YMStreamRef localStream;
+    YMLockRef theLock = NULL;
     YMLockLock(plexer->localAccessLock);
     {
         localStream = (YMStreamRef)YMDictionaryGetItem(plexer->localStreamsByID, streamID);
-    }
-    YMLockUnlock(plexer->localAccessLock);
+        theLock = plexer->localAccessLock;
+    } // float
     
     if ( localStream == NULL )
     {
@@ -834,8 +835,8 @@ void YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream)
         YMLockLock(plexer->remoteAccessLock);
         {
             isRemote = YMDictionaryContains(plexer->remoteStreamsByID, streamID);
-        }
-        YMLockUnlock(plexer->remoteAccessLock);
+            theLock = plexer->remoteAccessLock;
+        } // float
         
         if ( isRemote )
             ymerr(" plexer[%s]: error: user requested closure of remote stream %u",plexer->name,streamID);
@@ -846,7 +847,8 @@ void YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream)
     }
     
     _YMStreamClose(localStream);
-    // local service thread to deallocate after it's able to flush data and pass off the close command to remote
+    
+    YMLockUnlock(theLock);
 }
 
 void YMPlexerRemoteStreamRelease(__unused YMPlexerRef plexer, YMStreamRef stream)
@@ -869,6 +871,7 @@ void __YMPlexerDispatchFunctionWithName(YMPlexerRef plexer, YMStreamRef stream, 
     notifyDef->stream = stream;
     YMThreadDispatchUserInfo userDispatch = { function, NULL, true, notifyDef, name };
     YMThreadDispatchDispatch(targetThread, &userDispatch);
+    free(name);
 }
 
 void *__ym_plexer_notify_new_stream(void *context)

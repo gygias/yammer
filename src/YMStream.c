@@ -32,10 +32,10 @@ typedef struct __YMStream
 {
     YMTypeID _type;
     
-    YMPipeRef upstream;
+    YMPipeRef upstreamPipe;
     bool upstreamWriteClosed;
     bool upstreamReadClosed;
-    YMPipeRef downstream;
+    YMPipeRef downstreamPipe;
     bool downstreamWriteClosed;
     bool downstreamReadClosed;
     char *name;
@@ -68,13 +68,13 @@ YMStreamRef YMStreamCreate(const char *name, bool isLocallyOriginated, YMStreamU
     stream->isLocallyOriginated = isLocallyOriginated;
     
     char *upStreamName = YMStringCreateWithFormat("%s-up",name);
-    stream->upstream = YMPipeCreate(upStreamName);
+    stream->upstreamPipe = YMPipeCreate(upStreamName);
     free(upStreamName);
     stream->upstreamWriteClosed = false;
     stream->upstreamReadClosed = false;
     
     char *downStreamName = YMStringCreateWithFormat("%s-down",name);
-    stream->downstream = YMPipeCreate(downStreamName);
+    stream->downstreamPipe = YMPipeCreate(downStreamName);
     free(downStreamName);
     stream->downstreamWriteClosed = false;
     stream->downstreamReadClosed = false;
@@ -95,10 +95,10 @@ YMStreamRef YMStreamCreate(const char *name, bool isLocallyOriginated, YMStreamU
     
     if ( ymlog_stream_lifecycle )
         YMLogType(YMLogStreamLifecycle,"  stream[%s,i%d->o%dV,^o%d<-i%d,s%u]: %p allocating",stream->name,
-          YMPipeGetInputFile(stream->downstream),
-          YMPipeGetOutputFile(stream->downstream),
-          YMPipeGetOutputFile(stream->upstream),
-          YMPipeGetInputFile(stream->upstream),
+          YMPipeGetInputFile(stream->downstreamPipe),
+          YMPipeGetOutputFile(stream->downstreamPipe),
+          YMPipeGetOutputFile(stream->upstreamPipe),
+          YMPipeGetInputFile(stream->upstreamPipe),
           stream->__userInfo->streamID,
           stream);
     
@@ -108,11 +108,17 @@ YMStreamRef YMStreamCreate(const char *name, bool isLocallyOriginated, YMStreamU
 void _YMStreamFree(YMTypeRef object)
 {
     YMStreamRef stream = (YMStreamRef)object;
+    ymerr("  stream[%s,s%u]: fatal: stream cannot be free'd directly",stream->name,stream->__userInfo->streamID);
+}
+
+void _YMStreamDesignatedFree(YMStreamRef stream )
+{
     if ( ! stream->isLocallyOriginated )
     {
         ymerr("  stream[%s,s%u]: fatal: _YMStreamFree called on remote-originated",stream->name,stream->__userInfo->streamID);
         abort();
     }
+    
     __YMStreamFree(stream);
 }
 
@@ -120,18 +126,20 @@ void __YMStreamFree(YMStreamRef stream)
 {
     if ( ymlog_stream_lifecycle )
         YMLogType(YMLogStreamLifecycle,"  stream[%s,i%d->o%dV,^o%d<-i%d,s%u]: %p deallocating",stream->name,
-          YMPipeGetInputFile(stream->downstream),
-          YMPipeGetOutputFile(stream->downstream),
-          YMPipeGetOutputFile(stream->upstream),
-          YMPipeGetInputFile(stream->upstream),
+          YMPipeGetInputFile(stream->downstreamPipe),
+          YMPipeGetOutputFile(stream->downstreamPipe),
+          YMPipeGetOutputFile(stream->upstreamPipe),
+          YMPipeGetInputFile(stream->upstreamPipe),
           stream->__userInfo->streamID,
           stream);
     
-    YMFree(stream->downstream);
-    YMFree(stream->upstream);
+    YMFree(stream->downstreamPipe);
+    YMFree(stream->upstreamPipe);
     YMFree(stream->retainLock);
     
     free(stream->name);
+    if ( stream->__userInfo ) // optional
+        free(stream->__userInfo);
     free(stream->__lastServiceTime);
     free(stream);
     
@@ -139,10 +147,10 @@ void __YMStreamFree(YMStreamRef stream)
 
 void YMStreamWriteDown(YMStreamRef stream, const void *buffer, uint16_t length)
 {
-    int downstreamWrite = YMPipeGetInputFile(stream->downstream);
-    int debugDownstreamRead = YMPipeGetOutputFile(stream->downstream);
-    int debugUpstreamWrite = YMPipeGetInputFile(stream->upstream);
-    int debugUpstreamRead = YMPipeGetOutputFile(stream->upstream);
+    int downstreamWrite = YMPipeGetInputFile(stream->downstreamPipe);
+    int debugDownstreamRead = YMPipeGetOutputFile(stream->downstreamPipe);
+    int debugUpstreamWrite = YMPipeGetInputFile(stream->upstreamPipe);
+    int debugUpstreamRead = YMPipeGetOutputFile(stream->upstreamPipe);
     
     YMStreamCommand header = { length };
     
@@ -172,10 +180,10 @@ void YMStreamWriteDown(YMStreamRef stream, const void *buffer, uint16_t length)
 // void: only ever does in-process i/o
 void _YMStreamReadDown(YMStreamRef stream, void *buffer, uint32_t length)
 {
-    int debugDownstreamWrite = YMPipeGetInputFile(stream->downstream);
-    int downstreamRead = YMPipeGetOutputFile(stream->downstream);
-    int debugUpstreamWrite = YMPipeGetInputFile(stream->upstream);
-    int debugUpstreamRead = YMPipeGetOutputFile(stream->upstream);
+    int debugDownstreamWrite = YMPipeGetInputFile(stream->downstreamPipe);
+    int downstreamRead = YMPipeGetOutputFile(stream->downstreamPipe);
+    int debugUpstreamWrite = YMPipeGetInputFile(stream->upstreamPipe);
+    int debugUpstreamRead = YMPipeGetOutputFile(stream->upstreamPipe);
     ymlog("  stream[%s,i%d->o%d!V,^Vo%d<-i%d,s%u]: reading %ub from downstream",stream->name,debugDownstreamWrite,downstreamRead,debugUpstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,length);
     YMIOResult result = YMReadFull(downstreamRead, buffer, length);
     if ( result != YMIOSuccess )
@@ -190,10 +198,10 @@ void _YMStreamReadDown(YMStreamRef stream, void *buffer, uint32_t length)
 // void: only ever does in-process i/o
 void _YMStreamWriteUp(YMStreamRef stream, const void *buffer, uint32_t length)
 {
-    int debugDownstreamWrite = YMPipeGetInputFile(stream->downstream);
-    int downstreamRead = YMPipeGetOutputFile(stream->downstream);
-    int upstreamWrite = YMPipeGetInputFile(stream->upstream);
-    int debugUpstreamRead = YMPipeGetOutputFile(stream->upstream);
+    int debugDownstreamWrite = YMPipeGetInputFile(stream->downstreamPipe);
+    int downstreamRead = YMPipeGetOutputFile(stream->downstreamPipe);
+    int upstreamWrite = YMPipeGetInputFile(stream->upstreamPipe);
+    int debugUpstreamRead = YMPipeGetOutputFile(stream->upstreamPipe);
     
     YMIOResult result = YMWriteFull(upstreamWrite, buffer, length);
     if ( result == YMIOError )
@@ -206,10 +214,10 @@ void _YMStreamWriteUp(YMStreamRef stream, const void *buffer, uint32_t length)
 // because user data is opaque (even to user), this should expose eof
 YMIOResult YMStreamReadUp(YMStreamRef stream, void *buffer, uint16_t length)
 {
-    int debugDownstreamWrite = YMPipeGetInputFile(stream->downstream);
-    int downstreamRead = YMPipeGetOutputFile(stream->downstream);
-    int debugUpstreamWrite = YMPipeGetInputFile(stream->upstream);
-    int upstreamRead = YMPipeGetOutputFile(stream->upstream);
+    int debugDownstreamWrite = YMPipeGetInputFile(stream->downstreamPipe);
+    int downstreamRead = YMPipeGetOutputFile(stream->downstreamPipe);
+    int debugUpstreamWrite = YMPipeGetInputFile(stream->upstreamPipe);
+    int upstreamRead = YMPipeGetOutputFile(stream->upstreamPipe);
     
     ymlog("  stream[%s,i%d->o%dV,^Vo%d!<-i%d,s%u]: reading %ub user data",stream->name,debugDownstreamWrite,downstreamRead,upstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,length);
     YMIOResult result = YMReadFull(upstreamRead, buffer, length);
@@ -228,10 +236,10 @@ YMIOResult YMStreamReadUp(YMStreamRef stream, void *buffer, uint16_t length)
 
 void _YMStreamClose(YMStreamRef stream)
 {
-    int downstreamWrite = YMPipeGetInputFile(stream->downstream);
-    int debugDownstreamRead = YMPipeGetOutputFile(stream->downstream);
-    int debugUpstreamRead = YMPipeGetInputFile(stream->upstream);
-    int debugUpstreamWrite = YMPipeGetOutputFile(stream->upstream);
+    int downstreamWrite = YMPipeGetInputFile(stream->downstreamPipe);
+    int debugDownstreamRead = YMPipeGetOutputFile(stream->downstreamPipe);
+    int debugUpstreamRead = YMPipeGetInputFile(stream->upstreamPipe);
+    int debugUpstreamWrite = YMPipeGetOutputFile(stream->upstreamPipe);
     
     // if we are closing an outgoing stream, the plexer can race us between our write of the 'stream close' command here,
     // and freeing this stream object. synchronization is not guaranteed by our semaphore signal below, as all stream signals
@@ -255,10 +263,10 @@ void _YMStreamClose(YMStreamRef stream)
 
 void _YMStreamCloseUp(YMStreamRef stream)
 {
-    int debugdownstreamWrite = YMPipeGetInputFile(stream->downstream);
-    int debugDownstreamRead = YMPipeGetOutputFile(stream->downstream);
-    int debugUpstreamRead = YMPipeGetInputFile(stream->upstream);
-    int upstreamWrite = YMPipeGetOutputFile(stream->upstream);
+    int debugdownstreamWrite = YMPipeGetInputFile(stream->downstreamPipe);
+    int debugDownstreamRead = YMPipeGetOutputFile(stream->downstreamPipe);
+    int debugUpstreamRead = YMPipeGetInputFile(stream->upstreamPipe);
+    int upstreamWrite = YMPipeGetOutputFile(stream->upstreamPipe);
     
     stream->upstreamWriteClosed = true;
     int result = close(upstreamWrite);
@@ -278,22 +286,22 @@ bool _YMStreamIsClosed(YMStreamRef stream)
 
 int _YMStreamGetDownwardWrite(YMStreamRef stream)
 {
-    return YMPipeGetInputFile(stream->downstream);
+    return YMPipeGetInputFile(stream->downstreamPipe);
 }
 
 int _YMStreamGetDownwardRead(YMStreamRef stream)
 {
-    return YMPipeGetOutputFile(stream->downstream);
+    return YMPipeGetOutputFile(stream->downstreamPipe);
 }
 
 int _YMStreamGetUpstreamWrite(YMStreamRef stream)
 {
-    return YMPipeGetInputFile(stream->upstream);
+    return YMPipeGetInputFile(stream->upstreamPipe);
 }
 
 int _YMStreamGetUpstreamRead(YMStreamRef stream)
 {
-    return YMPipeGetOutputFile(stream->upstream);
+    return YMPipeGetOutputFile(stream->upstreamPipe);
 }
 
 YMStreamUserInfoRef _YMStreamGetUserInfo(YMStreamRef stream)

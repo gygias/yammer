@@ -1,3 +1,6 @@
+- consolidate DEBUG_INFO and ifdef out relevant logs (based on target log level?)
+- nice way to consolidate indentations
+- make constructor copies/assumes ownership consistent
 - eliminate if (thing) free(thing) in _Free's
 - dispatch _notify_ names are leaking (so is one other opaque pointer)
 - inlines (logs, string creation, timeval) __YMLogInit
