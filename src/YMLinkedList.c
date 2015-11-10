@@ -13,9 +13,9 @@
 #include "YMLog.h"
 #undef ymlog_type
 #define ymlog_type YMLogDefault
-#if ( ymlog_type >= ymlog_target )
+#if ( ymlog_type > ymlog_target )
 #undef ymlog
-#define ymlog(x,...)
+#define ymlog(x,...) ;
 #endif
 
 typedef struct _YMLinkedListItem

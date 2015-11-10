@@ -20,6 +20,7 @@ YMTypeID _YMmDNSBrowserTypeID = 'b';
 YMTypeID _YMConnectionTypeID = 'c';
 YMTypeID _YMPipeTypeID = 'i';
 YMTypeID _YMLockTypeID = 'k';
+YMTypeID _YMRSAKeyPairTypeID = 'K';
 YMTypeID _YMLinkedListTypeID = 'l';
 YMTypeID _YMmDNSServiceTypeID = 'm';
 YMTypeID _YMSemaphoreTypeID = 'p';
@@ -43,6 +44,7 @@ extern void _YMLockFree(YMTypeRef);
 extern void _YMSemaphoreFree(YMTypeRef);
 extern void _YMLinkedListFree(YMTypeRef);
 extern void _YMDictionaryFree(YMTypeRef);
+extern void _YMRSAKeyPairFree(YMTypeRef);
 
 void YMFree(YMTypeRef object)
 {
@@ -73,6 +75,8 @@ void YMFree(YMTypeRef object)
         _YMLinkedListFree(object);
     else if ( type == _YMDictionaryTypeID )
         _YMDictionaryFree(object);
+    else if ( type == _YMRSAKeyPairTypeID )
+        _YMRSAKeyPairFree(object);
     else
     {
         ymlog("YMFree unknown type %c",((_YMType *)object)->_type);

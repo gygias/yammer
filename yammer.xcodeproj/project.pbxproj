@@ -48,6 +48,10 @@
 		63476A501BEB159C00D10081 /* YMDictionary.h in Headers */ = {isa = PBXBuildFile; fileRef = 63476A4E1BEB159C00D10081 /* YMDictionary.h */; };
 		63476A531BEB319000D10081 /* YMSemaphore.c in Sources */ = {isa = PBXBuildFile; fileRef = 63476A511BEB319000D10081 /* YMSemaphore.c */; };
 		63476A541BEB319000D10081 /* YMSemaphore.h in Headers */ = {isa = PBXBuildFile; fileRef = 63476A521BEB319000D10081 /* YMSemaphore.h */; };
+		63FD5B5A1BF1899800174824 /* YMRSAKeyPair.c in Sources */ = {isa = PBXBuildFile; fileRef = 63FD5B581BF1899800174824 /* YMRSAKeyPair.c */; };
+		63FD5B5B1BF1899800174824 /* YMRSAKeyPair.h in Headers */ = {isa = PBXBuildFile; fileRef = 63FD5B591BF1899800174824 /* YMRSAKeyPair.h */; };
+		63FD5B5D1BF1B93400174824 /* libcrypto.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 63FD5B5C1BF1B93400174824 /* libcrypto.tbd */; };
+		63FD5B5F1BF1B94A00174824 /* CryptoTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 63FD5B5E1BF1B94A00174824 /* CryptoTests.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -113,6 +117,10 @@
 		63476A511BEB319000D10081 /* YMSemaphore.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMSemaphore.c; path = src/YMSemaphore.c; sourceTree = "<group>"; };
 		63476A521BEB319000D10081 /* YMSemaphore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMSemaphore.h; path = src/YMSemaphore.h; sourceTree = "<group>"; };
 		63A40EF81BEC239C0085ABD0 /* YMThreadPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMThreadPriv.h; path = src/YMThreadPriv.h; sourceTree = "<group>"; };
+		63FD5B581BF1899800174824 /* YMRSAKeyPair.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMRSAKeyPair.c; path = src/YMRSAKeyPair.c; sourceTree = "<group>"; };
+		63FD5B591BF1899800174824 /* YMRSAKeyPair.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMRSAKeyPair.h; path = src/YMRSAKeyPair.h; sourceTree = "<group>"; };
+		63FD5B5C1BF1B93400174824 /* libcrypto.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libcrypto.tbd; path = usr/lib/libcrypto.tbd; sourceTree = SDKROOT; };
+		63FD5B5E1BF1B94A00174824 /* CryptoTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CryptoTests.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -128,6 +136,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				63FD5B5D1BF1B93400174824 /* libcrypto.tbd in Frameworks */,
 				63225D9E1BE9372800C28F05 /* libssl.1.0.0.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -145,6 +154,7 @@
 				63476A401BEAEFC500D10081 /* PlexerTests.m */,
 				631683931BEEF1FB00F6AB99 /* DictionaryTest.m */,
 				6332A4BA1BF12C12004BB764 /* lldb_source.sh */,
+				63FD5B5E1BF1B94A00174824 /* CryptoTests.m */,
 			);
 			path = YammerTests;
 			sourceTree = "<group>";
@@ -152,6 +162,7 @@
 		63225D391BE9026200C28F05 = {
 			isa = PBXGroup;
 			children = (
+				63FD5B5C1BF1B93400174824 /* libcrypto.tbd */,
 				63225D9C1BE9314100C28F05 /* libs */,
 				63225D491BE9027000C28F05 /* src */,
 				630A5D011BE96CE9003292EE /* YammerTests */,
@@ -245,6 +256,8 @@
 				630A5D141BE9777C003292EE /* YMmDNSBrowser.c */,
 				630A5CEC1BE9428C003292EE /* YMmDNSService.h */,
 				630A5CEB1BE9428C003292EE /* YMmDNSService.c */,
+				63FD5B591BF1899800174824 /* YMRSAKeyPair.h */,
+				63FD5B581BF1899800174824 /* YMRSAKeyPair.c */,
 			);
 			name = Private;
 			sourceTree = "<group>";
@@ -271,6 +284,7 @@
 				6307F77E1BECA44A009C64CD /* YMStreamPriv.h in Headers */,
 				630A5D171BE9777C003292EE /* YMmDNSBrowser.h in Headers */,
 				63476A541BEB319000D10081 /* YMSemaphore.h in Headers */,
+				63FD5B5B1BF1899800174824 /* YMRSAKeyPair.h in Headers */,
 				630A5CEE1BE9428C003292EE /* YMmDNSService.h in Headers */,
 				63225D651BE90A6400C28F05 /* YMSecurityProvider.h in Headers */,
 			);
@@ -367,6 +381,7 @@
 				630A5D031BE96CE9003292EE /* YammerTests.m in Sources */,
 				631683941BEEF1FB00F6AB99 /* DictionaryTest.m in Sources */,
 				63476A411BEAEFC500D10081 /* PlexerTests.m in Sources */,
+				63FD5B5F1BF1B94A00174824 /* CryptoTests.m in Sources */,
 				63476A3F1BEAE54100D10081 /* mDNSTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -379,6 +394,7 @@
 				630A5CFA1BE95E36003292EE /* YMThread.c in Sources */,
 				63225D981BE92B6000C28F05 /* YMBase.c in Sources */,
 				630A5D1C1BE98199003292EE /* YMmDNS.c in Sources */,
+				63FD5B5A1BF1899800174824 /* YMRSAKeyPair.c in Sources */,
 				630A5D161BE9777C003292EE /* YMmDNSBrowser.c in Sources */,
 				63225D691BE9184000C28F05 /* YMUtilities.c in Sources */,
 				63476A531BEB319000D10081 /* YMSemaphore.c in Sources */,

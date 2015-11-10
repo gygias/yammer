@@ -19,9 +19,9 @@
 #include "YMLog.h"
 #undef ymlog_type
 #define ymlog_type YMLogPlexer
-#if ( ymlog_type >= ymlog_target )
+#if ( ymlog_type > ymlog_target )
 #undef ymlog
-#define ymlog(x,...)
+#define ymlog(x,...) ;
 #endif
 
 #include <sys/select.h>

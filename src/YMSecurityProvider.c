@@ -14,9 +14,9 @@
 #include "YMLog.h"
 #undef ymlog_type
 #define ymlog_type YMLogSecurity
-#if ( ymlog_type >= ymlog_target )
+#if ( ymlog_type > ymlog_target )
 #undef ymlog
-#define ymlog(x,...)
+#define ymlog(x,...) ;
 #endif
 
 typedef bool (*ym_security_init_func)(int,int);
