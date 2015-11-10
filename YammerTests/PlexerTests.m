@@ -15,12 +15,17 @@
 #include "YMStreamPriv.h"
 #include "YMLock.h"
 
-#define     PlexerTest1RoundTripThreads 4
-#define     PlexerTest1RoundTripsPerThread 5000
+#define     PlexerTest1Threads 4
 #define     PlexerTest1NewStreamPerRoundTrip true
+#define     PlexerTest1RoundTripsPerThread 5000
+
+#define PlexerTest1TimeBased
+#define PlexerTest1EndDate ([NSDate distantFuture])
+BOOL    gTimeBasedEnd = NO;
+
 #define     PlexerTest1RandomMessages true // todo
 #define     PlexerTest1RandomMessageMaxLength 256
-#define     PlexerTest1StreamClosuresToObserve ( PlexerTest1RoundTripThreads * ( PlexerTest1NewStreamPerRoundTrip ? PlexerTest1RoundTripsPerThread : 1 ) )
+#define     PlexerTest1StreamClosuresToObserve ( PlexerTest1Threads * ( PlexerTest1NewStreamPerRoundTrip ? PlexerTest1RoundTripsPerThread : 1 ) )
 
 typedef struct
 {
@@ -34,6 +39,8 @@ typedef struct
     BOOL plexerTest1Running;
     
     NSUInteger awaitingClosures;
+    NSUInteger streamsCompleted;
+    NSUInteger bytesIn, bytesOut;
 }
 
 @end
@@ -49,6 +56,7 @@ PlexerTests *gRunningPlexerTest; // xctest seems to make a new object for each -
     plexerTest1Lock = YMLockCreateWithOptionsAndName(YMLockDefault, [[self className] UTF8String]);
     awaitingClosures = PlexerTest1StreamClosuresToObserve;
     self.continueAfterFailure = NO;
+    streamsCompleted = 0;
 }
 
 - (void)tearDown {
@@ -110,7 +118,7 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
         XCTAssert(okay,@"slave did not start");
     });
     
-    NSUInteger nSpawnConcurrentStreams = PlexerTest1RoundTripThreads;
+    NSUInteger nSpawnConcurrentStreams = PlexerTest1Threads;
     while (nSpawnConcurrentStreams--)
     {
         dispatch_async(dispatch_get_global_queue(0, 0), ^{
@@ -122,14 +130,18 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
 #ifdef AND_MEASURE
     [self measureBlock:^{
 #endif
+#ifndef PlexerTest1TimeBased
         while ( plexerTest1Running )
             CFRunLoopRunInMode(kCFRunLoopDefaultMode,0.5,false);
+#else
+        CFRunLoopRunInMode(kCFRunLoopDefaultMode, [PlexerTest1EndDate timeIntervalSinceDate:[NSDate date]], false);
+#endif
 #ifdef AND_MEASURE
     }];
 #endif
-    
+    gTimeBasedEnd = YES;
     NSLog(@"plexer test finished %zu incoming round-trips on %d threads (%d round-trips per %s)",incomingStreamRoundTrips,
-          PlexerTest1RoundTripThreads,
+          PlexerTest1Threads,
           PlexerTest1RoundTripsPerThread,
           PlexerTest1NewStreamPerRoundTrip?"stream":"round-trip");
 }
@@ -137,7 +149,11 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
 - (void)doLocalTest1:(YMPlexerRef)plexer
 {
     YMStreamRef aStream = NULL;
+#ifdef PlexerTest1TimeBased
+    while ( ! gTimeBasedEnd )
+#else
     for ( unsigned idx = 0; idx < PlexerTest1RoundTripsPerThread; idx++ )
+#endif
     {
         YMStreamID streamID;
         if ( ! aStream || PlexerTest1NewStreamPerRoundTrip )
@@ -189,6 +205,11 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
             YMPlexerCloseStream(plexer, aStream);
             TestLog(@"^^^ LOCAL s%u closing stream ^^^",streamID);
         }
+        
+        YMLockLock(plexerTest1Lock);
+        bytesOut += messageLen;
+        bytesIn += responseLen;
+        YMLockUnlock(plexerTest1Lock);
     }
     if ( ! PlexerTest1NewStreamPerRoundTrip )
         YMPlexerCloseStream(plexer, aStream);
@@ -304,14 +325,25 @@ void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream)
 {
     NSUInteger last;
     YMLockLock(plexerTest1Lock);
+#ifdef PlexerTest1TimeBased
+    streamsCompleted++;
+#else
     last = awaitingClosures--;
+#endif
     YMLockUnlock(plexerTest1Lock);
     TestLog(@"%s: *********** gPlexerTest1AwaitingCloses %zu->%zu!! *****************",__FUNCTION__,last,awaitingClosures);
+#ifdef PlexerTest1TimeBased
+    if ( streamsCompleted % 10000 == 0 )
+    {
+        NSLog(@"handled %zuth stream, approx %zumb in, %zumb out",streamsCompleted,bytesIn/1024/1024,bytesOut/1024/1024);
+    }
+#else
     if ( last - 1 == 0 )
     {
         NSLog(@"%s last stream closed, signaling exit",__FUNCTION__);
         plexerTest1Running = NO;
     }
+#endif
     
 }
 
