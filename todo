@@ -1,3 +1,4 @@
+- eliminate if (thing) free(thing) in _Free's
 - dispatch _notify_ names are leaking (so is one other opaque pointer)
 - inlines (logs, string creation, timeval) __YMLogInit
 - stream isLocal redundant? or lookup of stream on removal

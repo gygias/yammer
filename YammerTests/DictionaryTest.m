@@ -8,7 +8,6 @@
 
 #import "YammerTests.h"
 
-#include "YMBase.h"
 #include "YMDictionary.h"
 
 // at a glance wasn't able to find another way to order test *classes*

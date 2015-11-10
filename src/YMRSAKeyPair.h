@@ -12,12 +12,8 @@
 typedef struct __YMRSAKeyPair *YMRSAKeyPairRef;
 
 YMRSAKeyPairRef YMRSAKeyPairCreate();
+YMRSAKeyPairRef YMRSAKeyPairCreateWithModuloSize(int moduloBits, int publicExponent);
 
 bool YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair); // blocking
-
-// undefined if called before
-int YMRSAKeyPairGetN(); // public modulo
-int YMRSAKeyPairGete(); // public exponent
-
 
 #endif /* YMRSAKeyPair_h */

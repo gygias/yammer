@@ -59,12 +59,28 @@ YMPipeRef YMPipeCreate(char *name)
     return (YMPipeRef)ymPipe;
 }
 
-#pragma message "stream manages closure of files, but that should probably be actually done at this level"
 void _YMPipeFree(YMTypeRef object)
 {
     _YMPipe *pipe = (_YMPipe *)object;
-    if ( pipe->name )
-        free(pipe->name);
+    
+    int aClose;
+    aClose = close(pipe->inFd);
+    if ( aClose != 0 )
+    {
+        ymerr("   pipe[%s,i%d] fatal: close failed: %d (%s)",pipe->name, pipe->inFd, errno, strerror(errno));
+        abort();
+    }
+    
+    // todo add 'data remaining' check or warning here?
+    
+    aClose = close(pipe->outFd);
+    if ( aClose != 0 )
+    {
+        ymerr("   pipe[%s,i%d] fatal: close failed: %d (%s)",pipe->name, pipe->outFd, errno, strerror(errno));
+        abort();
+    }
+    
+    free(pipe->name);
     free(pipe);
     
 }

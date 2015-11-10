@@ -105,43 +105,6 @@ YMStreamRef YMStreamCreate(const char *name, bool isLocallyOriginated, YMStreamU
     return (YMStreamRef)stream;
 }
 
-void __YMStreamCloseFiles(YMStreamRef stream)
-{
-    int downWrite = YMPipeGetInputFile(stream->downstream);
-    int downRead = YMPipeGetOutputFile(stream->downstream);
-    int upWrite = YMPipeGetInputFile(stream->upstream);
-    int upRead = YMPipeGetOutputFile(stream->upstream);
-    
-    int aClose;
-    aClose = close(upWrite);
-    if ( aClose != 0 )
-    {
-        ymerr("  stream[%s,i%d->o%dV,^o%d<-i%d!,s%u]: fatal: close failed: %d (%s)",stream->name, downWrite, downRead, upRead, upWrite, stream->__userInfo->streamID,errno,strerror(errno));
-        abort();
-    }
-    
-    aClose = close(upRead);
-    if ( aClose != 0 )
-    {
-        ymerr("  stream[%s,i%d->o%dV,^o%d!<-i%d,s%u]: fatal: close failed: %d (%s)",stream->name, downWrite, downRead, upRead, upWrite, stream->__userInfo->streamID,errno,strerror(errno));
-        abort();
-    }
-    
-    aClose = close(downWrite);
-    if ( aClose != 0 )
-    {
-        ymerr("  stream[%s,i%d!->o%dV,^o%d<-i%d,s%u]: fatal: close failed: %d (%s)",stream->name, downWrite, downRead, upRead, upWrite, stream->__userInfo->streamID,errno,strerror(errno));
-        abort();
-    }
-    
-    aClose = close(downRead);
-    if ( aClose != 0 )
-    {
-        ymerr("  stream[%s,i%d->o%d!V,^o%d!<-i%d,s%u]: fatal: close failed: %d (%s)",stream->name, downWrite, downRead, upRead, upWrite, stream->__userInfo->streamID,errno,strerror(errno));
-        abort();
-    }
-}
-
 void _YMStreamFree(YMTypeRef object)
 {
     YMStreamRef stream = (YMStreamRef)object;
@@ -164,10 +127,9 @@ void __YMStreamFree(YMStreamRef stream)
           stream->__userInfo->streamID,
           stream);
     
-    __YMStreamCloseFiles(stream);
-    YMFree(stream->retainLock);
     YMFree(stream->downstream);
     YMFree(stream->upstream);
+    YMFree(stream->retainLock);
     
     free(stream->name);
     free(stream->__lastServiceTime);

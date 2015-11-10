@@ -28,19 +28,22 @@
 // private key (d)
 // message^e must be greater than N
 
+#define openssl_success 1
+
 typedef struct __YMRSAKeyPair
 {
     YMTypeID _typeID;
     
-    RSA *rsa;
+    int publicE;
     int moduloNBits;
-    BIGNUM *e;
+    
+    RSA *rsa;
 } _YMRSAKeyPair;
 
 //static pthread_once_t gYMRSAKeyPairSeedOnce = PTHREAD_ONCE_INIT;
 void _YMRSAKeyPairSeed();
 
-YMRSAKeyPairRef YMRSAKeyPairCreate(int moduloBits)
+YMRSAKeyPairRef YMRSAKeyPairCreateWithModuloSize(int moduloBits, int publicExponent)
 {
     RSA* rsa = RSA_new();
     if ( ! rsa )
@@ -55,8 +58,13 @@ YMRSAKeyPairRef YMRSAKeyPairCreate(int moduloBits)
     
     keyPair->rsa = rsa;
     keyPair->moduloNBits = moduloBits;
-    keyPair->e = BN_new();
+    keyPair->publicE = publicExponent;
     return keyPair;
+}
+
+YMRSAKeyPairRef YMRSAKeyPairCreate()
+{
+    return YMRSAKeyPairCreateWithModuloSize(1024, 65537);
 }
 
 void _YMRSAKeyPairFree(YMRSAKeyPairRef keyPair)
@@ -118,16 +126,62 @@ bool YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair)
     // leaving me unsure if this should be once'd. For now playing it safe.
     //pthread_once(&gYMRSAKeyPairSeedOnce, _YMRSAKeyPairSeed);
     _YMRSAKeyPairSeed();
-    int result = RSA_generate_key_ex(keyPair->rsa, keyPair->moduloNBits, keyPair->e	, NULL /*BN_GENCB *cb callback struct*/);
-    if ( 0 != result )
+    
+    
+#ifdef YM_DEBUG_INFO
+    struct timeval then;
+    int timeResult = gettimeofday(&then,NULL);
+#endif
+    unsigned long rsaErr = 0;
+    const char* rsaErrFunc = "";
+    
+    BIGNUM *e = BN_new();
+    if ( ! e )
     {
-        __unused unsigned long err = ERR_get_error();
-        ymlog("rsa: generate_key_ex failed: %lu (%s)", err, ERR_error_string(err,NULL));
+        rsaErrFunc = "BN_new";
         goto catch_return;
     }
     
+    int result = BN_set_word(e, keyPair->publicE);
+    if ( openssl_success != result )
+    {
+        rsaErrFunc = "BN_set_word";
+        goto catch_return;
+    }
+    
+    BN_set_word(e, keyPair->publicE);
+    
+    // os x man page doesn't actually state that 1 is success for _ex.
+    result = RSA_generate_key_ex(keyPair->rsa, keyPair->moduloNBits, e	, NULL /*BN_GENCB *cb callback struct*/);
+    if ( openssl_success != result )
+    {
+        rsaErrFunc = "RSA_generate_key_ex";
+        goto catch_return;
+    }
+    
+#ifdef YM_DEBUG_INFO
+    struct timeval now;
+    if ( timeResult == 0 )
+    {
+        timeResult = gettimeofday(&now, NULL);
+        if ( timeResult == 0 )
+            ymlog("rsa: it took %ld seconds to generate rsa keypair with %d modulo bits",now.tv_sec - then.tv_sec,keyPair->moduloNBits);
+    }
+    if ( timeResult != 0 )
+        ymlog("rsa: gettimeofday failed");
+#endif
+    
 catch_return:
-    return (result == 0);
+    if ( result != openssl_success )
+    {
+        rsaErr = ERR_get_error();
+        ymlog("rsa: %s failed: %lu (%s)", rsaErrFunc, rsaErr, ERR_error_string(rsaErr,NULL));
+    }
+    
+    if ( e )
+        BN_free(e);
+    
+    return (result == openssl_success);
 }
 
 void _YMRSAKeyPairSeed()

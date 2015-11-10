@@ -35,6 +35,10 @@
     YMRSAKeyPairRef keyPair = YMRSAKeyPairCreate();
     XCTAssert(YMRSAKeyPairGenerate(keyPair), @"generate failed");
     YMFree(keyPair);
+    
+    keyPair = YMRSAKeyPairCreateWithModuloSize(4096, 65537);
+    XCTAssert(YMRSAKeyPairGenerate(keyPair), @"generate(4096) failed");
+    YMFree(keyPair);
 }
 
 - (void)testPerformanceExample {

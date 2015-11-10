@@ -15,7 +15,6 @@
 
 // from what i read, a bool yn = ptr warning can't be a thing
 // this is here to periodically check for bugs like one where we were assigning a pointer to a bool
-#define YM_TEST_BOOL_USE
 #ifdef YM_TEST_BOOL_USE
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wuninitialized"

@@ -153,8 +153,8 @@
 				630A5D041BE96CE9003292EE /* Info.plist */,
 				63476A401BEAEFC500D10081 /* PlexerTests.m */,
 				631683931BEEF1FB00F6AB99 /* DictionaryTest.m */,
-				6332A4BA1BF12C12004BB764 /* lldb_source.sh */,
 				63FD5B5E1BF1B94A00174824 /* CryptoTests.m */,
+				6332A4BA1BF12C12004BB764 /* lldb_source.sh */,
 			);
 			path = YammerTests;
 			sourceTree = "<group>";
@@ -564,6 +564,10 @@
 				ENABLE_NS_ASSERTIONS = YES;
 				EXECUTABLE_PREFIX = lib;
 				GCC_PREFIX_HEADER = src/PrefixHeader.pch;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"YM_TEST_BOOL_USE=1",
+				);
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
 				LIBRARY_SEARCH_PATHS = (
