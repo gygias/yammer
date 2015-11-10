@@ -20,7 +20,7 @@
 #define     PlexerTest1RoundTripsPerThread 50
 
 #define PlexerTest1TimeBased
-#define PlexerTest1Indefinite
+//#define PlexerTest1Indefinite
 #ifdef PlexerTest1Indefinite
 #define PlexerTest1EndDate ([NSDate distantFuture])
 #else
