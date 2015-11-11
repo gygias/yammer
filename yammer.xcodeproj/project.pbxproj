@@ -122,6 +122,7 @@
 		637E3D5C1BF262EE00D702ED /* YMX509Certificate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMX509Certificate.h; path = src/YMX509Certificate.h; sourceTree = "<group>"; };
 		637E3D5F1BF2680B00D702ED /* YMOpenssl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMOpenssl.h; path = src/YMOpenssl.h; sourceTree = "<group>"; };
 		637E3D601BF2CD7300D702ED /* TLSTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TLSTests.m; sourceTree = "<group>"; };
+		637E3D621BF2D12100D702ED /* YMSecurityProviderVeryPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMSecurityProviderVeryPriv.h; path = src/YMSecurityProviderVeryPriv.h; sourceTree = "<group>"; };
 		63A40EF81BEC239C0085ABD0 /* YMThreadPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMThreadPriv.h; path = src/YMThreadPriv.h; sourceTree = "<group>"; };
 		63FD5B581BF1899800174824 /* YMRSAKeyPair.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMRSAKeyPair.c; path = src/YMRSAKeyPair.c; sourceTree = "<group>"; };
 		63FD5B591BF1899800174824 /* YMRSAKeyPair.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMRSAKeyPair.h; path = src/YMRSAKeyPair.h; sourceTree = "<group>"; };
@@ -237,6 +238,7 @@
 				6307F77D1BECA44A009C64CD /* YMStreamPriv.h */,
 				63225D5A1BE9092500C28F05 /* YMStream.c */,
 				63225D631BE90A6400C28F05 /* YMSecurityProvider.h */,
+				637E3D621BF2D12100D702ED /* YMSecurityProviderVeryPriv.h */,
 				63225D621BE90A6400C28F05 /* YMSecurityProvider.c */,
 				630A5CE81BE93BEF003292EE /* YMTLSProvider.h */,
 				630A5CE71BE93BEF003292EE /* YMTLSProvider.c */,

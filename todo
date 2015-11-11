@@ -1,3 +1,6 @@
+- clean up hard aborts used for development (like streamwritedown)
+- ssl i/o func 'call again' stuff is only for nonblocking underlying files, yeah?
+- each openssl "hive" seems to have its own error code defines, go back through and make sure int (return) isn't confused with ERR
 - DispatchForwardFile leaks YMThreadRef because there's no way to set context out of band with initializer
 - way to wrap object->_typeID = myTypeID?
 - does init and generate keypair really need to be separated? if so x509 signing probably should be too

@@ -354,8 +354,9 @@ void *__YMThreadDispatchForwardFileProc(void *context)
     int toFile = filesPtr[1];
     
     uint64_t outBytes = 0;
-    YMIOResult result = YMReadWriteFull(fromFile, toFile, &outBytes);
     
+    ymlog("dispatch-forward: entered for %d->%d",fromFile,toFile);
+    YMIOResult result = YMReadWriteFull(fromFile, toFile, &outBytes);
     ymlog("dispatch-forward: %s %llu bytes from %d->%d", (result == YMIOError)?"error at offset":"finished",outBytes,fromFile,toFile);
     
     // todo: ymthread is being leaked here, need a way to set context out of band with the constructor

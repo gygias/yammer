@@ -7,6 +7,7 @@
 //
 
 #include "YMSecurityProvider.h"
+#include "YMSecurityProviderVeryPriv.h"
 #include "YMPrivate.h"
 
 #include "YMUtilities.h"
@@ -19,27 +20,11 @@
 #define ymlog(x,...) ;
 #endif
 
-typedef bool (*ym_security_init_func)(int,int);
-typedef bool (*ym_security_read_func)(int,int,uint8_t*,size_t);
-typedef bool (*ym_security_write_func)(int,int,const uint8_t*,size_t);
-typedef bool (*ym_security_close_func)(int,int);
+bool YMNoSecurityInit(YMSecurityProviderRef provider);
+bool YMNoSecurityRead(YMSecurityProviderRef provider,uint8_t*,size_t);
+bool YMNoSecurityWrite(YMSecurityProviderRef provider,const uint8_t*,size_t);
+bool YMNoSecurityClose(YMSecurityProviderRef provider);
 
-typedef struct __YMSecurityProvider
-{
-    YMTypeID _typeID;
-    
-    int readFile;
-    int writeFile;
-    ym_security_init_func   initFunc;
-    ym_security_read_func   readFunc;
-    ym_security_write_func  writeFunc;
-    ym_security_close_func  closeFunc;
-} _YMSecurityProvider;
-
-bool YMNoSecurityInit(int,int);
-bool YMNoSecurityRead(int,int,uint8_t*,size_t);
-bool YMNoSecurityWrite(int,int,const uint8_t*,size_t);
-bool YMNoSecurityClose(int,int);
 YMSecurityProviderRef YMSecurityProviderCreateWithFullDuplexFile(int fd)
 {
     return YMSecurityProviderCreate(fd, fd);
@@ -70,41 +55,41 @@ void YMSecurityProviderSetInitFunc(YMSecurityProviderRef provider, ym_security_i
 
 bool YMSecurityProviderInit(YMSecurityProviderRef provider)
 {
-    return provider->initFunc(provider->readFile, provider->writeFile);
+    return provider->initFunc(provider);
 }
 
 bool YMSecurityProviderRead(YMSecurityProviderRef provider, uint8_t *buffer, size_t bytes)
 {
-    return provider->readFunc(provider->readFile, provider->writeFile, buffer, bytes);
+    return provider->readFunc(provider, buffer, bytes);
 }
 
 bool YMSecurityProviderWrite(YMSecurityProviderRef provider, const uint8_t *buffer, size_t bytes)
 {
-    return provider->writeFunc(provider->readFile, provider->writeFile, buffer, bytes);
+    return provider->writeFunc(provider, buffer, bytes);
 }
 
 bool YMSecurityProviderClose(YMSecurityProviderRef provider)
 {
-    return provider->closeFunc(provider->readFile, provider->writeFile);
+    return provider->closeFunc(provider);
 }
 
 // passthrough
-bool YMNoSecurityInit(__unused int inFd, __unused int outFd)
+bool YMNoSecurityInit(__unused YMSecurityProviderRef provider)
 {
     return true;
 }
 
-bool YMNoSecurityRead(int readFile, __unused int writeFile, uint8_t *buffer, size_t bytes)
+bool YMNoSecurityRead(YMSecurityProviderRef provider, uint8_t *buffer, size_t bytes)
 {
-    return YMReadFull(readFile, buffer, bytes);
+    return YMReadFull(provider->readFile, buffer, bytes);
 }
 
-bool YMNoSecurityWrite(__unused int readFile, int writeFile, const uint8_t *buffer, size_t bytes)
+bool YMNoSecurityWrite(YMSecurityProviderRef provider, const uint8_t *buffer, size_t bytes)
 {
-    return YMWriteFull(writeFile, buffer, bytes);
+    return YMWriteFull(provider->writeFile, buffer, bytes);
 }
 
-bool YMNoSecurityClose(__unused  int inFd, __unused int outFd)
+bool YMNoSecurityClose(__unused YMSecurityProviderRef provider)
 {
     return true;
 }

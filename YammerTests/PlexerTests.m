@@ -218,11 +218,11 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
 - (NSData *)receiveMessage:(YMStreamRef)stream
 {
     UserMessageHeader header;
-    YMStreamReadUp(stream, &header, sizeof(header));
-    //XCTAssert(okay,@"failed to read header");
+    YMIOResult result = YMStreamReadUp(stream, &header, sizeof(header));
+    XCTAssert(result==YMIOSuccess,@"failed to read header");
     uint8_t *buffer = malloc(header.length);
-    YMStreamReadUp(stream, buffer, header.length);
-    //XCTAssert(okay,@"failed to read buffer");
+    result = YMStreamReadUp(stream, buffer, header.length);
+    XCTAssert(result==YMIOSuccess,@"failed to read buffer");
     
     return [NSData dataWithBytesNoCopy:buffer length:header.length freeWhenDone:YES];
 }
