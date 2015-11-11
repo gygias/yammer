@@ -93,7 +93,7 @@ typedef struct
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         serverSocket = [self createServerSocket:sockName];
     });
-    CFRunLoopRunInMode(kCFRunLoopDefaultMode, 1, false); // xxx let server reach accept()
+    CFRunLoopRunInMode(kCFRunLoopDefaultMode, 2, false); // xxx let server reach accept()
     dispatch_sync(dispatch_get_global_queue(0, 0), ^{
         clientSocket = [self createClientSocket:sockName];
     });

@@ -83,39 +83,6 @@ void ym_tls_lock_callback(int mode, int type, __unused char *file, __unused int 
         YMLockLock(theLock);
     else
         YMLockUnlock(theLock);
-    
-//    YMLockLock(gYMTLSLocksLock);
-//    
-//    int sizeOrig = gYMTLSLocksSize;
-//    while ( type > gYMTLSLocksSize )
-//    {
-//        gYMTLSLocksSize *= 2;
-//        gYMTLSLocks = realloc(gYMTLSLocks, gYMTLSLocksSize * sizeof(YMLockRef));
-//    }
-//    if ( sizeOrig != gYMTLSLocksSize )
-//    {
-//        int diff = gYMTLSLocksSize - sizeOrig;
-//        bzero((unsigned char *)gYMTLSLocks + diff, diff);
-//    }
-//    
-//    bool newLock = false;
-//    YMLockRef theLock = gYMTLSLocks[type];
-//    if ( ! theLock )
-//    {
-//        theLock = YMLockCreateWithOptionsAndName(YMLockDefault, YM_TOKEN_STR(gYMTLSLocks));
-//        gYMTLSLocks[type] = theLock;
-//        newLock = true;
-//    }
-//    if ( lock )
-//        YMLockLock(theLock);
-//    else if ( unlock )
-//    {
-//        if ( newLock )
-//            abort();
-//        YMLockUnlock(theLock);
-//    }
-//    
-//    YMLockUnlock(gYMTLSLocksLock);
 }
 
 static pthread_once_t gYMInitSSLOnce = PTHREAD_ONCE_INIT;
@@ -134,68 +101,6 @@ void __YMSSLInit()
 
 // designated initializer
 YMTLSProviderRef __YMTLSProviderCreateWithFullDuplexFile(int file, bool isWrappingSocket, bool isServer);
-
-//YMTLSProviderRef YMTLSProviderCreate(int inFile, int outFile, bool isServer)
-//{
-//    int sock;
-//    if ( inFile == outFile )
-//        sock = inFile;
-//    else
-//    {
-//        // todo? "raw" is only available to superuser, says the man page. protocol boxing not necessary here
-//        // even if this is currently only for the test case.
-//        sock = socket(PF_LOCAL, SOCK_STREAM, 0/* IP, /etc/sockets man 5 protocols*/);
-//        if ( sock == -1 )
-//        {
-//            ymerr("tls[%d]: failed to create socket for forwarding %d->%d: %d (%s)",isServer,inFile,outFile,errno,strerror(errno));
-//            return NULL;
-//        }
-//        
-//        struct sockaddr_un sockName;
-//        /* Bind a name to the socket. */
-//        sockName.sun_family = AF_LOCAL;
-//        char *name = YMStringCreateWithFormat("tls-%u",rand());
-//        strncpy (sockName.sun_path, name, sizeof (sockName.sun_path));
-//        free(name);
-//        sockName.sun_path[sizeof (sockName.sun_path) - 1] = '\0';
-//        
-//        /* The size of the address is
-//         the offset of the start of the filename,
-//         plus its length (not including the terminating null byte).
-//         Alternatively you can just do:
-//         size = SUN_LEN (&name);
-//         */
-//        socklen_t
-//        size = (offsetof (struct sockaddr_un, sun_path)
-//                + (unsigned int)strlen (sockName.sun_path));
-//        
-//        if (bind (sock, (struct sockaddr *) &sockName, size) < 0)
-//        {
-//            perror ("bind");
-//            exit (EXIT_FAILURE);
-//        }
-//        
-//        bool okay = YMThreadDispatchForwardFile(outFile, sock);
-//        if ( ! okay )
-//        {
-//            ymerr("tls[%d]: dispatch forward file failed %d->%d",isServer,outFile,sock);
-//            return NULL;
-//        }
-//        
-//        okay = YMThreadDispatchForwardFile(sock, inFile);
-//        if ( ! okay )
-//        {
-//            ymerr("tls[%d]: dispatch forward file failed %d<-%d",isServer,inFile,outFile);
-//            return NULL;
-//        }
-//    }
-//    
-//    YMTLSProviderRef tls = __YMTLSProviderCreateWithFullDuplexFile(sock,true, isServer);
-//    if ( ! tls )
-//        close(sock);
-//    
-//    return tls;
-//}
 
 // designated initializer with shorter arguments list! am i doing it wrong?
 YMTLSProviderRef YMTLSProviderCreateWithFullDuplexFile(int file, bool isServer)
@@ -266,57 +171,6 @@ void _YMTLSProviderFree(YMTypeRef object)
 #pragma message "BIG TODO - we can't fire and forget a forwarding thread, need a proper struct and flags such as a 'finished' callout (and maybe what to do with the output files when done)"
 }
 
-int ym_tls_write(BIO *bio, const char *buffer, int length)
-{
-    ymlog("ym_tls_write: %p %p %d",bio,buffer,length);
-    YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr;
-    YMIOResult result = YMWriteFull(tls->socket, (const unsigned char *)buffer, length);
-    if ( result != YMIOSuccess )
-        return -1;
-    return length;
-}
-int ym_tls_read(BIO *bio, char *buffer, int length)
-{
-    ymlog("ym_tls_read: %p %p %d",bio,buffer,length);
-    YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr;
-    YMIOResult result = YMReadFull(tls->socket, (unsigned char *)buffer, length);
-    if ( result == YMIOError )
-        return -1;
-    else if ( result == YMIOEOF )
-        return 0; // right?
-    return length;
-}
-int ym_tls_puts(BIO *bio, const char * buffer)
-{
-    ymlog("ym_tls_puts: %p %p %s",bio,buffer,buffer);
-    return 0;
-}
-
-int ym_tls_gets(BIO *bio, char * buffer, int length)
-{
-    ymlog("ym_tls_gets: %p %p %d",bio,buffer,length);
-    return 0;
-}
-
-long ym_tls_ctrl (BIO *bio, int one, long two, void *three) { ymlog("ym_tls_ctrl: %p %d %ld %p",bio,one,two,three); return 1; }
-int ym_tls_new(BIO *bio) { ymlog("ym_tls_new: %p",bio); return 1; }
-int ym_tls_free(BIO *bio) { ymlog("ym_tls_free: %p",bio); return 1; }
-long ym_tls_callback_ctrl(BIO *bio, int one, bio_info_cb * info) { ymlog("ym_tls_callback_ctrl: %p %d %p",bio,one,info); return 1; }
-
-__unused static BIO_METHOD ym_bio_methods =
-{
-    BIO_TYPE_SOCKET,
-    "socket",
-    ym_tls_write,
-    ym_tls_read,
-    ym_tls_puts,
-    ym_tls_gets, /* sock_gets, */
-    ym_tls_ctrl,
-    ym_tls_new,
-    ym_tls_free,
-    ym_tls_callback_ctrl,
-};
-
 bool __YMTLSProviderInit(YMSecurityProviderRef provider)
 {
     YMTLSProviderRef tls = (YMTLSProviderRef)provider;
@@ -351,7 +205,6 @@ bool __YMTLSProviderInit(YMSecurityProviderRef provider)
         ymerr("tls[%d]: BIO_new failed: %lu (%s)",tls->isServer ,sslError,ERR_error_string(sslError, NULL));
         goto catch_return;
     }
-    //BIO_set_fd(tls->bio, tls->readFile, 0);
     
     SSL_set_bio(tls->ssl, tls->bio, tls->bio);
     tls->bio->ptr = tls; // this is the elusive context pointer
@@ -435,12 +288,7 @@ catch_return:
     
     if ( ! initOkay )
     {
-        // seems that SSL* takes ownership
-//        if ( tls->bio )
-//        {
-//            BIO_free(tls->bio);
-//            tls->bio = NULL;
-//        }
+        // seems that SSL* takes ownership of BIO
         if ( tls->ssl )
         {
             SSL_free(tls->ssl);
@@ -514,3 +362,56 @@ bool __YMTLSProviderClose(YMSecurityProviderRef provider)
     
     return true;
 }
+
+#pragma mark function bio example
+
+//int ym_tls_write(BIO *bio, const char *buffer, int length)
+//{
+//    ymlog("ym_tls_write: %p %p %d",bio,buffer,length);
+//    YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr;
+//    YMIOResult result = YMWriteFull(tls->socket, (const unsigned char *)buffer, length);
+//    if ( result != YMIOSuccess )
+//        return -1;
+//    return length;
+//}
+//int ym_tls_read(BIO *bio, char *buffer, int length)
+//{
+//    ymlog("ym_tls_read: %p %p %d",bio,buffer,length);
+//    YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr;
+//    YMIOResult result = YMReadFull(tls->socket, (unsigned char *)buffer, length);
+//    if ( result == YMIOError )
+//        return -1;
+//    else if ( result == YMIOEOF )
+//        return 0; // right?
+//    return length;
+//}
+//int ym_tls_puts(BIO *bio, const char * buffer)
+//{
+//    ymlog("ym_tls_puts: %p %p %s",bio,buffer,buffer);
+//    return 0;
+//}
+//
+//int ym_tls_gets(BIO *bio, char * buffer, int length)
+//{
+//    ymlog("ym_tls_gets: %p %p %d",bio,buffer,length);
+//    return 0;
+//}
+//
+//long ym_tls_ctrl (BIO *bio, int one, long two, void *three) { ymlog("ym_tls_ctrl: %p %d %ld %p",bio,one,two,three); return 1; }
+//int ym_tls_new(BIO *bio) { ymlog("ym_tls_new: %p",bio); return 1; }
+//int ym_tls_free(BIO *bio) { ymlog("ym_tls_free: %p",bio); return 1; }
+//long ym_tls_callback_ctrl(BIO *bio, int one, bio_info_cb * info) { ymlog("ym_tls_callback_ctrl: %p %d %p",bio,one,info); return 1; }
+//
+//__unused static BIO_METHOD ym_bio_methods =
+//{
+//    BIO_TYPE_SOCKET,
+//    "socket",
+//    ym_tls_write,
+//    ym_tls_read,
+//    ym_tls_puts,
+//    ym_tls_gets, /* sock_gets, */
+//    ym_tls_ctrl,
+//    ym_tls_new,
+//    ym_tls_free,
+//    ym_tls_callback_ctrl,
+//};

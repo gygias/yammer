@@ -13,7 +13,7 @@
 
 #include "YMLog.h"
 #undef ymlog_type
-#define ymlog_type YMLogLock
+#define ymlog_type YMLogThreadSync
 #if ( ymlog_type > ymlog_target )
 #undef ymlog
 #define ymlog(x,...) ;

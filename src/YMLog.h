@@ -30,9 +30,9 @@ typedef enum
     YMLogConnection,
     YMLogThread,
     YMLogThreadDispatch, // todo: time to split out dispatch
-    YMLogLock,
     YMLogPlexer,
     YMLogStreamLifecycle,
+    YMLogThreadSync,
     YMLogStream,
     YMLogPipe,
     YMLogIO
