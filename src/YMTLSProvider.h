@@ -16,7 +16,7 @@
 
 typedef struct __YMTLSProvider *YMTLSProviderRef;
 
-YMTLSProviderRef YMTLSProviderCreate(int inFile, int outFile, bool isServer);
+//YMTLSProviderRef YMTLSProviderCreate(int inFile, int outFile, bool isServer);
 YMTLSProviderRef YMTLSProviderCreateWithFullDuplexFile(int file, bool isServer);
 
 // callbacks

@@ -13,7 +13,6 @@
 #include "YMThread.h"
 #include "YMLock.h"
 
-#include <sys/socket.h>
 #include <sys/stat.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -32,8 +31,8 @@ typedef struct __YMTLSProvider
 {
     YMTypeID _type;
     
-    int readFile;
-    int writeFile;
+    int socket;
+    int FAKE_UNION_FILLER_FIX_ME;
     ym_security_init_func   initFunc;
     ym_security_read_func   readFunc;
     ym_security_write_func  writeFunc;
@@ -58,21 +57,65 @@ bool __YMTLSProviderClose(YMSecurityProviderRef provider);
 
 unsigned long ym_tls_thread_id_callback()
 {
-    ymlog("ym_tls_thread_id_callback");
+    //ymlog("ym_tls_thread_id_callback");
     return (unsigned long)pthread_self();
 }
 
-YMLockRef gYMTLSLock = NULL;
+YMLockRef *gYMTLSLocks = NULL;
+int gYMTLSLocksSize = 24;
 
 void ym_tls_lock_callback(int mode, int type, __unused char *file, __unused int line)
 {
-    bool lock = (mode&CRYPTO_LOCK);
-    bool unlock = (mode&CRYPTO_UNLOCK);
-    ymlog("ym_tls_lock_callback: %04x %s %d(l%d u%d)",type,file,line,lock,unlock);
-    if ( lock )
-        YMLockLock(gYMTLSLock);
-    else if ( unlock )
-        YMLockUnlock(gYMTLSLock);
+    bool lock = mode & CRYPTO_LOCK;
+    //ymlog("ym_tls_lock_callback: %04x %s:%d #%d (%s)",mode,file,line,type,lock?"lock":"unlock");
+    
+    YMLockRef theLock = gYMTLSLocks[type];
+    if ( ! theLock )
+    {
+        char *name = YMStringCreateWithFormat("ym_tls_lock_callback-%d",type);
+        theLock = YMLockCreateWithOptionsAndName(YMLockDefault, name);
+        free(name);
+    }
+    
+    // locking_function() must be able to handle up to CRYPTO_num_locks() different mutex locks. It sets the n-th lock if mode
+    // & CRYPTO_LOCK, and releases it otherwise.
+    if (lock)
+        YMLockLock(theLock);
+    else
+        YMLockUnlock(theLock);
+    
+//    YMLockLock(gYMTLSLocksLock);
+//    
+//    int sizeOrig = gYMTLSLocksSize;
+//    while ( type > gYMTLSLocksSize )
+//    {
+//        gYMTLSLocksSize *= 2;
+//        gYMTLSLocks = realloc(gYMTLSLocks, gYMTLSLocksSize * sizeof(YMLockRef));
+//    }
+//    if ( sizeOrig != gYMTLSLocksSize )
+//    {
+//        int diff = gYMTLSLocksSize - sizeOrig;
+//        bzero((unsigned char *)gYMTLSLocks + diff, diff);
+//    }
+//    
+//    bool newLock = false;
+//    YMLockRef theLock = gYMTLSLocks[type];
+//    if ( ! theLock )
+//    {
+//        theLock = YMLockCreateWithOptionsAndName(YMLockDefault, YM_TOKEN_STR(gYMTLSLocks));
+//        gYMTLSLocks[type] = theLock;
+//        newLock = true;
+//    }
+//    if ( lock )
+//        YMLockLock(theLock);
+//    else if ( unlock )
+//    {
+//        if ( newLock )
+//            abort();
+//        YMLockUnlock(theLock);
+//    }
+//    
+//    YMLockUnlock(gYMTLSLocksLock);
 }
 
 static pthread_once_t gYMInitSSLOnce = PTHREAD_ONCE_INIT;
@@ -83,7 +126,7 @@ void __YMSSLInit()
     SSL_library_init();
     OpenSSL_add_all_algorithms();
     
-    gYMTLSLock = YMLockCreateWithOptionsAndName(YMLockDefault, YM_TOKEN_STR(gYMTLSLock));
+    gYMTLSLocks = calloc(CRYPTO_num_locks(),sizeof(YMLockRef));
     
     CRYPTO_set_id_callback((unsigned long (*)())ym_tls_thread_id_callback);
     CRYPTO_set_locking_callback((void (*)())ym_tls_lock_callback);
@@ -92,36 +135,67 @@ void __YMSSLInit()
 // designated initializer
 YMTLSProviderRef __YMTLSProviderCreateWithFullDuplexFile(int file, bool isWrappingSocket, bool isServer);
 
-YMTLSProviderRef YMTLSProviderCreate(int inFile, int outFile, bool isServer)
-{
-    int sock;
-    if ( inFile == outFile )
-        sock = inFile;
-    else
-    {
-        // todo? "raw" is only available to superuser, says the man page. protocol boxing not necessary here
-        // even if this is currently only for the test case.
-        sock = socket(PF_LOCAL, SOCK_STREAM, 0/* IP, /etc/sockets man 5 protocols*/);
-        if ( sock == -1 )
-        {
-            ymerr("tls[%d]: failed to create socket for forwarding %d->%d: %d (%s)",isServer,inFile,outFile,errno,strerror(errno));
-            return NULL;
-        }
-        
-        bool okay = YMThreadDispatchForwardFile(outFile, sock);
-        if ( ! okay )
-        {
-            ymerr("tls[%d]: dispatch forward file failed %d->%d",isServer,inFile,outFile);
-            return NULL;
-        }
-    }
-    
-    YMTLSProviderRef tls = __YMTLSProviderCreateWithFullDuplexFile(sock,true, isServer);
-    if ( ! tls )
-        close(sock);
-    
-    return tls;
-}
+//YMTLSProviderRef YMTLSProviderCreate(int inFile, int outFile, bool isServer)
+//{
+//    int sock;
+//    if ( inFile == outFile )
+//        sock = inFile;
+//    else
+//    {
+//        // todo? "raw" is only available to superuser, says the man page. protocol boxing not necessary here
+//        // even if this is currently only for the test case.
+//        sock = socket(PF_LOCAL, SOCK_STREAM, 0/* IP, /etc/sockets man 5 protocols*/);
+//        if ( sock == -1 )
+//        {
+//            ymerr("tls[%d]: failed to create socket for forwarding %d->%d: %d (%s)",isServer,inFile,outFile,errno,strerror(errno));
+//            return NULL;
+//        }
+//        
+//        struct sockaddr_un sockName;
+//        /* Bind a name to the socket. */
+//        sockName.sun_family = AF_LOCAL;
+//        char *name = YMStringCreateWithFormat("tls-%u",rand());
+//        strncpy (sockName.sun_path, name, sizeof (sockName.sun_path));
+//        free(name);
+//        sockName.sun_path[sizeof (sockName.sun_path) - 1] = '\0';
+//        
+//        /* The size of the address is
+//         the offset of the start of the filename,
+//         plus its length (not including the terminating null byte).
+//         Alternatively you can just do:
+//         size = SUN_LEN (&name);
+//         */
+//        socklen_t
+//        size = (offsetof (struct sockaddr_un, sun_path)
+//                + (unsigned int)strlen (sockName.sun_path));
+//        
+//        if (bind (sock, (struct sockaddr *) &sockName, size) < 0)
+//        {
+//            perror ("bind");
+//            exit (EXIT_FAILURE);
+//        }
+//        
+//        bool okay = YMThreadDispatchForwardFile(outFile, sock);
+//        if ( ! okay )
+//        {
+//            ymerr("tls[%d]: dispatch forward file failed %d->%d",isServer,outFile,sock);
+//            return NULL;
+//        }
+//        
+//        okay = YMThreadDispatchForwardFile(sock, inFile);
+//        if ( ! okay )
+//        {
+//            ymerr("tls[%d]: dispatch forward file failed %d<-%d",isServer,inFile,outFile);
+//            return NULL;
+//        }
+//    }
+//    
+//    YMTLSProviderRef tls = __YMTLSProviderCreateWithFullDuplexFile(sock,true, isServer);
+//    if ( ! tls )
+//        close(sock);
+//    
+//    return tls;
+//}
 
 // designated initializer with shorter arguments list! am i doing it wrong?
 YMTLSProviderRef YMTLSProviderCreateWithFullDuplexFile(int file, bool isServer)
@@ -144,8 +218,7 @@ YMTLSProviderRef __YMTLSProviderCreateWithFullDuplexFile(int file, bool isWrappi
     YMTLSProviderRef tls = (YMTLSProviderRef)YMALLOC(sizeof(struct __YMTLSProvider));
     tls->_type = _YMTLSProviderTypeID;
     
-    tls->readFile = file;
-    tls->writeFile = file;
+    tls->socket = file;
     tls->isWrappingSocket = isWrappingSocket;
     tls->isServer = isServer;
     
@@ -158,6 +231,10 @@ YMTLSProviderRef __YMTLSProviderCreateWithFullDuplexFile(int file, bool isWrappi
     tls->readFunc = __YMTLSProviderRead;
     tls->writeFunc = __YMTLSProviderWrite;
     tls->closeFunc = __YMTLSProviderClose;
+    
+    tls->ssl = NULL;
+    tls->sslCtx = NULL;
+    tls->bio = NULL;
     
     return tls;
 }
@@ -178,7 +255,7 @@ void _YMTLSProviderFree(YMTypeRef object)
 {
     YMTLSProviderRef tls = (YMTLSProviderRef)object;
     if ( tls->isWrappingSocket )
-        close(tls->readFile);
+        close(tls->socket);
     if ( tls->bio )
         BIO_free(tls->bio);
     if ( tls->ssl )
@@ -193,7 +270,7 @@ int ym_tls_write(BIO *bio, const char *buffer, int length)
 {
     ymlog("ym_tls_write: %p %p %d",bio,buffer,length);
     YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr;
-    YMIOResult result = YMWriteFull(tls->writeFile, (const unsigned char *)buffer, length);
+    YMIOResult result = YMWriteFull(tls->socket, (const unsigned char *)buffer, length);
     if ( result != YMIOSuccess )
         return -1;
     return length;
@@ -202,7 +279,7 @@ int ym_tls_read(BIO *bio, char *buffer, int length)
 {
     ymlog("ym_tls_read: %p %p %d",bio,buffer,length);
     YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr;
-    YMIOResult result = YMReadFull(tls->readFile, (unsigned char *)buffer, length);
+    YMIOResult result = YMReadFull(tls->socket, (unsigned char *)buffer, length);
     if ( result == YMIOError )
         return -1;
     else if ( result == YMIOEOF )
@@ -226,7 +303,7 @@ int ym_tls_new(BIO *bio) { ymlog("ym_tls_new: %p",bio); return 1; }
 int ym_tls_free(BIO *bio) { ymlog("ym_tls_free: %p",bio); return 1; }
 long ym_tls_callback_ctrl(BIO *bio, int one, bio_info_cb * info) { ymlog("ym_tls_callback_ctrl: %p %d %p",bio,one,info); return 1; }
 
-static BIO_METHOD ym_bio_methods =
+__unused static BIO_METHOD ym_bio_methods =
 {
     BIO_TYPE_SOCKET,
     "socket",
@@ -266,25 +343,87 @@ bool __YMTLSProviderInit(YMSecurityProviderRef provider)
         goto catch_return;
     }
     
-    tls->bio = BIO_new(&ym_bio_methods);
+    //tls->bio = BIO_new(&ym_bio_methods);
+    tls->bio = BIO_new_socket(tls->socket, 0);
     if ( ! tls->bio )
     {
         sslError = ERR_get_error();
         ymerr("tls[%d]: BIO_new failed: %lu (%s)",tls->isServer ,sslError,ERR_error_string(sslError, NULL));
         goto catch_return;
     }
+    //BIO_set_fd(tls->bio, tls->readFile, 0);
     
     SSL_set_bio(tls->ssl, tls->bio, tls->bio);
     tls->bio->ptr = tls; // this is the elusive context pointer
     
+    SSL_set_debug(tls->ssl, 1);
+    
+    YMRSAKeyPairRef rsa = YMRSAKeyPairCreate();
+    YMRSAKeyPairGenerate(rsa);
+    YMX509CertificateRef cert = YMX509CertificateCreate(rsa);
+    
+    int result = SSL_CTX_use_certificate(tls->sslCtx, YMX509CertificateGetX509(cert));
+    if ( result != 1 )
+    {
+        sslError = ERR_get_error(); // todo "latest" or "earliest"? i'd have thought "latest", but X509_/RSA_ man pages say to get_error, while SSL_ merely "check the stack structure"
+        ymerr("tls[%d]: SSL_CTX_use_certificate failed: %d: ssl err: %lu (%s)",tls->isServer , result, sslError, ERR_error_string(sslError,NULL));
+        goto catch_return;
+    }
+    result = SSL_CTX_use_RSAPrivateKey(tls->sslCtx, YMRSAKeyPairGetRSA(rsa));
+    if ( result != 1 )
+    {
+        sslError = ERR_get_error(); // todo "latest" or "earliest"? i'd have thought "latest", but X509_/RSA_ man pages say to get_error, while SSL_ merely "check the stack structure"
+        ymerr("tls[%d]: SSL_CTX_use_RSAPrivateKey failed: %d: ssl err: %lu (%s)",tls->isServer , result, sslError, ERR_error_string(sslError,NULL));
+        goto catch_return;
+    }
+    
+    result = SSL_use_certificate(tls->ssl, YMX509CertificateGetX509(cert));
+    if ( result != 1 )
+    {
+        sslError = ERR_get_error(); // todo "latest" or "earliest"? i'd have thought "latest", but X509_/RSA_ man pages say to get_error, while SSL_ merely "check the stack structure"
+        ymerr("tls[%d]: SSL_use_certificate failed: %d: ssl err: %lu (%s)",tls->isServer , result, sslError, ERR_error_string(sslError,NULL));
+        goto catch_return;
+    }
+    result = SSL_use_RSAPrivateKey(tls->ssl, YMRSAKeyPairGetRSA(rsa));
+    if ( result != 1 )
+    {
+        sslError = ERR_get_error(); // todo "latest" or "earliest"? i'd have thought "latest", but X509_/RSA_ man pages say to get_error, while SSL_ merely "check the stack structure"
+        ymerr("tls[%d]: SSL_CTX_use_RSAPrivateKey failed: %d: ssl err: %lu (%s)",tls->isServer , result, sslError, ERR_error_string(sslError,NULL));
+        goto catch_return;
+    }
+    
+    result = SSL_set_cipher_list(tls->ssl, "AES256-SHA");
+    if ( result != 1 )
+    {
+        sslError = ERR_get_error(); // todo "latest" or "earliest"? i'd have thought "latest", but X509_/RSA_ man pages say to get_error, while SSL_ merely "check the stack structure"
+        ymerr("tls[%d]: SSL_set_cipher_list failed: %d: ssl err: %lu (%s)",tls->isServer , result, sslError, ERR_error_string(sslError,NULL));
+        goto catch_return;
+    }
+    
+    if ( tls->isServer )
+        SSL_set_accept_state(tls->ssl);
+    else
+        SSL_set_connect_state(tls->ssl);
+    
     // todo: judging by higher level TLS libraries, there's probably a way to get called out to mid-accept
     // to do things like specify local certs and validate remote ones, but i'll be damned if i can find it in the ocean that is ssl.h.
     // it doesn't really matter if we do it within SSL_accept() or afterwards, though.
-    int result = SSL_accept(tls->ssl);
-    if ( SSL_ERROR_NONE != result )
+    bool wantsMoreIO = false;
+    ymlog("tls[%d]: entering handshake",tls->isServer);
+    do
     {
-        sslError = ERR_get_error(); // todo "latest" or "earliest"? i'd have thought "latest", but X509_/RSA_ man pages say to get_error, while SSL_ merely "check the stack structure"
-        ymerr("tls[%d]: SSL_accept failed: %d: ssl err: %lu (%s)",tls->isServer , result, sslError, ERR_error_string(sslError,NULL));
+        result = SSL_do_handshake(tls->ssl);
+        //ymlog("tls[%d]: handshake...",tls->isServer);
+        sslError = SSL_get_error(tls->ssl,result);
+        wantsMoreIO = ( sslError == SSL_ERROR_WANT_READ || sslError == SSL_ERROR_WANT_WRITE );
+    } while ( false /*wantsMoreIO this shouldn't happen for us, we're avoiding non-blocking i/o*/ );
+    
+    ymlog("tls[%d]: handshake returned %d",tls->isServer, result);
+    
+    if ( 1 != result )
+    {
+        sslError = SSL_get_error(tls->ssl, result); // todo "latest" or "earliest"? i'd have thought "latest", but X509_/RSA_ man pages say to get_error, while SSL_ merely "check the stack structure"
+        ymerr("tls[%d]: SSL_do_handshake failed: %d: ssl err: %lu (%s)",tls->isServer , result, sslError, ERR_error_string(sslError,NULL));
         goto catch_return;
     }
     
@@ -296,11 +435,12 @@ catch_return:
     
     if ( ! initOkay )
     {
-        if ( tls->bio )
-        {
-            BIO_free(tls->bio);
-            tls->bio = NULL;
-        }
+        // seems that SSL* takes ownership
+//        if ( tls->bio )
+//        {
+//            BIO_free(tls->bio);
+//            tls->bio = NULL;
+//        }
         if ( tls->ssl )
         {
             SSL_free(tls->ssl);

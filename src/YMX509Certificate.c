@@ -230,3 +230,8 @@ void _YMX509CertificateFree(YMTypeRef object)
     X509_free(cert->x509);
     free(cert);
 }
+
+void *YMX509CertificateGetX509(YMX509CertificateRef cert)
+{
+    return cert->x509;
+}

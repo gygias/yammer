@@ -10,7 +10,7 @@
 #define ymlog_type YMLogDefault
 #endif
 #ifndef ymlog_target
-#define ymlog_target YMLogPipe
+#define ymlog_target YMLogConnection
 #define ymlog(x,...) if ( ymlog_type <= ymlog_target ) YMLogType(ymlog_type,(x),##__VA_ARGS__)
 // it might be nice if this postpended errno/strerror (or had a designated version for cases that errno is relevant)
 #define ymerr(x,...) YMLogType(YMLogError,(x),##__VA_ARGS__)
@@ -29,6 +29,7 @@ typedef enum
     YMLogmDNS,
     YMLogConnection,
     YMLogThread,
+    YMLogThreadDispatch, // todo: time to split out dispatch
     YMLogLock,
     YMLogPlexer,
     YMLogStreamLifecycle,

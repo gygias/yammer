@@ -99,12 +99,12 @@ YMIOResult __YMWriteFull(int fd, const uint8_t *buffer, size_t bytes, size_t *ou
         {
             case 0:
                 ymerr("YMWrite: aWrite=0?");
+                abort();
                 break;
             case -1:
                 result = YMIOError;
                 break;
             default:
-                result = YMIOEOF;
                 break;
         }
         off += aWrite;

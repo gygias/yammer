@@ -161,8 +161,8 @@
 				63476A401BEAEFC500D10081 /* PlexerTests.m */,
 				631683931BEEF1FB00F6AB99 /* DictionaryTests.m */,
 				63FD5B5E1BF1B94A00174824 /* CryptoTests.m */,
-				6332A4BA1BF12C12004BB764 /* lldb_source.sh */,
 				637E3D601BF2CD7300D702ED /* TLSTests.m */,
+				6332A4BA1BF12C12004BB764 /* lldb_source.sh */,
 			);
 			path = YammerTests;
 			sourceTree = "<group>";
