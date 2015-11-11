@@ -291,7 +291,7 @@ void _YMmDNSBrowserAddOrUpdateService(_YMmDNSBrowser *browser, YMmDNSServiceReco
     
     // add
     aListItem = browser->serviceList;
-    YMmDNSServiceList *newItem = (YMmDNSServiceList *)YMMALLOC(sizeof(YMmDNSServiceList));
+    YMmDNSServiceList *newItem = (YMmDNSServiceList *)YMALLOC(sizeof(YMmDNSServiceList));
     newItem->service = record;
     newItem->next = aListItem;
     browser->serviceList = newItem;

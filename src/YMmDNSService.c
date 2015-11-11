@@ -103,7 +103,7 @@ ymbool YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPa
             *bufferWalker = buffer; // debugging, delete later
 #endif
     
-    TXTRecordRef *txtRecord = (TXTRecordRef *)YMMALLOC(sizeof(TXTRecordRef));
+    TXTRecordRef *txtRecord = (TXTRecordRef *)YMALLOC(sizeof(TXTRecordRef));
     TXTRecordCreate(txtRecord, 0, NULL);
     for ( idx = 0; idx < nPairs; idx++ )
     {

@@ -12,13 +12,16 @@
 
 #include "YMLog.h"
 #undef ymlog_type
-#define ymlog_type YMLogDefault
+#define ymlog_type YMLogIO // this file isn't very clearly purposed
 #if ( ymlog_type > ymlog_target )
 #undef ymlog
 #define ymlog(x,...) ;
 #endif
 
 #include <stdarg.h>
+
+YMIOResult __YMReadFull(int fd, uint8_t *buffer, size_t bytes, size_t *outRead);
+YMIOResult __YMWriteFull(int fd, const uint8_t *buffer, size_t bytes, size_t *outWritten);
 
 void YMGetTheBeginningOfPosixTimeForCurrentPlatform(struct timeval *time)
 {
@@ -51,38 +54,97 @@ ComparisonResult YMTimevalCompare(struct timeval *a, struct timeval *b)
 
 YMIOResult YMReadFull(int fd, uint8_t *buffer, size_t bytes)
 {
+    return __YMReadFull(fd, buffer, bytes, NULL);
+}
+
+YMIOResult YMWriteFull(int fd, const uint8_t *buffer, size_t bytes)
+{
+    return __YMWriteFull(fd, buffer, bytes, NULL);
+}
+
+YMIOResult __YMReadFull(int fd, uint8_t *buffer, size_t bytes, size_t *outRead)
+{
+    YMIOResult result = YMIOSuccess;
+    
     size_t off = 0;
     while ( off < bytes )
     {
         ssize_t aRead = read(fd, (void *)buffer + off, bytes - off);
         if ( aRead == 0 )
-            return YMIOEOF;
+        {
+            result = YMIOEOF;
+            break;
+        }
         else if ( aRead == -1 )
-            return YMIOError;
+        {
+            result = YMIOError;
+            break;
+        }
         off += aRead;
     }
-    return YMIOSuccess;
+    if ( outRead )
+        *outRead = off;
+    return result;
 }
 
-YMIOResult YMWriteFull(int fd, const uint8_t *buffer, size_t bytes)
+YMIOResult __YMWriteFull(int fd, const uint8_t *buffer, size_t bytes, size_t *outWritten)
 {
+    YMIOResult result = YMIOSuccess;
+    ssize_t aWrite;
     size_t off = 0;
     while ( off < bytes )
     {
-        ssize_t aWrite = write(fd, buffer + off, bytes - off);
+        aWrite = write(fd, buffer + off, bytes - off);
         switch(aWrite)
         {
             case 0:
                 ymerr("YMWrite: aWrite=0?");
+                break;
             case -1:
-                return YMIOError;
+                result = YMIOError;
                 break;
             default:
+                result = YMIOEOF;
                 break;
         }
         off += aWrite;
     }
-    return YMIOSuccess;
+    if ( outWritten )
+        *outWritten = off;
+    return result;
+}
+
+YMIOResult YMReadWriteFull(int inFile, int outFile, uint64_t *outBytes)
+{
+    uint64_t off = 0;
+    
+    bool lastIter = false;
+    uint16_t bufferSize = 16384;
+    void *buffer = YMALLOC(bufferSize);
+    
+    YMIOResult aResult;
+    size_t aBytes;
+    do
+    {
+        aResult = __YMReadFull(inFile, buffer, bufferSize, &aBytes);
+        if ( aResult == YMIOError )
+        {
+            ymerr("read-write-full: error reading %llu-%llu from %d: %d (%s)",off,off+bufferSize,inFile,errno,strerror(errno));
+            break;
+        }
+        else if ( aResult == YMIOEOF )
+            lastIter = true;
+        
+        aResult = __YMWriteFull(outFile, buffer, aBytes, NULL);
+        
+        outBytes += aBytes;
+    } while(!lastIter);
+    
+    free(buffer);
+    
+    if ( outBytes )
+        *outBytes = off;
+    return aResult;
 }
 
 char *YMStringCreateWithFormat(char *formatStr, ...)
@@ -99,7 +161,7 @@ char *YMStringCreateWithFormat(char *formatStr, ...)
         ymerr("snprintf failed on format: %s", formatStr);
     else
     {
-        newStr = (char *)YMMALLOC(length);
+        newStr = (char *)YMALLOC(length);
         //va_start(formatArgs,formatStr);
         vsnprintf(newStr, length, formatStr, formatArgs);
         va_end(formatArgs);
@@ -115,7 +177,7 @@ char *YMStringCreateByAppendString(char *baseStr, char *appendStr)
     size_t baseLen = strlen(baseStr);
     size_t appendLen = strlen(appendStr);
     size_t newStringLen = baseLen + appendLen + 1;
-    char *newString = (char *)YMMALLOC(newStringLen);
+    char *newString = (char *)YMALLOC(newStringLen);
     memcpy(newString, baseStr, baseLen);
     memcpy(newString + baseLen, appendStr, appendLen);
     newString[newStringLen - 1] = '\0';

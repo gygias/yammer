@@ -6,8 +6,6 @@
 //  Copyright © 2015 combobulated. All rights reserved.
 //
 
-#include "YMBase.h"
-#include "YMPrivate.h"
 #include "YMUtilities.h"
 
 #include "YMThread.h"
@@ -36,6 +34,9 @@ typedef struct __YMThread
     ym_thread_entry entryPoint;
     void *context;
     pthread_t pthread;
+    
+    // thread state
+    bool didStart;
     
     // dispatch stuff
     bool isDispatchThread;
@@ -73,7 +74,7 @@ void _YMThreadFreeDispatchInternal(_YMThreadDispatchInternal *dispatchInternal);
 
 YMThreadRef _YMThreadCreate(char *name, bool isDispatchThread, ym_thread_entry entryPoint, void *context)
 {
-    _YMThread *thread = (_YMThread *)YMMALLOC(sizeof(struct __YMThread));
+    _YMThread *thread = (_YMThread *)YMALLOC(sizeof(struct __YMThread));
     thread->_typeID = _YMThreadTypeID;
     
     pthread_once(&gDispatchInitOnce, _YMThreadDispatchInit);
@@ -83,6 +84,8 @@ YMThreadRef _YMThreadCreate(char *name, bool isDispatchThread, ym_thread_entry e
     thread->context = context;
     thread->pthread = NULL;
     thread->isDispatchThread = isDispatchThread;
+    
+    thread->didStart = false;
     
     if ( isDispatchThread )
     {
@@ -95,7 +98,7 @@ YMThreadRef _YMThreadCreate(char *name, bool isDispatchThread, ym_thread_entry e
                 abort();
             }
             
-            _YMThreadDispatchThreadDef *dispatchThreadDef = (_YMThreadDispatchThreadDef *)YMMALLOC(sizeof(_YMThreadDispatchThreadDef));
+            _YMThreadDispatchThreadDef *dispatchThreadDef = (_YMThreadDispatchThreadDef *)YMALLOC(sizeof(_YMThreadDispatchThreadDef));
             dispatchThreadDef->ymThread = thread;
             dispatchThreadDef->stopFlag = calloc(1, sizeof(bool));
             
@@ -151,6 +154,19 @@ YMThreadRef YMThreadDispatchCreate(char *name)
     return _YMThreadCreate(name, true, _YMThreadDispatchThreadProc, NULL);
 }
 
+// this out-of-band-with-initializer setter was added with ForwardFile, so that YMThread could spawn and
+// forget the thread and let it deallocate its own YMThread-level stuff (thread ref not known until after construction)
+void YMThreadSetContext(YMThreadRef thread, void *context)
+{
+    if ( thread->didStart )
+    {
+        ymerr("thread: fatal: cannot set context on a thread that has already started");
+        abort();
+    }
+    
+    thread->context = context;
+}
+
 bool YMThreadStart(YMThreadRef thread)
 {
     pthread_t pthread;
@@ -191,7 +207,7 @@ void YMThreadDispatchDispatch(YMThreadRef thread, YMThreadDispatchUserInfoRef us
     _YMThreadDispatchInternal *newDispatch = NULL;
     YMLockLock(thread->dispatchListLock);
     {
-        newDispatch = (_YMThreadDispatchInternal*)YMMALLOC(sizeof(struct __YMThreadDispatchInternal));
+        newDispatch = (_YMThreadDispatchInternal*)YMALLOC(sizeof(struct __YMThreadDispatchInternal));
         YMThreadDispatchUserInfoRef userDispatchCopy = _YMThreadDispatchCopyUserInfo(userDispatch);
         
         newDispatch->userDispatchRef = userDispatchCopy;
@@ -213,7 +229,7 @@ void YMThreadDispatchDispatch(YMThreadRef thread, YMThreadDispatchUserInfoRef us
 
 YMThreadDispatchUserInfoRef _YMThreadDispatchCopyUserInfo(YMThreadDispatchUserInfoRef userDispatchRef)
 {
-    YMThreadDispatchUserInfo *copy = (YMThreadDispatchUserInfo *)YMMALLOC(sizeof(YMThreadDispatchUserInfo));
+    YMThreadDispatchUserInfo *copy = (YMThreadDispatchUserInfo *)YMALLOC(sizeof(YMThreadDispatchUserInfo));
     copy->dispatchProc = userDispatchRef->dispatchProc;
     copy->context = userDispatchRef->context;
     copy->freeContextWhenDone = userDispatchRef->freeContextWhenDone;
@@ -302,4 +318,49 @@ uint64_t _YMThreadGetCurrentThreadNumber()
     uint64_t threadId = 0;
     memcpy(&threadId, &pthread, YMMIN(sizeof(threadId), sizeof(pthread)));
     return threadId;
+}
+
+void *__YMThreadDispatchForwardFileProc(void *context);
+bool YMThreadDispatchForwardFile(int fromFile, int toFile)
+{
+    char *name = YMStringCreateWithFormat("dispatch-forward-%d->%d",fromFile,toFile);
+    
+    // todo: new thread for all, don't let blockage on either end deny other clients of this api.
+    // but, if we wanted to feel good about ourselves, these threads could hang around for a certain amount of time to handle
+    // subsequent forwarding requests, to recycle the thread creation overhead.
+    YMThreadRef forwardingThread = YMThreadCreate(name, __YMThreadDispatchForwardFileProc, NULL);
+    free(name);
+    
+    if ( ! forwardingThread )
+        return false;
+    
+    void *context = YMALLOC(sizeof(struct __YMThread) + 2*sizeof(int));
+    ((YMThreadRef *)context)[0] = forwardingThread;
+    int *filesPtr = context + sizeof(struct __YMThread);
+    filesPtr[0] = fromFile;
+    filesPtr[1] = toFile;
+    
+    YMThreadSetContext(forwardingThread, context);
+    
+    return YMThreadStart(forwardingThread);
+}
+
+void *__YMThreadDispatchForwardFileProc(void *context)
+{
+    // todo: tired of defining semi-redundant structs for various tasks in here, should go back and take a look
+    YMThreadRef thread = ((YMThreadRef *)context)[0];
+    int *filesPtr = context + sizeof(struct __YMThread);
+    int fromFile = filesPtr[0];
+    int toFile = filesPtr[1];
+    
+    uint64_t outBytes = 0;
+    YMIOResult result = YMReadWriteFull(fromFile, toFile, &outBytes);
+    
+    ymlog("dispatch-forward: %s %llu bytes from %d->%d", (result == YMIOError)?"error at offset":"finished",outBytes,fromFile,toFile);
+    
+    // todo: ymthread is being leaked here, need a way to set context out of band with the constructor
+    free(context);
+    YMFree(thread);
+    
+    return NULL;
 }

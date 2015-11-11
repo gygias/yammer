@@ -21,7 +21,9 @@ typedef void *(*ym_thread_dispatch_dealloc)(void *);
 YMThreadRef YMThreadCreate(char *name, ym_thread_entry entryPoint, void *context);
 YMThreadRef YMThreadDispatchCreate(char *name);
 
-// if context contains nested allocations, or doesn't use the YMMALLOC allocator, use ym_thread_dispatch_dealloc
+void YMThreadSetContext(YMThreadRef thread, void *context);
+
+// if context contains nested allocations, or doesn't use the YMALLOC allocator, use ym_thread_dispatch_dealloc
 typedef struct
 {
     ym_thread_dispatch_entry dispatchProc;
@@ -40,6 +42,7 @@ typedef YMThreadDispatchUserInfo *YMThreadDispatchUserInfoRef;
 //                                                    const char *description,
 //                                                    void *context);
 void YMThreadDispatchDispatch(YMThreadRef thread, YMThreadDispatchUserInfoRef dispatch);
+bool YMThreadDispatchForwardFile(int fromFile, int toFile);
 
 bool YMThreadStart(YMThreadRef thread);
 bool YMThreadJoin(YMThreadRef thread);

@@ -60,7 +60,7 @@ YMRSAKeyPairRef YMRSAKeyPairCreateWithModuloSize(int moduloBits, int publicExpon
         return NULL;
     }
     
-    YMRSAKeyPairRef keyPair = (YMRSAKeyPairRef)YMMALLOC(sizeof(struct __YMRSAKeyPair));
+    YMRSAKeyPairRef keyPair = (YMRSAKeyPairRef)YMALLOC(sizeof(struct __YMRSAKeyPair));
     keyPair->_typeID = _YMRSAKeyPairTypeID;
     
     keyPair->rsa = rsa;

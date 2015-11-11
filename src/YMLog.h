@@ -33,7 +33,8 @@ typedef enum
     YMLogPlexer,
     YMLogStreamLifecycle,
     YMLogStream,
-    YMLogPipe
+    YMLogPipe,
+    YMLogIO
 } YMLogLevel;
 
 void YMLogType( YMLogLevel, char* format, ... ) __printflike(2, 3);

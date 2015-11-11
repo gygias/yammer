@@ -37,7 +37,7 @@ _YMDictionaryItemRef _YMDictionaryCopyItem(_YMDictionaryItemRef item);
 
 YMDictionaryRef YMDictionaryCreate()
 {
-    YMDictionaryRef dict = (YMDictionaryRef)YMMALLOC(sizeof(struct __YMDictionary));
+    YMDictionaryRef dict = (YMDictionaryRef)YMALLOC(sizeof(struct __YMDictionary));
     dict->_typeID = _YMDictionaryTypeID;
     
     dict->head = NULL;
@@ -75,7 +75,7 @@ void YMDictionaryAdd(YMDictionaryRef dict, YMDictionaryKey key, YMDictionaryValu
         ymerr("error: YMDictionary already contains item for key %llu",key);
         abort();
     }
-    _YMDictionaryItemRef newItem = (_YMDictionaryItemRef)YMMALLOC(sizeof(struct __YMDictionaryItem));
+    _YMDictionaryItemRef newItem = (_YMDictionaryItemRef)YMALLOC(sizeof(struct __YMDictionaryItem));
     newItem->key = key;
     newItem->value = value;
     newItem->next = dict->head; // nulls or prepends
@@ -255,7 +255,7 @@ bool __Broken_YMDictionaryPopKeyValue(YMDictionaryRef dict, bool last, YMDiction
 
 _YMDictionaryItemRef _YMDictionaryCopyItem(_YMDictionaryItemRef item)
 {
-    _YMDictionaryItemRef itemCopy = (_YMDictionaryItemRef)YMMALLOC(sizeof(struct __YMDictionaryItem));
+    _YMDictionaryItemRef itemCopy = (_YMDictionaryItemRef)YMALLOC(sizeof(struct __YMDictionaryItem));
     itemCopy->key = item->key;
     itemCopy->value = item->value;
     itemCopy->next = item->next;

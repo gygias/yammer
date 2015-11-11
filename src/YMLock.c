@@ -46,7 +46,7 @@ YMLockRef YMLockCreateWithOptionsAndName(YMLockOptions options, const char *name
     if ( ! _YMLockGetNewMutexWithOptions(options, &mutex) )
         return NULL;
     
-    _YMLock *lock = (_YMLock *)YMMALLOC(sizeof(_YMLock));
+    _YMLock *lock = (_YMLock *)YMALLOC(sizeof(_YMLock));
     lock->_typeID = _YMLockTypeID;
     
     lock->mutex = mutex;

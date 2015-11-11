@@ -1,3 +1,4 @@
+- DispatchForwardFile leaks YMThreadRef because there's no way to set context out of band with initializer
 - way to wrap object->_typeID = myTypeID?
 - does init and generate keypair really need to be separated? if so x509 signing probably should be too
 - consolidate DEBUG_INFO and ifdef out relevant logs (based on target log level?)

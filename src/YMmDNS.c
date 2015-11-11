@@ -69,7 +69,7 @@ void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record)
 YMmDNSServiceRecord *_YMmDNSCreateServiceRecord(const char *name, const char*type, const char *domain, bool resolved, const char *address,
                                                 uint16_t port, const unsigned char *txtRecord, uint16_t txtLength)
 {
-    YMmDNSServiceRecord *record = (YMmDNSServiceRecord *)YMMALLOC(sizeof(struct _YMmDNSServiceRecord));
+    YMmDNSServiceRecord *record = (YMmDNSServiceRecord *)YMALLOC(sizeof(struct _YMmDNSServiceRecord));
     if ( name )
         record->name = strdup(name);
     else
@@ -113,11 +113,11 @@ YMmDNSTxtRecordKeyPair **__YMmDNSCreateTxtKeyPairs(const unsigned char *txtRecor
 {
     size_t  allocatedListSize = 20,
             listSize = 0;
-    YMmDNSTxtRecordKeyPair **keyPairList = (YMmDNSTxtRecordKeyPair **)YMMALLOC(allocatedListSize * sizeof(YMmDNSTxtRecordKeyPair*));
+    YMmDNSTxtRecordKeyPair **keyPairList = (YMmDNSTxtRecordKeyPair **)YMALLOC(allocatedListSize * sizeof(YMmDNSTxtRecordKeyPair*));
     
     size_t currentPairOffset = 0;
     uint8_t aPairLength = txtRecord[currentPairOffset];
-    while ( currentPairOffset < txtLength - 1 )
+    while ( currentPairOffset < txtLength - 1 ) // -1 to handle 0 pairs case
     {
         const unsigned char* aPairWalker = txtRecord + currentPairOffset + 1;
         __unused const char* debugThisKey = (char *)aPairWalker;
@@ -137,16 +137,16 @@ YMmDNSTxtRecordKeyPair **__YMmDNSCreateTxtKeyPairs(const unsigned char *txtRecor
         }
         
         size_t keyLength = (size_t)(equalsPtr - (char *)aPairWalker);
-        char *keyStr = (char *)YMMALLOC(keyLength + 1);
+        char *keyStr = (char *)YMALLOC(keyLength + 1);
         memcpy(keyStr,aPairWalker,keyLength);
         keyStr[keyLength] = '\0';
         aPairWalker += keyLength + 1; // skip past '='
         
         size_t valueLength = aPairLength - keyLength - 1;
-        uint8_t *valueBuf = (uint8_t *)YMMALLOC(valueLength);
+        uint8_t *valueBuf = (uint8_t *)YMALLOC(valueLength);
         memcpy(valueBuf, aPairWalker, valueLength);
         
-        YMmDNSTxtRecordKeyPair *aKeyPair = (YMmDNSTxtRecordKeyPair *)YMMALLOC(sizeof(YMmDNSTxtRecordKeyPair));
+        YMmDNSTxtRecordKeyPair *aKeyPair = (YMmDNSTxtRecordKeyPair *)YMALLOC(sizeof(YMmDNSTxtRecordKeyPair));
         aKeyPair->key = keyStr;
         aKeyPair->value = valueBuf;
         aKeyPair->valueLen = (uint8_t)valueLength;

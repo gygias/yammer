@@ -12,3 +12,8 @@
 #include "YMSecurityProvider.h"
 
 #endif /* YMTLSProvider_h */
+
+typedef struct __YMTLSProvider *YMTLSProviderRef;
+
+YMTLSProviderRef YMTLSProviderCreate(int inFile, int outFile);
+YMTLSProviderRef YMTLSProviderCreateWithFullDuplexFile(int file);

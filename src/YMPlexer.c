@@ -170,14 +170,14 @@ YMPlexerRef YMPlexerCreate(char *name, int inputFile, int outputFile, bool maste
     plexer->localAccessLock = YMLockCreate(memberName);
     free(memberName);
     plexer->localPlexBufferSize = YMPlexerDefaultBufferSize;
-    plexer->localPlexBuffer = YMMALLOC(plexer->localPlexBufferSize);
+    plexer->localPlexBuffer = YMALLOC(plexer->localPlexBufferSize);
     
     plexer->remoteStreamsByID = YMDictionaryCreate();
     memberName = YMStringCreateWithFormat("%s-remote",plexer->name);
     plexer->remoteAccessLock = YMLockCreate(memberName);
     free(memberName);
     plexer->remotePlexBufferSize = YMPlexerDefaultBufferSize;
-    plexer->remotePlexBuffer = YMMALLOC(plexer->remotePlexBufferSize);
+    plexer->remotePlexBuffer = YMALLOC(plexer->remotePlexBufferSize);
     
     memberName = YMStringCreateWithFormat("%s-down",plexer->name);
     plexer->localServiceThread = YMThreadCreate(memberName, __YMPlexerServiceDownstreamThread, plexer);
@@ -734,7 +734,7 @@ YMStreamRef __YMPlexerGetOrCreateRemoteStreamWithID(YMPlexerRef plexer, YMStream
             {
                 ymlog(" plexer[%s,s%u]: alloc and notify",plexer->name,streamID);
                 
-                YMStreamUserInfoRef userInfo = (YMStreamUserInfoRef)YMMALLOC(sizeof(struct __YMStreamUserInfo));
+                YMStreamUserInfoRef userInfo = (YMStreamUserInfoRef)YMALLOC(sizeof(struct __YMStreamUserInfo));
                 userInfo->streamID = streamID;
                 char *memberName = YMStringCreateWithFormat("%s-^-%u",plexer->name,streamID);
                 theStream = YMStreamCreate(memberName, false, userInfo);
@@ -797,7 +797,7 @@ YMStreamRef YMPlexerCreateNewStream(YMPlexerRef plexer, const char *name, bool d
             abort();
         }
         
-        YMStreamUserInfoRef userInfo = (YMStreamUserInfoRef)YMMALLOC(sizeof(struct __YMStreamUserInfo));
+        YMStreamUserInfoRef userInfo = (YMStreamUserInfoRef)YMALLOC(sizeof(struct __YMStreamUserInfo));
         userInfo->streamID = newStreamID;
         char *memberName = YMStringCreateWithFormat("%s-V-%u:%s",plexer->name,newStreamID,name);
         newStream = YMStreamCreate(memberName, true, userInfo);
@@ -866,7 +866,7 @@ void YMPlexerRemoteStreamRelease(__unused YMPlexerRef plexer, YMStreamRef stream
 
 void __YMPlexerDispatchFunctionWithName(YMPlexerRef plexer, YMStreamRef stream, YMThreadRef targetThread, void *(*function)(void *), char *name )
 {
-    _ym_dispatch_plexer_stream_def *notifyDef = (_ym_dispatch_plexer_stream_def *)YMMALLOC(sizeof(_ym_dispatch_plexer_stream_def));
+    _ym_dispatch_plexer_stream_def *notifyDef = (_ym_dispatch_plexer_stream_def *)YMALLOC(sizeof(_ym_dispatch_plexer_stream_def));
     notifyDef->plexer = plexer;
     notifyDef->stream = stream;
     YMThreadDispatchUserInfo userDispatch = { function, NULL, true, notifyDef, name };

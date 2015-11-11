@@ -216,7 +216,7 @@ YMX509CertificateRef YMX509CertificateCreate(YMRSAKeyPairRef keyPair)
     if ( ! x509 )
         return NULL;
     
-    YMX509CertificateRef certificate = (YMX509CertificateRef)YMMALLOC(sizeof(struct __YMX509Certificate));
+    YMX509CertificateRef certificate = (YMX509CertificateRef)YMALLOC(sizeof(struct __YMX509Certificate));
     certificate->_type = _YMX509CertificateTypeID;
     
     certificate->x509 = x509;

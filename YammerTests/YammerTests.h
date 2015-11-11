@@ -18,6 +18,12 @@
 #define     TestLog(x,...) ;
 #endif
 
+// this is the best way of ordering XCTestCase classes that i could find, at the time
+#define DictionaryTests A_DictionaryTests
+#define CryptoTests     B_CryptoTests
+#define TLSTests        C_TLSTests
+#define PlexerTests     D_PlexerTests
+
 NSString *YMRandomASCIIStringWithMaxLength(uint16_t maxLength, BOOL for_mDNSServiceName);
 NSData *YMRandomDataWithMaxLength(uint16_t length);
 

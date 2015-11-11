@@ -73,7 +73,7 @@ YMSemaphoreRef YMSemaphoreCreate(const char *name, int initialValue)
     
     pthread_once(&gYMSemaphoreIndexInit, &_YMSemaphoreInit);
     
-    YMSemaphoreRef semaphore = (YMSemaphoreRef)YMMALLOC(sizeof(struct __YMSemaphore));
+    YMSemaphoreRef semaphore = (YMSemaphoreRef)YMALLOC(sizeof(struct __YMSemaphore));
     semaphore->_typeID = _YMSemaphoreTypeID;
     
     semaphore->userName = YMStringCreateWithFormat("%s-%p",name?name:"unnamed",semaphore);

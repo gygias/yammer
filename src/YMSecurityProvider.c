@@ -40,14 +40,13 @@ bool YMNoSecurityInit(int,int);
 bool YMNoSecurityRead(int,int,uint8_t*,size_t);
 bool YMNoSecurityWrite(int,int,const uint8_t*,size_t);
 bool YMNoSecurityClose(int,int);
-
 YMSecurityProviderRef YMSecurityProviderCreateWithFullDuplexFile(int fd)
 {
     return YMSecurityProviderCreate(fd, fd);
 }
 
 YMSecurityProviderRef YMSecurityProviderCreate(int readFile, int writeFile)
-{
+{    
     _YMSecurityProvider *provider = (_YMSecurityProvider *)calloc(1,sizeof(_YMSecurityProvider));
     provider->_typeID = _YMSecurityProviderTypeID;
     provider->initFunc = YMNoSecurityInit;

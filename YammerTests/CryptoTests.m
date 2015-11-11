@@ -6,7 +6,7 @@
 //  Copyright © 2015 Combobulated Software. All rights reserved.
 //
 
-#import <XCTest/XCTest.h>
+#import "YammerTests.h"
 
 #include "YMBase.h"
 

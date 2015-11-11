@@ -61,7 +61,7 @@ void __YMStreamCloseFiles(YMStreamRef stream);
 
 YMStreamRef YMStreamCreate(const char *name, bool isLocallyOriginated, YMStreamUserInfoRef userInfo)
 {
-    YMStreamRef stream = (YMStreamRef)YMMALLOC(sizeof(struct __YMStream));
+    YMStreamRef stream = (YMStreamRef)YMALLOC(sizeof(struct __YMStream));
     stream->_type = _YMStreamTypeID;
     
     stream->name = strdup( name ? name : "unnamed" );
@@ -81,7 +81,7 @@ YMStreamRef YMStreamCreate(const char *name, bool isLocallyOriginated, YMStreamU
     
     stream->__userInfo = userInfo;
     stream->__dataAvailableSemaphore = NULL;
-    stream->__lastServiceTime = (struct timeval *)YMMALLOC(sizeof(struct timeval));
+    stream->__lastServiceTime = (struct timeval *)YMALLOC(sizeof(struct timeval));
     if ( 0 != gettimeofday(stream->__lastServiceTime, NULL) )
     {
         ymlog("warning: error setting initial service time for stream: %d (%s)",errno,strerror(errno));

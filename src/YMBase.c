@@ -26,6 +26,7 @@ YMTypeID _YMSemaphoreTypeID = 'p';
 YMTypeID _YMStreamTypeID = 'r';
 YMTypeID _YMSessionTypeID = 's';
 YMTypeID _YMThreadTypeID = 't';
+YMTypeID _YMTLSProviderTypeID = 'T';
 YMTypeID _YMSecurityProviderTypeID = 'v';
 YMTypeID _YMPlexerTypeID = 'x';
 YMTypeID _YMX509CertificateTypeID = 'X';
@@ -46,6 +47,7 @@ extern void _YMLinkedListFree(YMTypeRef);
 extern void _YMDictionaryFree(YMTypeRef);
 extern void _YMRSAKeyPairFree(YMTypeRef);
 extern void _YMX509CertificateFree(YMTypeRef);
+extern void _YMTLSProviderFree(YMTypeRef);
 
 void YMFree(YMTypeRef object)
 {
@@ -80,6 +82,8 @@ void YMFree(YMTypeRef object)
         _YMRSAKeyPairFree(object);
     else if ( type == _YMX509CertificateTypeID )
         _YMX509CertificateFree(object);
+    else if ( type == _YMTLSProviderTypeID )
+        _YMTLSProviderFree(object);
     else
     {
         ymlog("YMFree unknown type %c",((_YMType *)object)->_type);

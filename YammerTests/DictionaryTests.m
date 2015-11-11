@@ -1,5 +1,5 @@
 //
-//  DictionaryTest.m
+//  DictionaryTests.m
 //  yammer
 //
 //  Created by david on 11/7/15.
@@ -10,15 +10,7 @@
 
 #include "YMDictionary.h"
 
-// at a glance wasn't able to find another way to order test *classes*
-//#define RunDictionaryTestFirst 1
-#ifdef RunDictionaryTestFirst
-#define DictionaryTest_Class DictionaryTest
-#else
-#define DictionaryTest_Class ZDictionaryTest
-#endif
-
-@interface DictionaryTest_Class : XCTestCase
+@interface DictionaryTests : XCTestCase
 {
     YMDictionaryRef theDictionary;
     NSMutableArray *existingKeys;
@@ -31,7 +23,7 @@
 #define RunFor 5.0
 #define MaxItemLength 2048
 
-@implementation DictionaryTest_Class
+@implementation DictionaryTests
 
 - (void)setUp {
     [super setUp];
