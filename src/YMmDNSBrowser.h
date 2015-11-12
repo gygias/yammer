@@ -22,8 +22,8 @@ typedef void (*ym_mdns_service_updated_func)(YMmDNSBrowserRef browser, YMmDNSSer
 // if success is false, service is undefined
 typedef void (*ym_mdns_service_resolved_func)(YMmDNSBrowserRef browser, bool success, YMmDNSServiceRecord *service, void *context);
 
-YMmDNSBrowserRef YMmDNSBrowserCreate(char *type);
-YMmDNSBrowserRef YMmDNSBrowserCreateWithCallbacks(char *type,
+YMmDNSBrowserRef YMmDNSBrowserCreate(const char *type);
+YMmDNSBrowserRef YMmDNSBrowserCreateWithCallbacks(const char *type,
                                                   ym_mdns_service_appeared_func serviceAppeared,
                                                   ym_mdns_service_updated_func serviceUpdated,
                                                   ym_mdns_service_resolved_func serviceResolved,

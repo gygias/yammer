@@ -31,7 +31,7 @@
     
     YMLocalSocketPairRef socketPair = YMLocalSocketPairCreate("connection-test");
     
-    YMConnectionRef connectionA = YMConnectionCreate(<#YMAddressRef address#>, <#YMConnectionType type#>, <#YMConnectionSecurityType securityType#>)
+    //YMConnectionRef connectionA = YMConnectionCreate(<#YMAddressRef address#>, <#YMConnectionType type#>, <#YMConnectionSecurityType securityType#>)
     
 }
 

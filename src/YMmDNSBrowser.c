@@ -66,12 +66,12 @@ void _YMmDNSBrowserRemoveServiceNamed(_YMmDNSBrowser *browser, const char *name)
 
 YMmDNSServiceRecord *_YMmDNSBrowserGetServiceWithName(_YMmDNSBrowser *browser, const char *name, bool remove);
 
-YMmDNSBrowserRef YMmDNSBrowserCreate(char *type)
+YMmDNSBrowserRef YMmDNSBrowserCreate(const char *type)
 {
     return YMmDNSBrowserCreateWithCallbacks(type, NULL, NULL, NULL, NULL, NULL);
 }
 
-YMmDNSBrowserRef YMmDNSBrowserCreateWithCallbacks(char *type,
+YMmDNSBrowserRef YMmDNSBrowserCreateWithCallbacks(const char *type,
                                                   ym_mdns_service_appeared_func serviceAppeared,
                                                   ym_mdns_service_updated_func serviceUpdated,
                                                   ym_mdns_service_resolved_func serviceResolved,

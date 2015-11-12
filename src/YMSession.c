@@ -48,6 +48,8 @@ typedef struct __YMSession
     
     // client
     YMmDNSBrowserRef browser;
+    YMDictionaryRef availablePeers;
+    YMLockRef availablePeersLock;
     
     ym_session_added_peer_func addedFunc;
     ym_session_removed_peer_func removedFunc;
@@ -67,11 +69,17 @@ typedef struct __YMSession
 YMSessionRef __YMSessionCreateShared(const char *type, bool isServer);
 void *__ym_session_accept_proc(void *context);
 void *__ym_session_init_connection(void *context);
+void __ym_mdns_service_appeared_func(YMmDNSBrowserRef browser, YMmDNSServiceRecord * service, void *context);
+void __ym_mdns_service_removed_func(YMmDNSBrowserRef browser, const char *name, void *context);
+void __ym_mdns_service_updated_func(YMmDNSBrowserRef browser, YMmDNSServiceRecord *service, void *context);
+void __ym_mdns_service_resolved_func(YMmDNSBrowserRef browser, bool success, YMmDNSServiceRecord *service, void *context);
 
 YMSessionRef YMSessionCreateClient(const char *type)
 {
     YMSessionRef session = __YMSessionCreateShared(type,false);
     session->logDescription = YMStringCreateWithFormat("c:%s",type);
+    session->availablePeers = YMDictionaryCreate();
+    session->availablePeersLock = YMLockCreateWithOptionsAndName(YMLockDefault, "available-peers");
     return session;
 }
 
@@ -97,7 +105,7 @@ YMSessionRef __YMSessionCreateShared(const char *type, bool isServer)
     session->type = strdup(type);
     session->isServer = isServer;
     session->connectionsByAddress = YMDictionaryCreate();
-    session->connectionsByAddressLock = YMLockCreate();
+    session->connectionsByAddressLock = YMLockCreate(YMLockDefault, "connections-by-address");
     return session;
 }
 
@@ -133,7 +141,37 @@ void _YMSessionFree(YMTypeRef object)
     YMSessionRef session = (YMSessionRef)object;
     if ( ! session->isServer )
         free((void *)session->name);
+#pragma message "implement me"
     free(session);
+}
+
+#pragma mark client
+
+ymbool YMSessionClientStart(YMSessionRef session)
+{
+    if ( session->browser )
+        return false;
+    
+    session->browser = YMmDNSBrowserCreateWithCallbacks(session->type,
+                                                        __ym_mdns_service_appeared_func,
+                                                        __ym_mdns_service_updated_func,
+                                                        __ym_mdns_service_resolved_func,
+                                                        __ym_mdns_service_removed_func,
+                                                        session);
+    if ( ! session->browser )
+    {
+        ymerr("session[%s]: error: failed to create browser",session->logDescription);
+        return false;
+    }
+    
+    bool startOK = YMmDNSBrowserStart(session->browser);
+    if ( ! startOK )
+    {
+        ymerr("session[%s]: error: failed to start browser",session->logDescription);
+        return false;
+    }
+    
+    return true;
 }
 
 #pragma mark server
@@ -304,7 +342,7 @@ void *__ym_session_init_connection(void *context)
     
     address = YMAddressCreate(addr, addrLen);
     peer = _YMPeerCreateWithAddress(address);
-    if ( ! session->shouldAcceptFunc(session,peer) )
+    if ( ! session->shouldAcceptFunc(session,peer,session->callbackContext) )
     {
         ymlog("session[%s]: client rejected peer %s",session->logDescription,YMAddressGetDescription(address));
         goto catch_return;
@@ -319,9 +357,10 @@ void *__ym_session_init_connection(void *context)
     
     YMLockLock(session->connectionsByAddressLock);
     YMDictionaryAdd(session->connectionsByAddress, (YMDictionaryKey)socket, newConnection);
+    YMLockUnlock(session->connectionsByAddressLock);
     
     ymlog("session[%s]: added connection for %s",session->logDescription,YMAddressGetAddressData(address));
-    session->connectedFunc(session,newConnection);
+    session->connectedFunc(session,newConnection,session->callbackContext);
     
     free(addr);
     
@@ -337,4 +376,97 @@ catch_return:
     if ( newConnection )
         YMFree(newConnection);
     return NULL;
+}
+
+void __ym_mdns_service_appeared_func(__unused YMmDNSBrowserRef browser, YMmDNSServiceRecord * service, void *context)
+{
+    YMSessionRef session = (YMSessionRef)context;
+    ymlog("session[%s]: __ym_mdns_service_appeared_func: %s",session->logDescription,service->name);
+    
+    const char *name = service->name;
+    YMPeerRef peer = _YMPeerCreate(name, NULL, NULL);
+    YMLockLock(session->availablePeersLock);
+#pragma message "need to key dictionary off something better now.."
+    YMDictionaryAdd(session->availablePeers, (YMDictionaryKey)peer, peer);
+    YMLockUnlock(session->availablePeersLock);
+    
+    session->addedFunc(session,peer,session->callbackContext);
+}
+
+void __ym_mdns_service_removed_func(__unused YMmDNSBrowserRef browser, const char *name, void *context)
+{
+    YMSessionRef session = (YMSessionRef)context;
+    ymlog("session[%s]: __ym_mdns_service_removed_func %s",session->logDescription,name);
+    
+    YMLockLock(session->availablePeersLock);
+    {
+        YMDictionaryKey mysteryKey = MAX_OF(YMDictionaryKey);
+        bool found = false;
+        YMDictionaryEnumRef myEnum = YMDictionaryEnumeratorBegin(session->availablePeers);
+        while ( myEnum )
+        {
+            YMPeerRef peer = (YMPeerRef)myEnum->value;
+            if ( strcmp(YMPeerGetName(peer),name) == 0 )
+            {
+                found = true;
+                mysteryKey = myEnum->key;
+            }
+            myEnum = YMDictionaryEnumeratorGetNext(myEnum);
+        }
+        YMDictionaryEnumeratorEnd(myEnum);
+        
+        if ( found )
+            YMDictionaryRemove(session->availablePeers, mysteryKey);
+        else
+        {
+            ymerr("session[%s]: notified of removal of unknown peer: %s",session->logDescription,name);
+            abort();
+        }
+    }
+    YMLockUnlock(session->availablePeersLock);
+}
+
+void __ym_mdns_service_updated_func(__unused YMmDNSBrowserRef browser, YMmDNSServiceRecord *service, void *context)
+{
+    YMSessionRef session = (YMSessionRef)context;
+    ymlog("session[%s]: __ym_mdns_service_updated_func %s",session->logDescription,service->name);
+}
+
+void __ym_mdns_service_resolved_func(__unused YMmDNSBrowserRef browser, bool success, YMmDNSServiceRecord *service, void *context)
+{
+    YMSessionRef session = (YMSessionRef)context;
+    ymlog("session[%s]: __ym_mdns_service_resolved_func %s",session->logDescription,service->name);
+    
+    bool found = false;
+    YMPeerRef peer = NULL;
+    YMLockLock(session->availablePeersLock);
+    {
+        YMDictionaryEnumRef myEnum = YMDictionaryEnumeratorBegin(session->availablePeers);
+        while ( myEnum )
+        {
+            peer = (YMPeerRef)myEnum->value;
+            if ( strcmp(YMPeerGetName(peer),service->name) == 0 )
+            {
+                found = true;
+                peer = (YMPeerRef)myEnum->value;
+            }
+            
+            myEnum = YMDictionaryEnumeratorGetNext(myEnum);
+        }
+        YMDictionaryEnumeratorEnd(myEnum);
+    }
+    YMLockUnlock(session->availablePeersLock);
+    
+    if ( found )
+    {
+        if ( success )
+            session->resolvedFunc(session,peer,session->callbackContext);
+        else
+            session->resolveFailedFunc(session,peer,session->callbackContext);
+    }
+    else
+    {
+        ymerr("session[%s]: notified of resolution of unknown peer: %s",session->logDescription,service->name);
+        abort();
+    }
 }
