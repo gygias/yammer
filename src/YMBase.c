@@ -15,6 +15,7 @@ typedef struct __YMType
     YMTypeID _type;
 } _YMType;
 
+YMTypeID _YMAddressTypeID = 'a';
 YMTypeID _YMmDNSBrowserTypeID = 'b';
 YMTypeID _YMConnectionTypeID = 'c';
 YMTypeID _YMPipeTypeID = 'i';
@@ -50,6 +51,7 @@ extern void _YMRSAKeyPairFree(YMTypeRef);
 extern void _YMX509CertificateFree(YMTypeRef);
 extern void _YMTLSProviderFree(YMTypeRef);
 extern void _YMLocalSocketPairFree(YMTypeRef);
+extern void _YMAddressFree(YMTypeRef);
 
 void YMFree(YMTypeRef object)
 {
@@ -88,6 +90,8 @@ void YMFree(YMTypeRef object)
         _YMTLSProviderFree(object);
     else if ( type == _YMLocalSocketPairTypeID )
         _YMLocalSocketPairFree(object);
+    else if ( type == _YMAddressTypeID )
+        _YMAddressFree(object);
     else
     {
         ymlog("YMFree unknown type %c",((_YMType *)object)->_type);

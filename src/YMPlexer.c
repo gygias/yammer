@@ -131,6 +131,7 @@ typedef struct __YMPlexer
     ym_plexer_interrupted_func interruptedFunc;
     ym_plexer_new_upstream_func newIncomingFunc;
     ym_plexer_stream_closing_func closingFunc;
+    void *callbackContext;
 } _YMPlexer;
 
 #define YMPlexerDefaultBufferSize (1e+6)
@@ -224,6 +225,11 @@ void YMPlexerSetNewIncomingStreamFunc(YMPlexerRef plexer, ym_plexer_new_upstream
 void YMPlexerSetStreamClosingFunc(YMPlexerRef plexer, ym_plexer_stream_closing_func func)
 {
     plexer->closingFunc = func;
+}
+
+void YMPlexerSetCallbackContext(YMPlexerRef plexer, void *context)
+{
+    plexer->callbackContext = context;
 }
 
 void YMPlexerSetSecurityProvider(YMPlexerRef plexer, YMTypeRef provider)
@@ -799,6 +805,7 @@ YMStreamRef YMPlexerCreateNewStream(YMPlexerRef plexer, const char *name, bool d
         
         YMStreamUserInfoRef userInfo = (YMStreamUserInfoRef)YMALLOC(sizeof(struct __YMStreamUserInfo));
         userInfo->streamID = newStreamID;
+        if ( ! name ) name = "*";
         char *memberName = YMStringCreateWithFormat("%s-V-%u:%s",plexer->name,newStreamID,name);
         newStream = YMStreamCreate(memberName, true, userInfo);
         free(memberName);
@@ -883,7 +890,7 @@ void *__ym_plexer_notify_new_stream(void *context)
     __unused YMStreamID streamID = _YMStreamGetUserInfo(stream)->streamID;
     
     ymlog(" plexer[%s,s%u] ym_notify_new_stream entered", plexer->name, streamID);
-    plexer->newIncomingFunc(plexer,stream);
+    plexer->newIncomingFunc(plexer,stream,plexer->callbackContext);
     ymlog(" plexer[%s,s%u] ym_notify_new_stream exiting", plexer->name, streamID);
     
     return NULL;
@@ -898,7 +905,7 @@ void *__ym_plexer_notify_stream_closing(void *context)
     YMStreamID streamID = _YMStreamGetUserInfo(stream)->streamID;
     
     ymlog(" plexer[%s,s%u] ym_notify_stream_closing entered", plexer->name, streamID);
-    plexer->closingFunc(plexer,stream);
+    plexer->closingFunc(plexer,stream,plexer->callbackContext);
     
     YMLockLock(plexer->remoteAccessLock);
     {
@@ -935,7 +942,7 @@ void *__ym_plexer_notify_interrupted(void *context)
     YMPlexerRef plexer = notifyDef->plexer;
     
     ymlog(" plexer[%s] ym_notify_interrupted entered", plexer->name);
-    plexer->interruptedFunc(plexer);
+    plexer->interruptedFunc(plexer,plexer->callbackContext);
     ymlog(" plexer[%s] ym_notify_interrupted exiting", plexer->name);
     
     return NULL;
