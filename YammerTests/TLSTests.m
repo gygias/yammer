@@ -9,21 +9,19 @@
 #import "YammerTests.h"
 
 #import "YMTLSProvider.h"
-#import "YMPipe.h"
+#import "YMLocalSocketPair.h"
 #import "YMUtilities.h"
 #import "YMLock.h"
-
-#include <sys/socket.h>
-#include <sys/un.h>
+#import "YMSemaphore.h"
 
 #define TLSTestRoundTrips 1
-#define TLSTestMessageRoudTrips 1000
-#define TLSTestRandomMessages false
+#define TLSTestMessageRoundTrips 1000
+#define TLSTestRandomMessages true
 #define TLSTestRandomMessageMaxLength 1024
 
 //#define TLSTestIndefinite
-#define TLSTestTimeBased false
-#ifdef TLSTestTimeBased
+#define TLSTestTimeBased true
+#if TLSTestTimeBased
     #ifdef TLSTestIndefinite
     #define TLSTestEndDate ([NSDate distantFuture])
     #else
@@ -34,12 +32,12 @@
 @interface TLSTests : XCTestCase
 {
     YMLockRef stateLock;
+    YMSemaphoreRef threadExitSemaphore;
     uint64_t bytesIn,bytesOut;
+    BOOL isTimeBased;
     BOOL timeBasedEnd;
-    BOOL testRunning;
     
-    NSData *lastLocalMessageWritten;
-    NSData *lastRemoteMessageWritten;
+    NSData *lastMessageSent;
 }
 @end
 
@@ -62,41 +60,15 @@ typedef struct
 
 - (void)testTLS1 {
     
-//    char *name = YMStringCreateWithFormat("%s-local",[[self className] UTF8String]);
-//    YMPipeRef localOutgoing = YMPipeCreate(name);
-//    free(name);
-//    name = YMStringCreateWithFormat("%s-remote",[[self className] UTF8String]);
-//    YMPipeRef remoteOutgoing = YMPipeCreate(name);
-//    free(name);
-//    
-//    // "output" and "input" get confusing with all these crossed files!
-//    int localOutput = YMPipeGetInputFile(localOutgoing);
-//    int remoteInput = YMPipeGetOutputFile(localOutgoing);
-//    int remoteOutput = YMPipeGetInputFile(remoteOutgoing);
-//    int localInput = YMPipeGetOutputFile(remoteOutgoing);
-//    
-//    NSLog(@"tls tests running with local:%d->%d, remote:%d<-%d",localOutput,remoteInput,localInput,remoteOutput);
-//    
-//    BOOL localIsServer = arc4random_uniform(2);
-//    int sockets[2];
-//    BOOL socketsOK = [self _createSockets:sockets];
-//    YMTLSProviderRef localProvider = YMTLSProviderCreateWithFullDuplexFile(socket, localIsServer);
-//    XCTAssert(localProvider,@"local provider didn't initialize");
-//    YMTLSProviderRef remoteProvider = YMTLSProviderCreateWithFullDuplexFile(socket, !localIsServer);
-//    XCTAssert(remoteProvider,@"remote provider didn't initialize");
-    
     BOOL localIsServer = arc4random_uniform(2);
     
     char * sockName = YMStringCreateWithFormat("ym-tls-test-%u",arc4random());
     
-    __block int serverSocket, clientSocket;
-    dispatch_async(dispatch_get_global_queue(0, 0), ^{
-        serverSocket = [self createServerSocket:sockName];
-    });
-    CFRunLoopRunInMode(kCFRunLoopDefaultMode, 2, false); // xxx let server reach accept()
-    dispatch_sync(dispatch_get_global_queue(0, 0), ^{
-        clientSocket = [self createClientSocket:sockName];
-    });
+    YMLocalSocketPairRef localSocketPair = YMLocalSocketPairCreate(sockName);
+    XCTAssert(localSocketPair,@"socket pair didn't initialize");
+    int serverSocket = YMLocalSocketPairGetA(localSocketPair);
+    int clientSocket = YMLocalSocketPairGetB(localSocketPair);
+    
     XCTAssert(serverSocket>=0,@"server socket is bogus");
     XCTAssert(clientSocket>=0,@"client socket is bogus");
     
@@ -116,9 +88,10 @@ typedef struct
     XCTAssert(remoteProvider,@"remote provider didn't initialize");
     
     stateLock = YMLockCreateWithOptionsAndName(YMLockDefault, [[self className] UTF8String]);
+    threadExitSemaphore = YMSemaphoreCreate([[self className] UTF8String], 0);
     bytesIn = 0;
     bytesOut = 0;
-    testRunning = YES;
+    isTimeBased = TLSTestTimeBased;
     
     YMTLSProviderRef theServer = localIsServer?localProvider:remoteProvider;
     YMTLSProviderRef theClient = localIsServer?remoteProvider:localProvider;
@@ -127,14 +100,14 @@ typedef struct
         bool okay = YMSecurityProviderInit((YMSecurityProviderRef)theServer);
         XCTAssert(okay,@"server tls provider didn't init");
         if ( okay )
-            [self runLocal:theServer];
+            [self runEndpoint:theServer :localIsServer];
     });
     CFRunLoopRunInMode(kCFRunLoopDefaultMode, 5, false); // xxx let server reach accept()
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         bool okay = YMSecurityProviderInit((YMSecurityProviderRef)theClient);
         XCTAssert(okay,@"client tls provider didn't init");
         if ( okay )
-            [self runRemote:theClient];
+            [self runEndpoint:theClient :!localIsServer];
     });
     
     //#define AND_MEASURE
@@ -142,14 +115,18 @@ typedef struct
     [self measureBlock:^{
 #endif
 #if TLSTestTimeBased
-        CFRunLoopRunInMode(kCFRunLoopDefaultMode, [PlexerTest1EndDate timeIntervalSinceDate:[NSDate date]], false);
-    #else
-        while ( testRunning )
-            CFRunLoopRunInMode(kCFRunLoopDefaultMode,0.5,false);
+        CFRunLoopRunInMode(kCFRunLoopDefaultMode, [TLSTestEndDate timeIntervalSinceDate:[NSDate date]], false);
 #endif
 #ifdef AND_MEASURE
     }];
 #endif
+    
+    // signal threads to exit and wait for them
+    YMLockLock(stateLock); // ensure the iterate the same number of times (for time-based where this thread flags the end)
+    timeBasedEnd = YES;
+    YMLockUnlock(stateLock);
+    YMSemaphoreWait(threadExitSemaphore);
+    YMSemaphoreWait(threadExitSemaphore);
     
     BOOL clientFirst = arc4random_uniform(2);
     dispatch_async(dispatch_get_global_queue(0,0), ^{
@@ -161,20 +138,15 @@ typedef struct
         XCTAssert(okay,@"server close failed");
     });
     
-    timeBasedEnd = YES;
     NSLog(@"tls test finished (%llu in, %llu out)",bytesIn,bytesOut);
 }
 
 const char *testMessage = "security is important. put in the advanced technology. technology consultants international. please check. thanks.";
 const char *testResponse = "i am a technology creative. i am a foodie. i am quirky. here is a picture of my half-eaten food.";
 
-- (void)runRemote:(YMTLSProviderRef)tls
+- (void)runEndpoint:(YMTLSProviderRef)tls :(BOOL)isServer
 {
-#if TLSTestTimeBased
-    while ( ! timeBasedEnd )
-#else
-    for ( unsigned idx = 0; idx < TLSTestMessageRoudTrips; idx++ )
-#endif
+    for ( unsigned idx = 0; isTimeBased || idx < TLSTestMessageRoundTrips; idx++ )
     {
         NSData *outgoingMessage;
         if ( TLSTestRandomMessages )
@@ -182,51 +154,37 @@ const char *testResponse = "i am a technology creative. i am a foodie. i am quir
         else
             outgoingMessage = [NSData dataWithBytesNoCopy:(void *)testMessage length:strlen(testMessage) + 1 freeWhenDone:NO];
         
-        lastRemoteMessageWritten = outgoingMessage;
-        [self sendMessage:tls :outgoingMessage];
-        
-        NSData *incomingMessage = [self receiveMessage:tls];
-        XCTAssert([incomingMessage length]&&[lastRemoteMessageWritten length]&&[incomingMessage isEqualToData:lastRemoteMessageWritten],
-                  @"incoming and last written do not match (i%zu o%zu)",[incomingMessage length],[lastLocalMessageWritten length]);
-        
-        YMLockLock(stateLock);
-        bytesOut += [outgoingMessage length];
-        bytesIn += [incomingMessage length];
-        YMLockUnlock(stateLock);
-    }
-    
-    NSLog(@"runRemote exiting...");
-}
-
-- (void)runLocal:(YMTLSProviderRef)tls
-{
-#if TLSTestTimeBased
-    while ( ! timeBasedEnd )
-#else
-    for ( unsigned idx = 0; idx < TLSTestMessageRoudTrips; idx++ )
-#endif
-    {
-        NSData *outgoingMessage;
-        if ( TLSTestRandomMessages )
-            outgoingMessage = YMRandomDataWithMaxLength(TLSTestRandomMessageMaxLength);
+        if ( isServer )
+        {
+            NSData *incomingMessage = [self receiveMessage:tls];
+            XCTAssert([incomingMessage length]&&[lastMessageSent length]&&[incomingMessage isEqualToData:lastMessageSent],
+                  @"incoming and last written do not match (i%zu o%zu)",[incomingMessage length],[lastMessageSent length]);
+            
+            lastMessageSent = outgoingMessage;
+            [self sendMessage:tls :outgoingMessage];
+        }
         else
-            outgoingMessage = [NSData dataWithBytesNoCopy:(void *)testMessage length:strlen(testMessage) + 1 freeWhenDone:NO];
-        
-        lastLocalMessageWritten = outgoingMessage;
-        [self sendMessage:tls :outgoingMessage];
-        
-        NSData *incomingMessage = [self receiveMessage:tls];
-        XCTAssert([incomingMessage length]&&[lastRemoteMessageWritten length]&&[incomingMessage isEqualToData:lastRemoteMessageWritten],
-                  @"incoming and last written do not match (i%zu o%zu)",[incomingMessage length],[lastRemoteMessageWritten length]);
+        {
+            lastMessageSent = outgoingMessage;
+            [self sendMessage:tls :outgoingMessage];
+            
+            NSData *incomingMessage = [self receiveMessage:tls];
+            XCTAssert([incomingMessage length]&&[lastMessageSent length]&&[incomingMessage isEqualToData:lastMessageSent],
+                      @"incoming and last written do not match (i%zu o%zu)",[incomingMessage length],[lastMessageSent length]);
+        }
         
         YMLockLock(stateLock);
         bytesOut += [outgoingMessage length];
-        bytesIn += [incomingMessage length];
+        bytesIn += [lastMessageSent length];
+        BOOL exit = timeBasedEnd;
         YMLockUnlock(stateLock);
+        
+        if ( exit )
+            break;
     }
     
     NSLog(@"runLocal exiting...");
-    testRunning = NO;
+    YMSemaphoreSignal(threadExitSemaphore);
 }
 
 - (void)sendMessage:(YMTLSProviderRef)tls :(NSData *)message
@@ -248,98 +206,6 @@ const char *testResponse = "i am a technology creative. i am a foodie. i am quir
     XCTAssert(okay,@"failed to read buffer");
     
     return [NSData dataWithBytesNoCopy:buffer length:header.length freeWhenDone:YES];
-}
-
-- (int)createServerSocket:(char *)sockName
-{
-    struct sockaddr_un name;
-    int sock;
-    socklen_t size;
-    
-    sock = socket(PF_LOCAL, SOCK_STREAM, 0/* IP, /etc/sockets man 5 protocols*/);
-    
-    /* Bind a name to the socket. */
-    name.sun_family = AF_LOCAL;
-    strncpy (name.sun_path, sockName, sizeof (name.sun_path));
-    name.sun_path[sizeof (name.sun_path) - 1] = '\0';
-    
-    /* The size of the address is
-     the offset of the start of the filename,
-     plus its length (not including the terminating null byte).
-     Alternatively you can just do:
-     size = SUN_LEN (&name);
-     */
-    size = (offsetof (struct sockaddr_un, sun_path)
-            + (socklen_t)strlen (name.sun_path));
-    
-    BOOL triedAgain = NO;
-try_again:
-    if (bind (sock, (struct sockaddr *) &name, size) < 0)
-    {
-        int bindErrno = errno;
-        if ( errno == EADDRINUSE )
-        {
-            NSLog(@"EADDRINUSE: %s",sockName);
-            triedAgain = YES;
-            goto try_again;
-        }
-        close(sock);
-        XCTAssert(NO,@"bind failed: %d (%s)",bindErrno,strerror(bindErrno));
-    }
-    
-    if (listen(sock, 5))
-    {
-        int listenErrno = errno;
-        close(sock);
-        XCTAssert(NO,@"listen failed: %d (%s)",listenErrno,strerror(listenErrno));
-    }
-    
-    int acceptedSock = accept(sock, (struct sockaddr *) &name, &size);
-    if (acceptedSock<0)
-    {
-        int acceptErrno = errno;
-        close(sock);
-        XCTAssert(NO,@"accept failed: %d (%s)",acceptErrno,strerror(acceptErrno));
-    }
-    
-    NSLog(@"accepted: %d",acceptedSock);
-    
-    return acceptedSock;
-}
-
-- (int)createClientSocket:(char *)sockName
-{
-    struct sockaddr_un name;
-    int sock;
-    socklen_t size;
-    
-    sock = socket(PF_LOCAL, SOCK_STREAM, 0/* IP, /etc/sockets man 5 protocols*/);
-    
-    /* Bind a name to the socket. */
-    name.sun_family = AF_LOCAL;
-    strncpy (name.sun_path, sockName, sizeof (name.sun_path));
-    name.sun_path[sizeof (name.sun_path) - 1] = '\0';
-    
-    /* The size of the address is
-     the offset of the start of the filename,
-     plus its length (not including the terminating null byte).
-     Alternatively you can just do:
-     size = SUN_LEN (&name);
-     */
-    size = (offsetof (struct sockaddr_un, sun_path)
-            + (socklen_t)strlen (name.sun_path));
-    
-    int result = connect(sock, (struct sockaddr *) &name, size);
-    if ( result != 0 )
-    {
-        int connectErrno = errno;
-        close(sock);
-        XCTAssert(NO,@"connect failed: %d (%s)",connectErrno,strerror(connectErrno));
-    }
-    
-    NSLog(@"connected: %d",sock);
-    
-    return sock;
 }
 
 - (void)testPerformanceExample {
