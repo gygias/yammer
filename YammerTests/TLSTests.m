@@ -125,7 +125,7 @@ typedef struct
     YMLockLock(stateLock); // ensure the iterate the same number of times (for time-based where this thread flags the end)
     timeBasedEnd = YES;
     YMLockUnlock(stateLock);
-    YMSemaphoreWait(threadExitSemaphore);
+    YMSemaphoreWait(threadExitSemaphore); // todo: there's still a deadlock bug in this code, where server races client and timeBasedEnd to try to receive an additional message
     YMSemaphoreWait(threadExitSemaphore);
     
     BOOL clientFirst = arc4random_uniform(2);
@@ -146,8 +146,12 @@ const char *testResponse = "i am a technology creative. i am a foodie. i am quir
 
 - (void)runEndpoint:(YMTLSProviderRef)tls :(BOOL)isServer
 {
-    for ( unsigned idx = 0; isTimeBased || idx < TLSTestMessageRoundTrips; idx++ )
+    BOOL looped = NO;
+    for ( unsigned idx = 0; (isTimeBased && ! timeBasedEnd) || (idx < TLSTestMessageRoundTrips); idx++ )
     {
+        if ( looped )
+            YMLockUnlock(stateLock);
+        
         NSData *outgoingMessage;
         if ( TLSTestRandomMessages )
             outgoingMessage = YMRandomDataWithMaxLength(TLSTestRandomMessageMaxLength);
@@ -173,15 +177,16 @@ const char *testResponse = "i am a technology creative. i am a foodie. i am quir
                       @"incoming and last written do not match (i%zu o%zu)",[incomingMessage length],[lastMessageSent length]);
         }
         
+        
+        // for races between server, client and main thread signaling time-based end
+        looped = YES;
         YMLockLock(stateLock);
         bytesOut += [outgoingMessage length];
         bytesIn += [lastMessageSent length];
-        BOOL exit = timeBasedEnd;
-        YMLockUnlock(stateLock);
-        
-        if ( exit )
-            break;
     }
+    
+    if ( looped )
+        YMLockUnlock(stateLock);
     
     NSLog(@"runLocal exiting...");
     YMSemaphoreSignal(threadExitSemaphore);
