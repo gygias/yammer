@@ -3,7 +3,7 @@
 //  yammer
 //
 //  Created by david on 11/11/15.
-//  Copyright © 2015 Combobulated Software. All rights reserved.
+//  Copyright © 2015 combobulated. All rights reserved.
 //
 
 // goal: abstraction and convenience for working with sockaddrs, human readable and non-cryptic
@@ -19,7 +19,8 @@ typedef enum
     YMAddressIPV6
 } YMAddressType;
 
-YMAddressRef YMAddressCreate(void* addressData, uint16_t length);
+YMAddressRef YMAddressCreate(void* addressData, uint32_t length);
+YMAddressRef YMAddressCreateLocalHostIPV4(uint16_t port);
 
 const void *YMAddressGetAddressData(YMAddressRef address);
 int YMAddressGetLength(YMAddressRef address);

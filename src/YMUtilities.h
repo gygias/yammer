@@ -49,4 +49,6 @@ YMIOResult YMReadWriteFull(int inFile, int outFile, uint64_t *outBytes);
 char *YMStringCreateWithFormat(char *formatStr, ...) __printflike(1, 2);
 char *YMStringCreateByAppendingString(char *baseStr, char *appendStr);
 
+int32_t YMPortReserve(bool ipv4, int *outSocket);
+
 #endif /* YMUtilities_h */

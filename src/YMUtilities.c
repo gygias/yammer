@@ -19,6 +19,7 @@
 #endif
 
 #include <stdarg.h>
+#include <netinet/in.h>
 
 YMIOResult __YMReadFull(int fd, uint8_t *buffer, size_t bytes, size_t *outRead);
 YMIOResult __YMWriteFull(int fd, const uint8_t *buffer, size_t bytes, size_t *outWritten);
@@ -183,4 +184,55 @@ char *YMStringCreateByAppendString(char *baseStr, char *appendStr)
     newString[newStringLen - 1] = '\0';
     
     return newString;
+}
+
+int32_t YMPortReserve(bool ipv4, int *outSocket)
+{
+    uint16_t aPort = IPPORT_RESERVED;
+    while (aPort < IPPORT_HILASTAUTO)
+    {
+        uint16_t tryPort = aPort++;
+        int aSocket = -1;
+        
+        int domain = ipv4 ? PF_INET : PF_INET6;
+        int proto = domain;
+        int aResult = socket(domain, SOCK_STREAM, proto);
+        if ( aResult < 0 )
+            goto catch_continue;
+        
+        aSocket = aResult;
+        
+        int yes = 1;
+        aResult = setsockopt(aSocket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+        if ( aResult != 0 )
+            goto catch_continue;
+        
+        uint8_t length = ipv4 ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6);
+        struct sockaddr *addr = YMALLOC(length);
+        addr->sa_family = ipv4 ? AF_INET : AF_INET6;
+        addr->sa_len = length;
+        if ( ipv4 )
+        {
+            ((struct sockaddr_in *)addr)->sin_addr.s_addr = INADDR_ANY;
+            ((struct sockaddr_in *)addr)->sin_port = tryPort;
+        }
+        else
+        {
+            ((struct sockaddr_in6 *)addr)->sin6_addr = in6addr_any;
+            ((struct sockaddr_in6 *)addr)->sin6_port = tryPort;
+        }
+        
+        aResult = bind(aSocket, addr, length);
+        if ( aResult != 0 )
+            goto catch_continue;
+        
+        *outSocket = aSocket;
+        return tryPort;
+        
+    catch_continue:
+        if ( aSocket > 0 )
+            close(aSocket);
+    }
+    
+    return -1;
 }

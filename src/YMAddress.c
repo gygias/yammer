@@ -3,7 +3,7 @@
 //  yammer
 //
 //  Created by david on 11/11/15.
-//  Copyright © 2015 Combobulated Software. All rights reserved.
+//  Copyright © 2015 combobulated. All rights reserved.
 //
 
 #include "YMAddress.h"
@@ -36,13 +36,13 @@ typedef struct __YMAddress
     
     YMAddressType type;
     struct sockaddr *address;
-    uint16_t length;
+    socklen_t length;
     int family;
     
     const char *description;
 } _YMAddress;
 
-YMAddressRef YMAddressCreate(void* addressData, uint16_t length)
+YMAddressRef YMAddressCreate(void* addressData, socklen_t length)
 {
     struct sockaddr *addr = addressData;
     
@@ -110,6 +110,22 @@ rewind_fail:
     free(address->address);
     free(address);
     return NULL;
+}
+
+YMAddressRef YMAddressCreateLocalHostIPV4(uint16_t port)
+{
+    uint8_t ip[4] = { 127, 0, 0, 1 };
+    
+    uint8_t length = sizeof(struct sockaddr_in);
+    struct sockaddr_in *newAddr = YMALLOC(length);
+    newAddr->sin_family = AF_INET;
+    memcpy(&newAddr->sin_addr.s_addr,ip,sizeof(ip));
+    newAddr->sin_port = port;
+    newAddr->sin_len = length;
+    
+    YMAddressRef address = YMAddressCreate(newAddr, length); // todo could be optimized
+    free(newAddr);
+    return address;
 }
 
 void _YMAddressFree(YMTypeRef object)

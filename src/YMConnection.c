@@ -30,6 +30,7 @@ typedef struct __YMConnection
 {
     YMTypeID _type;
     
+    bool isIncoming;
     YMAddressRef address;
     YMConnectionType type;
     YMConnectionSecurityType securityType;
@@ -63,7 +64,28 @@ void ym_connection_new_stream_proc(YMPlexerRef plexer,YMStreamRef stream, void *
 void ym_connection_stream_closing_proc(YMPlexerRef plexer, YMStreamRef stream, void *context);
 void ym_connection_interrupted_proc(YMPlexerRef plexer, void *context);
 
+YMConnectionRef __YMConnectionCreate(bool isIncoming, int socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType);
+bool __YMConnectionDestroy(YMConnectionRef connection);
+bool __YMConnectionInitCommon(YMConnectionRef connection, int newSocket, bool asServer);
+
 YMConnectionRef YMConnectionCreate(YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType)
+{
+    return __YMConnectionCreate(false, NULL_SOCKET, address, type, securityType);
+}
+
+YMConnectionRef YMConnectionCreateIncoming(int socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType)
+{
+    YMConnectionRef connection = __YMConnectionCreate(true, socket, address, type, securityType);
+    bool commonInitOK = __YMConnectionInitCommon(connection, socket, true);
+    if ( ! commonInitOK )
+    {
+        YMFree(connection);
+        return NULL;
+    }
+    return connection;
+}
+
+YMConnectionRef __YMConnectionCreate(bool isIncoming, int socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType)
 {
     if ( type < __YMConnectionTypeMin || type > __YMConnectionTypeMax )
         return NULL;
@@ -73,9 +95,10 @@ YMConnectionRef YMConnectionCreate(YMAddressRef address, YMConnectionType type, 
     _YMConnection *connection = (_YMConnection *)calloc(1,sizeof(_YMConnection));
     connection->_type = _YMConnectionTypeID;
     
+    connection->isIncoming = isIncoming;
     connection->address = address;
     connection->type = type;
-    connection->socket = NULL_SOCKET;
+    connection->socket = socket;
     connection->securityType = securityType;
     
     return (YMConnectionRef)connection;
@@ -84,6 +107,9 @@ YMConnectionRef YMConnectionCreate(YMAddressRef address, YMConnectionType type, 
 void _YMConnectionFree(YMTypeRef object)
 {
     YMConnectionRef connection = (YMConnectionRef)object;
+    
+    __YMConnectionDestroy(connection);
+    
     free(connection);
 }
 
@@ -102,8 +128,11 @@ void YMConnectionSetCallbacks(YMConnectionRef connection,
 
 bool YMConnectionConnect(YMConnectionRef connection)
 {
-    YMSecurityProviderRef security = NULL;
-    YMPlexerRef plexer = NULL;
+    if ( connection->socket >= 0 || connection->isIncoming )
+    {
+        ymerr("connection[%s]: connect called on connected socket",YMAddressGetDescription(connection->address));
+        return false;
+    }    
     
     int type;
     switch(connection->type)
@@ -132,10 +161,28 @@ bool YMConnectionConnect(YMConnectionRef connection)
     if ( result != 0 )
     {
         ymerr("connection: connect(%s)",YMAddressGetDescription(connection->address));
+        close(newSocket);
         return false;
     }
     
     ymlog("connection[%s]: connected",YMAddressGetDescription(connection->address));
+    
+    bool commonInitOK = __YMConnectionInitCommon(connection, newSocket, false);
+    if ( ! commonInitOK )
+    {
+        close(newSocket);
+        return false;
+    }
+    
+    connection->socket = newSocket;
+    
+    return true;
+}
+
+bool __YMConnectionInitCommon(YMConnectionRef connection, int newSocket, bool asServer)
+{
+    YMSecurityProviderRef security = NULL;
+    YMPlexerRef plexer = NULL;
     
     switch( connection->securityType )
     {
@@ -143,7 +190,7 @@ bool YMConnectionConnect(YMConnectionRef connection)
             security = YMSecurityProviderCreateWithFullDuplexFile(newSocket);
             break;
         case YMTLS:
-            security = (YMSecurityProviderRef)YMTLSProviderCreateWithFullDuplexFile(newSocket, false);
+            security = (YMSecurityProviderRef)YMTLSProviderCreateWithFullDuplexFile(newSocket, asServer);
             break;
         default:
             ymerr("connection: unknown security type");
@@ -157,7 +204,7 @@ bool YMConnectionConnect(YMConnectionRef connection)
         goto rewind_fail;
     }
     
-    plexer = YMPlexerCreate((char *)YMAddressGetDescription(connection->address), newSocket, newSocket, false);
+    plexer = YMPlexerCreate((char *)YMAddressGetDescription(connection->address), newSocket, newSocket, asServer);
     bool plexerOK = YMPlexerStart(plexer);
     if ( ! plexerOK )
     {
@@ -170,20 +217,44 @@ bool YMConnectionConnect(YMConnectionRef connection)
     
     connection->plexer = plexer;
     connection->security = security;
-    connection->socket = newSocket;
     
     return true;
     
 rewind_fail:
-    close(newSocket);
     if ( security )
         YMFree(security);
+    if ( plexer )
+        YMFree(plexer);
     return false;
+}
+
+bool YMConnectionClose(YMConnectionRef connection)
+{
+    return __YMConnectionDestroy(connection);
+}
+
+bool __YMConnectionDestroy(YMConnectionRef connection)
+{
+    YMPlexerStop(connection->plexer);
+    bool securityOK = YMSecurityProviderClose(connection->security);
+    if ( ! securityOK )
+        ymerr("connection[%s]: warning: failed to close security",YMAddressGetDescription(connection->address));
+    int closeResult = close(connection->socket);
+    if ( closeResult != 0 )
+        ymerr("connection[%s]: warning: failed to close socket: %d (%s)",YMAddressGetDescription(connection->address),errno,strerror(errno));
+    
+    YMFree(connection->plexer);
+    connection->plexer = NULL;
+    YMFree(connection->security);
+    connection->security = NULL;
+    connection->socket = NULL_SOCKET;
+    
+    return securityOK && ( closeResult == 0 );
 }
 
 uint64_t YMConnectionDoSample(YMConnectionRef connection)
 {
-    return (uint64_t)connection;
+    return (uint64_t)connection; // todo
 }
 
 YMStreamRef YMConnectionCreateStream(YMConnectionRef connection, const char *name)

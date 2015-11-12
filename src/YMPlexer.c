@@ -209,6 +209,7 @@ YMPlexerRef YMPlexerCreate(char *name, int inputFile, int outputFile, bool maste
 
 void _YMPlexerFree(YMPlexerRef plexer)
 {
+#pragma message "implement me"
     free(plexer);
 }
 
@@ -779,6 +780,7 @@ void __YMPlexerInterrupt(YMPlexerRef plexer)
 
 void YMPlexerStop(YMPlexerRef plexer)
 {
+#pragma message "how should this actually behave? join on remaining activity?"
     // deallocate volatile stuff
     
     free(plexer->localPlexBuffer);

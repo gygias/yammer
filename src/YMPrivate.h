@@ -38,6 +38,7 @@ extern YMTypeID _YMX509CertificateTypeID;
 extern YMTypeID _YMTLSProviderTypeID;
 extern YMTypeID _YMLocalSocketPairTypeID;
 extern YMTypeID _YMAddressTypeID;
+extern YMTypeID _YMPeerTypeID;
 
 typedef struct __YMTypeRef
 {
