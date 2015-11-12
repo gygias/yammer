@@ -73,17 +73,17 @@ PlexerTests *gRunningPlexerTest; // xctest seems to make a new object for each -
     [super tearDown];
 }
 
-void local_plexer_interrupted(YMPlexerRef plexer)
+void local_plexer_interrupted(YMPlexerRef plexer, void *context)
 {
     NSLog(@"%s",__FUNCTION__);
 }
 
-void local_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream)
+void local_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *context)
 {
     NSLog(@"%s",__FUNCTION__);
 }
 
-void local_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream)
+void local_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *context)
 {
     NSLog(@"%s",__FUNCTION__);
 }
@@ -227,7 +227,7 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
     return [NSData dataWithBytesNoCopy:buffer length:header.length freeWhenDone:YES];
 }
 
-void remote_plexer_interrupted(YMPlexerRef plexer)
+void remote_plexer_interrupted(YMPlexerRef plexer, void *context)
 {
     [gRunningPlexerTest interrupted:plexer];
 }
@@ -237,7 +237,7 @@ void remote_plexer_interrupted(YMPlexerRef plexer)
     NSLog(@"%s",__FUNCTION__);
 }
 
-void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream)
+void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *context)
 {
     [gRunningPlexerTest newStream:plexer :stream];
 }
@@ -288,7 +288,7 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream)
     YMPlexerRemoteStreamRelease(plexer, stream);
 }
 
-void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream)
+void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *context)
 {
     [gRunningPlexerTest closing:plexer :stream];
 }

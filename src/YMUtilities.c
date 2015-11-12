@@ -195,8 +195,7 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
         int aSocket = -1;
         
         int domain = ipv4 ? PF_INET : PF_INET6;
-        int proto = domain;
-        int aResult = socket(domain, SOCK_STREAM, proto);
+        int aResult = socket(domain, SOCK_STREAM, 6);
         if ( aResult < 0 )
             goto catch_continue;
         

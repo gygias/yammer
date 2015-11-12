@@ -42,7 +42,7 @@ SessionTests *gTheSessionTest = nil;
     
     gTheSessionTest = self;
     
-    testType = "_ymtest._local";
+    testType = "_ymtest._tcp";
     testName = "twitter-cliche";
     serverSession = YMSessionCreateServer(testType, testName);
     XCTAssert(serverSession,@"server alloc");
@@ -56,6 +56,9 @@ SessionTests *gTheSessionTest = nil;
     XCTAssert(clientSession,@"client alloc");
     YMSessionSetSharedCallbacks(clientSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
     YMSessionSetClientCallbacks(clientSession, _ym_session_added_peer_func, _ym_session_removed_peer_func, _ym_session_resolve_failed_func, _ym_session_resolved_peer_func, _ym_session_connect_failed_func, (__bridge void *)self);
+    
+    started = YMSessionClientStart(clientSession);
+    XCTAssert(started,@"client start");
 }
 
 - (void)testPerformanceExample {

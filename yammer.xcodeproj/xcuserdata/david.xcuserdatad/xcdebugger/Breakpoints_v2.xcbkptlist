@@ -56,11 +56,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "YammerTests/SessionTests.m"
-            timestampString = "469019699.471532"
+            timestampString = "469022201.272265"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "47"
-            endingLineNumber = "47"
+            startingLineNumber = "60"
+            endingLineNumber = "60"
             landmarkName = "-testSession"
             landmarkType = "5">
          </BreakpointContent>

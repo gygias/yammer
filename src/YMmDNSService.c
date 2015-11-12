@@ -162,6 +162,9 @@ ymbool YMmDNSServiceStart( YMmDNSServiceRef service )
 {
     DNSServiceRef *serviceRef = (DNSServiceRef *)calloc( 1, sizeof(DNSServiceRef) );
     uint16_t netPort = htons(service->port);
+    bool txtExists = (service->txtRecord != NULL);
+    uint16_t txtLength = txtExists ? TXTRecordGetLength((TXTRecordRef *)service->txtRecord) : 0;
+    const void *txt = txtExists ? TXTRecordGetBytesPtr((TXTRecordRef *)service->txtRecord) : NULL;
     DNSServiceErrorType result = DNSServiceRegister(serviceRef,
                                                     0, // DNSServiceFlags
                                                     0, // interfaceIndex (0=all)
@@ -174,8 +177,8 @@ ymbool YMmDNSServiceStart( YMmDNSServiceRef service )
                                                     service->txtRecordLen,
                                                     service->txtRecord,
 #else
-                                                    TXTRecordGetLength((TXTRecordRef *)service->txtRecord),
-                                                    TXTRecordGetBytesPtr((TXTRecordRef *)service->txtRecord),
+                                                    txtLength,
+                                                    txt,
 #endif
                                                     _YMmDNSRegisterCallback, // DNSServiceRegisterReply
                                                     service); // context
