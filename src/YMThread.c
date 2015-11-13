@@ -74,8 +74,9 @@ void __ym_thread_dispatch_dispatch_thread_proc(void *);
 typedef struct __ym_thread_dispatch_forward_file_async_context_def
 {
     YMThreadRef threadOrNull;
-    int fromFile;
-    YMStreamRef toStream;
+    int file;
+    YMStreamRef stream;
+    bool toStream;
     bool limited;
     uint64_t nBytes;
     bool sync; // only necessary to free return value
@@ -87,6 +88,7 @@ void *__ym_thread_dispatch_forward_file_proc(__ym_thread_dispatch_forward_file_a
 uint64_t _YMThreadGetCurrentThreadNumber();
 ym_thread_dispatch_ref __YMThreadDispatchCopy(ym_thread_dispatch_ref userDispatchRef);
 void __YMThreadFreeDispatchContext(__ym_thread_dispatch_context);
+bool __YMThreadDispatchForward(YMStreamRef stream, int file, bool toStream, bool limited, uint64_t byteLimit, bool sync, ym_thread_dispatch_forward_file_context callbackInfo);
 
 YMThreadRef _YMThreadCreate(char *name, bool isDispatchThread, ym_thread_entry entryPoint, void *context)
 {
@@ -336,17 +338,28 @@ uint64_t _YMThreadGetCurrentThreadNumber()
     return threadId;
 }
 
-bool YMThreadDispatchForwardFile(int fromFile, YMStreamRef toStream, bool limited, uint64_t nBytes, bool sync, ym_thread_dispatch_forward_file_context callbackInfo)
+bool YMThreadDispatchForwardFile(int fromFile, YMStreamRef toStream, bool limited, uint64_t byteLimit, bool sync, ym_thread_dispatch_forward_file_context callbackInfo)
+{
+    return __YMThreadDispatchForward(toStream, fromFile, true, limited, byteLimit, sync, callbackInfo);
+}
+
+bool YMThreadDispatchForwardStream(YMStreamRef fromStream, int toFile, bool limited, uint64_t byteLimit, bool sync, ym_thread_dispatch_forward_file_context callbackInfo)
+{
+    return __YMThreadDispatchForward(fromStream, toFile, false, limited, byteLimit, sync, callbackInfo);
+}
+
+bool __YMThreadDispatchForward(YMStreamRef stream, int file, bool toStream, bool limited, uint64_t byteLimit, bool sync, ym_thread_dispatch_forward_file_context callbackInfo)
 {
     YMThreadRef forwardingThread = NULL;
     char *name = NULL;
     
     __ym_thread_dispatch_forward_file_async_context_ref context = YMALLOC(sizeof(__ym_thread_dispatch_forward_file_async_context));
     context->threadOrNull = forwardingThread;
-    context->fromFile = fromFile;
+    context->file = file;
+    context->stream = stream;
     context->toStream = toStream;
     context->limited = limited;
-    context->nBytes = nBytes;
+    context->nBytes = byteLimit;
     context->sync = sync;
     context->callbackInfo = callbackInfo;
     
@@ -361,8 +374,8 @@ bool YMThreadDispatchForwardFile(int fromFile, YMStreamRef toStream, bool limite
     // todo: new thread for all, don't let blockage on either end deny other clients of this api.
     // but, if we wanted to feel good about ourselves, these threads could hang around for a certain amount of time to handle
     // subsequent forwarding requests, to recycle the thread creation overhead.
-    YMStreamID streamID = _YMStreamGetUserInfo(toStream)->streamID;
-    name = YMStringCreateWithFormat("dispatch-forward-%d->s%u",fromFile,streamID);
+    YMStreamID streamID = _YMStreamGetUserInfo(stream)->streamID;
+    name = YMStringCreateWithFormat("dispatch-forward-%d%ss%u",file,toStream?"->":"<-",streamID);
     forwardingThread = YMThreadCreate(name, (void (*)(void *))__ym_thread_dispatch_forward_file_proc, context);
     free(name);
     if ( ! forwardingThread )
@@ -374,7 +387,7 @@ bool YMThreadDispatchForwardFile(int fromFile, YMStreamRef toStream, bool limite
     bool okay = YMThreadStart(forwardingThread);
     if ( ! okay )
     {
-        ymerr("thread[%s]: error: failed to start forwarding thread: %d %llu %d",name,limited,nBytes,sync);
+        ymerr("thread[%s]: error: failed to start forwarding thread",name);
         goto rewind_fail;
     }
     
@@ -391,8 +404,10 @@ void *__ym_thread_dispatch_forward_file_proc(__ym_thread_dispatch_forward_file_a
 {
     // todo: tired of defining semi-redundant structs for various tasks in here, should go back and take a look
     YMThreadRef threadOrNull = ctx->threadOrNull;
-    int fromFile = ctx->fromFile;
-    YMStreamRef toStream = ctx->toStream;
+    const char *threadName = threadOrNull ? threadOrNull->name : "*";
+    int file = ctx->file;
+    YMStreamRef stream = ctx->stream;
+    bool toStream = ctx->toStream;
     bool limited = ctx->limited;
     uint64_t nBytes = ctx->nBytes;
     bool sync = ctx->sync;
@@ -401,11 +416,15 @@ void *__ym_thread_dispatch_forward_file_proc(__ym_thread_dispatch_forward_file_a
     
     uint64_t outBytes = 0;
     
-    YMStreamID streamID = _YMStreamGetUserInfo(toStream)->streamID;
-    ymlog("dispatch-forward: entered for %d->s%u",fromFile,streamID);
+    YMStreamID streamID = _YMStreamGetUserInfo(stream)->streamID;
+    ymlog("thread[%s]: forward: entered for %d%ss%u",threadName,file,toStream?"->":"<-",streamID);
     uint64_t forwardBytes = limited ? nBytes : 0;
-    YMIOResult result = YMStreamWriteFile(toStream, fromFile, limited ? &forwardBytes : NULL, &outBytes);
-    ymlog("dispatch-forward: %s %llu bytes from %d->s%u", (result == YMIOError)?"error at offset":"finished",outBytes,fromFile,streamID);
+    YMIOResult result;
+    if ( toStream )
+        result = YMStreamReadFromFile(stream, file, limited ? &forwardBytes : NULL, &outBytes);
+    else
+        result = YMStreamWriteToFile(stream, file, limited ? &forwardBytes : NULL, &outBytes);
+    ymlog("thread[%s]: forward: %s %llu bytes from %d%ss%u",threadName, (result == YMIOError)?"error at offset":"finished",outBytes,file,toStream?"->":"<-",streamID);
     
     if ( threadOrNull )
         YMFree(threadOrNull);

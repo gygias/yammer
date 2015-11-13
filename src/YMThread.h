@@ -62,7 +62,8 @@ typedef struct ym_thread_dispatch_forward_file_context_def ym_thread_dispatch_fo
 typedef ym_thread_dispatch_forward_file_context *ym_thread_dispatch_forward_file_context_ref;
 
 //
-bool YMThreadDispatchForwardFile(int fromFile, YMStreamRef toStream, bool limited, uint64_t nBytes, bool sync, ym_thread_dispatch_forward_file_context callbackInfo);
+bool YMThreadDispatchForwardFile(int fromFile, YMStreamRef toStream, bool limited, uint64_t byteLimit, bool sync, ym_thread_dispatch_forward_file_context callbackInfo);
+bool YMThreadDispatchForwardStream(YMStreamRef fromStream, int toFile, bool limited, uint64_t byteLimit, bool sync, ym_thread_dispatch_forward_file_context callbackInfo);
 
 bool YMThreadStart(YMThreadRef thread);
 bool YMThreadJoin(YMThreadRef thread);

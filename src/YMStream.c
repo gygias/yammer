@@ -58,6 +58,7 @@ typedef struct __YMStream
 
 void __YMStreamFree(YMStreamRef stream);
 void __YMStreamCloseFiles(YMStreamRef stream);
+YMIOResult __YMStreamForward(YMStreamRef stream, int file, bool toStream, uint64_t *inBytes, uint64_t *outBytes);
 
 YMStreamRef YMStreamCreate(const char *name, bool isLocallyOriginated, YMStreamUserInfoRef userInfo)
 {
@@ -234,7 +235,17 @@ YMIOResult YMStreamReadUp(YMStreamRef stream, void *buffer, uint16_t length)
     return result;
 }
 
-YMIOResult YMStreamWriteFile(YMStreamRef stream, int file, uint64_t *inBytes, uint64_t *outBytes)
+YMIOResult YMStreamWriteToFile(YMStreamRef stream, int file, uint64_t *inBytes, uint64_t *outBytes)
+{
+    return __YMStreamForward(stream, file, false, inBytes, outBytes);
+}
+
+YMIOResult YMStreamReadFromFile(YMStreamRef stream, int file, uint64_t *inBytes, uint64_t *outBytes)
+{
+    return __YMStreamForward(stream, file, true, inBytes, outBytes);
+}
+
+YMIOResult __YMStreamForward(YMStreamRef stream, int file, bool toStream, uint64_t *inBytes, uint64_t *outBytes)
 {
     uint64_t off = 0;
     uint64_t remainingIfInBytes = inBytes ? *inBytes : 0;
@@ -245,24 +256,48 @@ YMIOResult YMStreamWriteFile(YMStreamRef stream, int file, uint64_t *inBytes, ui
     YMStreamID streamID = stream->__userInfo->streamID;
     
     YMIOResult aResult = YMIOError; // i guess if called with 0 it's an 'error' (?)
-    size_t aBytes;
+    size_t aBytes = 0;
     do
     {
         uint16_t aChunkSize = inBytes ? ( remainingIfInBytes < bufferSize ? (uint16_t)remainingIfInBytes : bufferSize ) : bufferSize;
         
-        aResult = YMReadFull(file, buffer, aChunkSize, &aBytes);
+        if ( toStream )
+            aResult = YMReadFull(file, buffer, aChunkSize, &aBytes);
+        else
+            aResult = YMStreamReadUp(stream, buffer, aChunkSize);
+            
         if ( aResult == YMIOError )
         {
-            ymerr("read-write-full: %d->s%u error %llu-%llu: %d (%s)",file,streamID,off,off+aChunkSize,errno,strerror(errno));
+            ymerr("stream[%s]: error: %d%ss%u forward read %llu-%llu: %d (%s)",stream->name,file,toStream?"->":"<-",streamID,off,off+aChunkSize,errno,strerror(errno));
             break;
         }
         else if ( aResult == YMIOEOF )
             lastIter = true;
+        else if ( toStream && aChunkSize != aBytes )
+            ymerr("stream[%s]: warning: %d%ss%u forward read %llu-%llu %u != %zu: %d (%s)",stream->name,file,toStream?"->":"<-",streamID,off,off+aChunkSize,aChunkSize,aBytes,errno,strerror(errno));
+        else if ( ! toStream )
+            aBytes = aChunkSize;
         
         if ( aBytes > UINT16_MAX )
             abort();
         
-        YMStreamWriteDown(stream, buffer, (uint16_t)aBytes);
+        size_t outWritten = 0;
+        if ( toStream )
+            YMStreamWriteDown(stream, buffer, (uint16_t)aBytes);
+        else
+        {
+            aResult = YMWriteFull(file, buffer, aBytes, &outWritten);
+            if ( aBytes != outWritten )
+                abort();
+        }
+        
+        if ( aResult == YMIOError )
+        {
+            ymerr("stream[%s]: error: %d%ss%u forward write %llu-%llu: %d (%s)",stream->name,file,toStream?"->":"<-",streamID,off,off+aChunkSize,errno,strerror(errno));
+            lastIter = true;
+        }
+        else if ( ! toStream && aBytes != outWritten )
+            ymerr("stream[%s]: warning: %d%ss%u forward write %llu-%llu %zu != %zu: %d (%s)",stream->name,file,toStream?"->":"<-",streamID,off,off+aChunkSize,outWritten,aBytes,errno,strerror(errno));
         
         if ( inBytes )
         {
@@ -273,12 +308,18 @@ YMIOResult YMStreamWriteFile(YMStreamRef stream, int file, uint64_t *inBytes, ui
             if ( remainingIfInBytes == 0 )
                 lastIter = true;
         }
+        
+        off += aChunkSize;
     } while ( ! lastIter );
     
     free(buffer);
     
     if ( outBytes )
         *outBytes = off;
+    
+    if ( inBytes && off != *inBytes )
+        ymerr("stream[%s]: warning: forwarded %llu bytes of requested %llu",stream->name,*inBytes,off);
+    
     return aResult;
 }
 

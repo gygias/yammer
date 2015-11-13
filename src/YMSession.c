@@ -15,6 +15,7 @@
 #include "YMThread.h"
 #include "YMAddress.h"
 #include "YMPeerPriv.h"
+#include "YMStreamPriv.h"
 
 #include "YMLog.h"
 #undef ymlog_type
@@ -73,6 +74,11 @@ void __YMSessionAddConnection(YMSessionRef session, YMConnectionRef connection);
 void __ym_session_accept_proc(void *);
 void *__ym_session_init_incoming_connection_proc(ym_thread_dispatch_ref);
 void *__ym_session_connect_async_proc(ym_thread_dispatch_ref);
+
+void __ym_session_new_stream_proc(YMConnectionRef connection, YMStreamRef stream, void *context);
+void __ym_session_stream_closing_proc(YMConnectionRef connection, YMStreamRef stream, void *context);
+void __ym_session_connection_interrupted_proc(YMConnectionRef connection, void *context);
+
 void __ym_mdns_service_appeared_func(YMmDNSBrowserRef browser, YMmDNSServiceRecord * service, void *context);
 void __ym_mdns_service_removed_func(YMmDNSBrowserRef browser, const char *name, void *context);
 void __ym_mdns_service_updated_func(YMmDNSBrowserRef browser, YMmDNSServiceRecord *service, void *context);
@@ -230,10 +236,7 @@ ymbool YMSessionClientConnectToPeer(YMSessionRef session, YMPeerRef peer, ymbool
     context->connection = newConnection;
     
     char *name = YMStringCreateWithFormat("session-async-connect-%s",YMAddressGetDescription(address));
-    ym_thread_dispatch connectDispatch;
-    connectDispatch.context = context;
-    connectDispatch.dispatchProc = __ym_session_connect_async_proc;
-    connectDispatch.description = name;
+    ym_thread_dispatch connectDispatch = {__ym_session_connect_async_proc, 0, 0, context, name};
     
     YMThreadRef dispatchThread = NULL;
     if ( ! sync )
@@ -292,14 +295,18 @@ void __YMSessionAddConnection(YMSessionRef session, YMConnectionRef connection)
 {
     
     YMLockLock(session->connectionsByAddressLock);
-    YMDictionaryKey key = (YMDictionaryKey)socket;
+    YMDictionaryKey key = (YMDictionaryKey)connection;
     if ( YMDictionaryContains(session->connectionsByAddress, key) )
     {
         ymerr("session[%s]: error: connections list already contains %llu",session->logDescription,key);
         abort();
     }
-    YMDictionaryAdd(session->connectionsByAddress, (YMDictionaryKey)socket, connection);
+    YMDictionaryAdd(session->connectionsByAddress, key, connection);
     YMLockUnlock(session->connectionsByAddressLock);
+    
+    YMConnectionSetCallbacks(connection, __ym_session_new_stream_proc, session,
+                                         __ym_session_stream_closing_proc, session,
+                                        __ym_session_connection_interrupted_proc, session);
     
     bool isNewDefault = (session->defaultConnection == NULL);
     YMAddressRef address = YMConnectionGetAddress(connection);
@@ -534,6 +541,70 @@ YMDictionaryRef YMSessionGetConnections(YMSessionRef session)
 {
     session = NULL;
     return *(YMDictionaryRef *)session; // todo, sync
+}
+
+#pragma mark connection callbacks
+
+void __ym_session_new_stream_proc(YMConnectionRef connection, YMStreamRef stream, void *context)
+{
+    YMSessionRef session = context;
+    
+    YMAddressRef address = YMConnectionGetAddress(connection);
+    YMStreamID streamID = _YMStreamGetUserInfo(stream)->streamID;
+    ymlog("session[%s]: new incoming stream %u on %s",session->logDescription,streamID,YMAddressGetDescription(address));
+    
+    if ( connection != session->defaultConnection )
+        ymerr("session[%s]: warning: new stream on non-default connection",session->logDescription);
+    
+    // is it weird that we don't report 'connection' here, despite user only being concerned with "active"?
+    if ( session->newStreamFunc )
+        session->newStreamFunc(session,stream,session->callbackContext);
+}
+
+void __ym_session_stream_closing_proc(YMConnectionRef connection, YMStreamRef stream, void *context)
+{
+    YMSessionRef session = context;
+    
+    YMAddressRef address = YMConnectionGetAddress(connection);
+    YMStreamID streamID = _YMStreamGetUserInfo(stream)->streamID;
+    ymlog("session[%s]: stream %u closing on %s",session->logDescription,streamID,YMAddressGetDescription(address));
+    
+    if ( connection != session->defaultConnection )
+    {
+        ymerr("session[%s]: warning: closing stream on non-default connection",session->logDescription);
+        return;
+    }
+    
+    if ( session->streamClosingFunc )
+        session->streamClosingFunc(session,stream,session->callbackContext);
+}
+
+void __ym_session_connection_interrupted_proc(YMConnectionRef connection, void *context)
+{
+    YMSessionRef session = context;
+    
+    bool isDefault = false;
+    YMAddressRef address = YMConnectionGetAddress(connection);
+    if ( connection == session->defaultConnection )
+    {
+        ymerr("session[%s]: default connection interrupted: %s",session->logDescription,YMAddressGetDescription(address));
+        session->defaultConnection = NULL;
+        isDefault = true;
+    }
+    else
+        ymerr("session[%s]: aux connection interrupted: %s",session->logDescription,YMAddressGetDescription(address));
+    
+    YMLockLock(session->connectionsByAddressLock);
+    YMDictionaryValue removedValue = YMDictionaryRemove(session->connectionsByAddress, (YMDictionaryKey)connection);
+    if ( ! removedValue || ( removedValue != connection ) )
+    {
+        ymerr("session[%s]: sanity check dictionary: %p v %p",session->logDescription, removedValue, connection);
+        abort();
+    }
+    
+    // weird that new stream / stream close don't report connection but this does, should be consistent
+    if ( isDefault && session->interruptedFunc )
+        session->interruptedFunc(session,session->callbackContext);
 }
 
 #pragma mark client mdns callbacks

@@ -254,7 +254,7 @@ bool __YMConnectionDestroy(YMConnectionRef connection)
         ymerr("connection[%s]: warning: failed to close security",YMAddressGetDescription(connection->address));
     int closeResult = close(connection->socket);
     if ( closeResult != 0 )
-        ymerr("connection[%s]: warning: failed to close socket: %d (%s)",YMAddressGetDescription(connection->address),errno,strerror(errno));
+        ymerr("connection[%s]: warning: close socket failed: %d (%s)",YMAddressGetDescription(connection->address),errno,strerror(errno));
     
     YMFree(connection->plexer);
     connection->plexer = NULL;

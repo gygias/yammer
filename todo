@@ -1,3 +1,5 @@
+- DICTIONARY KEYS
+- retain/release?
 - struct defs once and for all. (empty) should be typedef'd as static, _ref for pointers, _def for (unintended to be used) struct def, like was done for ym_thread_dispatch
 - ymthread should free ym_thread_dispatch_forward_file_context/ym_thread_dispatch_user_context automatically
    would need to wrap user's entry point in our own "manage memory" wrapper entry, at least for generic dispatches

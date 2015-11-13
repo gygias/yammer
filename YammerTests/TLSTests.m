@@ -15,7 +15,7 @@
 #import "YMSemaphore.h"
 
 #define TLSTestRoundTrips 1
-#define TLSTestMessageRoundTrips 1000
+#define TLSTestMessageRoundTrips 100
 #define TLSTestRandomMessages true
 #define TLSTestRandomMessageMaxLength 1024
 
@@ -211,13 +211,6 @@ const char *testResponse = "i am a technology creative. i am a foodie. i am quir
     XCTAssert(okay,@"failed to read buffer");
     
     return [NSData dataWithBytesNoCopy:buffer length:header.length freeWhenDone:YES];
-}
-
-- (void)testPerformanceExample {
-    // This is an example of a performance test case.
-    [self measureBlock:^{
-        // Put the code you want to measure the time of here.
-    }];
 }
 
 @end

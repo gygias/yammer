@@ -38,7 +38,7 @@
     [super tearDown];
 }
 
-- (void)testSerialized {
+- (void)testSerializedAddEnumRemoveAndPop {
     
     dispatch_queue_t queue = dispatch_queue_create("dictionary-test-serialized-queue", DISPATCH_QUEUE_SERIAL);
     for ( NSUInteger idx = 0; idx < NumberOfThreads; idx++ )

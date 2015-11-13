@@ -158,8 +158,8 @@ void YMTLSProviderSetAcceptPeerCertsFunc(YMTLSProviderRef tls, ym_tls_provider_s
 void _YMTLSProviderFree(YMTypeRef object)
 {
     YMTLSProviderRef tls = (YMTLSProviderRef)object;
-    if ( tls->isWrappingSocket )
-        close(tls->socket);
+    //if ( tls->isWrappingSocket ) // when YMConnection is involved, it 'owns' the socket
+    //    close(tls->socket);
     //if ( tls->bio )
     //    BIO_free(tls->bio); // todo
     if ( tls->ssl )
@@ -167,7 +167,6 @@ void _YMTLSProviderFree(YMTypeRef object)
     if ( tls->sslCtx )
         SSL_CTX_free(tls->sslCtx);
     free(tls);
-#pragma message "BIG TODO - we can't fire and forget a forwarding thread, need a proper struct and flags such as a 'finished' callout (and maybe what to do with the output files when done)"
 }
 
 bool __YMTLSProviderInit(YMSecurityProviderRef provider)
@@ -354,7 +353,7 @@ bool __YMTLSProviderClose(YMSecurityProviderRef provider)
     int result = SSL_shutdown(tls->ssl);
     if ( result )
     {
-        unsigned long sslError = ERR_get_error();
+        unsigned long sslError = SSL_get_error(tls->ssl, result);
         ymerr("tls[%d]: SSL_shutdown failed: %d: ssl err: %lu (%s)",tls->isServer ,result,sslError,ERR_error_string(sslError, NULL));
         return false;
     }
