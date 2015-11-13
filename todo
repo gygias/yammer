@@ -1,3 +1,4 @@
+- test huge single i/o (plex buf)
 - DICTIONARY KEYS
 - retain/release?
 - struct defs once and for all. (empty) should be typedef'd as static, _ref for pointers, _def for (unintended to be used) struct def, like was done for ym_thread_dispatch
