@@ -24,12 +24,13 @@
 #include <sys/socket.h>
 
 #define NULL_SOCKET (-1)
-#define NOT_CONNECTED ( connection->socket == NULL_SOCKET )
+#define NOT_CONNECTED ( ( connection->socket == NULL_SOCKET ) && ! connection->isConnected )
 
 typedef struct __YMConnection
 {
     YMTypeID _type;
     
+    int socket;
     bool isIncoming;
     YMAddressRef address;
     YMConnectionType type;
@@ -43,7 +44,7 @@ typedef struct __YMConnection
     void *interruptedFuncContext;
     
     // volatile
-    int socket;
+    bool isConnected;
     YMSecurityProviderRef security;
     YMPlexerRef plexer;
 } _YMConnection;
@@ -100,6 +101,7 @@ YMConnectionRef __YMConnectionCreate(bool isIncoming, int socket, YMAddressRef a
     connection->address = address;
     connection->type = type;
     connection->socket = socket;
+    connection->isConnected = false;
     connection->securityType = securityType;
     
     return (YMConnectionRef)connection;
@@ -221,6 +223,9 @@ bool __YMConnectionInitCommon(YMConnectionRef connection, int newSocket, bool as
     
     YMPlexerSetSecurityProvider(plexer, security);
     YMPlexerSetNewIncomingStreamFunc(plexer, ym_connection_new_stream_proc);
+    YMPlexerSetInterruptedFunc(plexer, ym_connection_interrupted_proc);
+    YMPlexerSetStreamClosingFunc(plexer, ym_connection_stream_closing_proc);
+    YMPlexerSetCallbackContext(plexer, connection);
     
     connection->plexer = plexer;
     connection->security = security;
@@ -263,6 +268,11 @@ bool __YMConnectionDestroy(YMConnectionRef connection)
 uint64_t YMConnectionDoSample(YMConnectionRef connection)
 {
     return (uint64_t)connection; // todo
+}
+
+YMAddressRef YMConnectionGetAddress(YMConnectionRef connection)
+{
+    return connection->address;
 }
 
 YMStreamRef YMConnectionCreateStream(YMConnectionRef connection, const char *name)

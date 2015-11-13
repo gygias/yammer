@@ -35,7 +35,12 @@ typedef struct __YMLocalSocketPair
 } _YMLocalSocketPair;
 
 int __YMLocalSocketPairCreateClient();
-void *__ym_local_socket_accept_proc(void *);
+typedef struct __ym_local_socket_pair_thread_context_def
+{
+    YMSemaphoreRef semaphore;
+} _ym_local_socket_pair_thread_context_def;
+typedef struct __ym_local_socket_pair_thread_context_def *__ym_local_socket_pair_thread_context;
+void __ym_local_socket_accept_proc(void *ctx);
 void __YMLocalSocketPairInitOnce(void);
 
 const char *__YMLocalSocketPairNameBase = "ym-local-socket";
@@ -141,16 +146,11 @@ int __YMLocalSocketPairCreateClient()
     return sock;
 }
 
-typedef struct __YMLocalSocketPairThreadContext
-{
-    YMSemaphoreRef semaphore;
-} _YMLocalSocketPairThreadContext;
-
 void __YMLocalSocketPairInitOnce(void)
 {
     YMSemaphoreRef waitForThreadSemaphore = YMSemaphoreCreate("local-socket-listening", 0);
     gYMLocalSocketPairDidAcceptSemaphore = YMSemaphoreCreate("local-socket-did-accept", 0);
-    struct __YMLocalSocketPairThreadContext context;
+    struct __ym_local_socket_pair_thread_context_def context;
     context.semaphore = waitForThreadSemaphore;
     gYMLocalSocketPairAcceptThread = YMThreadCreate("local-socket-accept", __ym_local_socket_accept_proc, &context);
     if ( ! gYMLocalSocketPairAcceptThread )
@@ -169,10 +169,10 @@ void __YMLocalSocketPairInitOnce(void)
     YMFree(waitForThreadSemaphore);
 }
 
-void *__ym_local_socket_accept_proc(void *context)
+void __ym_local_socket_accept_proc(void *ctx)
 {
     ymlog("__ym_local_socket_accept_proc entered");
-    struct __YMLocalSocketPairThreadContext *contextStruct = context;
+    __ym_local_socket_pair_thread_context context = (__ym_local_socket_pair_thread_context)ctx;
     
     uint16_t nameSuffixIter = 0;
 close_retry:;
@@ -232,7 +232,7 @@ close_retry:;
     }
     
     gYMLocalSocketPairName = tryName;
-    YMSemaphoreSignal(contextStruct->semaphore); // free'd by InitOnce
+    YMSemaphoreSignal(context->semaphore); // free'd by InitOnce
     
     ymlog("local-socket[spawn]: listening on %d",listenSocket);
     
@@ -255,5 +255,4 @@ close_retry:;
     }
     
     ymlog("__ym_local_socket_accept_proc exiting");
-    return NULL;
 }

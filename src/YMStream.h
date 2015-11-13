@@ -17,5 +17,6 @@ typedef struct __YMStream *YMStreamRef;
 
 void YMStreamWriteDown(YMStreamRef stream, const void *buffer, uint16_t length);
 YMIOResult YMStreamReadUp(YMStreamRef stream, void *buffer, uint16_t length);
+YMIOResult YMStreamWriteFile(YMStreamRef stream, int file, uint64_t *inBytes, uint64_t *outBytes);
 
 #endif /* YMStream_h */

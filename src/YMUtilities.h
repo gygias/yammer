@@ -42,9 +42,8 @@ typedef enum
     YMIOError = -1
 } YMIOResult;
 
-YMIOResult YMReadFull(int fd, uint8_t *buffer, size_t bytes);
-YMIOResult YMWriteFull(int fd, const uint8_t *buffer, size_t bytes);
-YMIOResult YMReadWriteFull(int inFile, int outFile, uint64_t *outBytes);
+YMIOResult YMReadFull(int fd, uint8_t *buffer, size_t bytes, size_t *outRead);
+YMIOResult YMWriteFull(int fd, const uint8_t *buffer, size_t bytes, size_t *outWritten);
 
 char *YMStringCreateWithFormat(char *formatStr, ...) __printflike(1, 2);
 char *YMStringCreateByAppendingString(char *baseStr, char *appendStr);

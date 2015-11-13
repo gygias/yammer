@@ -21,9 +21,6 @@
 #include <stdarg.h>
 #include <netinet/in.h>
 
-YMIOResult __YMReadFull(int fd, uint8_t *buffer, size_t bytes, size_t *outRead);
-YMIOResult __YMWriteFull(int fd, const uint8_t *buffer, size_t bytes, size_t *outWritten);
-
 void YMGetTheBeginningOfPosixTimeForCurrentPlatform(struct timeval *time)
 {
     time->tv_sec = MIN_OF(typeof(time->tv_sec));
@@ -53,17 +50,7 @@ ComparisonResult YMTimevalCompare(struct timeval *a, struct timeval *b)
     return EqualTo;
 }
 
-YMIOResult YMReadFull(int fd, uint8_t *buffer, size_t bytes)
-{
-    return __YMReadFull(fd, buffer, bytes, NULL);
-}
-
-YMIOResult YMWriteFull(int fd, const uint8_t *buffer, size_t bytes)
-{
-    return __YMWriteFull(fd, buffer, bytes, NULL);
-}
-
-YMIOResult __YMReadFull(int fd, uint8_t *buffer, size_t bytes, size_t *outRead)
+YMIOResult YMReadFull(int fd, uint8_t *buffer, size_t bytes, size_t *outRead)
 {
     YMIOResult result = YMIOSuccess;
     
@@ -88,7 +75,7 @@ YMIOResult __YMReadFull(int fd, uint8_t *buffer, size_t bytes, size_t *outRead)
     return result;
 }
 
-YMIOResult __YMWriteFull(int fd, const uint8_t *buffer, size_t bytes, size_t *outWritten)
+YMIOResult YMWriteFull(int fd, const uint8_t *buffer, size_t bytes, size_t *outWritten)
 {
     YMIOResult result = YMIOSuccess;
     ssize_t aWrite;
@@ -113,39 +100,6 @@ YMIOResult __YMWriteFull(int fd, const uint8_t *buffer, size_t bytes, size_t *ou
     if ( outWritten )
         *outWritten = off;
     return result;
-}
-
-YMIOResult YMReadWriteFull(int inFile, int outFile, uint64_t *outBytes)
-{
-    uint64_t off = 0;
-    
-    bool lastIter = false;
-    uint16_t bufferSize = 16384;
-    void *buffer = YMALLOC(bufferSize);
-    
-    YMIOResult aResult;
-    size_t aBytes;
-    do
-    {
-        aResult = __YMReadFull(inFile, buffer, bufferSize, &aBytes);
-        if ( aResult == YMIOError )
-        {
-            ymerr("read-write-full: error reading %llu-%llu from %d: %d (%s)",off,off+bufferSize,inFile,errno,strerror(errno));
-            break;
-        }
-        else if ( aResult == YMIOEOF )
-            lastIter = true;
-        
-        aResult = __YMWriteFull(outFile, buffer, aBytes, NULL);
-        
-        outBytes += aBytes;
-    } while(!lastIter);
-    
-    free(buffer);
-    
-    if ( outBytes )
-        *outBytes = off;
-    return aResult;
 }
 
 char *YMStringCreateWithFormat(char *formatStr, ...)

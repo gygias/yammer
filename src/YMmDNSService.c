@@ -52,7 +52,7 @@ void _YMmDNSRegisterCallback(__unused DNSServiceRef sdRef,
     // DNSServiceRefDeallocate?
 }
 
-void *_YMmDNSEventThread(void *context);
+void __ym_mdns_service_event_thread(void *);
 
 YMmDNSServiceRef YMmDNSServiceCreate(const char *type, const char *name, uint16_t port)
 {
@@ -196,7 +196,7 @@ ymbool YMmDNSServiceStart( YMmDNSServiceRef service )
     service->advertising = true;
     
     char *threadName = YMStringCreateWithFormat("mdns-event-%s-%s",service->type,service->name);
-    YMThreadRef eventThread = YMThreadCreate(threadName, _YMmDNSEventThread, service);
+    YMThreadRef eventThread = YMThreadCreate(threadName, __ym_mdns_service_event_thread, service);
     free(threadName);
     
     YMThreadStart(eventThread);
@@ -225,13 +225,12 @@ ymbool YMmDNSServiceStop( YMmDNSServiceRef service, ymbool synchronous )
     return okay;
 }
 
-void *_YMmDNSEventThread(void *context)
+void __ym_mdns_service_event_thread(void * ctx)
 {
-    YMmDNSServiceRef service = (YMmDNSServiceRef)context;
+    YMmDNSServiceRef service = (YMmDNSServiceRef)ctx;
     ymlog("event thread for %s entered...",service->name);
     while (service->advertising) {
         sleep(1);
     }
     ymlog("event thread for %s exiting...",service->name);
-    return NULL;
 }

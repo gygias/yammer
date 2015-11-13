@@ -37,6 +37,7 @@ typedef struct __YMSession
     YMDictionaryRef connectionsByAddress;
     YMLockRef connectionsByAddressLock;
     const char *logDescription;
+    YMConnectionRef defaultConnection;
     
     // server
     const char *name;
@@ -68,8 +69,10 @@ typedef struct __YMSession
 #pragma mark setup
 
 YMSessionRef __YMSessionCreateShared(const char *type, bool isServer);
-void *__ym_session_accept_proc(void *context);
-void *__ym_session_init_connection(void *context);
+void __YMSessionAddConnection(YMSessionRef session, YMConnectionRef connection);
+void __ym_session_accept_proc(void *);
+void *__ym_session_init_incoming_connection_proc(ym_thread_dispatch_ref);
+void *__ym_session_connect_async_proc(ym_thread_dispatch_ref);
 void __ym_mdns_service_appeared_func(YMmDNSBrowserRef browser, YMmDNSServiceRecord * service, void *context);
 void __ym_mdns_service_removed_func(YMmDNSBrowserRef browser, const char *name, void *context);
 void __ym_mdns_service_updated_func(YMmDNSBrowserRef browser, YMmDNSServiceRecord *service, void *context);
@@ -90,7 +93,7 @@ YMSessionRef YMSessionCreateServer(const char *type, const char *name)
     session->name = strdup(name);
     session->ipv4ListenSocket = -1;
     session->ipv6ListenSocket = -1;
-    session->logDescription = YMStringCreateWithFormat("s:%s@%s",type,name);
+    session->logDescription = YMStringCreateWithFormat("s:%s:%s",type,name);
     session->service = NULL;
     session->acceptThread = NULL;
     session->acceptThreadExitFlag = false;
@@ -193,7 +196,15 @@ ymbool YMSessionClientResolvePeer(YMSessionRef session, YMPeerRef peer)
     return YMmDNSBrowserResolve(session->browser, peerName);
 }
 
-ymbool YMSessionClientConnectToPeer(YMSessionRef session, YMPeerRef peer)
+typedef struct __ym_session_connect_async_context_def
+{
+    YMSessionRef session;
+    YMPeerRef peer;
+    YMConnectionRef connection;
+} ___ym_session_connect_async_context_def;
+typedef struct __ym_session_connect_async_context_def *__ym_session_connect_async_context;
+
+ymbool YMSessionClientConnectToPeer(YMSessionRef session, YMPeerRef peer, ymbool sync)
 {
     bool knownPeer = true;
     YMLockLock(session->availablePeersLock);
@@ -213,16 +224,104 @@ ymbool YMSessionClientConnectToPeer(YMSessionRef session, YMPeerRef peer)
     YMAddressRef address = (YMAddressRef)YMDictionaryGetItem(addresses, aKey);
     YMConnectionRef newConnection = YMConnectionCreate(address, YMConnectionStream, YMTLS);
     
-    return YMConnectionConnect(newConnection);
+    __ym_session_connect_async_context context = (__ym_session_connect_async_context)YMALLOC(sizeof(struct __ym_session_connect_async_context_def));
+    context->session = session;
+    context->peer = peer;
+    context->connection = newConnection;
+    
+    char *name = YMStringCreateWithFormat("session-async-connect-%s",YMAddressGetDescription(address));
+    ym_thread_dispatch connectDispatch;
+    connectDispatch.context = context;
+    connectDispatch.dispatchProc = __ym_session_connect_async_proc;
+    connectDispatch.description = name;
+    
+    YMThreadRef dispatchThread = NULL;
+    if ( ! sync )
+    {
+        dispatchThread = YMThreadDispatchCreate(name);
+        free(name);
+        if ( ! dispatchThread )
+        {
+            ymerr("session[%s]: error: failed to create async connect thread",session->logDescription);
+            return false;
+        }
+        bool okay = YMThreadStart(dispatchThread);
+        if ( ! okay )
+        {
+            ymerr("session[%s]: error: failed to start async connect thread",session->logDescription);
+            return false;
+        }
+        
+        YMThreadDispatchDispatch(dispatchThread, connectDispatch);
+    }
+    else
+    {
+        __ym_session_connect_async_proc(&connectDispatch);
+        //free(context); free'd by proc, to have one code path with async
+    }
+    
+    return true;
+}
+
+void *__ym_session_connect_async_proc(ym_thread_dispatch_ref dispatch)
+{
+    __ym_session_connect_async_context context = (__ym_session_connect_async_context)dispatch->context;
+    YMSessionRef session = context->session;
+    YMPeerRef peer = context->peer;
+    YMConnectionRef connection = context->connection;
+    free(context);
+    
+    ymlog("session[%s]: __ym_session_connect_async_proc entered",session->logDescription);
+    
+    bool okay = YMConnectionConnect(connection);
+    
+    if ( okay )
+    {
+        __YMSessionAddConnection(session,connection);
+        session->connectedFunc(session,connection,session->callbackContext);
+    }
+    else
+        session->connectFailedFunc(session,peer,session->callbackContext);
+    
+    ymlog("session[%s]: __ym_session_connect_async_proc exiting: %s",session->logDescription,okay?"success":"fail");
+    
+    return NULL;
+}
+
+void __YMSessionAddConnection(YMSessionRef session, YMConnectionRef connection)
+{
+    
+    YMLockLock(session->connectionsByAddressLock);
+    YMDictionaryKey key = (YMDictionaryKey)socket;
+    if ( YMDictionaryContains(session->connectionsByAddress, key) )
+    {
+        ymerr("session[%s]: error: connections list already contains %llu",session->logDescription,key);
+        abort();
+    }
+    YMDictionaryAdd(session->connectionsByAddress, (YMDictionaryKey)socket, connection);
+    YMLockUnlock(session->connectionsByAddressLock);
+    
+    bool isNewDefault = (session->defaultConnection == NULL);
+    YMAddressRef address = YMConnectionGetAddress(connection);
+    if ( ! address )
+    {
+        ymerr("session[%s]: internal: connection has no address",session->logDescription);
+        abort();
+    }
+    ymlog("session[%s]: adding %s connection for %s",session->logDescription,isNewDefault?"default":"aux",YMAddressGetDescription(address));
+    
+    if ( isNewDefault )
+        session->defaultConnection = connection;
 }
 
 #pragma mark server
 
-typedef struct __YMSessionAcceptThreadCtx
+typedef struct __ym_session_accept_thread_context_def
 {
     YMSessionRef session;
     bool ipv4;
-} _YMSessionAcceptThreadCtx;
+} _ym_session_accept_thread_context_def;
+typedef struct __ym_session_accept_thread_context_def *__ym_session_accept_thread_context;
 
 ymbool YMSessionServerStartAdvertising(YMSessionRef session)
 {
@@ -254,7 +353,7 @@ ymbool YMSessionServerStartAdvertising(YMSessionRef session)
         session->ipv6ListenSocket = socket;
     
     char *name = YMStringCreateWithFormat("session-accept-%s",session->type);
-    struct __YMSessionAcceptThreadCtx *ctx = YMALLOC(sizeof(struct __YMSessionAcceptThreadCtx));
+    __ym_session_accept_thread_context ctx = YMALLOC(sizeof(struct __ym_session_accept_thread_context_def));
     ctx->session = session;
     ctx->ipv4 = ipv4;
     session->acceptThread = YMThreadCreate(name, __ym_session_accept_proc, ctx);
@@ -328,21 +427,22 @@ ymbool YMSessionServerStopAdvertising(YMSessionRef session)
     return YMmDNSServiceStop(session->service, false);
 }
 
-typedef struct __YMInitConnectionCtx
+typedef struct __ym_connection_init_context_def
 {
     YMSessionRef session;
     int socket;
     struct sockaddr *addr;
     socklen_t addrLen; // redundant?
     bool ipv4;
-} _YMInitConnectionCtx;
+} ___ym_connection_init_context_def;
+typedef struct __ym_connection_init_context_def *__ym_connection_init_context;
 
-void *__ym_session_accept_proc(void *context)
+void __ym_session_accept_proc(void * ctx)
 {
-    struct __YMSessionAcceptThreadCtx *ctx = context;
-    YMSessionRef session = ctx->session;
-    bool ipv4 = ctx->ipv4;
-    free(ctx);
+    __ym_session_accept_thread_context context = (__ym_session_accept_thread_context)ctx;
+    YMSessionRef session = context->session;
+    bool ipv4 = context->ipv4;
+    free(context);
     
     while ( ! session->acceptThreadExitFlag )
     {
@@ -361,25 +461,22 @@ void *__ym_session_accept_proc(void *context)
         
         ymlog("session[%s]: accepted %d, dispatching connection init",session->logDescription, aResult);
         
-        struct __YMInitConnectionCtx *initCtx = (struct __YMInitConnectionCtx *)YMALLOC(sizeof(struct __YMInitConnectionCtx));
+        __ym_connection_init_context initCtx = (__ym_connection_init_context)YMALLOC(sizeof(struct __ym_connection_init_context_def));
         initCtx->session = session;
         initCtx->socket = aResult;
         initCtx->addr = (struct sockaddr *)bigEnoughAddr;
         initCtx->addrLen = thisLength;
         initCtx->ipv4 = ipv4;
-        YMThreadDispatchUserInfo userInfo = { __ym_session_init_connection, NULL, false, initCtx, "init-connection" };
-        YMThreadDispatchDispatch(session->initConnectionDispatchThread, &userInfo);
+        ym_thread_dispatch dispatch = { __ym_session_init_incoming_connection_proc, NULL, false, initCtx, "init-connection" };
+        YMThreadDispatchDispatch(session->initConnectionDispatchThread, dispatch);
     }
     
     session->acceptThreadExitFlag = false;
-    
-    return NULL;
 }
 
-void *__ym_session_init_connection(void *context)
+void *__ym_session_init_incoming_connection_proc(ym_thread_dispatch_ref dispatch)
 {
-    YMThreadDispatchUserInfoRef userInfo = context;
-    struct __YMInitConnectionCtx *initCtx = userInfo->context;
+    __ym_connection_init_context initCtx = dispatch->context;
     YMSessionRef session = initCtx->session;
     int socket = initCtx->socket;
     struct sockaddr *addr = initCtx->addr;
@@ -408,11 +505,7 @@ void *__ym_session_init_connection(void *context)
         goto catch_return;
     }
     
-    YMLockLock(session->connectionsByAddressLock);
-    YMDictionaryAdd(session->connectionsByAddress, (YMDictionaryKey)socket, newConnection);
-    YMLockUnlock(session->connectionsByAddressLock);
-    
-    ymlog("session[%s]: added connection for %s",session->logDescription,YMAddressGetDescription(address));
+    __YMSessionAddConnection(session, newConnection);
     session->connectedFunc(session,newConnection,session->callbackContext);
     
     free(addr);
@@ -429,6 +522,18 @@ catch_return:
     if ( newConnection )
         YMFree(newConnection);
     return NULL;
+}
+
+#pragma mark connected shared
+YMConnectionRef YMSessionGetDefaultConnection(YMSessionRef session)
+{
+    return session->defaultConnection;
+}
+
+YMDictionaryRef YMSessionGetConnections(YMSessionRef session)
+{
+    session = NULL;
+    return *(YMDictionaryRef *)session; // todo, sync
 }
 
 #pragma mark client mdns callbacks

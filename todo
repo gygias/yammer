@@ -1,3 +1,6 @@
+- struct defs once and for all. (empty) should be typedef'd as static, _ref for pointers, _def for (unintended to be used) struct def, like was done for ym_thread_dispatch
+- ymthread should free ym_thread_dispatch_forward_file_context/ym_thread_dispatch_user_context automatically
+   would need to wrap user's entry point in our own "manage memory" wrapper entry, at least for generic dispatches
 - clean up hard aborts used for development (like streamwritedown)
 - ssl i/o func 'call again' stuff is only for nonblocking underlying files, yeah?
 - each openssl "hive" seems to have its own error code defines, go back through and make sure int (return) isn't confused with ERR

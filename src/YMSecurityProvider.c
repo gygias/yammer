@@ -81,12 +81,12 @@ bool YMNoSecurityInit(__unused YMSecurityProviderRef provider)
 
 bool YMNoSecurityRead(YMSecurityProviderRef provider, uint8_t *buffer, size_t bytes)
 {
-    return YMReadFull(provider->readFile, buffer, bytes);
+    return YMReadFull(provider->readFile, buffer, bytes, NULL);
 }
 
 bool YMNoSecurityWrite(YMSecurityProviderRef provider, const uint8_t *buffer, size_t bytes)
 {
-    return YMWriteFull(provider->writeFile, buffer, bytes);
+    return YMWriteFull(provider->writeFile, buffer, bytes, NULL);
 }
 
 bool YMNoSecurityClose(__unused YMSecurityProviderRef provider)

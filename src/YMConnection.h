@@ -33,18 +33,18 @@ typedef void (*ym_connection_interrupted_func)(YMConnectionRef,void*);
 
 YMConnectionRef YMConnectionCreate(YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType);
 YMConnectionRef YMConnectionCreateIncoming(int socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType);
-
 void YMConnectionSetCallbacks(YMConnectionRef connection,
                               ym_connection_new_stream_func newFunc, void *newFuncContext,
                               ym_connection_stream_closing_func closingFunc, void *closingFuncContext,
                               ym_connection_interrupted_func interruptedFunc, void *interruptedFuncContext);
-
 bool YMConnectionConnect(YMConnectionRef connection);
-bool YMConnectionClose(YMConnectionRef connection);
 
 uint64_t YMConnectionDoSample(YMConnectionRef connection);
+YMAddressRef YMConnectionGetAddress(YMConnectionRef connection);
 
 YMStreamRef YMConnectionCreateStream(YMConnectionRef connection, const char *name);
 void YMConnectionCloseStream(YMConnectionRef connection, YMStreamRef stream);
+
+bool YMConnectionClose(YMConnectionRef connection);
 
 #endif /* YMConnection_h */

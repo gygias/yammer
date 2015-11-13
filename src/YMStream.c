@@ -155,7 +155,7 @@ void YMStreamWriteDown(YMStreamRef stream, const void *buffer, uint16_t length)
     YMStreamCommand header = { length };
     
     ymlog("  stream[%s,i%d!->o%dV,^o%d<-i%d,s%u]: writing header for command: %ub",stream->name,downstreamWrite,debugDownstreamRead,debugUpstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,length);
-    YMIOResult result = YMWriteFull(downstreamWrite, (void *)&header, sizeof(header));
+    YMIOResult result = YMWriteFull(downstreamWrite, (void *)&header, sizeof(header), NULL);
     if ( result != YMIOSuccess )
     {
         ymerr("  stream[%s,i%d!->o%dV,^o%d<-i%d,s%u]: fatal: failed writing header for stream chunk size %ub",stream->name,downstreamWrite,debugDownstreamRead,debugUpstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,length);
@@ -163,7 +163,7 @@ void YMStreamWriteDown(YMStreamRef stream, const void *buffer, uint16_t length)
     }
     ymlog("  stream[%s,i%d!->o%dV,^o%d<-i%d,s%u]: wrote header for command: %u",stream->name,downstreamWrite,debugDownstreamRead,debugUpstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,length);
     
-    result = YMWriteFull(downstreamWrite, buffer, length);
+    result = YMWriteFull(downstreamWrite, buffer, length, NULL);
     if ( result != YMIOSuccess )
     {
         ymerr("  stream[%s,i%d!->o%dV,^o%d<-i%d,s%u]: fatal: failed writing stream chunk with size %ub",stream->name,downstreamWrite,debugDownstreamRead,debugUpstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,length);
@@ -185,7 +185,7 @@ void _YMStreamReadDown(YMStreamRef stream, void *buffer, uint32_t length)
     int debugUpstreamWrite = YMPipeGetInputFile(stream->upstreamPipe);
     int debugUpstreamRead = YMPipeGetOutputFile(stream->upstreamPipe);
     ymlog("  stream[%s,i%d->o%d!V,^Vo%d<-i%d,s%u]: reading %ub from downstream",stream->name,debugDownstreamWrite,downstreamRead,debugUpstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,length);
-    YMIOResult result = YMReadFull(downstreamRead, buffer, length);
+    YMIOResult result = YMReadFull(downstreamRead, buffer, length, NULL);
     if ( result != YMIOSuccess )
     {
         ymerr("  stream[%s,i%d->o%d!V,^Vo%d<-i%d,s%u]: error: failed reading %ub from downstream",stream->name,debugDownstreamWrite,downstreamRead,debugUpstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,length);
@@ -203,7 +203,7 @@ void _YMStreamWriteUp(YMStreamRef stream, const void *buffer, uint32_t length)
     int upstreamWrite = YMPipeGetInputFile(stream->upstreamPipe);
     int debugUpstreamRead = YMPipeGetOutputFile(stream->upstreamPipe);
     
-    YMIOResult result = YMWriteFull(upstreamWrite, buffer, length);
+    YMIOResult result = YMWriteFull(upstreamWrite, buffer, length, NULL);
     if ( result == YMIOError )
     {
         ymerr("  stream[%s,i%d!->o%dV,^Vo%d<-i%d,s%u]: fatal: failed writing %u bytes to upstream",stream->name,debugDownstreamWrite,downstreamRead,debugUpstreamRead,upstreamWrite,stream->__userInfo->streamID,length);
@@ -220,7 +220,7 @@ YMIOResult YMStreamReadUp(YMStreamRef stream, void *buffer, uint16_t length)
     int upstreamRead = YMPipeGetOutputFile(stream->upstreamPipe);
     
     ymlog("  stream[%s,i%d->o%dV,^Vo%d!<-i%d,s%u]: reading %ub user data",stream->name,debugDownstreamWrite,downstreamRead,upstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,length);
-    YMIOResult result = YMReadFull(upstreamRead, buffer, length);
+    YMIOResult result = YMReadFull(upstreamRead, buffer, length, NULL);
     if ( result == YMIOError ) // in-process i/o errors are fatal
     {
         ymerr("  stream[%s,i%d->o%dV,^Vo%d!<-i%d,s%u]: fatal: reading %ub user data: %d (%s)",stream->name,debugDownstreamWrite,downstreamRead,upstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,length,errno,strerror(errno));
@@ -232,6 +232,54 @@ YMIOResult YMStreamReadUp(YMStreamRef stream, void *buffer, uint16_t length)
         ymlog("  stream[%s,i%d->o%dV,^Vo%d!<-i%d,s%u]: read %ub from upstream",stream->name,debugDownstreamWrite,downstreamRead,upstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,length);
     
     return result;
+}
+
+YMIOResult YMStreamWriteFile(YMStreamRef stream, int file, uint64_t *inBytes, uint64_t *outBytes)
+{
+    uint64_t off = 0;
+    uint64_t remainingIfInBytes = inBytes ? *inBytes : 0;
+    
+    bool lastIter = false;
+    uint16_t bufferSize = 16384;
+    void *buffer = YMALLOC(bufferSize);
+    YMStreamID streamID = stream->__userInfo->streamID;
+    
+    YMIOResult aResult = YMIOError; // i guess if called with 0 it's an 'error' (?)
+    size_t aBytes;
+    do
+    {
+        uint16_t aChunkSize = inBytes ? ( remainingIfInBytes < bufferSize ? (uint16_t)remainingIfInBytes : bufferSize ) : bufferSize;
+        
+        aResult = YMReadFull(file, buffer, aChunkSize, &aBytes);
+        if ( aResult == YMIOError )
+        {
+            ymerr("read-write-full: %d->s%u error %llu-%llu: %d (%s)",file,streamID,off,off+aChunkSize,errno,strerror(errno));
+            break;
+        }
+        else if ( aResult == YMIOEOF )
+            lastIter = true;
+        
+        if ( aBytes > UINT16_MAX )
+            abort();
+        
+        YMStreamWriteDown(stream, buffer, (uint16_t)aBytes);
+        
+        if ( inBytes )
+        {
+            if ( aBytes > remainingIfInBytes ) // todo guard or not, it's all internal
+                abort();
+            
+            remainingIfInBytes -= aBytes;
+            if ( remainingIfInBytes == 0 )
+                lastIter = true;
+        }
+    } while ( ! lastIter );
+    
+    free(buffer);
+    
+    if ( outBytes )
+        *outBytes = off;
+    return aResult;
 }
 
 void _YMStreamClose(YMStreamRef stream)
@@ -248,7 +296,7 @@ void _YMStreamClose(YMStreamRef stream)
     YMLockLock(stream->retainLock);
     {
         YMStreamCommand command = { YMStreamClose };
-        YMIOResult result = YMWriteFull(downstreamWrite, (void *)&command, sizeof(YMStreamClose));
+        YMIOResult result = YMWriteFull(downstreamWrite, (void *)&command, sizeof(YMStreamClose), NULL);
         if ( result != YMIOSuccess )
         {
             ymerr("  stream[%s,Vi%d!->o%d,^o%d<-i%d,s%u]: fatal: writing close byte to plexer: %d (%s)",stream->name,downstreamWrite,debugDownstreamRead,debugUpstreamRead,debugUpstreamWrite,stream->__userInfo->streamID,errno,strerror(errno));

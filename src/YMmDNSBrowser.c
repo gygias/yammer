@@ -58,7 +58,7 @@ static void DNSSD_API _YMmDNSBrowseCallback(DNSServiceRef sdRef, DNSServiceFlags
 void DNSSD_API _YMmDNSResolveCallback(DNSServiceRef serviceRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *name,
                                       const char *host, uint16_t port, uint16_t txtLen, const unsigned char *txtRecord, void *context );
 
-void *_YMmDNSBrowserEventThread(void *context);
+void __ym_mdns_browser_event_proc(void *);
 
 #pragma mark private
 void _YMmDNSBrowserAddOrUpdateService(_YMmDNSBrowser *browser, YMmDNSServiceRecord *record);
@@ -210,7 +210,7 @@ bool YMmDNSBrowserStart(YMmDNSBrowserRef browser)
     }
     
     char *threadName = YMStringCreateWithFormat("mdns-browse-%s",browser->type);
-    browser->browseEventThread = YMThreadCreate(threadName, _YMmDNSBrowserEventThread, browser);
+    browser->browseEventThread = YMThreadCreate(threadName, __ym_mdns_browser_event_proc, browser);
     free(threadName);
     
     bool okay = YMThreadStart(browser->browseEventThread);
@@ -415,9 +415,9 @@ catch_callback_and_release:
 }
 
 // this function was mostly lifted from "Zero Configuration Networking: The Definitive Guide" -o'reilly
-void *_YMmDNSBrowserEventThread( void *context )
+void __ym_mdns_browser_event_proc( void *ctx )
 {
-    _YMmDNSBrowser *browser = (_YMmDNSBrowser *)context;
+    _YMmDNSBrowser *browser = (_YMmDNSBrowser *)ctx;
     bool keepGoing = true;
     while ( keepGoing )
     {
@@ -478,5 +478,4 @@ void *_YMmDNSBrowserEventThread( void *context )
     }
     
     ymlog("mDNS event thread exiting");
-    return 0;
 }

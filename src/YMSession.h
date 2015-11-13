@@ -49,7 +49,11 @@ void YMSessionSetSharedCallbacks(YMSessionRef session, ym_session_connected_func
 
 ymbool YMSessionClientStart(YMSessionRef session);
 ymbool YMSessionClientResolvePeer(YMSessionRef session, YMPeerRef peer);
-ymbool YMSessionClientConnectToPeer(YMSessionRef session, YMPeerRef peer);
+ymbool YMSessionClientStart(YMSessionRef session);
+ymbool YMSessionClientConnectToPeer(YMSessionRef session, YMPeerRef peer, ymbool sync);
+
+YMConnectionRef YMSessionGetDefaultConnection(YMSessionRef session);
+YMDictionaryRef YMSessionGetConnections(YMSessionRef session);
 
 ymbool YMSessionServerStartAdvertising(YMSessionRef session);
 ymbool YMSessionServerStopAdvertising(YMSessionRef session);
