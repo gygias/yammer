@@ -15,7 +15,8 @@ YMPeerRef _YMPeerCreateWithAddress(YMAddressRef address);
 YMPeerRef _YMPeerCreate(const char *name, YMDictionaryRef addresses, YMDictionaryRef certificates);
 
 void _YMPeerSetName(YMPeerRef peer, const char *name);
-void _YMPeerSetAddresses(YMDictionaryRef addresses);
-void _YMPeerSetCertificates(YMDictionaryRef certificates);
+void _YMPeerSetAddresses(YMPeerRef peer, YMDictionaryRef addresses);
+void _YMPeerSetPort(YMPeerRef peer, uint16_t port);
+void _YMPeerSetCertificates(YMPeerRef peer, YMDictionaryRef certificates);
 
 #endif /* YMPeerPriv_h */

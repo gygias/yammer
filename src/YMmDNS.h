@@ -27,7 +27,7 @@ typedef struct _YMmDNSServiceRecord
     
     // values below aren't known until the service is resolved
     bool resolved;
-    const char *address;
+    struct hostent *hostNames;
     uint16_t port;
     YMmDNSTxtRecordKeyPair **txtRecordKeyPairs;
     size_t txtRecordKeyPairsSize;
@@ -39,7 +39,7 @@ typedef struct _YMmDNSServiceList
     struct _YMmDNSServiceList *next;
 } YMmDNSServiceList;
 
-YMmDNSServiceRecord *_YMmDNSCreateServiceRecord(const char *name, const char*type, const char *domain, bool resolved, const char *address,
+YMmDNSServiceRecord *_YMmDNSCreateServiceRecord(const char *name, const char*type, const char *domain, bool resolved, const char *hostname,
                                                 uint16_t port, const unsigned char *txtRecord, uint16_t txtLength);
 YMmDNSTxtRecordKeyPair **__YMmDNSCreateTxtKeyPairs(const unsigned char *txtRecord, uint16_t txtLength, size_t *outSize);
 void _YMmDNSServiceListFree(YMmDNSServiceList *serviceList); // xxx

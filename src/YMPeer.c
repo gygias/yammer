@@ -14,6 +14,7 @@ typedef struct __YMPeer
     
     const char *name;
     YMDictionaryRef addresses;
+    uint16_t port;
     YMDictionaryRef certificates;
 } _YMPeer;
 
@@ -65,6 +66,11 @@ YMDictionaryRef YMPeerGetAddresses(YMPeerRef peer)
     return peer->addresses;
 }
 
+uint16_t YMPeerGetPort(YMPeerRef peer)
+{
+    return peer->port;
+}
+
 YMDictionaryRef YMPeerGetCertificates(YMPeerRef peer)
 {
     return peer->certificates;
@@ -78,6 +84,11 @@ void _YMPeerSetName(YMPeerRef peer, const char *name)
 void _YMPeerSetAddresses(YMPeerRef peer, YMDictionaryRef addresses)
 {
     peer->addresses = addresses;
+}
+
+void _YMPeerSetPort(YMPeerRef peer, uint16_t port)
+{
+    peer->port = port;
 }
 
 void _YMPeerSetCertificates(YMPeerRef peer, YMDictionaryRef certificates)

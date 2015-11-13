@@ -401,7 +401,7 @@ void DNSSD_API _YMmDNSResolveCallback(__unused DNSServiceRef serviceRef,__unused
 #else
                                             NULL,
 #endif
-                                            true, host, hostPort, txtRecord, txtLength); // could be optimized
+                                            true, host, ntohs(hostPort), txtRecord, txtLength); // could be optimized
         _YMmDNSBrowserAddOrUpdateService(browser, record);
     }
     

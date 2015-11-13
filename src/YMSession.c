@@ -25,6 +25,7 @@
 #endif
 
 #include <netinet/in.h>
+#include <netdb.h> // struct hostent
 
 typedef struct __YMSession
 {
@@ -174,6 +175,47 @@ ymbool YMSessionClientStart(YMSessionRef session)
     return true;
 }
 
+ymbool YMSessionClientResolvePeer(YMSessionRef session, YMPeerRef peer)
+{
+    YMLockLock(session->availablePeersLock);
+    const char *peerName = YMPeerGetName(peer);
+    bool knownPeer = true;
+    if ( ! YMDictionaryContains(session->availablePeers, (YMDictionaryKey)peer) )
+    {
+        ymerr("session[%s]: requested resolve of unknown peer: %s",session->logDescription,peerName);
+        knownPeer = false;
+    }
+    YMLockUnlock(session->availablePeersLock);
+    
+    if ( ! knownPeer )
+        return false;
+    
+    return YMmDNSBrowserResolve(session->browser, peerName);
+}
+
+ymbool YMSessionClientConnectToPeer(YMSessionRef session, YMPeerRef peer)
+{
+    bool knownPeer = true;
+    YMLockLock(session->availablePeersLock);
+    const char *peerName = YMPeerGetName(peer);
+    if ( ! YMDictionaryContains(session->availablePeers, (YMDictionaryKey)peer) )
+    {
+        ymerr("session[%s]: requested connect to unknown peer: %s",session->logDescription,peerName);
+        knownPeer = false;
+    }
+    YMLockUnlock(session->availablePeersLock);
+    
+    if ( ! knownPeer )
+        return false;
+    
+    YMDictionaryRef addresses = YMPeerGetAddresses(peer);
+    YMDictionaryKey aKey = YMDictionaryRandomKey(addresses);
+    YMAddressRef address = (YMAddressRef)YMDictionaryGetItem(addresses, aKey);
+    YMConnectionRef newConnection = YMConnectionCreate(address, YMConnectionStream, YMTLS);
+    
+    return YMConnectionConnect(newConnection);
+}
+
 #pragma mark server
 
 typedef struct __YMSessionAcceptThreadCtx
@@ -235,7 +277,13 @@ ymbool YMSessionServerStartAdvertising(YMSessionRef session)
     free(name);
     if ( ! session->initConnectionDispatchThread )
     {
-        ymerr("session[%s]: error: failed to start connection init thread",session->logDescription);
+        ymerr("session[%s]: error: failed to create connection init thread",session->logDescription);
+        goto rewind_fail;
+    }
+    threadOK = YMThreadStart(session->initConnectionDispatchThread);
+    if ( ! threadOK )
+    {
+        ymerr("session[%s]: error: failed to start start connection init thread",session->logDescription);
         goto rewind_fail;
     }
     
@@ -311,9 +359,11 @@ void *__ym_session_accept_proc(void *context)
             continue;
         }
         
+        ymlog("session[%s]: accepted %d, dispatching connection init",session->logDescription, aResult);
+        
         struct __YMInitConnectionCtx *initCtx = (struct __YMInitConnectionCtx *)YMALLOC(sizeof(struct __YMInitConnectionCtx));
         initCtx->session = session;
-        initCtx->socket = socket;
+        initCtx->socket = aResult;
         initCtx->addr = (struct sockaddr *)bigEnoughAddr;
         initCtx->addrLen = thisLength;
         initCtx->ipv4 = ipv4;
@@ -328,13 +378,16 @@ void *__ym_session_accept_proc(void *context)
 
 void *__ym_session_init_connection(void *context)
 {
-    struct __YMInitConnectionCtx *initCtx = context;
+    YMThreadDispatchUserInfoRef userInfo = context;
+    struct __YMInitConnectionCtx *initCtx = userInfo->context;
     YMSessionRef session = initCtx->session;
     int socket = initCtx->socket;
     struct sockaddr *addr = initCtx->addr;
     socklen_t addrLen = initCtx->addrLen;
     __unused bool ipv4 = initCtx->ipv4;
     free(initCtx);
+    
+    ymlog("session[%s]: __ym_session_init_connection entered: %d %d %d",session->logDescription,socket,addrLen,ipv4);
     
     YMAddressRef address = NULL;
     YMPeerRef peer = NULL;
@@ -348,7 +401,7 @@ void *__ym_session_init_connection(void *context)
         goto catch_return;
     }
     
-    newConnection = YMConnectionCreate(address, YMConnectionStream, YMTLS);
+    newConnection = YMConnectionCreateIncoming(socket, address, YMConnectionStream, YMTLS);
     if ( ! newConnection )
     {
         ymlog("session[%s]: failed to create new connection",session->logDescription);
@@ -359,7 +412,7 @@ void *__ym_session_init_connection(void *context)
     YMDictionaryAdd(session->connectionsByAddress, (YMDictionaryKey)socket, newConnection);
     YMLockUnlock(session->connectionsByAddressLock);
     
-    ymlog("session[%s]: added connection for %s",session->logDescription,YMAddressGetAddressData(address));
+    ymlog("session[%s]: added connection for %s",session->logDescription,YMAddressGetDescription(address));
     session->connectedFunc(session,newConnection,session->callbackContext);
     
     free(addr);
@@ -377,6 +430,8 @@ catch_return:
         YMFree(newConnection);
     return NULL;
 }
+
+#pragma mark client mdns callbacks
 
 void __ym_mdns_service_appeared_func(__unused YMmDNSBrowserRef browser, YMmDNSServiceRecord * service, void *context)
 {
@@ -455,6 +510,42 @@ void __ym_mdns_service_resolved_func(__unused YMmDNSBrowserRef browser, bool suc
         }
         YMDictionaryEnumeratorEnd(myEnum);
     }
+    
+    YMDictionaryRef addresses = YMDictionaryCreate();
+    
+    char *portString = YMStringCreateWithFormat("%u",service->port);
+    struct addrinfo *outAddrInfo;
+    int result = getaddrinfo(service->hostNames->h_name, portString, NULL, &outAddrInfo);
+    free(portString);
+    
+    if ( result != 0 )
+    {
+        ymerr("session[%s]: error: failed to resolve addresses for '%s'",session->logDescription,service->hostNames->h_name);
+    }
+    else
+    {
+#pragma message "move this into YMAddress"
+        struct addrinfo *addrInfoIter = outAddrInfo;
+        while ( addrInfoIter )
+        {
+#pragma message "revisit"
+            if ( addrInfoIter->ai_family == AF_INET /*|| addrInfoIter->ai_family == AF_INET6*/ )
+            {
+                YMAddressRef address = YMAddressCreate(addrInfoIter->ai_addr, addrInfoIter->ai_addrlen);
+                if ( address )
+                    YMDictionaryAdd(addresses, (YMDictionaryKey)address, address);
+                ymlog("session[%s]: %s address with family %d proto %d length %d canon %s: %s",session->logDescription,address?"parsed":"failed to parse",
+                      addrInfoIter->ai_family,addrInfoIter->ai_protocol,addrInfoIter->ai_addrlen,addrInfoIter->ai_canonname,address?YMAddressGetDescription(address):"(null");
+            }
+            else
+                ymlog("session[%s]: ignoring address with family %d proto %d length %d canon %s:",session->logDescription,
+                      addrInfoIter->ai_family,addrInfoIter->ai_protocol,addrInfoIter->ai_addrlen,addrInfoIter->ai_canonname);
+            addrInfoIter = addrInfoIter->ai_next;
+        }
+        _YMPeerSetAddresses(peer, addresses);
+        _YMPeerSetPort(peer, service->port);
+    }
+    
     YMLockUnlock(session->availablePeersLock);
     
     if ( found )

@@ -128,6 +128,25 @@ YMAddressRef YMAddressCreateLocalHostIPV4(uint16_t port)
     return address;
 }
 
+YMAddressRef YMAddressCreateWithIPStringAndPort(const char *ipString, uint16_t port)
+{
+    struct in_addr inAddr = {0};
+    int result = inet_aton(ipString, &inAddr);
+    if ( result != 1 )
+    {
+        ymlog("address: failed to parse '%s' (%u)",ipString,port);
+        return NULL;
+    }
+    
+    struct sockaddr_in sinAddr = {0,0,0,{0},{0}};
+    sinAddr.sin_len = sizeof(struct sockaddr_in);
+    sinAddr.sin_family = AF_INET;
+    sinAddr.sin_port = port;
+    sinAddr.sin_addr.s_addr = inAddr.s_addr;
+    
+    return YMAddressCreate(&sinAddr, sinAddr.sin_len);
+}
+
 void _YMAddressFree(YMTypeRef object)
 {
     YMAddressRef address = (YMAddressRef)object;
@@ -182,9 +201,7 @@ int YMAddressGetDefaultProtocolForAddressFamily(int addressFamily)
     switch(addressFamily)
     {
         case AF_INET:
-            return PF_INET;
-        case AF_INET6:
-            return PF_INET6;
+            return IPPROTO_TCP;
         default: ;
     }
     

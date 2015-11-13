@@ -16,6 +16,7 @@ typedef struct __YMPeer *YMPeerRef;
 
 const char *YMPeerGetName(YMPeerRef);
 YMDictionaryRef YMPeerGetAddresses(YMPeerRef);
+uint16_t YMPeerGetPort(YMPeerRef);
 YMDictionaryRef YMPeerGetCertificates(YMPeerRef);
 
 #endif /* YMPeer_h */

@@ -21,6 +21,7 @@
     YMConnectionRef clientConnection;
     
     BOOL expectingRemoval;
+    BOOL runningTest;
 }
 @end
 
@@ -59,6 +60,11 @@ SessionTests *gTheSessionTest = nil;
     
     started = YMSessionClientStart(clientSession);
     XCTAssert(started,@"client start");
+    
+    runningTest = YES;
+    
+    while (runningTest)
+        CFRunLoopRunInMode(kCFRunLoopDefaultMode, 1, false);
 }
 
 - (void)testPerformanceExample {
@@ -82,7 +88,8 @@ void _ym_session_added_peer_func(YMSessionRef session, YMPeerRef peer, void *con
     XCTAssert(0==strcmp(YMPeerGetName(peer),testName),@"added name");
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_global_queue(0, 0), ^{
-        // resolve
+        NSLog(@"resolving %s",YMPeerGetName(peer));
+        YMSessionClientResolvePeer(session, peer);
     });
 }
 
@@ -125,9 +132,11 @@ void _ym_session_resolved_peer_func(YMSessionRef session, YMPeerRef peer, void *
     XCTAssert(context==(__bridge void *)self,@"resolved context");
     XCTAssert(session==clientSession,@"resolved session");
     XCTAssert(0==strcmp(YMPeerGetName(peer),testName),@"resolved name");
+    XCTAssert(YMPeerGetAddresses(peer));
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_global_queue(0, 0), ^{
-        // connect
+        NSLog(@"connecting to %s...",YMPeerGetName(peer));
+        YMSessionClientConnectToPeer(session,peer);
     });
 }
 
@@ -155,7 +164,7 @@ bool _ym_session_should_accept_func(YMSessionRef session, YMPeerRef peer, void *
 - (bool)shouldAccept:(YMSessionRef)session :(YMPeerRef)peer :(void *)context
 {
     XCTAssert(context==(__bridge void *)self,@"shouldAccept context");
-    XCTAssert(session==clientSession,@"shouldAccept session");
+    XCTAssert(session==serverSession,@"shouldAccept session");
     XCTAssert(peer,@"shouldAccept peer");
     return true;
 }

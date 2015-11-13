@@ -48,6 +48,8 @@ void YMSessionSetSharedCallbacks(YMSessionRef session, ym_session_connected_func
                                  ym_session_new_stream_func new_, ym_session_stream_closing_func closing);
 
 ymbool YMSessionClientStart(YMSessionRef session);
+ymbool YMSessionClientResolvePeer(YMSessionRef session, YMPeerRef peer);
+ymbool YMSessionClientConnectToPeer(YMSessionRef session, YMPeerRef peer);
 
 ymbool YMSessionServerStartAdvertising(YMSessionRef session);
 ymbool YMSessionServerStopAdvertising(YMSessionRef session);

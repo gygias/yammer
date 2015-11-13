@@ -21,6 +21,7 @@ typedef enum
 
 YMAddressRef YMAddressCreate(void* addressData, uint32_t length);
 YMAddressRef YMAddressCreateLocalHostIPV4(uint16_t port);
+YMAddressRef YMAddressCreateWithIPStringAndPort(const char *ipString, uint16_t port);
 
 const void *YMAddressGetAddressData(YMAddressRef address);
 int YMAddressGetLength(YMAddressRef address);

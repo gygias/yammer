@@ -15,6 +15,7 @@ typedef struct __YMThread *YMThreadRef;
 typedef void *(*ym_thread_entry)(void *);
 
 // function pointers for YMThreadDispatchUserInfo
+#pragma message "todo: make parameter explicitly YMThreadDispatchUserInfoRef, i got confused thinkng it was userInfo->context"
 typedef void *(*ym_thread_dispatch_entry)(void *);
 typedef void *(*ym_thread_dispatch_dealloc)(void *);
 

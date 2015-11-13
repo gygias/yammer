@@ -79,6 +79,7 @@ YMConnectionRef YMConnectionCreateIncoming(int socket, YMAddressRef address, YMC
     bool commonInitOK = __YMConnectionInitCommon(connection, socket, true);
     if ( ! commonInitOK )
     {
+        ymlog("connection[%s]: server init failed",YMAddressGetDescription(address));
         YMFree(connection);
         return NULL;
     }
@@ -147,8 +148,9 @@ bool YMConnectionConnect(YMConnectionRef connection)
     int domain = YMAddressGetDomain(connection->address);
     int addressFamily = YMAddressGetAddressFamily(connection->address);
     int protocol = YMAddressGetDefaultProtocolForAddressFamily(addressFamily);
+    //struct protoent *ppe = getprotobyname("tcp");
     
-    int newSocket = socket(domain, type, protocol);
+    int newSocket = socket(domain, type, protocol); // xxx
     if ( newSocket < 0 )
     {
         ymerr("connection: socket(%s) failed: %d (%s)",YMAddressGetDescription(connection->address),errno,strerror(errno));
@@ -157,10 +159,15 @@ bool YMConnectionConnect(YMConnectionRef connection)
     
     ymlog("connection[%s]: connecting...",YMAddressGetDescription(connection->address));
     
-    int result = connect(newSocket, YMAddressGetAddressData(connection->address), YMAddressGetLength(connection->address));
+    struct sockaddr *addr = (struct sockaddr *)YMAddressGetAddressData(connection->address);
+    socklen_t addrLen = YMAddressGetLength(connection->address);
+    __unused struct sockaddr_in *addrAsIPV4 = (struct sockaddr_in *)addr;
+    __unused struct sockaddr_in6 *addrAsIPV6 = (struct sockaddr_in6 *)addr;
+    
+    int result = connect(newSocket, addr, addrLen);
     if ( result != 0 )
     {
-        ymerr("connection: connect(%s)",YMAddressGetDescription(connection->address));
+        ymerr("connection: error: connect(%s): %d (%s)",YMAddressGetDescription(connection->address),errno,strerror(errno));
         close(newSocket);
         return false;
     }
@@ -193,7 +200,7 @@ bool __YMConnectionInitCommon(YMConnectionRef connection, int newSocket, bool as
             security = (YMSecurityProviderRef)YMTLSProviderCreateWithFullDuplexFile(newSocket, asServer);
             break;
         default:
-            ymerr("connection: unknown security type");
+            ymerr("connection[%s]: unknown security type",YMAddressGetDescription(connection->address));
             goto rewind_fail;
     }
     
@@ -235,7 +242,8 @@ bool YMConnectionClose(YMConnectionRef connection)
 
 bool __YMConnectionDestroy(YMConnectionRef connection)
 {
-    YMPlexerStop(connection->plexer);
+    if ( connection->plexer )
+        YMPlexerStop(connection->plexer);
     bool securityOK = YMSecurityProviderClose(connection->security);
     if ( ! securityOK )
         ymerr("connection[%s]: warning: failed to close security",YMAddressGetDescription(connection->address));

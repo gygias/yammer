@@ -10,6 +10,8 @@
 
 #include "YMPrivate.h"
 
+#include <netdb.h>
+
 //#include <dns_sd.h>
 
 // mDNS rules:
@@ -60,13 +62,13 @@ void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record)
         free( (char *)record->type );
     if ( record->domain )
         free( (char *)record->domain );
-    if ( record->address )
-        free( (char *)record->address );
+    //if ( record->hostNames )  // todo: i can't find any mention of ownership of this struct
+    //    free( (char *)record->hostNames );
     if ( record->txtRecordKeyPairs )
         _YMmDNSTxtRecordKeyPairsFree( (YMmDNSTxtRecordKeyPair **)record->txtRecordKeyPairs, record->txtRecordKeyPairsSize );
 }
 
-YMmDNSServiceRecord *_YMmDNSCreateServiceRecord(const char *name, const char*type, const char *domain, bool resolved, const char *address,
+YMmDNSServiceRecord *_YMmDNSCreateServiceRecord(const char *name, const char*type, const char *domain, bool resolved, const char *hostname,
                                                 uint16_t port, const unsigned char *txtRecord, uint16_t txtLength)
 {
     YMmDNSServiceRecord *record = (YMmDNSServiceRecord *)YMALLOC(sizeof(struct _YMmDNSServiceRecord));
@@ -87,10 +89,13 @@ YMmDNSServiceRecord *_YMmDNSCreateServiceRecord(const char *name, const char*typ
     
     record->resolved = resolved;
     
-    if ( address )
-        record->address = strdup(address);
-    else
-        record->address = NULL;
+    if ( hostname )
+    {
+        struct hostent *hostNames = gethostbyname(hostname);
+        if ( ! hostNames )
+            ymerr("mdns: warning: gethostbyname failed for %s",hostname);
+        record->hostNames = hostNames;
+    }
     
     record->port = port;
     
@@ -131,7 +136,7 @@ YMmDNSTxtRecordKeyPair **__YMmDNSCreateTxtKeyPairs(const unsigned char *txtRecor
         char *equalsPtr = strstr((const char *)aPairWalker,"=");
         if ( equalsPtr == NULL )
         {
-            ymlog("__YMmDNSCreateTxtKeyPairs failed to parse txt record");
+            ymlog("mdns: warning: failed to parse %ub txt record",txtLength);
             _YMmDNSTxtRecordKeyPairsFree(keyPairList, listSize);
             return NULL;
         }

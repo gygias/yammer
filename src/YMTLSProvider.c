@@ -61,8 +61,7 @@ unsigned long ym_tls_thread_id_callback()
     return (unsigned long)pthread_self();
 }
 
-YMLockRef *gYMTLSLocks = NULL;
-int gYMTLSLocksSize = 24;
+static YMLockRef *gYMTLSLocks = NULL;
 
 void ym_tls_lock_callback(int mode, int type, __unused char *file, __unused int line)
 {
@@ -161,8 +160,8 @@ void _YMTLSProviderFree(YMTypeRef object)
     YMTLSProviderRef tls = (YMTLSProviderRef)object;
     if ( tls->isWrappingSocket )
         close(tls->socket);
-    if ( tls->bio )
-        BIO_free(tls->bio);
+    //if ( tls->bio )
+    //    BIO_free(tls->bio); // todo
     if ( tls->ssl )
         SSL_free(tls->ssl);
     if ( tls->sslCtx )
@@ -271,7 +270,7 @@ bool __YMTLSProviderInit(YMSecurityProviderRef provider)
         wantsMoreIO = ( sslError == SSL_ERROR_WANT_READ || sslError == SSL_ERROR_WANT_WRITE );
     } while ( false /*wantsMoreIO this shouldn't happen for us, we're avoiding non-blocking i/o*/ );
     
-    ymlog("tls[%d]: handshake returned %d",tls->isServer, result);
+    ymlog("tls[%d]: handshake returned %d: %ld (%s)",tls->isServer, result, sslError, ERR_error_string(sslError, NULL));
     
     if ( 1 != result )
     {
