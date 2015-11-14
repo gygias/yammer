@@ -62,7 +62,11 @@ typedef struct
     
     BOOL localIsServer = arc4random_uniform(2);
     
-    char * sockName = YMStringCreateWithFormat("ym-tls-test-%u",arc4random());
+    NSString *template = @"ym-tls-test-%u";
+    uint32_t suffix = arc4random();
+    NSString *nsSockName = [NSString stringWithFormat:template,suffix];
+    YMStringRef sockName = YMStringCreateWithFormat("ym-tls-test-%u",arc4random(), NULL);
+    XCTAssert(strcmp([nsSockName UTF8String],YMSTR(sockName))==0,@"ymstring: %s",YMSTR(sockName));
     
     YMLocalSocketPairRef localSocketPair = YMLocalSocketPairCreate(sockName);
     XCTAssert(localSocketPair,@"socket pair didn't initialize");

@@ -71,7 +71,7 @@ SessionTests *gTheSessionTest = nil;
     YMSessionSetSharedCallbacks(serverSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
     YMSessionSetServerCallbacks(serverSession, _ym_session_should_accept_func, (__bridge void *)self);
     
-    BOOL started = YMSessionServerStartAdvertising(serverSession);
+    BOOL started = YMSessionServerStart(serverSession);
     XCTAssert(started,@"server start");
     
     clientSession = YMSessionCreateClient(testType);
@@ -111,9 +111,13 @@ SessionTests *gTheSessionTest = nil;
     
     stopping = YES;
     BOOL okay = YMConnectionClose(sC);
-    XCTAssert(sC,@"server close");
+    XCTAssert(okay,@"server close");
     okay = YMConnectionClose(cC);
-    XCTAssert(cC,@"client close");
+    XCTAssert(okay,@"client close");
+    okay = YMSessionServerStop(serverSession);
+    XCTAssert(okay,@"server session close");
+    okay = YMSessionClientStop(clientConnection);
+    XCTAssert(okay,@"client session close");
     
     NSLog(@"diffing %@",tempDir);
     NSPipe *outputPipe = [NSPipe pipe];

@@ -7,7 +7,8 @@
 //
 
 #include "YMLock.h"
-#include "YMPrivate.h"
+
+#include "YMUtilities.h"
 
 #include <pthread.h>
 
@@ -19,16 +20,15 @@
 #define ymlog(x,...) ;
 #endif
 
-typedef struct __YMLock
+typedef struct __ym_lock
 {
-    YMTypeID _typeID;
+    _YMType _type;
     
     pthread_mutex_t mutex;
-    char *name;
-} _YMLock;
-
-// private
-bool _YMLockGetNewMutexWithOptions(YMLockOptions options, pthread_mutex_t *outMutex);
+    YMStringRef name;
+} ___ym_lock;
+typedef struct __ym_lock __YMLock;
+typedef __YMLock *__YMLockRef;
 
 YMLockRef YMLockCreate()
 {
@@ -40,80 +40,40 @@ YMLockRef YMLockCreateWithOptions(YMLockOptions options)
     return YMLockCreateWithOptionsAndName(options, NULL);
 }
 
-YMLockRef YMLockCreateWithOptionsAndName(YMLockOptions options, const char *name)
+YMLockRef YMLockCreateWithOptionsAndName(YMLockOptions options, YMStringRef name)
 {
     pthread_mutex_t mutex;
-    if ( ! _YMLockGetNewMutexWithOptions(options, &mutex) )
+    if ( ! YMCreateMutexWithOptions(options, &mutex) )
         return NULL;
     
-    _YMLock *lock = (_YMLock *)YMALLOC(sizeof(_YMLock));
-    lock->_typeID = _YMLockTypeID;
+    __YMLockRef lock = (__YMLockRef)_YMAlloc(_YMLockTypeID,sizeof(__YMLock));
     
     lock->mutex = mutex;
-    lock->name = strdup(name?name:"unnamed");
+    lock->name = name ? YMRetain(name) : YMSTRC("unnamed");
     
     return (YMLockRef)lock;
 }
 
-bool _YMLockGetNewMutexWithOptions(YMLockOptions options, pthread_mutex_t *outMutex)
+YMLockRef _YMLockCreateForYMAlloc(YMLockOptions options, YMStringRef name)
 {
     pthread_mutex_t mutex;
-    pthread_mutexattr_t attributes;
-    pthread_mutexattr_t *attributesPtr = NULL;
-    int result;
+    if ( ! YMCreateMutexWithOptions(options, &mutex) )
+        return NULL;
     
-    if ( options & YMLockRecursive )
-    {
-        attributesPtr = &attributes;
-        result = pthread_mutexattr_init(attributesPtr);
-        if ( result != 0 )
-        {
-            ymerr("YMLock: pthread_mutexattr_init failed: %d (%s)", result, strerror(result));
-            return false;
-        }
-        result = pthread_mutexattr_settype(attributesPtr, PTHREAD_MUTEX_RECURSIVE);
-        if ( result != 0 )
-        {
-            ymerr("YMLock: pthread_mutexattr_settype failed: %d (%s)", result, strerror(result));
-            goto catch_release;
-        }
-    }
+    __YMLockRef lock = (__YMLockRef)YMALLOC(sizeof(__YMLock));
+    lock->_type.type = _YMLockTypeID;
     
-    result = pthread_mutex_init(&mutex, attributesPtr);
-    if ( result != 0 )
-    {
-        ymerr("YMLock: pthread_mutex_init failed: %d (%s)", result, strerror(result));
-        goto catch_release;
-    }
+    lock->mutex = mutex;
+    lock->name = name ? YMRetain(name) : YMSTRC("unnamed");
     
-    *outMutex = mutex;
-    
-catch_release:
-    if ( attributesPtr )
-        pthread_mutexattr_destroy(attributesPtr);
-    return ( result == 0 );
+    return (YMLockRef)lock;
 }
 
-void YMLockLock(YMLockRef lock)
+void YMLockLock(YMLockRef lock_)
 {
-    int result = pthread_mutex_lock(&lock->mutex);
-    bool okay = true;
-    switch(result)
-    {
-        case 0:
-            break;
-        case EDEADLK:
-            ymerr("fatal: user of YMLock (%s) created deadlock", lock->name);
-            okay = false;
-            break;
-        case EINVAL:
-            ymerr("fatal: invalid parameter to YMLock (%s)", lock->name);
-            okay = false;
-            break;
-        default:
-            ymerr("warning: unknown error on YMLockLock (%s): %d (%s)", lock->name, result, strerror(result));
-            break;
-    }
+    __YMLockRef lock = (__YMLockRef)lock_;
+    
+    ymbool okay = YMLockMutex(lock->mutex);
     
 #ifndef DUMB_AND_DUMBER
     if ( ! okay )
@@ -121,26 +81,11 @@ void YMLockLock(YMLockRef lock)
 #endif
 }
 
-void YMLockUnlock(YMLockRef lock)
+void YMLockUnlock(YMLockRef lock_)
 {
-    int result = pthread_mutex_unlock(&lock->mutex);
-    bool okay = true;
-    switch(result)
-    {
-        case 0:
-            break;
-        case EPERM:
-            ymerr("fatal: unlocking thread does not hold YMLock (%s)", lock->name);
-            okay = false;
-            break;
-        case EINVAL:
-            ymerr("fatal: invalid parameter to YMLock (%s)", lock->name);
-            okay = false;
-            break;
-        default:
-            ymerr("warning: unknown error on YMLockLock (%s): %d (%s)", lock->name, result, strerror(result));
-            break;
-    }
+    __YMLockRef lock = (__YMLockRef)lock_;
+    
+    bool okay = YMUnlockMutex(lock->mutex);
     
     if ( ! okay )
         abort();
@@ -148,18 +93,17 @@ void YMLockUnlock(YMLockRef lock)
 
 void _YMLockFree(YMTypeRef object)
 {
-    YMLockRef lock = (YMLockRef)object;
+    __YMLockRef lock = (__YMLockRef)object;
     
-    int result = pthread_mutex_destroy(&lock->mutex);
-    if ( result != 0 )
-        ymerr("warning: cannot destroy mutex (%s), something may deadlock", lock->name ? lock->name : "unnamed");
-    free(lock->name);
-    lock->name = NULL;
+    ymbool okay = YMDestroyMutex(lock->mutex);
+    if ( ! okay )
+        ymerr("warning: cannot destroy mutex (%s), something may deadlock", YMSTR(lock->name));
     
-    free(lock);
+    YMRelease(lock->name);
 }
 
-pthread_mutex_t _YMLockGetMutex(YMLockRef lock)
+pthread_mutex_t _YMLockGetMutex(YMLockRef lock_)
 {
+    __YMLockRef lock = (__YMLockRef)lock_;    
     return lock->mutex;
 }

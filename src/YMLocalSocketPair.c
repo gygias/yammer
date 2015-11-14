@@ -8,7 +8,6 @@
 
 #include "YMLocalSocketPair.h"
 
-#include "YMUtilities.h"
 #include "YMThread.h"
 #include "YMSemaphore.h"
 
@@ -25,14 +24,16 @@
 #include <stddef.h> // offsetof
 #include <pthread.h>
 
-typedef struct __YMLocalSocketPair
+typedef struct __ym_local_socket_pair
 {
-    YMTypeID _typeID;
+    _YMType _type;
     
-    char *name;
+    YMStringRef name;
     int socketA;
     int socketB;
-} _YMLocalSocketPair;
+} ___ym_local_socket_pair;
+typedef struct __ym_local_socket_pair __YMLocalSocketPair;
+typedef __YMLocalSocketPair *__YMLocalSocketPairRef;
 
 int __YMLocalSocketPairCreateClient();
 typedef struct __ym_local_socket_pair_thread_context_def
@@ -46,16 +47,16 @@ void __YMLocalSocketPairInitOnce(void);
 const char *__YMLocalSocketPairNameBase = "ym-local-socket";
 static YMThreadRef gYMLocalSocketPairAcceptThread = NULL;
 static pthread_once_t gYMLocalSocketPairAcceptThreadOnce = PTHREAD_ONCE_INIT;
-static char *gYMLocalSocketPairName = NULL;
+static YMStringRef gYMLocalSocketPairName = NULL;
 static YMSemaphoreRef gYMLocalSocketPairDidAcceptSemaphore = NULL;
 static bool gYMLocalSocketPairAcceptStopFlag = false;
 static int gYMLocalSocketPairAcceptLast = -1;
 
-YMLocalSocketPairRef YMLocalSocketPairCreate(const char *name)
+YMLocalSocketPairRef YMLocalSocketPairCreate(YMStringRef name)
 {
     if ( ! name )
     {
-        ymlog("local-socket[%s]: error: name is required",name);
+        ymlog("local-socket[%s]: error: name is required",YMSTR(name));
         return NULL;
     }
     
@@ -64,7 +65,7 @@ YMLocalSocketPairRef YMLocalSocketPairCreate(const char *name)
     int clientSocket = __YMLocalSocketPairCreateClient(name);
     if ( clientSocket < 0 )
     {
-        ymerr("local-socket[%s]: error: failed to create client socket",name);
+        ymerr("local-socket[%s]: error: failed to create client socket",YMSTR(name));
         return NULL;
     }
     
@@ -73,47 +74,49 @@ YMLocalSocketPairRef YMLocalSocketPairCreate(const char *name)
     int serverSocket = gYMLocalSocketPairAcceptLast;
     if ( serverSocket < 0 )
     {
-        ymerr("local-socket[%s]: error: failed to create server socket",name);
+        ymerr("local-socket[%s]: error: failed to create server socket",YMSTR(name));
         return NULL;
     }
     
-    YMLocalSocketPairRef pair = (YMLocalSocketPairRef)YMALLOC(sizeof(struct __YMLocalSocketPair));
-    pair->_typeID = _YMLocalSocketPairTypeID;
+    __YMLocalSocketPairRef pair = (__YMLocalSocketPairRef)_YMAlloc(_YMLocalSocketPairTypeID,sizeof(__YMLocalSocketPair));
     
-    char *myName = YMStringCreateWithFormat("ls:s%d<->c%d:%s",serverSocket,clientSocket,name);
+    YMStringRef myName = YMStringCreateWithFormat("ls:s%d<->c%d:%s",serverSocket,clientSocket,YMSTR(name),NULL);
     pair->name = myName;
+    YMRelease(myName);
+    
     pair->socketA = serverSocket;
     pair->socketB = clientSocket;
     
     return pair;
 }
 
-int YMLocalSocketPairGetA(YMLocalSocketPairRef pair)
+int YMLocalSocketPairGetA(YMLocalSocketPairRef pair_)
 {
+    __YMLocalSocketPairRef pair = (__YMLocalSocketPairRef)pair_;
     return pair->socketA;
 }
-int YMLocalSocketPairGetB(YMLocalSocketPairRef pair)
+int YMLocalSocketPairGetB(YMLocalSocketPairRef pair_)
 {
+    __YMLocalSocketPairRef pair = (__YMLocalSocketPairRef)pair_;
     return pair->socketB;
 }
 
 void _YMLocalSocketPairFree(YMTypeRef object)
 {
-    YMLocalSocketPairRef pair = (YMLocalSocketPairRef)object;
-    free(pair->name);
+    __YMLocalSocketPairRef pair = (__YMLocalSocketPairRef)object;
+    YMRelease(pair->name);
     int result = close(pair->socketA);
     if ( result != 0 )
     {
-        ymerr("local-socket: close failed (%d): %d (%s)",result,errno,strerror(errno));
+        ymerr("local-socket[%s]: close failed (%d): %d (%s)",YMSTR(pair->name),result,errno,strerror(errno));
         abort();
     }
     result = close(pair->socketB);
     if ( result != 0 )
     {
-        ymerr("local-socket: close failed (%d): %d (%s)",result,errno,strerror(errno));
+        ymerr("local-socket[%s]: close failed (%d): %d (%s)",YMSTR(pair->name),result,errno,strerror(errno));
         abort();
     }
-    free(pair);
 }
 
 // lifted from http://www.gnu.org/software/libc/manual/html_node/Local-Socket-Example.html
@@ -166,7 +169,7 @@ void __YMLocalSocketPairInitOnce(void)
     }
     
     YMSemaphoreWait(waitForThreadSemaphore);
-    YMFree(waitForThreadSemaphore);
+    YMRelease(waitForThreadSemaphore);
 }
 
 void __ym_local_socket_accept_proc(void *ctx)
@@ -181,10 +184,10 @@ close_retry:;
         ymerr("local-socket[spawn]: fatal: unable to choose available name");
         abort();
     }
-    char *tryName = NULL;
+    YMStringRef tryName = NULL;
     if ( tryName )
-        free(tryName);
-    tryName = YMStringCreateWithFormat("%s:%u",__YMLocalSocketPairNameBase,nameSuffixIter);
+        YMRelease(tryName);
+    tryName = YMStringCreateWithFormat("%s:%u",__YMLocalSocketPairNameBase,nameSuffixIter,NULL);
     
     int listenSocket = socket(PF_LOCAL, SOCK_STREAM, PF_UNSPEC /* /etc/sockets man 5 protocols*/);
     if ( listenSocket < 0 )
@@ -215,7 +218,7 @@ close_retry:;
         close(listenSocket);
         if ( bindErrno == EADDRINUSE )
         {
-            ymerr("local-socket[spawn]: %s in use, retrying",tryName);
+            ymerr("local-socket[spawn]: %s in use, retrying",YMSTR(tryName));
             nameSuffixIter++;
             goto close_retry;
         }

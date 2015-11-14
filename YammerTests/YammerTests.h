@@ -10,6 +10,7 @@
 #define YammerTests_h
 
 #import <XCTest/XCTest.h>
+#import <Yammer.h>
 
 //#define     Logging 1
 #ifdef      Logging

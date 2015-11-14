@@ -9,9 +9,9 @@
 #ifndef YMLocalSocketPair_h
 #define YMLocalSocketPair_h
 
-typedef struct __YMLocalSocketPair *YMLocalSocketPairRef;
+typedef YMTypeRef YMLocalSocketPairRef;
 
-YMLocalSocketPairRef YMLocalSocketPairCreate(const char *name);
+YMLocalSocketPairRef YMLocalSocketPairCreate(YMStringRef name);
 
 int YMLocalSocketPairGetA(YMLocalSocketPairRef pair);
 int YMLocalSocketPairGetB(YMLocalSocketPairRef pair);

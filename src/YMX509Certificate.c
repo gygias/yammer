@@ -22,13 +22,14 @@
 #define ymlog(x,...) ;
 #endif
 
-typedef struct __YMX509Certificate
+typedef struct __ym_x509_certificate
 {
-    YMTypeID _type;
+    _YMType _type;
     
     X509 *x509;
-    
-} _YMX509Certificate;
+} ___ym_x509_certificate;
+typedef struct __ym_x509_certificate __YMX509Certificate;
+typedef __YMX509Certificate *__YMX509CertificateRef;
 
 X509* __YMX509CertificateGetX509(YMRSAKeyPairRef keyPair)
 {
@@ -216,8 +217,7 @@ YMX509CertificateRef YMX509CertificateCreate(YMRSAKeyPairRef keyPair)
     if ( ! x509 )
         return NULL;
     
-    YMX509CertificateRef certificate = (YMX509CertificateRef)YMALLOC(sizeof(struct __YMX509Certificate));
-    certificate->_type = _YMX509CertificateTypeID;
+    __YMX509CertificateRef certificate = (__YMX509CertificateRef)_YMAlloc(_YMX509CertificateTypeID,sizeof(__YMX509Certificate));
     
     certificate->x509 = x509;
     
@@ -226,12 +226,12 @@ YMX509CertificateRef YMX509CertificateCreate(YMRSAKeyPairRef keyPair)
 
 void _YMX509CertificateFree(YMTypeRef object)
 {
-    YMX509CertificateRef cert = (YMX509CertificateRef)object;
+    __YMX509CertificateRef cert = (__YMX509CertificateRef)object;
     X509_free(cert->x509);
-    free(cert);
 }
 
-void *YMX509CertificateGetX509(YMX509CertificateRef cert)
+void *YMX509CertificateGetX509(YMX509CertificateRef cert_)
 {
+    __YMX509CertificateRef cert = (__YMX509CertificateRef)cert_;
     return cert->x509;
 }

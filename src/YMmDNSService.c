@@ -7,9 +7,8 @@
 //
 
 #include "YMmDNSService.h"
-#include "YMPrivate.h"
-#include "YMUtilities.h"
 
+#include "YMUtilities.h"
 #include "YMThread.h"
 
 #include <sys/socket.h>
@@ -23,12 +22,12 @@
 #define ymlog(x,...) ;
 #endif
 
-typedef struct __YMmDNSService
+typedef struct __ym_mdns_service
 {
-    YMTypeID _typeID;
+    _YMType _type;
     
-    char *type;
-    char *name;
+    YMStringRef type;
+    YMStringRef name;
     uint16_t port;
     
     // volatile stuff
@@ -37,39 +36,40 @@ typedef struct __YMmDNSService
     DNSServiceRef *dnsService;
     bool advertising;
     YMThreadRef eventThread;
-} _YMmDNSService;
+} ___ym_mdns_service;
+typedef struct __ym_mdns_service __YMmDNSService;
+typedef __YMmDNSService *__YMmDNSServiceRef;
 
-void _YMmDNSRegisterCallback(__unused DNSServiceRef sdRef,
-                            __unused DNSServiceFlags flags,
-                            __unused DNSServiceErrorType errorCode,
-                            __unused const char *name,
-                            __unused const char *regtype,
-                            __unused const char *domain,
-                            void *context )
+void __YMmDNSRegisterCallback(__unused DNSServiceRef sdRef,
+                              __unused DNSServiceFlags flags,
+                              __unused DNSServiceErrorType errorCode,
+                              __unused const char *name,
+                              __unused const char *regtype,
+                              __unused const char *domain,
+                              void *context )
 {
-    __unused YMmDNSServiceRef service = (YMmDNSServiceRef)context;
-    ymlog("_YMmDNSRegisterCallback: %s/%s:%u: %d", service->type, service->name, service->port, errorCode);
+    __YMmDNSServiceRef service = (__YMmDNSServiceRef)context;
+    ymlog("mdns: %s/%s:%u: %d", YMSTR(service->type), YMSTR(service->name), service->port, errorCode);
     // DNSServiceRefDeallocate?
 }
 
 void __ym_mdns_service_event_thread(void *);
 
-YMmDNSServiceRef YMmDNSServiceCreate(const char *type, const char *name, uint16_t port)
+YMmDNSServiceRef YMmDNSServiceCreate(YMStringRef type, YMStringRef name, uint16_t port)
 {
     // DNSServiceRegister will truncate this automatically, but keep the client well informed i suppose
     if ( ! name
-        || strlen(name) >= mDNS_SERVICE_NAME_LENGTH_MAX
-        || strlen(name) < mDNS_SERVICE_NAME_LENGTH_MIN )
+        || YMLEN(name) >= mDNS_SERVICE_NAME_LENGTH_MAX
+        || YMLEN(name) < mDNS_SERVICE_NAME_LENGTH_MIN )
     {
-        ymlog("invalid service name specified to YMmDNSServiceCreate");
+        ymlog("mdns: invalid service name");
         return NULL;
     }
     
-    _YMmDNSService *service = (_YMmDNSService *)calloc(1, sizeof(_YMmDNSService));
-    service->_typeID = _YMmDNSServiceTypeID;
+    __YMmDNSServiceRef service = (__YMmDNSServiceRef)_YMAlloc(_YMmDNSServiceTypeID,sizeof(__YMmDNSService));
     
-    service->type = strdup(type);
-    service->name = strdup(name);
+    service->type = YMRetain(type);
+    service->name = YMRetain(name);
     service->port = port;
     service->advertising = false;
     service->txtRecord = NULL;
@@ -78,23 +78,24 @@ YMmDNSServiceRef YMmDNSServiceCreate(const char *type, const char *name, uint16_
 
 void _YMmDNSServiceFree(YMTypeRef object)
 {
-    _YMmDNSService *service = (_YMmDNSService *)object;
+    __YMmDNSServiceRef service = (__YMmDNSServiceRef)object;
     if ( service->type )
-        free(service->type);
+        YMRelease(service->type);
     if ( service->name )
-        free(service->name);
+        YMRelease(service->name);
     if ( service->txtRecord )
 #ifdef MANUAL_TXT
         free(service->txtRecord);
 #else
         TXTRecordDeallocate((TXTRecordRef *)service->txtRecord);
 #endif
-    free(service);
 }
 
 // todo this should be replaced by the TxtRecord* family in dns_sd.h
-ymbool YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPair *keyPairs[], size_t nPairs )
+ymbool YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service_, YMmDNSTxtRecordKeyPair *keyPairs[], size_t nPairs )
 {
+    __YMmDNSServiceRef service = (__YMmDNSServiceRef)service_;
+    
     size_t idx;
 #ifdef MANUAL_TXT
     size_t  offset = 0,
@@ -158,8 +159,10 @@ ymbool YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPa
     return true;
 }
 
-ymbool YMmDNSServiceStart( YMmDNSServiceRef service )
+ymbool YMmDNSServiceStart( YMmDNSServiceRef service_ )
 {
+    __YMmDNSServiceRef service = (__YMmDNSServiceRef)service_;
+    
     DNSServiceRef *serviceRef = (DNSServiceRef *)calloc( 1, sizeof(DNSServiceRef) );
     uint16_t netPort = htons(service->port);
     bool txtExists = (service->txtRecord != NULL);
@@ -180,7 +183,7 @@ ymbool YMmDNSServiceStart( YMmDNSServiceRef service )
                                                     txtLength,
                                                     txt,
 #endif
-                                                    _YMmDNSRegisterCallback, // DNSServiceRegisterReply
+                                                    __YMmDNSRegisterCallback, // DNSServiceRegisterReply
                                                     service); // context
     
     if( result != kDNSServiceErr_NoError )
@@ -195,18 +198,20 @@ ymbool YMmDNSServiceStart( YMmDNSServiceRef service )
     service->dnsService = serviceRef;
     service->advertising = true;
     
-    char *threadName = YMStringCreateWithFormat("mdns-event-%s-%s",service->type,service->name);
+    YMStringRef threadName = YMStringCreateWithFormat("mdns-event-%s-%s",YMSTR(service->type),YMSTR(service->name),NULL);
     YMThreadRef eventThread = YMThreadCreate(threadName, __ym_mdns_service_event_thread, service);
-    free(threadName);
+    YMRelease(threadName);
     
     YMThreadStart(eventThread);
 
-    ymlog("YMmDNSService published %s/%s:%u",service->type,service->name,(unsigned)service->port);
+    ymlog("mdns: published %s/%s:%u",YMSTR(service->type),YMSTR(service->name),(unsigned)service->port);
     return true;
 }
 
-ymbool YMmDNSServiceStop( YMmDNSServiceRef service, ymbool synchronous )
+ymbool YMmDNSServiceStop( YMmDNSServiceRef service_, ymbool synchronous )
 {
+    __YMmDNSServiceRef service = (__YMmDNSServiceRef)service_;
+    
     if ( ! service->advertising )
         return false;
     
@@ -221,16 +226,17 @@ ymbool YMmDNSServiceStop( YMmDNSServiceRef service, ymbool synchronous )
     if ( synchronous )
         okay = YMThreadJoin(service->eventThread);
     
-    ymlog("YMmDNSService stopping");
+    ymlog("mdns: browser stopping");
     return okay;
 }
 
 void __ym_mdns_service_event_thread(void * ctx)
 {
-    YMmDNSServiceRef service = (YMmDNSServiceRef)ctx;
-    ymlog("event thread for %s entered...",service->name);
+    __YMmDNSServiceRef service = (__YMmDNSServiceRef)ctx;
+    
+    ymlog("mdns: event thread for %s entered...",YMSTR(service->name));
     while (service->advertising) {
         sleep(1);
     }
-    ymlog("event thread for %s exiting...",service->name);
+    ymlog("mdns: event thread for %s exiting...",YMSTR(service->name));
 }

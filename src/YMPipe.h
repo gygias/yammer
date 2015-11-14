@@ -9,9 +9,9 @@
 #ifndef YMPipe_h
 #define YMPipe_h
 
-typedef struct _YMPipe *YMPipeRef;
+typedef YMTypeRef YMPipeRef;
 
-YMPipeRef YMPipeCreate(char *name);
+YMPipeRef YMPipeCreate(YMStringRef name);
 
 int YMPipeGetInputFile(YMPipeRef pipe);
 int YMPipeGetOutputFile(YMPipeRef pipe);

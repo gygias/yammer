@@ -10,5 +10,6 @@
 #define Yammer_h
 
 #include <YMBase.h>
+#include <YMString.h>
 
 #endif /* Yammer_h */

@@ -11,14 +11,14 @@
 
 #include "YMStream.h"
 
-typedef struct __YMThread *YMThreadRef;
+typedef YMTypeRef YMThreadRef;
 
 typedef void (*ym_void_voidp_func)(void *);
 typedef void *(*ym_voidp_voidp_func)(void *);
 
 typedef struct ym_thread_dispatch_def ym_thread_dispatch;
 typedef struct ym_thread_dispatch_def *ym_thread_dispatch_ref;
-typedef void *(*ym_thread_dispatch_func)(ym_thread_dispatch_ref);
+typedef void (*ym_thread_dispatch_func)(ym_thread_dispatch_ref);
 
 // entry point definition for standard threads
 
@@ -28,8 +28,9 @@ typedef ym_void_voidp_func ym_thread_entry;
 #pragma message "todo: make parameter explicitly YMThreadDispatchUserInfoRef, i got confused thinkng it was userInfo->context"
 typedef ym_thread_dispatch_func ym_thread_dispatch_dealloc;
 
-YMThreadRef YMThreadCreate(char *name, ym_thread_entry entryPoint, void *context);
-YMThreadRef YMThreadDispatchCreate(char *name);
+YMThreadRef YMThreadCreate(YMStringRef name, ym_thread_entry entryPoint, void *context);
+#pragma message "there needs to be a way to stop these, use it in session -serverStop"
+YMThreadRef YMThreadDispatchCreate(YMStringRef name);
 
 void YMThreadSetContext(YMThreadRef thread, void *context);
 
@@ -41,6 +42,7 @@ typedef struct ym_thread_dispatch_def
     bool freeContextWhenDone; // optional convenience for YMALLOC'd context pointers. will be free'd after deallocProc, if it is specified.
     void *context; // weak
     const char *description; // optional, copied, assigns a name that will be included in logging from YMThreadDispatch
+#pragma message "OWNERSHIP"
 } _ym_thread_dispatch_def;
 
 // description (and other non-opaque types) will be copied

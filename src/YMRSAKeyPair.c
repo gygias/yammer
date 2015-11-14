@@ -7,7 +7,6 @@
 //
 
 #include "YMRSAKeyPair.h"
-#include "YMPrivate.h"
 
 #include "YMOpenssl.h"
 
@@ -30,18 +29,20 @@
 // private key (d)
 // message^e must be greater than N
 
-typedef struct __YMRSAKeyPair
+typedef struct __ym_rsa_key_pair
 {
-    YMTypeID _typeID;
+    _YMType _typeID;
     
     int publicE;
     int moduloNBits;
     
     RSA *rsa;
-} _YMRSAKeyPair;
+} ___ym_rsa_key_pair;
+typedef struct __ym_rsa_key_pair __YMRSAKeyPair;
+typedef __YMRSAKeyPair *__YMRSAKeyPairRef;
 
 //static pthread_once_t gYMRSAKeyPairSeedOnce = PTHREAD_ONCE_INIT;
-void _YMRSAKeyPairSeed();
+void __YMRSAKeyPairSeed();
 
 YMRSAKeyPairRef YMRSAKeyPairCreateWithModuloSize(int moduloBits, int publicExponent)
 {
@@ -60,8 +61,7 @@ YMRSAKeyPairRef YMRSAKeyPairCreateWithModuloSize(int moduloBits, int publicExpon
         return NULL;
     }
     
-    YMRSAKeyPairRef keyPair = (YMRSAKeyPairRef)YMALLOC(sizeof(struct __YMRSAKeyPair));
-    keyPair->_typeID = _YMRSAKeyPairTypeID;
+    __YMRSAKeyPairRef keyPair = (__YMRSAKeyPairRef)_YMAlloc(_YMRSAKeyPairTypeID,sizeof(__YMRSAKeyPair));
     
     keyPair->rsa = rsa;
     keyPair->moduloNBits = moduloBits;
@@ -74,10 +74,10 @@ YMRSAKeyPairRef YMRSAKeyPairCreate()
     return YMRSAKeyPairCreateWithModuloSize(4096, RSA_F4);
 }
 
-void _YMRSAKeyPairFree(YMRSAKeyPairRef keyPair)
+void _YMRSAKeyPairFree(YMTypeRef object)
 {
+    __YMRSAKeyPairRef keyPair = (__YMRSAKeyPairRef)object;
     RSA_free(keyPair->rsa);
-    free(keyPair);
 }
 
 // e.g.
@@ -126,13 +126,15 @@ void _YMRSAKeyPairFree(YMRSAKeyPairRef keyPair)
 //    int flags;
 //};
 
-bool YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair)
+bool YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair_)
 {
+    __YMRSAKeyPairRef keyPair = (__YMRSAKeyPairRef)keyPair_;
+    
     // "OpenSSL makes sure that the PRNG state is unique for each thread.
     // On systems that provide /dev/urandom, the randomness device is used to seed the PRNG transparently."
     // leaving me unsure if this should be once'd. For now playing it safe.
     //pthread_once(&gYMRSAKeyPairSeedOnce, _YMRSAKeyPairSeed);
-    _YMRSAKeyPairSeed();
+    __YMRSAKeyPairSeed();
     
     
 #ifdef YM_DEBUG_INFO
@@ -191,7 +193,7 @@ catch_return:
     return (result == openssl_success);
 }
 
-void _YMRSAKeyPairSeed()
+void __YMRSAKeyPairSeed()
 {
 #ifdef YM_DEBUG_INFO
     struct timeval then;
@@ -219,7 +221,8 @@ void _YMRSAKeyPairSeed()
 #endif
 }
 
-void *YMRSAKeyPairGetRSA(YMRSAKeyPairRef keyPair)
+void *YMRSAKeyPairGetRSA(YMRSAKeyPairRef keyPair_)
 {
+    __YMRSAKeyPairRef keyPair = (__YMRSAKeyPairRef)keyPair_;
     return keyPair->rsa;
 }

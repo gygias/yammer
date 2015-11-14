@@ -8,17 +8,19 @@
 
 #include "YMPeer.h"
 
-typedef struct __YMPeer
+typedef struct __ym_peer
 {
-    YMTypeID _type;
+    _YMType _type;
     
-    const char *name;
+    YMStringRef name;
     YMDictionaryRef addresses;
     uint16_t port;
     YMDictionaryRef certificates;
-} _YMPeer;
+} ___ym_peer;
+typedef struct __ym_peer __YMPeer;
+typedef __YMPeer *__YMPeerRef;
 
-YMPeerRef __YMPeerCreate(const char *name, YMDictionaryRef addresses, YMDictionaryRef certificates);
+YMPeerRef __YMPeerCreate(YMStringRef name, YMDictionaryRef addresses, YMDictionaryRef certificates);
 
 YMPeerRef _YMPeerCreateWithAddress(YMAddressRef address)
 {
@@ -27,17 +29,16 @@ YMPeerRef _YMPeerCreateWithAddress(YMAddressRef address)
     return __YMPeerCreate(NULL,dictionary,NULL);
 }
 
-YMPeerRef _YMPeerCreate(const char *name, YMDictionaryRef addresses, YMDictionaryRef certificates)
+YMPeerRef _YMPeerCreate(YMStringRef name, YMDictionaryRef addresses, YMDictionaryRef certificates)
 {
     return __YMPeerCreate(name, addresses, certificates);
 }
 
-YMPeerRef __YMPeerCreate(const char *name, YMDictionaryRef addresses, YMDictionaryRef certificates)
+YMPeerRef __YMPeerCreate(YMStringRef name, YMDictionaryRef addresses, YMDictionaryRef certificates)
 {
-    YMPeerRef peer = (YMPeerRef)YMALLOC(sizeof(struct __YMPeer));
-    peer->_type = _YMPeerTypeID;
+    __YMPeerRef peer = (__YMPeerRef)_YMAlloc(_YMPeerTypeID,sizeof(__YMPeer));
     
-    peer->name = name ? strdup(name) : NULL;
+    peer->name = name ? YMRetain(name) : YMSTRC("unnamed-peer");
     peer->addresses = addresses;
     peer->certificates = certificates;
     
@@ -46,52 +47,59 @@ YMPeerRef __YMPeerCreate(const char *name, YMDictionaryRef addresses, YMDictiona
 
 void _YMPeerFree(YMTypeRef object)
 {
-    YMPeerRef peer = (YMPeerRef)object;
+    __YMPeerRef peer = (__YMPeerRef)object;
     if ( peer->addresses )
-        YMFree(peer->addresses);
+        YMRelease(peer->addresses);
     if ( peer->certificates )
-        YMFree(peer->certificates);
+        YMRelease(peer->certificates);
     if ( peer->name )
-        free((void *)peer->name);
-    free(peer);
+        YMRelease(peer->name);
 }
 
-const char *YMPeerGetName(YMPeerRef peer)
+YMStringRef YMPeerGetName(YMPeerRef peer_)
 {
+    __YMPeerRef peer = (__YMPeerRef)peer_;
     return peer->name;
 }
 
-YMDictionaryRef YMPeerGetAddresses(YMPeerRef peer)
+YMDictionaryRef YMPeerGetAddresses(YMPeerRef peer_)
 {
+    __YMPeerRef peer = (__YMPeerRef)peer_;
     return peer->addresses;
 }
 
-uint16_t YMPeerGetPort(YMPeerRef peer)
+uint16_t YMPeerGetPort(YMPeerRef peer_)
 {
+    __YMPeerRef peer = (__YMPeerRef)peer_;
     return peer->port;
 }
 
-YMDictionaryRef YMPeerGetCertificates(YMPeerRef peer)
+YMDictionaryRef YMPeerGetCertificates(YMPeerRef peer_)
 {
+    __YMPeerRef peer = (__YMPeerRef)peer_;
     return peer->certificates;
 }
 
-void _YMPeerSetName(YMPeerRef peer, const char *name)
+void _YMPeerSetName(YMPeerRef peer_, YMStringRef name)
 {
-    peer->name = strdup(name);
+    __YMPeerRef peer = (__YMPeerRef)peer_;
+    peer->name = YMRetain(name);
 }
 
-void _YMPeerSetAddresses(YMPeerRef peer, YMDictionaryRef addresses)
+void _YMPeerSetAddresses(YMPeerRef peer_, YMDictionaryRef addresses)
 {
+    __YMPeerRef peer = (__YMPeerRef)peer_;
     peer->addresses = addresses;
 }
 
-void _YMPeerSetPort(YMPeerRef peer, uint16_t port)
+void _YMPeerSetPort(YMPeerRef peer_, uint16_t port)
 {
+    __YMPeerRef peer = (__YMPeerRef)peer_;
     peer->port = port;
 }
 
-void _YMPeerSetCertificates(YMPeerRef peer, YMDictionaryRef certificates)
+void _YMPeerSetCertificates(YMPeerRef peer_, YMDictionaryRef certificates)
 {
+    __YMPeerRef peer = (__YMPeerRef)peer_;
     peer->certificates = certificates;
 }

@@ -11,7 +11,7 @@
 #ifndef YMAddress_h
 #define YMAddress_h
 
-typedef struct __YMAddress *YMAddressRef;
+typedef YMTypeRef YMAddressRef;
 
 typedef enum
 {
@@ -21,11 +21,11 @@ typedef enum
 
 YMAddressRef YMAddressCreate(void* addressData, uint32_t length);
 YMAddressRef YMAddressCreateLocalHostIPV4(uint16_t port);
-YMAddressRef YMAddressCreateWithIPStringAndPort(const char *ipString, uint16_t port);
+YMAddressRef YMAddressCreateWithIPStringAndPort(YMStringRef ipString, uint16_t port);
 
 const void *YMAddressGetAddressData(YMAddressRef address);
 int YMAddressGetLength(YMAddressRef address);
-const char *YMAddressGetDescription(YMAddressRef address);
+YMStringRef YMAddressGetDescription(YMAddressRef address);
 
 int YMAddressGetDomain(YMAddressRef address);
 int YMAddressGetAddressFamily(YMAddressRef address);

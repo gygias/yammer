@@ -6,7 +6,7 @@
 //  Copyright © 2015 combobulated. All rights reserved.
 //
 
-#import <XCTest/XCTest.h>
+#import "YammerTests.h"
 
 #import "YMLocalSocketPair.h"
 #import "YMConnection.h"
@@ -29,7 +29,7 @@
 
 - (void)testConnection {
     
-    YMLocalSocketPairRef socketPair = YMLocalSocketPairCreate("connection-test");
+    YMLocalSocketPairRef socketPair = YMLocalSocketPairCreate(YMSTRC("connection-test"));
     
     //YMConnectionRef connectionA = YMConnectionCreate(<#YMAddressRef address#>, <#YMConnectionType type#>, <#YMConnectionSecurityType securityType#>)
     

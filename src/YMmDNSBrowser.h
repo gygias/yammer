@@ -13,17 +13,17 @@
 
 #include <dns_sd.h>
 
-typedef struct __YMmDNSBrowser *YMmDNSBrowserRef;
+typedef YMTypeRef YMmDNSBrowserRef;
 
 // callback definitions
 typedef void (*ym_mdns_service_appeared_func)(YMmDNSBrowserRef browser, YMmDNSServiceRecord * service, void *context);
-typedef void (*ym_mdns_service_removed_func)(YMmDNSBrowserRef browser, const char *name, void *context);
+typedef void (*ym_mdns_service_removed_func)(YMmDNSBrowserRef browser, YMStringRef name, void *context);
 typedef void (*ym_mdns_service_updated_func)(YMmDNSBrowserRef browser, YMmDNSServiceRecord *service, void *context);
 // if success is false, service is undefined
 typedef void (*ym_mdns_service_resolved_func)(YMmDNSBrowserRef browser, bool success, YMmDNSServiceRecord *service, void *context);
 
-YMmDNSBrowserRef YMmDNSBrowserCreate(const char *type);
-YMmDNSBrowserRef YMmDNSBrowserCreateWithCallbacks(const char *type,
+YMmDNSBrowserRef YMmDNSBrowserCreate(YMStringRef type);
+YMmDNSBrowserRef YMmDNSBrowserCreateWithCallbacks(YMStringRef type,
                                                   ym_mdns_service_appeared_func serviceAppeared,
                                                   ym_mdns_service_updated_func serviceUpdated,
                                                   ym_mdns_service_resolved_func serviceResolved,
@@ -45,8 +45,8 @@ bool YMmDNSBrowserEnumeratingStop(YMmDNSBrowserRef browser);
 bool YMmDNSBrowserStart(YMmDNSBrowserRef browser);
 bool YMmDNSBrowserStop(YMmDNSBrowserRef browser);
 
-bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser, const char *serviceName);
+bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser, YMStringRef serviceName);
 
-YMmDNSServiceRecord *YMmDNSBrowserGetServiceWithName(YMmDNSBrowserRef browser, const char *name);
+YMmDNSServiceRecord *YMmDNSBrowserGetServiceWithName(YMmDNSBrowserRef browser, YMStringRef name);
 
 #endif /* YMmDNSBrowser_h */

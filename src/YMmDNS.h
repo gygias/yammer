@@ -14,16 +14,16 @@
 
 typedef struct _YMmDNSTxtRecordKeyPair
 {
-    const char *key;
+    YMStringRef key;
     const void *value;
     uint8_t valueLen; // length of key + value can't exceed 255 (allowing for '=')
 } YMmDNSTxtRecordKeyPair;
 
 typedef struct _YMmDNSServiceRecord
 {
-    const char *type;
-    const char *name;
-    const char *domain;
+    YMStringRef type;
+    YMStringRef name;
+    YMStringRef domain;
     
     // values below aren't known until the service is resolved
     bool resolved;

@@ -7,9 +7,8 @@
 //
 
 #include "YMmDNSBrowser.h"
-#include "YMPrivate.h"
-#include "YMUtilities.h"
 
+#include "YMUtilities.h"
 #include "YMThread.h"
 
 #include <errno.h>
@@ -22,11 +21,11 @@
 #define ymlog(x,...) ;
 #endif
 
-typedef struct __YMmDNSBrowser
+typedef struct __ym_mdns_browser
 {
-    YMTypeID _typeID;
+    _YMType _type;
     
-    char *type;
+    YMStringRef type;
     YMmDNSServiceList *serviceList;
     
 #ifdef YMmDNS_ENUMERATION
@@ -47,39 +46,40 @@ typedef struct __YMmDNSBrowser
     ym_mdns_service_updated_func serviceUpdated;
     ym_mdns_service_resolved_func serviceResolved;
     void *callbackContext;
-} _YMmDNSBrowser;
+} ___ym_mdns_browser;
+typedef struct __ym_mdns_browser __YMmDNSBrowser;
+typedef __YMmDNSBrowser *__YMmDNSBrowserRef;
 
 #pragma mark callback/event goo
 #ifdef YMmDNS_ENUMERATION
-void DNSSD_API _YMmDNSEnumerateReply(DNSServiceRef sdRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *replyDomain, void *context);
+void DNSSD_API __YMmDNSEnumerateReply(DNSServiceRef sdRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *replyDomain, void *context);
 #endif
-static void DNSSD_API _YMmDNSBrowseCallback(DNSServiceRef sdRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *serviceName,
+static void DNSSD_API __YMmDNSBrowseCallback(DNSServiceRef sdRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *serviceName,
                                             const char *reg_type, const char *reply_domain, void *context);
-void DNSSD_API _YMmDNSResolveCallback(DNSServiceRef serviceRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *name,
+void DNSSD_API __YMmDNSResolveCallback(DNSServiceRef serviceRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *name,
                                       const char *host, uint16_t port, uint16_t txtLen, const unsigned char *txtRecord, void *context );
 
 void __ym_mdns_browser_event_proc(void *);
 
 #pragma mark private
-void _YMmDNSBrowserAddOrUpdateService(_YMmDNSBrowser *browser, YMmDNSServiceRecord *record);
-void _YMmDNSBrowserRemoveServiceNamed(_YMmDNSBrowser *browser, const char *name);
+void __YMmDNSBrowserAddOrUpdateService(__YMmDNSBrowserRef browser, YMmDNSServiceRecord *record);
+void __YMmDNSBrowserRemoveServiceNamed(__YMmDNSBrowserRef browser, YMStringRef name);
 
-YMmDNSServiceRecord *_YMmDNSBrowserGetServiceWithName(_YMmDNSBrowser *browser, const char *name, bool remove);
+YMmDNSServiceRecord *__YMmDNSBrowserGetServiceWithName(__YMmDNSBrowserRef browser, YMStringRef name, bool remove);
 
-YMmDNSBrowserRef YMmDNSBrowserCreate(const char *type)
+YMmDNSBrowserRef YMmDNSBrowserCreate(YMStringRef type)
 {
     return YMmDNSBrowserCreateWithCallbacks(type, NULL, NULL, NULL, NULL, NULL);
 }
 
-YMmDNSBrowserRef YMmDNSBrowserCreateWithCallbacks(const char *type,
+YMmDNSBrowserRef YMmDNSBrowserCreateWithCallbacks(YMStringRef type,
                                                   ym_mdns_service_appeared_func serviceAppeared,
                                                   ym_mdns_service_updated_func serviceUpdated,
                                                   ym_mdns_service_resolved_func serviceResolved,
                                                   ym_mdns_service_removed_func serviceRemoved,
                                                   void *context)
 {
-    YMmDNSBrowserRef browser = (YMmDNSBrowserRef)calloc(1,sizeof(struct __YMmDNSBrowser));
-    browser->_typeID = _YMmDNSBrowserTypeID;
+    __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)_YMAlloc(_YMmDNSBrowserTypeID,sizeof(__YMmDNSBrowser));
     
     browser->type = strdup(type);
     browser->serviceList = NULL;
@@ -93,21 +93,21 @@ YMmDNSBrowserRef YMmDNSBrowserCreateWithCallbacks(const char *type,
 
 void _YMmDNSBrowserFree(YMTypeRef object)
 {
-    _YMmDNSBrowser *browser = (_YMmDNSBrowser *)object;
+    __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)object;
     if ( browser->type )
-        free(browser->type);
+        YMRelease(browser->type);
     
 #ifdef YMmDNS_ENUMERATION
     if ( browser->enumerateServiceRef )
         free(browser->enumerateServiceRef);
     if ( browser->enumerateEventThread )
-        YMFree(browser->enumerateEventThread)
+        YMRelease(browser->enumerateEventThread)
 #endif
         
     if ( browser->browseServiceRef )
         free(browser->browseServiceRef);
     if ( browser->browseEventThread )
-        YMFree(browser->browseEventThread);
+        YMRelease(browser->browseEventThread);
     
     if ( browser->resolveServiceRef )
         free(browser->resolveServiceRef);
@@ -116,29 +116,34 @@ void _YMmDNSBrowserFree(YMTypeRef object)
         _YMmDNSServiceListFree((YMmDNSServiceList *)(browser->serviceList));
 }
 
-void YMmDNSBrowserSetServiceAppearedFunc(YMmDNSBrowserRef browser, ym_mdns_service_appeared_func func)
+void YMmDNSBrowserSetServiceAppearedFunc(YMmDNSBrowserRef browser_, ym_mdns_service_appeared_func func)
 {
-    ((_YMmDNSBrowser *)browser)->serviceAppeared = func;
+    __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)browser_;
+    browser->serviceAppeared = func;
 }
 
-void YMmDNSBrowserSetServiceRemovedFunc(YMmDNSBrowserRef browser, ym_mdns_service_removed_func func)
+void YMmDNSBrowserSetServiceRemovedFunc(YMmDNSBrowserRef browser_, ym_mdns_service_removed_func func)
 {
-    ((_YMmDNSBrowser *)browser)->serviceRemoved = func;
+    __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)browser_;
+    browser->serviceRemoved = func;
 }
 
-void YMmDNSBrowserSetServiceUpdatedFunc(YMmDNSBrowserRef browser, ym_mdns_service_updated_func func)
+void YMmDNSBrowserSetServiceUpdatedFunc(YMmDNSBrowserRef browser_, ym_mdns_service_updated_func func)
 {
-    ((_YMmDNSBrowser *)browser)->serviceUpdated = func;
+    __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)browser_;
+    browser->serviceUpdated = func;
 }
 
-void YMmDNSBrowserSetServiceResolvedFunc(YMmDNSBrowserRef browser, ym_mdns_service_resolved_func func)
+void YMmDNSBrowserSetServiceResolvedFunc(YMmDNSBrowserRef browser_, ym_mdns_service_resolved_func func)
 {
-    ((_YMmDNSBrowser *)browser)->serviceResolved = func;
+    __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)browser_;
+    browser->serviceResolved = func;
 }
 
-void YMmDNSBrowserSetCallbackContext(YMmDNSBrowserRef browser, void *context)
+void YMmDNSBrowserSetCallbackContext(YMmDNSBrowserRef browser_, void *context)
 {
-    ((_YMmDNSBrowser *)browser)->callbackContext = context;
+    __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)browser_;
+    browser->callbackContext = context;
 }
 
 #ifdef YMmDNS_ENUMERATION
@@ -165,7 +170,7 @@ bool YMmDNSBrowserEnumeratingStart(YMmDNSBrowserRef browser)
     
     if ( browser->enumerateEventThread )
         YMFree(browser->enumerateEventThread);
-    char *threadName = YMStringCreateWithFormat("mdns-enum-%s",browser->type);
+    char *threadName = YMStringCreateWithFormat("mdns-enum-%s",YMSTR(browser->type));
     browser->enumerateEventThread = YMThreadCreate(threadName, _YMmDNSBrowserThread, browser);
     free(threadName);
     bool okay = YMThreadStart(_browser->enumerateEventThread);
@@ -185,8 +190,10 @@ bool YMmDNSBrowserEnumeratingStop(YMmDNSBrowserRef browser)
 }
 #endif
 
-bool YMmDNSBrowserStart(YMmDNSBrowserRef browser)
+bool YMmDNSBrowserStart(YMmDNSBrowserRef browser_)
 {
+    __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)browser_;
+    
     if ( browser->browsing )
         return false;
     browser->browsing = true;
@@ -200,7 +207,7 @@ bool YMmDNSBrowserStart(YMmDNSBrowserRef browser)
                                                   0, // interfaceIndex
                                                   browser->type, // type
                                                   NULL, // domain
-                                                  _YMmDNSBrowseCallback, // callback
+                                                  __YMmDNSBrowseCallback, // callback
                                                   browser); // context
     
     if( result != kDNSServiceErr_NoError )
@@ -209,33 +216,36 @@ bool YMmDNSBrowserStart(YMmDNSBrowserRef browser)
         return false;
     }
     
-    char *threadName = YMStringCreateWithFormat("mdns-browse-%s",browser->type);
+    YMStringRef threadName = YMStringCreateWithFormat("mdns-browse-%s",YMSTR(browser->type),NULL);
     browser->browseEventThread = YMThreadCreate(threadName, __ym_mdns_browser_event_proc, browser);
-    free(threadName);
+    YMRelease(threadName);
     
     bool okay = YMThreadStart(browser->browseEventThread);
     
     return okay;
 }
 
-bool YMmDNSBrowserStop(YMmDNSBrowserRef browser)
+bool YMmDNSBrowserStop(YMmDNSBrowserRef browser_)
 {
-    _YMmDNSBrowser *_browser = (_YMmDNSBrowser *)browser;
-    if ( _browser->browseServiceRef )
+    __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)browser_;
+    
+    if ( browser->browseServiceRef )
     {
-        DNSServiceRefDeallocate(*(_browser->browseServiceRef));
-        free(_browser->browseServiceRef); // not sure this is right
-        _browser->browseServiceRef = NULL;
+        DNSServiceRefDeallocate(*(browser->browseServiceRef));
+        free(browser->browseServiceRef); // not sure this is right
+        browser->browseServiceRef = NULL;
     }
     return true;
 }
 
-bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser, const char *serviceName)
+bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser_, YMStringRef serviceName)
 {
-    YMmDNSServiceRecord *theService = _YMmDNSBrowserGetServiceWithName(browser, serviceName, false);
+    __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)browser_;
+    
+    YMmDNSServiceRecord *theService = __YMmDNSBrowserGetServiceWithName(browser, serviceName, false);
     if ( ! theService )
     {
-        ymlog("YMmDNS asked to resolve '%s', but it doesn't have a record of this service",serviceName);
+        ymlog("YMmDNS asked to resolve '%s', but it doesn't have a record of this service",YMSTR(serviceName));
         return false;
     }
     
@@ -246,7 +256,7 @@ bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser, const char *serviceName)
                                                     serviceName,
                                                     browser->type, // type
                                                     theService->domain, // domain
-                                                    _YMmDNSResolveCallback,
+                                                    __YMmDNSResolveCallback,
                                                     browser );
     if ( result != kDNSServiceErr_NoError )
     {
@@ -270,7 +280,7 @@ bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser, const char *serviceName)
     return true;
 }
 
-void _YMmDNSBrowserAddOrUpdateService(_YMmDNSBrowser *browser, YMmDNSServiceRecord *record)
+void __YMmDNSBrowserAddOrUpdateService(__YMmDNSBrowserRef browser, YMmDNSServiceRecord *record)
 {
     YMmDNSServiceList *aListItem = (YMmDNSServiceList *)browser->serviceList;
     // update?
@@ -301,8 +311,8 @@ void _YMmDNSBrowserAddOrUpdateService(_YMmDNSBrowser *browser, YMmDNSServiceReco
 }
 
 #define _YMmDNSServiceFoundAndRemovedHack ((YMmDNSServiceRecord *)0xEA75F00D)
-YMmDNSServiceRecord *_YMmDNSBrowserGetServiceWithName(_YMmDNSBrowser *browser, const char *name, bool remove)
-{
+YMmDNSServiceRecord *__YMmDNSBrowserGetServiceWithName(__YMmDNSBrowserRef browser, YMStringRef name, bool remove)
+{    
     YMmDNSServiceRecord *matchedRecord = NULL;
     YMmDNSServiceList *aListItem = (YMmDNSServiceList *)browser->serviceList,
                         *previousListItem = (YMmDNSServiceList *)browser->serviceList;
@@ -330,34 +340,35 @@ YMmDNSServiceRecord *_YMmDNSBrowserGetServiceWithName(_YMmDNSBrowser *browser, c
     return matchedRecord;
 }
 
-YMmDNSServiceRecord *YMmDNSBrowserGetServiceWithName(YMmDNSBrowserRef browser, const char *name)
+YMmDNSServiceRecord *YMmDNSBrowserGetServiceWithName(YMmDNSBrowserRef browser_, YMStringRef name)
 {
-    return _YMmDNSBrowserGetServiceWithName((_YMmDNSBrowser *)browser, name, false);
+    __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)browser_;
+    return __YMmDNSBrowserGetServiceWithName(browser, name, false);
 }
 
-void _YMmDNSBrowserRemoveServiceNamed(_YMmDNSBrowser *browser, const char *name)
+void __YMmDNSBrowserRemoveServiceNamed(__YMmDNSBrowserRef browser, YMStringRef name)
 {
-    _YMmDNSBrowserGetServiceWithName(browser, name, true);
+    __YMmDNSBrowserGetServiceWithName(browser, name, true);
     if ( browser->serviceRemoved )
         browser->serviceRemoved((YMmDNSBrowserRef)browser, name, browser->callbackContext);
 }
 
 #ifdef YMmDNS_ENUMERATION
-void DNSSD_API _YMmDNSEnumerateReply(DNSServiceRef sdRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *replyDomain, void *context)
+void DNSSD_API __YMmDNSEnumerateReply(DNSServiceRef sdRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *replyDomain, void *context)
 {
     ymlog("YMmDNSEnumerateReply: flags: %04x", flags);
 }
 #endif
 
-static void DNSSD_API _YMmDNSBrowseCallback(__unused DNSServiceRef serviceRef, DNSServiceFlags flags, __unused uint32_t ifIdx, DNSServiceErrorType result, const char *name, const char *type,
+static void DNSSD_API __YMmDNSBrowseCallback(__unused DNSServiceRef serviceRef, DNSServiceFlags flags, __unused uint32_t ifIdx, DNSServiceErrorType result, const char *name, const char *type,
                                             const char *domain, void *context)
 {
     
     //ymlog("_YMmDNSBrowseCallback: %s/%s:?: if: %u flags: %04x", type, name, ifIdx, result);
-    _YMmDNSBrowser *browser = (_YMmDNSBrowser *)context;
+    __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)context;
     if ( result != kDNSServiceErr_NoError )
     {
-        ymerr("mDNS[%s]: error: browse callback: %d",browser->type,result);
+        ymerr("mDNS[%s]: error: browse callback: %d",YMSTR(browser->type),result);
         return;
     }
     
@@ -365,18 +376,18 @@ static void DNSSD_API _YMmDNSBrowseCallback(__unused DNSServiceRef serviceRef, D
     bool remove = (flags & kDNSServiceFlagsAdd) == 0;
     
     if ( remove )
-        _YMmDNSBrowserRemoveServiceNamed(browser, name);
+        __YMmDNSBrowserRemoveServiceNamed(browser, name);
     else
     {
         YMmDNSServiceRecord *record = _YMmDNSCreateServiceRecord(name, type, domain, false, NULL, 0, NULL, 0);
-        _YMmDNSBrowserAddOrUpdateService(browser, record);
+        __YMmDNSBrowserAddOrUpdateService(browser, record);
     }    
 }
 
-void DNSSD_API _YMmDNSResolveCallback(__unused DNSServiceRef serviceRef,__unused DNSServiceFlags flags, __unused uint32_t interfaceIndex, DNSServiceErrorType result, const char *fullname,
+void DNSSD_API __YMmDNSResolveCallback(__unused DNSServiceRef serviceRef,__unused DNSServiceFlags flags, __unused uint32_t interfaceIndex, DNSServiceErrorType result, const char *fullname,
                                       const char *host, uint16_t port, uint16_t txtLength, const unsigned char *txtRecord, void *context )
 {
-    _YMmDNSBrowser *browser = (_YMmDNSBrowser *)context;
+    __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)context;
     //ymlog("_YMmDNSResolveCallback: %s/%s -> %s:%u",browser->type,fullname,host,(unsigned)port);
     uint16_t hostPort = ntohs(port);
     
@@ -402,7 +413,7 @@ void DNSSD_API _YMmDNSResolveCallback(__unused DNSServiceRef serviceRef,__unused
                                             NULL,
 #endif
                                             true, host, ntohs(hostPort), txtRecord, txtLength); // could be optimized
-        _YMmDNSBrowserAddOrUpdateService(browser, record);
+        __YMmDNSBrowserAddOrUpdateService(browser, record);
     }
     
 catch_callback_and_release:
@@ -417,7 +428,7 @@ catch_callback_and_release:
 // this function was mostly lifted from "Zero Configuration Networking: The Definitive Guide" -o'reilly
 void __ym_mdns_browser_event_proc( void *ctx )
 {
-    _YMmDNSBrowser *browser = (_YMmDNSBrowser *)ctx;
+    __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)ctx;
     bool keepGoing = true;
     while ( keepGoing )
     {

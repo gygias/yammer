@@ -14,14 +14,15 @@
 typedef enum
 {
     YMLockDefault = 0,
-    YMLockRecursive = 1 << 0
+    YMLockRecursive = 1 << 0,
+    YMLockErrorCheck = 1 << 1
 } YMLockOptions;
 
-typedef struct __YMLock *YMLockRef;
+typedef YMTypeRef YMLockRef;
 
 YMLockRef YMLockCreate();
 YMLockRef YMLockCreateWithOptions(YMLockOptions options);
-YMLockRef YMLockCreateWithOptionsAndName(YMLockOptions options, const char *name);
+YMLockRef YMLockCreateWithOptionsAndName(YMLockOptions options, YMStringRef name);
 
 // avoid 'try lock'
 void YMLockLock(YMLockRef lock);

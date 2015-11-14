@@ -10,11 +10,6 @@
 
 #include "YMLog.h"
 
-typedef struct __YMType
-{
-    YMTypeID _type;
-} _YMType;
-
 YMTypeID _YMAddressTypeID = 'a';
 YMTypeID _YMmDNSBrowserTypeID = 'b';
 YMTypeID _YMConnectionTypeID = 'c';
@@ -28,6 +23,7 @@ YMTypeID _YMSemaphoreTypeID = 'p';
 YMTypeID _YMPeerTypeID = 'P';
 YMTypeID _YMStreamTypeID = 'r';
 YMTypeID _YMSessionTypeID = 's';
+YMTypeID _YMStringTypeID = 'S';
 YMTypeID _YMThreadTypeID = 't';
 YMTypeID _YMTLSProviderTypeID = 'T';
 YMTypeID _YMSecurityProviderTypeID = 'v';
@@ -54,10 +50,84 @@ extern void _YMTLSProviderFree(YMTypeRef);
 extern void _YMLocalSocketPairFree(YMTypeRef);
 extern void _YMAddressFree(YMTypeRef);
 extern void _YMPeerFree(YMTypeRef);
+extern void _YMStringFree(YMTypeRef);
 
-void YMFree(YMTypeRef object)
+typedef struct __ym_type
 {
-    YMTypeID type = ((_YMTypeRef*)object)->_typeID;
+    YMTypeID type;
+    int __retainCount; // todo find a better way to preallocate this
+    pthread_mutex_t __retainMutex;
+} ___ym_type;
+typedef struct __ym_type __YMType;
+typedef __YMType *__YMTypeRef;
+
+void __YMFree(__YMTypeRef object);
+
+#include "YMUtilities.h"
+
+YMTypeRef _YMAlloc(YMTypeID type, size_t size)
+{
+    if ( size < sizeof(__YMType) )
+    {
+        ymerr("base: fatal: bad alloc");
+        abort();
+    }
+    
+    __YMTypeRef object = YMALLOC(size);
+    object->type = type;
+    object->__retainCount = 1;
+    
+    pthread_mutex_t mutex;
+    if ( ! YMCreateMutexWithOptions(YMLockDefault, &mutex) )
+    {
+        ymerr("base: fatal: create mutex failed");
+        abort();
+    }
+    object->__retainMutex = mutex;
+    
+    // can't divine a way to escape infinite recursion here
+    //YMStringRef name = _YMStringCreateForYMAlloc("ymtype-%p", object, NULL);
+    //object->__retainLock = _YMLockCreateForYMAlloc(YMLockDefault, name);
+    //YMRelease(name);
+    
+    return object;
+}
+
+YMTypeRef YMRetain(YMTypeRef object_)
+{
+    __YMTypeRef object = (__YMTypeRef)object_;
+    YMLockMutex(object->__retainMutex);
+    if ( object->__retainCount < 1 )
+    {
+        ymerr("base: fatal: retain count inconsistent");
+        abort();
+    }
+    object->__retainCount++;
+    YMUnlockMutex(object->__retainMutex);
+    
+    return object;
+}
+
+void YMRelease(YMTypeRef object_)
+{
+    __YMTypeRef object = (__YMTypeRef)object_;
+    YMLockMutex(object->__retainMutex);
+    if ( object->__retainCount < 1 )
+    {
+        ymerr("base: fatal: retain count inconsistent");
+        abort();
+    }
+    else if ( object->__retainCount == 1 )
+        __YMFree(object);
+    YMUnlockMutex(object->__retainMutex);
+    
+    YMDestroyMutex(object->__retainMutex);
+    free(object);
+}
+
+void __YMFree(__YMTypeRef object)
+{
+    YMTypeID type = object->type;
     if ( type == _YMPipeTypeID )
         _YMPipeFree(object);
     else if ( type == _YMStreamTypeID )
@@ -96,9 +166,11 @@ void YMFree(YMTypeRef object)
         _YMAddressFree(object);
     else if ( type == _YMPeerTypeID )
         _YMPeerFree(object);
+    else if ( type == _YMStringTypeID )
+        _YMStringFree(object);
     else
     {
-        ymlog("YMFree unknown type %c",((_YMType *)object)->_type);
+        ymlog("YMFree unknown type %c",object->type);
         abort();
     }
 }

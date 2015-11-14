@@ -13,6 +13,7 @@
 #include "YMPlexer.h"
 #include "YMSecurityProvider.h"
 #include "YMStreamPriv.h"
+#include "YMPlexerPriv.h"
 #include "YMLock.h"
 
 #define     PlexerTest1Threads 8
@@ -165,11 +166,11 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
     for ( unsigned idx = 0; idx < PlexerTest1RoundTripsPerThread; idx++ )
 #endif
     {
-        YMStreamID streamID;
+        YMPlexerStreamID streamID;
         if ( ! aStream || PlexerTest1NewStreamPerRoundTrip )
         {
             aStream = YMPlexerCreateNewStream(plexer,__FUNCTION__,false);
-            streamID = _YMStreamGetUserInfo(aStream)->streamID;
+            streamID = ((ym_plexer_stream_user_info_ref)_YMStreamGetUserInfo(aStream))->streamID;
         }
         
         NSData *outgoingMessage;
@@ -252,7 +253,7 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *cont
 
 - (void)handleANewLocalStream:(YMPlexerRef)plexer :(YMStreamRef)stream
 {
-    YMStreamID streamID = _YMStreamGetUserInfo(stream)->streamID;
+    YMPlexerStreamID streamID = ((ym_plexer_stream_user_info_ref)_YMStreamGetUserInfo(stream))->streamID;
     BOOL protectTheList = ( PlexerTest1Threads > 1 );
     
     unsigned iterations = PlexerTest1NewStreamPerRoundTrip ? 1 : PlexerTest1RoundTripsPerThread;
@@ -285,7 +286,7 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *cont
     }
     
     TestLog(@"^^^ REMOTE -newStream [%u] exiting (and remoteReleasing)",streamID);
-    YMPlexerRemoteStreamRelease(plexer, stream);
+    YMRelease(stream);
 }
 
 void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *context)

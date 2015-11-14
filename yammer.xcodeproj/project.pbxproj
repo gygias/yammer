@@ -54,6 +54,8 @@
 		63476A501BEB159C00D10081 /* YMDictionary.h in Headers */ = {isa = PBXBuildFile; fileRef = 63476A4E1BEB159C00D10081 /* YMDictionary.h */; };
 		63476A531BEB319000D10081 /* YMSemaphore.c in Sources */ = {isa = PBXBuildFile; fileRef = 63476A511BEB319000D10081 /* YMSemaphore.c */; };
 		63476A541BEB319000D10081 /* YMSemaphore.h in Headers */ = {isa = PBXBuildFile; fileRef = 63476A521BEB319000D10081 /* YMSemaphore.h */; };
+		637816C71BF68B8F00BF79E2 /* YMString.c in Sources */ = {isa = PBXBuildFile; fileRef = 637816C51BF68B8F00BF79E2 /* YMString.c */; };
+		637816C81BF68B8F00BF79E2 /* YMString.h in Headers */ = {isa = PBXBuildFile; fileRef = 637816C61BF68B8F00BF79E2 /* YMString.h */; };
 		637E3D5D1BF262EE00D702ED /* YMX509Certificate.c in Sources */ = {isa = PBXBuildFile; fileRef = 637E3D5B1BF262EE00D702ED /* YMX509Certificate.c */; };
 		637E3D5E1BF262EE00D702ED /* YMX509Certificate.h in Headers */ = {isa = PBXBuildFile; fileRef = 637E3D5C1BF262EE00D702ED /* YMX509Certificate.h */; };
 		637E3D611BF2CD7300D702ED /* TLSTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 637E3D601BF2CD7300D702ED /* TLSTests.m */; };
@@ -111,11 +113,11 @@
 		63225D6B1BE91B3B00C28F05 /* YMLog.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMLog.c; path = src/YMLog.c; sourceTree = "<group>"; };
 		63225D6C1BE91B3B00C28F05 /* YMLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMLog.h; path = src/YMLog.h; sourceTree = "<group>"; };
 		63225D971BE92B6000C28F05 /* YMBase.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMBase.c; path = src/YMBase.c; sourceTree = "<group>"; };
-		63225D991BE92CBA00C28F05 /* YMPrivate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMPrivate.h; path = src/YMPrivate.h; sourceTree = "<group>"; };
+		63225D991BE92CBA00C28F05 /* YMDebug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMDebug.h; path = src/YMDebug.h; sourceTree = "<group>"; };
 		63225D9D1BE9372800C28F05 /* libssl.1.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libssl.1.0.0.dylib; path = /opt/local/lib/libssl.1.0.0.dylib; sourceTree = "<absolute>"; };
 		6332A4B91BEFCDCF004BB764 /* YammerTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = YammerTests.h; sourceTree = "<group>"; };
 		6332A4BA1BF12C12004BB764 /* lldb_source.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = lldb_source.sh; sourceTree = "<group>"; };
-		6332A4BB1BF134DD004BB764 /* PrefixHeader.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PrefixHeader.pch; path = src/PrefixHeader.pch; sourceTree = "<group>"; };
+		6332A4BB1BF134DD004BB764 /* yammer-PrefixHeader.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "yammer-PrefixHeader.pch"; path = "src/yammer-PrefixHeader.pch"; sourceTree = "<group>"; };
 		6335CABD1BF453A800412CC9 /* YMAddress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMAddress.c; path = src/YMAddress.c; sourceTree = "<group>"; };
 		6335CABE1BF453A800412CC9 /* YMAddress.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMAddress.h; path = src/YMAddress.h; sourceTree = "<group>"; };
 		6335CAC11BF47A1D00412CC9 /* ConnectionTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ConnectionTests.m; sourceTree = "<group>"; };
@@ -133,6 +135,12 @@
 		63476A4E1BEB159C00D10081 /* YMDictionary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMDictionary.h; path = src/YMDictionary.h; sourceTree = "<group>"; };
 		63476A511BEB319000D10081 /* YMSemaphore.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMSemaphore.c; path = src/YMSemaphore.c; sourceTree = "<group>"; };
 		63476A521BEB319000D10081 /* YMSemaphore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMSemaphore.h; path = src/YMSemaphore.h; sourceTree = "<group>"; };
+		637816C31BF680A700BF79E2 /* YMInternal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMInternal.h; path = src/YMInternal.h; sourceTree = "<group>"; };
+		637816C41BF684D300BF79E2 /* YMPlexerPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMPlexerPriv.h; path = src/YMPlexerPriv.h; sourceTree = "<group>"; };
+		637816C51BF68B8F00BF79E2 /* YMString.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMString.c; path = src/YMString.c; sourceTree = "<group>"; };
+		637816C61BF68B8F00BF79E2 /* YMString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMString.h; path = src/YMString.h; sourceTree = "<group>"; };
+		637816C91BF6FF3400BF79E2 /* YMLockPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMLockPriv.h; path = src/YMLockPriv.h; sourceTree = "<group>"; };
+		637816CA1BF6FFF800BF79E2 /* YMStringPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMStringPriv.h; path = src/YMStringPriv.h; sourceTree = "<group>"; };
 		637E3D5B1BF262EE00D702ED /* YMX509Certificate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMX509Certificate.c; path = src/YMX509Certificate.c; sourceTree = "<group>"; };
 		637E3D5C1BF262EE00D702ED /* YMX509Certificate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMX509Certificate.h; path = src/YMX509Certificate.h; sourceTree = "<group>"; };
 		637E3D5F1BF2680B00D702ED /* YMOpenssl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMOpenssl.h; path = src/YMOpenssl.h; sourceTree = "<group>"; };
@@ -209,7 +217,7 @@
 		63225D491BE9027000C28F05 /* src */ = {
 			isa = PBXGroup;
 			children = (
-				6332A4BB1BF134DD004BB764 /* PrefixHeader.pch */,
+				6332A4BB1BF134DD004BB764 /* yammer-PrefixHeader.pch */,
 				63476A471BEB05B400D10081 /* API */,
 				63476A481BEB05DC00D10081 /* Private */,
 				63476A461BEAF4E900D10081 /* Utility */,
@@ -236,6 +244,7 @@
 				63225D681BE9184000C28F05 /* YMUtilities.h */,
 				63225D671BE9184000C28F05 /* YMUtilities.c */,
 				63476A431BEAF4DB00D10081 /* YMLock.h */,
+				637816C91BF6FF3400BF79E2 /* YMLockPriv.h */,
 				63476A421BEAF4DB00D10081 /* YMLock.c */,
 				63476A4A1BEB074C00D10081 /* YMLinkedList.h */,
 				63476A491BEB074C00D10081 /* YMLinkedList.c */,
@@ -254,6 +263,7 @@
 		63476A471BEB05B400D10081 /* API */ = {
 			isa = PBXGroup;
 			children = (
+				63225D991BE92CBA00C28F05 /* YMDebug.h */,
 				63225D661BE90B2D00C28F05 /* YMBase.h */,
 				63225D971BE92B6000C28F05 /* YMBase.c */,
 				630A5D0B1BE96D6E003292EE /* Yammer.h */,
@@ -271,6 +281,9 @@
 				630A5CF41BE9518A003292EE /* YMSession.c */,
 				6335CAC41BF480DC00412CC9 /* YMPeer.h */,
 				6335CAC31BF480DC00412CC9 /* YMPeer.c */,
+				637816C61BF68B8F00BF79E2 /* YMString.h */,
+				637816CA1BF6FFF800BF79E2 /* YMStringPriv.h */,
+				637816C51BF68B8F00BF79E2 /* YMString.c */,
 			);
 			name = API;
 			sourceTree = "<group>";
@@ -278,8 +291,9 @@
 		63476A481BEB05DC00D10081 /* Private */ = {
 			isa = PBXGroup;
 			children = (
-				63225D991BE92CBA00C28F05 /* YMPrivate.h */,
+				637816C31BF680A700BF79E2 /* YMInternal.h */,
 				63225D5F1BE909BB00C28F05 /* YMPlexer.h */,
+				637816C41BF684D300BF79E2 /* YMPlexerPriv.h */,
 				63225D5E1BE909BB00C28F05 /* YMPlexer.c */,
 				63225D6C1BE91B3B00C28F05 /* YMLog.h */,
 				63225D6B1BE91B3B00C28F05 /* YMLog.c */,
@@ -323,6 +337,7 @@
 				6335CAC01BF453A800412CC9 /* YMAddress.h in Headers */,
 				630A5D171BE9777C003292EE /* YMmDNSBrowser.h in Headers */,
 				63476A541BEB319000D10081 /* YMSemaphore.h in Headers */,
+				637816C81BF68B8F00BF79E2 /* YMString.h in Headers */,
 				63FD5B5B1BF1899800174824 /* YMRSAKeyPair.h in Headers */,
 				6335CAC61BF480DC00412CC9 /* YMPeer.h in Headers */,
 				630A5CEE1BE9428C003292EE /* YMmDNSService.h in Headers */,
@@ -434,6 +449,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				637816C71BF68B8F00BF79E2 /* YMString.c in Sources */,
 				63225D6D1BE91B3B00C28F05 /* YMLog.c in Sources */,
 				63BD75CE1BF3F0E700D01F70 /* YMLocalSocketPair.c in Sources */,
 				630A5CFA1BE95E36003292EE /* YMThread.c in Sources */,
@@ -476,7 +492,6 @@
 			buildSettings = {
 				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = NO;
 				COMBINE_HIDPI_IMAGES = YES;
-				GCC_PREFIX_HEADER = src/PrefixHeader.pch;
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				INFOPLIST_FILE = YammerTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
@@ -490,7 +505,6 @@
 			buildSettings = {
 				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = NO;
 				COMBINE_HIDPI_IMAGES = YES;
-				GCC_PREFIX_HEADER = src/PrefixHeader.pch;
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				INFOPLIST_FILE = YammerTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
@@ -528,7 +542,6 @@
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREFIX_HEADER = src/PrefixHeader.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -546,7 +559,10 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_PARAMETER = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = /opt/local/include;
+				HEADER_SEARCH_PATHS = (
+					/opt/local/include,
+					"\"$SRCROOT/src\"",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -581,7 +597,6 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_PREFIX_HEADER = src/PrefixHeader.pch;
 				GCC_TREAT_INCOMPATIBLE_POINTER_TYPE_WARNINGS_AS_ERRORS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
@@ -595,7 +610,10 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_PARAMETER = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = /opt/local/include;
+				HEADER_SEARCH_PATHS = (
+					/opt/local/include,
+					"\"$SRCROOT/src\"",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = macosx;
@@ -611,7 +629,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				ENABLE_NS_ASSERTIONS = YES;
 				EXECUTABLE_PREFIX = lib;
-				GCC_PREFIX_HEADER = src/PrefixHeader.pch;
+				GCC_PREFIX_HEADER = "src/yammer-PrefixHeader.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"YM_TEST_BOOL_USE=1",
@@ -636,7 +654,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				ENABLE_NS_ASSERTIONS = YES;
 				EXECUTABLE_PREFIX = lib;
-				GCC_PREFIX_HEADER = src/PrefixHeader.pch;
+				GCC_PREFIX_HEADER = "src/yammer-PrefixHeader.pch";
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
 				LIBRARY_SEARCH_PATHS = (

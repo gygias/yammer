@@ -13,7 +13,7 @@
 
 #include "YMSemaphore.h"
 
-typedef struct __YMStream *YMStreamRef;
+typedef YMTypeRef YMStreamRef;
 
 void YMStreamWriteDown(YMStreamRef stream, const void *buffer, uint16_t length);
 YMIOResult YMStreamReadUp(YMStreamRef stream, void *buffer, uint16_t length);

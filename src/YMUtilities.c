@@ -8,7 +8,7 @@
 
 #include "YMUtilities.h"
 
-#include "YMPrivate.h"
+#include "YMLock.h"
 
 #include "YMLog.h"
 #undef ymlog_type
@@ -18,7 +18,6 @@
 #define ymlog(x,...) ;
 #endif
 
-#include <stdarg.h>
 #include <netinet/in.h>
 
 void YMGetTheBeginningOfPosixTimeForCurrentPlatform(struct timeval *time)
@@ -102,44 +101,6 @@ YMIOResult YMWriteFull(int fd, const uint8_t *buffer, size_t bytes, size_t *outW
     return result;
 }
 
-char *YMStringCreateWithFormat(char *formatStr, ...)
-{
-    va_list testArgs,formatArgs;
-    va_start(testArgs,formatStr);
-    va_copy(formatArgs,testArgs);
-    int length = vsnprintf(NULL, 0, formatStr, testArgs) + 1;
-    
-    char *newStr = NULL;
-    if ( length == 0 )
-        newStr = strdup("");
-    else if ( length < 0 )
-        ymerr("snprintf failed on format: %s", formatStr);
-    else
-    {
-        newStr = (char *)YMALLOC(length);
-        //va_start(formatArgs,formatStr);
-        vsnprintf(newStr, length, formatStr, formatArgs);
-        va_end(formatArgs);
-    }
-    
-    va_end(testArgs);
-    
-    return newStr;
-}
-
-char *YMStringCreateByAppendString(char *baseStr, char *appendStr)
-{
-    size_t baseLen = strlen(baseStr);
-    size_t appendLen = strlen(appendStr);
-    size_t newStringLen = baseLen + appendLen + 1;
-    char *newString = (char *)YMALLOC(newStringLen);
-    memcpy(newString, baseStr, baseLen);
-    memcpy(newString + baseLen, appendStr, appendLen);
-    newString[newStringLen - 1] = '\0';
-    
-    return newString;
-}
-
 int32_t YMPortReserve(bool ipv4, int *outSocket)
 {
     uint16_t aPort = IPPORT_RESERVED;
@@ -188,4 +149,97 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
     }
     
     return -1;
+}
+
+ymbool YMCreateMutexWithOptions(YMLockOptions options, pthread_mutex_t *outMutex)
+{
+    pthread_mutex_t mutex;
+    pthread_mutexattr_t attributes;
+    pthread_mutexattr_t *attributesPtr = NULL;
+    int result;
+    
+    if ( options & YMLockRecursive )
+    {
+        attributesPtr = &attributes;
+        result = pthread_mutexattr_init(attributesPtr);
+        if ( result != 0 )
+        {
+            ymerr("pthread_mutexattr_init failed: %d (%s)", result, strerror(result));
+            return false;
+        }
+        result = pthread_mutexattr_settype(attributesPtr, PTHREAD_MUTEX_RECURSIVE);
+        if ( result != 0 )
+        {
+            ymerr("pthread_mutexattr_settype failed: %d (%s)", result, strerror(result));
+            goto catch_release;
+        }
+    }
+    
+    result = pthread_mutex_init(&mutex, attributesPtr);
+    if ( result != 0 )
+    {
+        ymerr("pthread_mutex_init failed: %d (%s)", result, strerror(result));
+        goto catch_release;
+    }
+    
+    *outMutex = mutex;
+    
+catch_release:
+    if ( attributesPtr )
+        pthread_mutexattr_destroy(attributesPtr);
+    return ( result == 0 );
+}
+
+ymbool YMLockMutex(pthread_mutex_t mutex)
+{
+    int result = pthread_mutex_lock(&mutex);
+    ymbool okay = true;
+    switch(result)
+    {
+        case 0:
+            break;
+        case EDEADLK:
+            ymerr("mutex: error: %p EDEADLK", &mutex);
+            okay = false;
+            break;
+        case EINVAL:
+            ymerr("mutex: error: %p EINVAL", &mutex);
+            okay = false;
+            break;
+        default:
+            ymerr("mutex: error: %p unknown error", &mutex);
+            break;
+    }
+    
+    return okay;
+}
+
+ymbool YMUnlockMutex(pthread_mutex_t mutex)
+{
+    int result = pthread_mutex_unlock(&mutex);
+    ymbool okay = true;
+    switch(result)
+    {
+        case 0:
+            break;
+        case EPERM:
+            ymerr("mutex: error: unlocking thread doesn't hold %p", &mutex);
+            okay = false;
+            break;
+        case EINVAL:
+            ymerr("mutex: error: unlock EINVAL %p", &mutex);
+            okay = false;
+            break;
+        default:
+            ymerr("mutex: error: unknown %p", &mutex);
+            break;
+    }
+    
+    return okay;
+}
+
+ymbool YMDestroyMutex(pthread_mutex_t mutex)
+{
+    int result = pthread_mutex_destroy(&mutex);
+    return ( result == 0 );
 }

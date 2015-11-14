@@ -8,7 +8,6 @@
 
 #include "YMSecurityProvider.h"
 #include "YMSecurityProviderVeryPriv.h"
-#include "YMPrivate.h"
 
 #include "YMUtilities.h"
 
@@ -20,10 +19,10 @@
 #define ymlog(x,...) ;
 #endif
 
-bool YMNoSecurityInit(YMSecurityProviderRef provider);
-bool YMNoSecurityRead(YMSecurityProviderRef provider,uint8_t*,size_t);
-bool YMNoSecurityWrite(YMSecurityProviderRef provider,const uint8_t*,size_t);
-bool YMNoSecurityClose(YMSecurityProviderRef provider);
+bool YMNoSecurityInit(__YMSecurityProviderRef provider);
+bool YMNoSecurityRead(__YMSecurityProviderRef provider,uint8_t*,size_t);
+bool YMNoSecurityWrite(__YMSecurityProviderRef provider,const uint8_t*,size_t);
+bool YMNoSecurityClose(__YMSecurityProviderRef provider);
 
 YMSecurityProviderRef YMSecurityProviderCreateWithFullDuplexFile(int fd)
 {
@@ -32,9 +31,9 @@ YMSecurityProviderRef YMSecurityProviderCreateWithFullDuplexFile(int fd)
 
 YMSecurityProviderRef YMSecurityProviderCreate(int readFile, int writeFile)
 {    
-    _YMSecurityProvider *provider = (_YMSecurityProvider *)calloc(1,sizeof(_YMSecurityProvider));
-    provider->_typeID = _YMSecurityProviderTypeID;
+    __YMSecurityProviderRef provider = (__YMSecurityProviderRef)_YMAlloc(_YMSecurityProviderTypeID,sizeof(__YMSecurityProvider));
     provider->initFunc = YMNoSecurityInit;
+    
     provider->readFunc = YMNoSecurityRead;
     provider->writeFunc = YMNoSecurityWrite;
     provider->closeFunc = YMNoSecurityClose;
@@ -43,53 +42,59 @@ YMSecurityProviderRef YMSecurityProviderCreate(int readFile, int writeFile)
     return provider;
 }
 
-void _YMSecurityProviderFree(YMSecurityProviderRef provider)
+void _YMSecurityProviderFree(YMSecurityProviderRef provider_)
 {
+    __YMSecurityProviderRef provider = (__YMSecurityProviderRef)provider_;
     free(provider);
 }
 
-void YMSecurityProviderSetInitFunc(YMSecurityProviderRef provider, ym_security_init_func func)
+void YMSecurityProviderSetInitFunc(YMSecurityProviderRef provider_, ym_security_init_func func)
 {
+    __YMSecurityProviderRef provider = (__YMSecurityProviderRef)provider_;
     provider->initFunc = func;
 }
 
-bool YMSecurityProviderInit(YMSecurityProviderRef provider)
+bool YMSecurityProviderInit(YMSecurityProviderRef provider_)
 {
+    __YMSecurityProviderRef provider = (__YMSecurityProviderRef)provider_;
     return provider->initFunc(provider);
 }
 
-bool YMSecurityProviderRead(YMSecurityProviderRef provider, uint8_t *buffer, size_t bytes)
+bool YMSecurityProviderRead(YMSecurityProviderRef provider_, uint8_t *buffer, size_t bytes)
 {
+    __YMSecurityProviderRef provider = (__YMSecurityProviderRef)provider_;
     return provider->readFunc(provider, buffer, bytes);
 }
 
-bool YMSecurityProviderWrite(YMSecurityProviderRef provider, const uint8_t *buffer, size_t bytes)
+bool YMSecurityProviderWrite(YMSecurityProviderRef provider_, const uint8_t *buffer, size_t bytes)
 {
+    __YMSecurityProviderRef provider = (__YMSecurityProviderRef)provider_;
     return provider->writeFunc(provider, buffer, bytes);
 }
 
-bool YMSecurityProviderClose(YMSecurityProviderRef provider)
+bool YMSecurityProviderClose(YMSecurityProviderRef provider_)
 {
+    __YMSecurityProviderRef provider = (__YMSecurityProviderRef)provider_;
     return provider->closeFunc(provider);
 }
 
 // passthrough
-bool YMNoSecurityInit(__unused YMSecurityProviderRef provider)
+bool YMNoSecurityInit(__unused __YMSecurityProviderRef provider)
 {
     return true;
 }
 
-bool YMNoSecurityRead(YMSecurityProviderRef provider, uint8_t *buffer, size_t bytes)
+bool YMNoSecurityRead(__YMSecurityProviderRef provider, uint8_t *buffer, size_t bytes)
 {
     return YMReadFull(provider->readFile, buffer, bytes, NULL);
 }
 
-bool YMNoSecurityWrite(YMSecurityProviderRef provider, const uint8_t *buffer, size_t bytes)
+bool YMNoSecurityWrite(__YMSecurityProviderRef provider, const uint8_t *buffer, size_t bytes)
 {
     return YMWriteFull(provider->writeFile, buffer, bytes, NULL);
 }
 
-bool YMNoSecurityClose(__unused YMSecurityProviderRef provider)
+bool YMNoSecurityClose(__unused __YMSecurityProviderRef provider)
 {
     return true;
 }

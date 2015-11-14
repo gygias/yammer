@@ -14,7 +14,7 @@
 #include "YMStream.h"
 #include "YMAddress.h"
 
-typedef struct __YMConnection *YMConnectionRef;
+typedef YMTypeRef YMConnectionRef;
 
 typedef enum
 {
@@ -42,7 +42,7 @@ bool YMConnectionConnect(YMConnectionRef connection);
 uint64_t YMConnectionDoSample(YMConnectionRef connection);
 YMAddressRef YMConnectionGetAddress(YMConnectionRef connection);
 
-YMStreamRef YMConnectionCreateStream(YMConnectionRef connection, const char *name);
+YMStreamRef YMConnectionCreateStream(YMConnectionRef connection, YMStringRef name);
 void YMConnectionCloseStream(YMConnectionRef connection, YMStreamRef stream);
 
 bool YMConnectionClose(YMConnectionRef connection);

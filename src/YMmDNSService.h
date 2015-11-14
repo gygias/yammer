@@ -12,9 +12,9 @@
 #include "YMBase.h"
 #include "YMmDNS.h"
 
-typedef struct __YMmDNSService *YMmDNSServiceRef;
+typedef YMTypeRef YMmDNSServiceRef;
 
-YMmDNSServiceRef YMmDNSServiceCreate(const char *type, const char *name, uint16_t port);
+YMmDNSServiceRef YMmDNSServiceCreate(YMStringRef type, YMStringRef name, uint16_t port);
 
 // copies the keys/values
 ymbool YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPair *keyPairs[], size_t nPairs );

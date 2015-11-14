@@ -9,7 +9,7 @@
 #ifndef YMDictionary_h
 #define YMDictionary_h
 
-typedef struct __YMDictionary *YMDictionaryRef;
+typedef YMTypeRef YMDictionaryRef;
 
 typedef uint64_t YMDictionaryKey;
 typedef const void *YMDictionaryValue;

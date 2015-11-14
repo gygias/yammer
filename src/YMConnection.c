@@ -7,7 +7,6 @@
 //
 
 #include "YMConnection.h"
-#include "YMPrivate.h"
 
 #include "YMPlexer.h"
 #include "YMSecurityProvider.h"
@@ -26,9 +25,9 @@
 #define NULL_SOCKET (-1)
 #define NOT_CONNECTED ( ( connection->socket == NULL_SOCKET ) && ! connection->isConnected )
 
-typedef struct __YMConnection
+typedef struct __ym_connection
 {
-    YMTypeID _type;
+    _YMType _type;
     
     int socket;
     bool isIncoming;
@@ -47,7 +46,9 @@ typedef struct __YMConnection
     bool isConnected;
     YMSecurityProviderRef security;
     YMPlexerRef plexer;
-} _YMConnection;
+} ___ym_connection;
+typedef struct __ym_connection __YMConnection;
+typedef __YMConnection *__YMConnectionRef;
 
 enum
 {
@@ -65,9 +66,9 @@ void ym_connection_new_stream_proc(YMPlexerRef plexer,YMStreamRef stream, void *
 void ym_connection_stream_closing_proc(YMPlexerRef plexer, YMStreamRef stream, void *context);
 void ym_connection_interrupted_proc(YMPlexerRef plexer, void *context);
 
-YMConnectionRef __YMConnectionCreate(bool isIncoming, int socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType);
-bool __YMConnectionDestroy(YMConnectionRef connection);
-bool __YMConnectionInitCommon(YMConnectionRef connection, int newSocket, bool asServer);
+__YMConnectionRef __YMConnectionCreate(bool isIncoming, int socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType);
+bool __YMConnectionDestroy(__YMConnectionRef connection);
+bool __YMConnectionInitCommon(__YMConnectionRef connection, int newSocket, bool asServer);
 
 YMConnectionRef YMConnectionCreate(YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType)
 {
@@ -76,51 +77,59 @@ YMConnectionRef YMConnectionCreate(YMAddressRef address, YMConnectionType type, 
 
 YMConnectionRef YMConnectionCreateIncoming(int socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType)
 {
-    YMConnectionRef connection = __YMConnectionCreate(true, socket, address, type, securityType);
+    __YMConnectionRef connection = __YMConnectionCreate(true, socket, address, type, securityType);
     bool commonInitOK = __YMConnectionInitCommon(connection, socket, true);
     if ( ! commonInitOK )
     {
-        ymlog("connection[%s]: server init failed",YMAddressGetDescription(address));
-        YMFree(connection);
+        ymlog("connection[%s]: server init failed",YMSTR(YMAddressGetDescription(address)));
+        YMRelease(connection);
         return NULL;
     }
     return connection;
 }
 
-YMConnectionRef __YMConnectionCreate(bool isIncoming, int socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType)
+__YMConnectionRef __YMConnectionCreate(bool isIncoming, int socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType)
 {
     if ( type < __YMConnectionTypeMin || type > __YMConnectionTypeMax )
         return NULL;
     if ( securityType < __YMConnectionSecurityTypeMin || securityType > __YMConnectionSecurityTypeMax )
         return NULL;
     
-    _YMConnection *connection = (_YMConnection *)calloc(1,sizeof(_YMConnection));
-    connection->_type = _YMConnectionTypeID;
+    __YMConnectionRef connection = (__YMConnectionRef)_YMAlloc(_YMConnectionTypeID,sizeof(__YMConnection));
     
+    connection->socket = socket;
     connection->isIncoming = isIncoming;
     connection->address = address;
     connection->type = type;
-    connection->socket = socket;
-    connection->isConnected = false;
     connection->securityType = securityType;
     
-    return (YMConnectionRef)connection;
+    connection->newFunc = NULL;
+    connection->newFuncContext = NULL;
+    connection->closingFunc = NULL;
+    connection->closingFuncContext = NULL;
+    connection->interruptedFunc = NULL;
+    connection->interruptedFuncContext = NULL;
+    
+    connection->isConnected = false;
+    connection->security = NULL;
+    connection->plexer = NULL;
+    
+    return connection;
 }
 
 void _YMConnectionFree(YMTypeRef object)
 {
-    YMConnectionRef connection = (YMConnectionRef)object;
-    
+    __YMConnectionRef connection = (__YMConnectionRef)object;
     __YMConnectionDestroy(connection);
-    
-    free(connection);
 }
 
-void YMConnectionSetCallbacks(YMConnectionRef connection,
+void YMConnectionSetCallbacks(YMConnectionRef connection_,
                               ym_connection_new_stream_func newFunc, void *newFuncContext,
                               ym_connection_stream_closing_func closingFunc, void *closingFuncContext,
                               ym_connection_interrupted_func interruptedFunc, void *interruptedFuncContext)
 {
+    __YMConnectionRef connection = (__YMConnectionRef)connection_;
+    
     connection->newFunc = newFunc;
     connection->newFuncContext = newFuncContext;
     connection->closingFunc = closingFunc;
@@ -129,11 +138,13 @@ void YMConnectionSetCallbacks(YMConnectionRef connection,
     connection->interruptedFuncContext = interruptedFuncContext;
 }
 
-bool YMConnectionConnect(YMConnectionRef connection)
+bool YMConnectionConnect(YMConnectionRef connection_)
 {
+    __YMConnectionRef connection = (__YMConnectionRef)connection_;
+    
     if ( connection->socket >= 0 || connection->isIncoming )
     {
-        ymerr("connection[%s]: connect called on connected socket",YMAddressGetDescription(connection->address));
+        ymerr("connection[%s]: connect called on connected socket",YMSTR(YMAddressGetDescription(connection->address)));
         return false;
     }    
     
@@ -155,11 +166,11 @@ bool YMConnectionConnect(YMConnectionRef connection)
     int newSocket = socket(domain, type, protocol); // xxx
     if ( newSocket < 0 )
     {
-        ymerr("connection: socket(%s) failed: %d (%s)",YMAddressGetDescription(connection->address),errno,strerror(errno));
+        ymerr("connection: socket(%s) failed: %d (%s)",YMSTR(YMAddressGetDescription(connection->address)),errno,strerror(errno));
         return false;
     }
     
-    ymlog("connection[%s]: connecting...",YMAddressGetDescription(connection->address));
+    ymlog("connection[%s]: connecting...",YMSTR(YMAddressGetDescription(connection->address)));
     
     struct sockaddr *addr = (struct sockaddr *)YMAddressGetAddressData(connection->address);
     socklen_t addrLen = YMAddressGetLength(connection->address);
@@ -169,12 +180,12 @@ bool YMConnectionConnect(YMConnectionRef connection)
     int result = connect(newSocket, addr, addrLen);
     if ( result != 0 )
     {
-        ymerr("connection: error: connect(%s): %d (%s)",YMAddressGetDescription(connection->address),errno,strerror(errno));
+        ymerr("connection: error: connect(%s): %d (%s)",YMSTR(YMAddressGetDescription(connection->address)),errno,strerror(errno));
         close(newSocket);
         return false;
     }
     
-    ymlog("connection[%s]: connected",YMAddressGetDescription(connection->address));
+    ymlog("connection[%s]: connected",YMSTR(YMAddressGetDescription(connection->address)));
     
     bool commonInitOK = __YMConnectionInitCommon(connection, newSocket, false);
     if ( ! commonInitOK )
@@ -188,7 +199,7 @@ bool YMConnectionConnect(YMConnectionRef connection)
     return true;
 }
 
-bool __YMConnectionInitCommon(YMConnectionRef connection, int newSocket, bool asServer)
+bool __YMConnectionInitCommon(__YMConnectionRef connection, int newSocket, bool asServer)
 {
     YMSecurityProviderRef security = NULL;
     YMPlexerRef plexer = NULL;
@@ -202,22 +213,22 @@ bool __YMConnectionInitCommon(YMConnectionRef connection, int newSocket, bool as
             security = (YMSecurityProviderRef)YMTLSProviderCreateWithFullDuplexFile(newSocket, asServer);
             break;
         default:
-            ymerr("connection[%s]: unknown security type",YMAddressGetDescription(connection->address));
+            ymerr("connection[%s]: unknown security type",YMSTR(YMAddressGetDescription(connection->address)));
             goto rewind_fail;
     }
     
     bool securityOK = YMSecurityProviderInit(security);
     if ( ! securityOK )
     {
-        ymerr("connection[%s]: security type %d failed to initialize",YMAddressGetDescription(connection->address),connection->securityType);
+        ymerr("connection[%s]: security type %d failed to initialize",YMSTR(YMAddressGetDescription(connection->address)),connection->securityType);
         goto rewind_fail;
     }
     
-    plexer = YMPlexerCreate((char *)YMAddressGetDescription(connection->address), newSocket, newSocket, asServer);
+    plexer = YMPlexerCreate(YMAddressGetDescription(connection->address), newSocket, newSocket, asServer);
     bool plexerOK = YMPlexerStart(plexer);
     if ( ! plexerOK )
     {
-        ymerr("connection[%s]: plexer failed to initialize",YMAddressGetDescription(connection->address));
+        ymerr("connection[%s]: plexer failed to initialize",YMSTR(YMAddressGetDescription(connection->address)));
         goto rewind_fail;
     }
     
@@ -234,31 +245,32 @@ bool __YMConnectionInitCommon(YMConnectionRef connection, int newSocket, bool as
     
 rewind_fail:
     if ( security )
-        YMFree(security);
+        YMRelease(security);
     if ( plexer )
-        YMFree(plexer);
+        YMRelease(plexer);
     return false;
 }
 
-bool YMConnectionClose(YMConnectionRef connection)
+bool YMConnectionClose(YMConnectionRef connection_)
 {
+    __YMConnectionRef connection = (__YMConnectionRef)connection_;
     return __YMConnectionDestroy(connection);
 }
 
-bool __YMConnectionDestroy(YMConnectionRef connection)
+bool __YMConnectionDestroy(__YMConnectionRef connection)
 {
     if ( connection->plexer )
         YMPlexerStop(connection->plexer);
     bool securityOK = YMSecurityProviderClose(connection->security);
     if ( ! securityOK )
-        ymerr("connection[%s]: warning: failed to close security",YMAddressGetDescription(connection->address));
+        ymerr("connection[%s]: warning: failed to close security",YMSTR(YMAddressGetDescription(connection->address)));
     int closeResult = close(connection->socket);
     if ( closeResult != 0 )
-        ymerr("connection[%s]: warning: close socket failed: %d (%s)",YMAddressGetDescription(connection->address),errno,strerror(errno));
+        ymerr("connection[%s]: warning: close socket failed: %d (%s)",YMSTR(YMAddressGetDescription(connection->address)),errno,strerror(errno));
     
-    YMFree(connection->plexer);
+    YMRelease(connection->plexer);
     connection->plexer = NULL;
-    YMFree(connection->security);
+    YMRelease(connection->security);
     connection->security = NULL;
     connection->socket = NULL_SOCKET;
     
@@ -270,38 +282,42 @@ uint64_t YMConnectionDoSample(YMConnectionRef connection)
     return (uint64_t)connection; // todo
 }
 
-YMAddressRef YMConnectionGetAddress(YMConnectionRef connection)
+YMAddressRef YMConnectionGetAddress(YMConnectionRef connection_)
 {
+    __YMConnectionRef connection = (__YMConnectionRef)connection_;
     return connection->address;
 }
 
-YMStreamRef YMConnectionCreateStream(YMConnectionRef connection, const char *name)
+YMStreamRef YMConnectionCreateStream(YMConnectionRef connection_, YMStringRef name)
 {
+    __YMConnectionRef connection = (__YMConnectionRef)connection_;
+    
     if ( NOT_CONNECTED )
         return NULL;
     
     return YMPlexerCreateNewStream(connection->plexer, name, false);
 }
 
-void YMConnectionCloseStream(YMConnectionRef connection, YMStreamRef stream)
+void YMConnectionCloseStream(YMConnectionRef connection_, YMStreamRef stream)
 {
+    __YMConnectionRef connection = (__YMConnectionRef)connection_;
     YMPlexerCloseStream(connection->plexer, stream);
 }
 
 void ym_connection_new_stream_proc(__unused YMPlexerRef plexer,YMStreamRef stream, void *context)
 {
-    YMConnectionRef connection = (YMConnectionRef)context;
+    __YMConnectionRef connection = (__YMConnectionRef)context;
     connection->newFunc(connection, stream, connection->newFuncContext);
 }
 
 void ym_connection_stream_closing_proc(__unused YMPlexerRef plexer, YMStreamRef stream, void *context)
 {
-    YMConnectionRef connection = (YMConnectionRef)context;
+    __YMConnectionRef connection = (__YMConnectionRef)context;
     connection->closingFunc(connection, stream, connection->closingFuncContext);
 }
 
 void ym_connection_interrupted_proc(__unused YMPlexerRef plexer, void *context)
 {
-    YMConnectionRef connection = (YMConnectionRef)context;
+    __YMConnectionRef connection = (__YMConnectionRef)context;
     connection->interruptedFunc(connection, connection->interruptedFuncContext);
 }

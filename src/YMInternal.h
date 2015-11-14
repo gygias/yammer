@@ -1,15 +1,17 @@
 //
-//  YMPrivate.h
+//  YMInternal.h
 //  yammer
 //
-//  Created by david on 11/3/15.
-//  Copyright © 2015 combobulated. All rights reserved.
+//  Created by david on 11/13/15.
+//  Copyright © 2015 Combobulated Software. All rights reserved.
 //
 
-#ifndef YMPrivate_h
-#define YMPrivate_h
+#ifndef YMInternal_h
+#define YMInternal_h
 
 #include "YMBase.h"
+#include "YMString.h"
+#include "YMLock.h"
 
 #define YM_USE_CALLOC
 #ifdef YM_USE_CALLOC
@@ -19,6 +21,18 @@
 #endif
 
 #define YM_DEBUG_INFO // consolidate extra-curricular stuff under here so it doesn't get forgotten
+
+#define YM_TYPE_RESERVED 16
+
+typedef struct _ym_type
+{
+    YMTypeID type;
+    uint8_t __internal[YM_TYPE_RESERVED];
+} __ym_type;
+typedef struct _ym_type _YMType;
+typedef _YMType *_YMTypeRef;
+
+YMTypeRef _YMAlloc(YMTypeID type, size_t size);
 
 extern YMTypeID _YMPipeTypeID;
 extern YMTypeID _YMStreamTypeID;
@@ -39,10 +53,12 @@ extern YMTypeID _YMTLSProviderTypeID;
 extern YMTypeID _YMLocalSocketPairTypeID;
 extern YMTypeID _YMAddressTypeID;
 extern YMTypeID _YMPeerTypeID;
+extern YMTypeID _YMStringTypeID;
 
-typedef struct __YMTypeRef
-{
-    YMTypeID _typeID;
-} _YMTypeRef;
+typedef bool (*ym_read_func)(int,const uint8_t*,size_t);
+typedef bool (*ym_write_func)(int,const uint8_t*,size_t);
 
-#endif /* YMPrivate_h */
+#define YM_STREAM_INFO(x) ((ym_plexer_stream_user_info_ref)_YMStreamGetUserInfo(x))
+
+
+#endif /* YMInternal_h */

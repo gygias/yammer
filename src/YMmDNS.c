@@ -8,8 +8,6 @@
 
 #include "YMmDNS.h"
 
-#include "YMPrivate.h"
-
 #include <netdb.h>
 
 //#include <dns_sd.h>
@@ -57,11 +55,11 @@ void _YMmDNSServiceListFree(YMmDNSServiceList *serviceList)
 void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record)
 {
     if ( record->name )
-        free( (char *)record->name );
+        YMRelease(record->name);
     if ( record->type )
-        free( (char *)record->type );
+        YMRelease(record->type);
     if ( record->domain )
-        free( (char *)record->domain );
+        YMRelease(record->domain);
     //if ( record->hostNames )  // todo: i can't find any mention of ownership of this struct
     //    free( (char *)record->hostNames );
     if ( record->txtRecordKeyPairs )
@@ -73,17 +71,17 @@ YMmDNSServiceRecord *_YMmDNSCreateServiceRecord(const char *name, const char*typ
 {
     YMmDNSServiceRecord *record = (YMmDNSServiceRecord *)YMALLOC(sizeof(struct _YMmDNSServiceRecord));
     if ( name )
-        record->name = strdup(name);
+        record->name = YMSTRC(name);
     else
         record->name = NULL;
     
     if ( type )
-        record->type = strdup(type);
+        record->type = YMSTRC(type);
     else
         record->type = NULL;
     
     if ( domain )
-        record->domain = strdup(domain);
+        record->domain = YMSTRC(domain);
     else
         record->domain = NULL;
     
@@ -142,17 +140,17 @@ YMmDNSTxtRecordKeyPair **__YMmDNSCreateTxtKeyPairs(const unsigned char *txtRecor
         }
         
         size_t keyLength = (size_t)(equalsPtr - (char *)aPairWalker);
-        char *keyStr = (char *)YMALLOC(keyLength + 1);
+        char keyStr[keyLength + 1];
         memcpy(keyStr,aPairWalker,keyLength);
         keyStr[keyLength] = '\0';
         aPairWalker += keyLength + 1; // skip past '='
         
         size_t valueLength = aPairLength - keyLength - 1;
-        uint8_t *valueBuf = (uint8_t *)YMALLOC(valueLength);
+        uint8_t *valueBuf = YMALLOC(valueLength);
         memcpy(valueBuf, aPairWalker, valueLength);
         
         YMmDNSTxtRecordKeyPair *aKeyPair = (YMmDNSTxtRecordKeyPair *)YMALLOC(sizeof(YMmDNSTxtRecordKeyPair));
-        aKeyPair->key = keyStr;
+        aKeyPair->key = YMSTRC(keyStr);
         aKeyPair->value = valueBuf;
         aKeyPair->valueLen = (uint8_t)valueLength;
         keyPairList[listSize] = aKeyPair;
@@ -181,9 +179,9 @@ void _YMmDNSTxtRecordKeyPairsFree(YMmDNSTxtRecordKeyPair **keyPairList, size_t s
         if ( aPair )
         {
             if ( aPair->key )
-                free((char *)aPair->key);
+                YMRelease(aPair->key);
             if ( aPair->value )
-                free((void *)aPair->value);
+                free((void*)aPair->value);
             free(aPair);
         }
     }

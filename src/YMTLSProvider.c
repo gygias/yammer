@@ -26,10 +26,9 @@
 #define ymlog(x,...) ;
 #endif
 
-#pragma message "danger! really time to convert to unions.."
-typedef struct __YMTLSProvider
+typedef struct __ym_tls_provider
 {
-    YMTypeID _type;
+    _YMType _type;
     
     int socket;
     int FAKE_UNION_FILLER_FIX_ME;
@@ -48,12 +47,14 @@ typedef struct __YMTLSProvider
     void *localCertsContext;
     ym_tls_provider_should_accept peerCertsFunc;
     void *peerCertsContext;
-} _YMTLSProvider;
+} ___ym_tls_provider;
+typedef struct __ym_tls_provider __YMTLSProvider;
+typedef __YMTLSProvider *__YMTLSProviderRef;
 
-bool __YMTLSProviderInit(YMSecurityProviderRef provider);
-bool __YMTLSProviderRead(YMSecurityProviderRef provider, uint8_t *buffer, size_t bytes);
-bool __YMTLSProviderWrite(YMSecurityProviderRef provider, const uint8_t *buffer, size_t bytes);
-bool __YMTLSProviderClose(YMSecurityProviderRef provider);
+bool __YMTLSProviderInit(__YMSecurityProviderRef provider);
+bool __YMTLSProviderRead(__YMSecurityProviderRef provider, uint8_t *buffer, size_t bytes);
+bool __YMTLSProviderWrite(__YMSecurityProviderRef provider, const uint8_t *buffer, size_t bytes);
+bool __YMTLSProviderClose(__YMSecurityProviderRef provider);
 
 unsigned long ym_tls_thread_id_callback()
 {
@@ -71,9 +72,9 @@ void ym_tls_lock_callback(int mode, int type, __unused char *file, __unused int 
     YMLockRef theLock = gYMTLSLocks[type];
     if ( ! theLock )
     {
-        char *name = YMStringCreateWithFormat("ym_tls_lock_callback-%d",type);
+        YMStringRef name = YMStringCreateWithFormat("ym_tls_lock_callback-%d",type, NULL);
         theLock = YMLockCreateWithOptionsAndName(YMLockDefault, name);
-        free(name);
+        YMRelease(name);
     }
     
     // locking_function() must be able to handle up to CRYPTO_num_locks() different mutex locks. It sets the n-th lock if mode
@@ -119,8 +120,7 @@ YMTLSProviderRef __YMTLSProviderCreateWithFullDuplexFile(int file, bool isWrappi
         return NULL;
     }
     
-    YMTLSProviderRef tls = (YMTLSProviderRef)YMALLOC(sizeof(struct __YMTLSProvider));
-    tls->_type = _YMTLSProviderTypeID;
+    __YMTLSProviderRef tls = (__YMTLSProviderRef)_YMAlloc(_YMTLSProviderTypeID,sizeof(__YMTLSProvider));
     
     tls->socket = file;
     tls->isWrappingSocket = isWrappingSocket;
@@ -143,21 +143,23 @@ YMTLSProviderRef __YMTLSProviderCreateWithFullDuplexFile(int file, bool isWrappi
     return tls;
 }
 
-void YMTLSProviderSetLocalCertsFunc(YMTLSProviderRef tls, ym_tls_provider_get_certs func, void *context)
+void YMTLSProviderSetLocalCertsFunc(YMTLSProviderRef tls_, ym_tls_provider_get_certs func, void *context)
 {
+    __YMTLSProviderRef tls = (__YMTLSProviderRef)tls_;
     tls->localCertsFunc = func;
     tls->localCertsContext = context;
 }
 
-void YMTLSProviderSetAcceptPeerCertsFunc(YMTLSProviderRef tls, ym_tls_provider_should_accept func, void *context)
+void YMTLSProviderSetAcceptPeerCertsFunc(YMTLSProviderRef tls_, ym_tls_provider_should_accept func, void *context)
 {
+    __YMTLSProviderRef tls = (__YMTLSProviderRef)tls_;
     tls->peerCertsFunc = func;
     tls->peerCertsContext = context;
 }
 
 void _YMTLSProviderFree(YMTypeRef object)
 {
-    YMTLSProviderRef tls = (YMTLSProviderRef)object;
+    __YMTLSProviderRef tls = (__YMTLSProviderRef)object;
     //if ( tls->isWrappingSocket ) // when YMConnection is involved, it 'owns' the socket
     //    close(tls->socket);
     //if ( tls->bio )
@@ -169,9 +171,9 @@ void _YMTLSProviderFree(YMTypeRef object)
     free(tls);
 }
 
-bool __YMTLSProviderInit(YMSecurityProviderRef provider)
+bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
 {
-    YMTLSProviderRef tls = (YMTLSProviderRef)provider;
+    __YMTLSProviderRef tls = (__YMTLSProviderRef)provider;
     unsigned long sslError = SSL_ERROR_NONE;
     bool initOkay = false;
     
@@ -303,9 +305,9 @@ catch_return:
 }
 
 #pragma message "i'm pretty sure all the 'call it twice' cases for these i/o wrappers are for non-blocking files, which we're (thank god) not using, but go back through"
-bool __YMTLSProviderRead(YMSecurityProviderRef provider, uint8_t *buffer, size_t bytes)
+bool __YMTLSProviderRead(__YMSecurityProviderRef provider, uint8_t *buffer, size_t bytes)
 {
-    YMTLSProviderRef tls = (YMTLSProviderRef)provider;
+    __YMTLSProviderRef tls = (__YMTLSProviderRef)provider;
     
     // loop or something? hate to change the whole prototype for this, and i like having length-y things be unsigned
     if ( bytes > INT32_MAX )
@@ -325,9 +327,9 @@ bool __YMTLSProviderRead(YMSecurityProviderRef provider, uint8_t *buffer, size_t
     
 }
 
-bool __YMTLSProviderWrite(YMSecurityProviderRef provider, const uint8_t *buffer, size_t bytes)
+bool __YMTLSProviderWrite(__YMSecurityProviderRef provider, const uint8_t *buffer, size_t bytes)
 {
-    YMTLSProviderRef tls = (YMTLSProviderRef)provider;
+    __YMTLSProviderRef tls = (__YMTLSProviderRef)provider;
     
     if ( bytes > INT32_MAX )
     {
@@ -346,9 +348,9 @@ bool __YMTLSProviderWrite(YMSecurityProviderRef provider, const uint8_t *buffer,
     return true;
 }
 
-bool __YMTLSProviderClose(YMSecurityProviderRef provider)
+bool __YMTLSProviderClose(__YMSecurityProviderRef provider)
 {
-    YMTLSProviderRef tls = (YMTLSProviderRef)provider;
+    __YMTLSProviderRef tls = (__YMTLSProviderRef)provider;
     
     int result = SSL_shutdown(tls->ssl);
     if ( result )

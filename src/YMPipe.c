@@ -7,7 +7,6 @@
 //
 
 #include "YMPipe.h"
-#include "YMPrivate.h"
 
 #include "YMLog.h"
 #undef ymlog_type
@@ -17,21 +16,24 @@
 #define ymlog(x,...) ;
 #endif
 
-typedef struct __YMPipe
+typedef struct __ym_pipe
 {
-    YMTypeID _typeID;
+    _YMType _type;
     
-    char *name;
+    YMStringRef name;
     int inFd;
     int outFd;
-} _YMPipe;
+} ___ym_pipe;
+typedef struct __ym_pipe __YMPipe;
+typedef __YMPipe *__YMPipeRef;
 
-YMPipeRef YMPipeCreate(char *name)
+YMPipeRef YMPipeCreate(YMStringRef name)
 {
-    _YMPipe *ymPipe = (_YMPipe *)calloc(1,sizeof(_YMPipe));
-    ymPipe->_typeID = _YMPipeTypeID;
+    __YMPipeRef aPipe = (__YMPipeRef)_YMAlloc(_YMPipeTypeID,sizeof(__YMPipe));
     
-    ymPipe->name = strdup(name?name:"unnamed");
+    aPipe->name = name ? YMRetain(name) : YMSTRC("unnamed");
+    aPipe->inFd = -1;
+    aPipe->outFd = -1;
     
     uint64_t iter = 1;
     int fds[2];
@@ -39,9 +41,8 @@ YMPipeRef YMPipeCreate(char *name)
     {
         if ( errno == EFAULT )
         {
-            ymerr("pipe[%s]: error: invalid address space",name);
-            free(ymPipe->name);
-            free(ymPipe);
+            ymerr("pipe[%s]: error: invalid address space",YMSTR(name));
+            YMRelease(aPipe);
             return NULL;
         }
         usleep(10000);
@@ -49,48 +50,54 @@ YMPipeRef YMPipeCreate(char *name)
         {
             iter++;
             if ( iter > 100 )
-                ymerr("pipe[%s]: warning: new files unavailable for pipe()",name);
+                ymerr("pipe[%s]: warning: new files unavailable for pipe()",YMSTR(name));
         }
     }
     
-    ymPipe->outFd = fds[0];
-    ymPipe->inFd = fds[1];
+    aPipe->outFd = fds[0];
+    aPipe->inFd = fds[1];
     
-    return (YMPipeRef)ymPipe;
+    return aPipe;
 }
 
 void _YMPipeFree(YMTypeRef object)
 {
-    _YMPipe *pipe = (_YMPipe *)object;
+    __YMPipeRef pipe = (__YMPipeRef)object;
     
     int aClose;
-    aClose = close(pipe->inFd);
-    if ( aClose != 0 )
+    if ( pipe->inFd >= 0 )
     {
-        ymerr("   pipe[%s,i%d] fatal: close failed: %d (%s)",pipe->name, pipe->inFd, errno, strerror(errno));
-        abort();
+        aClose = close(pipe->inFd);
+        if ( aClose != 0 )
+        {
+            ymerr("   pipe[%s,i%d] fatal: close failed: %d (%s)",YMSTR(pipe->name), pipe->inFd, errno, strerror(errno));
+            abort();
+        }
     }
     
     // todo add 'data remaining' check or warning here?
     
-    aClose = close(pipe->outFd);
-    if ( aClose != 0 )
+    if ( pipe->outFd >= 0 )
     {
-        ymerr("   pipe[%s,i%d] fatal: close failed: %d (%s)",pipe->name, pipe->outFd, errno, strerror(errno));
-        abort();
+        aClose = close(pipe->outFd);
+        if ( aClose != 0 )
+        {
+            ymerr("   pipe[%s,i%d] fatal: close failed: %d (%s)",YMSTR(pipe->name), pipe->outFd, errno, strerror(errno));
+            abort();
+        }
     }
     
-    free(pipe->name);
-    free(pipe);
-    
+    YMRelease(pipe->name);
 }
 
-int YMPipeGetInputFile(YMPipeRef pipe)
+int YMPipeGetInputFile(YMPipeRef pipe_)
 {
-    return ((_YMPipe *)pipe)->inFd;
+    __YMPipeRef pipe = (__YMPipeRef)pipe_;
+    return pipe->inFd;
 }
 
-int YMPipeGetOutputFile(YMPipeRef pipe)
+int YMPipeGetOutputFile(YMPipeRef pipe_)
 {
-    return ((_YMPipe *)pipe)->outFd;
+    __YMPipeRef pipe = (__YMPipeRef)pipe_;
+    return pipe->outFd;
 }

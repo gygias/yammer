@@ -9,7 +9,7 @@
 #ifndef YMRSAKeyPair_h
 #define YMRSAKeyPair_h
 
-typedef struct __YMRSAKeyPair *YMRSAKeyPairRef;
+typedef YMTypeRef YMRSAKeyPairRef;
 
 YMRSAKeyPairRef YMRSAKeyPairCreate();
 YMRSAKeyPairRef YMRSAKeyPairCreateWithModuloSize(int moduloBits, int publicExponent);

@@ -8,8 +8,6 @@
 
 #include "YMLinkedList.h"
 
-#include "YMPrivate.h"
-
 #include "YMLog.h"
 #undef ymlog_type
 #define ymlog_type YMLogDefault
@@ -24,21 +22,22 @@ typedef struct _YMLinkedListItem
     struct _YMLinkedListItem *next;
 } YMLinkedListItem;
 
-typedef struct __YMLinkedList
+typedef struct __ym_linked_list
 {
-    YMTypeID _typeID;
+    _YMType _type;
     
     bool isYMTypeList;
     YMLinkedListItem *head;
     size_t count;
-} _YMLinkedList;
+} ___ym_linked_list;
+typedef struct __ym_linked_list __YMLinkedList;
+typedef __YMLinkedList *__YMLinkedListRef;
 
-YMLinkedListItem *_YMLinkedListFindItemWithIdentifier(YMLinkedListItem *head, bool (*identifierFunc)(void *), YMLinkedListItem **outPreviousItem);
+YMLinkedListItem *__YMLinkedListFindItemWithIdentifier(YMLinkedListItem *head, bool (*identifierFunc)(void *), YMLinkedListItem **outPreviousItem);
 
 YMLinkedListRef YMLinkedListCreate()
 {
-    _YMLinkedList *list = (_YMLinkedList *)YMALLOC(sizeof(_YMLinkedList));
-    list->_typeID = _YMLinkedListTypeID;
+    __YMLinkedListRef list = (__YMLinkedListRef)_YMAlloc(_YMLinkedListTypeID,sizeof(__YMLinkedList));
     
     list->head = NULL;
     list->count = 0;
@@ -48,7 +47,7 @@ YMLinkedListRef YMLinkedListCreate()
 
 void _YMLinkedListFree(YMTypeRef object)
 {
-    _YMLinkedList *list = (_YMLinkedList *)object;
+    __YMLinkedListRef list = (__YMLinkedListRef)object;
     // we don't assume ownership of list members
     YMLinkedListItem *itemIter = list->head;
     
@@ -58,31 +57,31 @@ void _YMLinkedListFree(YMTypeRef object)
         itemIter = (YMLinkedListItem *)itemIter->next;
         free(thisItem);
     }
-    
-    free(list);
 }
 
-void YMLinkedListAdd(YMLinkedListRef list, void *item)
+void YMLinkedListAdd(YMLinkedListRef list_, void *item)
 {
-    _YMLinkedList *_list = (_YMLinkedList *)list;
+    __YMLinkedListRef list = (__YMLinkedListRef)list_;
     
     YMLinkedListItem *newItem = (YMLinkedListItem *)YMALLOC(sizeof(YMLinkedListItem));
     newItem->representedItem = item;
-    newItem->next = (struct _YMLinkedListItem *)_list->head;
-    _list->head = newItem;
+    newItem->next = (struct _YMLinkedListItem *)list->head;
+    list->head = newItem;
 }
 
-bool YMLinkedListContains(YMLinkedListRef list, bool (*identifierFunc)(void *))
+bool YMLinkedListContains(YMLinkedListRef list_, bool (*identifierFunc)(void *))
 {
-    return ( NULL != _YMLinkedListFindItemWithIdentifier(((_YMLinkedList *)list)->head, identifierFunc, NULL) );
+    __YMLinkedListRef list = (__YMLinkedListRef)list_;
+    return ( NULL != __YMLinkedListFindItemWithIdentifier(list->head, identifierFunc, NULL) );
 }
 
-void *YMLinkedListGetItem(YMLinkedListRef list, bool (*identifierFunc)(void *))
+void *YMLinkedListGetItem(YMLinkedListRef list_, bool (*identifierFunc)(void *))
 {
-    return _YMLinkedListFindItemWithIdentifier(((_YMLinkedList *)list)->head, identifierFunc, NULL);
+    __YMLinkedListRef list = (__YMLinkedListRef)list_;
+    return __YMLinkedListFindItemWithIdentifier(list->head, identifierFunc, NULL);
 }
 
-YMLinkedListItem *_YMLinkedListFindItemWithIdentifier(YMLinkedListItem *head, bool (*identifierFunc)(void *), YMLinkedListItem **outPreviousItem)
+YMLinkedListItem *__YMLinkedListFindItemWithIdentifier(YMLinkedListItem *head, bool (*identifierFunc)(void *), YMLinkedListItem **outPreviousItem)
 {
     YMLinkedListItem *itemIter = head,
         *previousItem = NULL;
@@ -102,24 +101,25 @@ YMLinkedListItem *_YMLinkedListFindItemWithIdentifier(YMLinkedListItem *head, bo
     return NULL;
 }
 
-void * YMLinkedListRemove(YMLinkedListRef list, bool (*identifierFunc)(void *))
+void * YMLinkedListRemove(YMLinkedListRef list_, bool (*identifierFunc)(void *))
 {
-    _YMLinkedList *_list = (_YMLinkedList *)list;
+    __YMLinkedListRef list = (__YMLinkedListRef)list_;
+    
     YMLinkedListItem *previousItem = NULL;
-    YMLinkedListItem *theItem = _YMLinkedListFindItemWithIdentifier(_list->head, identifierFunc, &previousItem);
+    YMLinkedListItem *theItem = __YMLinkedListFindItemWithIdentifier(list->head, identifierFunc, &previousItem);
     if ( theItem )
     {
         if ( previousItem )
             previousItem->next = theItem->next;
         else
-            _list->head = NULL;
+            list->head = NULL;
     }
     
     return theItem;
 }
 
-size_t YMLinkedListGetCount(YMLinkedListRef list)
+size_t YMLinkedListGetCount(YMLinkedListRef list_)
 {
-    _YMLinkedList *_list = (_YMLinkedList *)list;
-    return _list->count;
+    __YMLinkedListRef list = (__YMLinkedListRef)list_;
+    return list->count;
 }

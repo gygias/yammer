@@ -30,17 +30,19 @@
 #define YM_IS_IPV4(x) ( ( x->sa_family == AF_INET ) && ( x->sa_len == YM_IPV4_LEN ) )
 #define YM_IS_IPV6(x) ( ( x->sa_family == AF_INET6 ) && ( x->sa_len == YM_IPV6_LEN ) )
 
-typedef struct __YMAddress
+typedef struct __ym_address
 {
-    YMTypeID _type;
+    _YMType _type;
     
     YMAddressType type;
     struct sockaddr *address;
     socklen_t length;
     int family;
     
-    const char *description;
-} _YMAddress;
+    YMStringRef description;
+} ___ym_address;
+typedef struct __ym_address __YMAddress;
+typedef __YMAddress *__YMAddressRef;
 
 YMAddressRef YMAddressCreate(void* addressData, socklen_t length)
 {
@@ -65,8 +67,7 @@ YMAddressRef YMAddressCreate(void* addressData, socklen_t length)
         return NULL;
     }
     
-    YMAddressRef address = (YMAddressRef)YMALLOC(sizeof(struct __YMAddress));
-    address->_type = _YMAddressTypeID;
+    __YMAddressRef address = (__YMAddressRef)_YMAlloc(_YMAddressTypeID,sizeof(__YMAddress));
     
     address->type = type;
     address->address = YMALLOC(length);
@@ -84,7 +85,7 @@ YMAddressRef YMAddressCreate(void* addressData, socklen_t length)
             goto rewind_fail;
         }
         uint16_t port = inAddr->sin_port;
-        address->description = YMStringCreateWithFormat("%s:%u",ipString,port);
+        address->description = YMStringCreateWithFormat("%s:%u",ipString,port,NULL);
     }
     else if ( isIP )
     {
@@ -101,7 +102,7 @@ YMAddressRef YMAddressCreate(void* addressData, socklen_t length)
             port = ((struct sockaddr_in *)addr)->sin_port;
         else
             port = ((struct sockaddr_in6 *)addr)->sin6_port;
-        address->description = YMStringCreateWithFormat("%s:%u",ipString,port);
+        address->description = YMStringCreateWithFormat("%s:%u",ipString,port,NULL);
     }
     
     return address;
@@ -128,13 +129,13 @@ YMAddressRef YMAddressCreateLocalHostIPV4(uint16_t port)
     return address;
 }
 
-YMAddressRef YMAddressCreateWithIPStringAndPort(const char *ipString, uint16_t port)
+YMAddressRef YMAddressCreateWithIPStringAndPort(YMStringRef ipString, uint16_t port)
 {
     struct in_addr inAddr = {0};
-    int result = inet_aton(ipString, &inAddr);
+    int result = inet_aton(YMSTR(ipString), &inAddr);
     if ( result != 1 )
     {
-        ymlog("address: failed to parse '%s' (%u)",ipString,port);
+        ymlog("address: failed to parse '%s' (%u)",YMSTR(ipString),port);
         return NULL;
     }
     
@@ -149,29 +150,33 @@ YMAddressRef YMAddressCreateWithIPStringAndPort(const char *ipString, uint16_t p
 
 void _YMAddressFree(YMTypeRef object)
 {
-    YMAddressRef address = (YMAddressRef)object;
+    __YMAddressRef address = (__YMAddressRef)object;
     free((void *)address->address);
-    free ((void *)address->description);
+    YMRelease(address->description);
     free(address);
 }
 
-const void *YMAddressGetAddressData(YMAddressRef address)
+const void *YMAddressGetAddressData(YMAddressRef address_)
 {
+    __YMAddressRef address = (__YMAddressRef)address_;
     return address->address;
 }
 
-int YMAddressGetLength(YMAddressRef address)
+int YMAddressGetLength(YMAddressRef address_)
 {
+    __YMAddressRef address = (__YMAddressRef)address_;
     return address->length;
 }
 
-const char *YMAddressGetDescription(YMAddressRef address)
+YMStringRef YMAddressGetDescription(YMAddressRef address_)
 {
+    __YMAddressRef address = (__YMAddressRef)address_;
     return address->description;
 }
 
-int YMAddressGetDomain(YMAddressRef address)
+int YMAddressGetDomain(YMAddressRef address_)
 {
+    __YMAddressRef address = (__YMAddressRef)address_;
     switch(address->type)
     {
         case YMAddressIPV4:
@@ -183,8 +188,9 @@ int YMAddressGetDomain(YMAddressRef address)
     return -1;
 }
 
-int YMAddressGetAddressFamily(YMAddressRef address)
+int YMAddressGetAddressFamily(YMAddressRef address_)
 {
+    __YMAddressRef address = (__YMAddressRef)address_;
     switch(address->type)
     {
         case YMAddressIPV4:

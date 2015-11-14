@@ -124,16 +124,16 @@ void test_service_resolved(YMmDNSBrowserRef browser, bool resolved, YMmDNSServic
     YMmDNSServiceStop(service, false);
 }
 
-void test_service_removed(YMmDNSBrowserRef browser, const char *serviceName, void *context)
+void test_service_removed(YMmDNSBrowserRef browser, YMStringRef serviceName, void *context)
 {
     mDNSTests *SELF = (__bridge mDNSTests *)context;
     if (!context || SELF != gGlobalSelf) [NSException raise:@"test failed" format:@"context is nil or != gGlobalSelf in %s",__FUNCTION__]; // XCT depends on self, NSAssert on _cmd...
     [SELF removed:browser :serviceName];
 }
 
-- (void)removed:(YMmDNSBrowserRef)aBrowser :(const char *)serviceName
+- (void)removed:(YMmDNSBrowserRef)aBrowser :(YMStringRef)serviceName
 {
-    NSLog(@"%s/%s:? disappeared",testServiceType,serviceName);
+    NSLog(@"%s/%s:? disappeared",testServiceType,YMSTR(serviceName));
     XCTAssert(aBrowser==browser,@"browser pointers %p and %p are not equal on service disappearance",browser,aBrowser);
     
     if ( waitingOnAppearance || waitingOnResolution )
@@ -153,7 +153,7 @@ void test_service_removed(YMmDNSBrowserRef browser, const char *serviceName, voi
     
     nTestKeyPairs = arc4random_uniform(10);
     size_t idx = 0;
-    testKeyPairs = (YMmDNSTxtRecordKeyPair **)YMALLOC(nTestKeyPairs * sizeof(YMmDNSTxtRecordKeyPair *));
+    testKeyPairs = (YMmDNSTxtRecordKeyPair **)calloc(nTestKeyPairs,sizeof(YMmDNSTxtRecordKeyPair *));
     
     for ( ; idx < nTestKeyPairs; idx++ )
     {
@@ -161,7 +161,7 @@ void test_service_removed(YMmDNSBrowserRef browser, const char *serviceName, voi
         NSString *randomKey = YMRandomASCIIStringWithMaxLength(testKeyLengthBound, NO);
         testKeyPairs[idx]->key = strdup((char *)[randomKey cStringUsingEncoding:NSASCIIStringEncoding]);//"test-key";
         NSData *valueData = YMRandomDataWithMaxLength((uint8_t)(254 - [randomKey lengthOfBytesUsingEncoding:NSASCIIStringEncoding])); // 256 - '=' - size prefix, ok?
-        testKeyPairs[idx]->value = YMALLOC([valueData length]);
+        testKeyPairs[idx]->value = calloc(1,[valueData length]);
         memcpy((void *)testKeyPairs[idx]->value, [valueData bytes], [valueData length]);
         testKeyPairs[idx]->valueLen = (uint8_t)[valueData length];
         
@@ -174,7 +174,7 @@ void test_service_removed(YMmDNSBrowserRef browser, const char *serviceName, voi
     XCTAssert(okay,@"YMmDNSServiceStart failed");
     
     // i had these as separate functions, but apparently "self" is a new object for each -test* method, which isn't what we need here
-    browser = YMmDNSBrowserCreateWithCallbacks(testServiceType, test_service_appeared, test_service_updated, test_service_resolved, test_service_removed, (__bridge void *)(self));
+    browser = YMmDNSBrowserCreateWithCallbacks(YMSTRC(testServiceType), test_service_appeared, test_service_updated, test_service_resolved, test_service_removed, (__bridge void *)(self));
     okay = YMmDNSBrowserStart(browser);
     XCTAssert(okay,@"YMmDNSBrowserStartBrowsing failed");
     

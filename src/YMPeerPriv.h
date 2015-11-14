@@ -12,9 +12,9 @@
 #include "YMPeer.h"
 
 YMPeerRef _YMPeerCreateWithAddress(YMAddressRef address);
-YMPeerRef _YMPeerCreate(const char *name, YMDictionaryRef addresses, YMDictionaryRef certificates);
+YMPeerRef _YMPeerCreate(YMStringRef name, YMDictionaryRef addresses, YMDictionaryRef certificates);
 
-void _YMPeerSetName(YMPeerRef peer, const char *name);
+void _YMPeerSetName(YMPeerRef peer, YMStringRef name);
 void _YMPeerSetAddresses(YMPeerRef peer, YMDictionaryRef addresses);
 void _YMPeerSetPort(YMPeerRef peer, uint16_t port);
 void _YMPeerSetCertificates(YMPeerRef peer, YMDictionaryRef certificates);

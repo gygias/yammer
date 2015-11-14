@@ -16,7 +16,7 @@
 #include "YMDictionary.h"
 #include "YMConnection.h"
 
-typedef struct __YMSession *YMSessionRef;
+typedef YMTypeRef YMSessionRef;
 
 // client, discover->connect
 typedef void(*ym_session_added_peer_func)(YMSessionRef,YMPeerRef,void*);
@@ -36,9 +36,9 @@ typedef void(*ym_session_interrupted_func)(YMSessionRef,void*);
 typedef void(*ym_session_new_stream_func)(YMSessionRef,YMStreamRef,void*);
 typedef void(*ym_session_stream_closing_func)(YMSessionRef,YMStreamRef,void*);
 
-YMSessionRef YMSessionCreateClient(const char *type);
+YMSessionRef YMSessionCreateClient(YMStringRef type);
 #pragma message "option to have client reserve and specify port?"
-YMSessionRef YMSessionCreateServer(const char *type, const char *name);
+YMSessionRef YMSessionCreateServer(YMStringRef type, YMStringRef name);
 
 void YMSessionSetClientCallbacks(YMSessionRef session, ym_session_added_peer_func added, ym_session_removed_peer_func removed,
                                  ym_session_resolve_failed_func rFailed, ym_session_resolved_peer_func resolved,
@@ -48,6 +48,7 @@ void YMSessionSetSharedCallbacks(YMSessionRef session, ym_session_connected_func
                                  ym_session_new_stream_func new_, ym_session_stream_closing_func closing);
 
 ymbool YMSessionClientStart(YMSessionRef session);
+ymbool YMSessionClientStop(YMSessionRef session_);
 ymbool YMSessionClientResolvePeer(YMSessionRef session, YMPeerRef peer);
 ymbool YMSessionClientStart(YMSessionRef session);
 ymbool YMSessionClientConnectToPeer(YMSessionRef session, YMPeerRef peer, ymbool sync);
@@ -55,7 +56,7 @@ ymbool YMSessionClientConnectToPeer(YMSessionRef session, YMPeerRef peer, ymbool
 YMConnectionRef YMSessionGetDefaultConnection(YMSessionRef session);
 YMDictionaryRef YMSessionGetConnections(YMSessionRef session);
 
-ymbool YMSessionServerStartAdvertising(YMSessionRef session);
-ymbool YMSessionServerStopAdvertising(YMSessionRef session);
+ymbool YMSessionServerStart(YMSessionRef session);
+ymbool YMSessionServerStop(YMSessionRef session);
 
 #endif /* YMSession_h */

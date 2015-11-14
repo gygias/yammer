@@ -37,15 +37,15 @@
     XCTAssert(YMRSAKeyPairGenerate(keyPair), @"generate failed");
     YMX509CertificateRef cert = YMX509CertificateCreate(keyPair);
     XCTAssert(cert, @"cert creation failed");
-    YMFree(cert);
-    YMFree(keyPair);
+    YMRelease(cert);
+    YMRelease(keyPair);
     
     keyPair = YMRSAKeyPairCreateWithModuloSize(4096, 65537);
     XCTAssert(YMRSAKeyPairGenerate(keyPair), @"generate(4096) failed");
     cert = YMX509CertificateCreate(keyPair);
     XCTAssert(cert, @"cert creation failed");
-    YMFree(cert);
-    YMFree(keyPair);
+    YMRelease(cert);
+    YMRelease(keyPair);
 }
 
 @end

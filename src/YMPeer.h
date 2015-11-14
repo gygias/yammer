@@ -12,9 +12,9 @@
 #include "YMDictionary.h"
 #include "YMAddress.h"
 
-typedef struct __YMPeer *YMPeerRef;
+typedef YMTypeRef YMPeerRef;
 
-const char *YMPeerGetName(YMPeerRef);
+YMStringRef YMPeerGetName(YMPeerRef);
 YMDictionaryRef YMPeerGetAddresses(YMPeerRef);
 uint16_t YMPeerGetPort(YMPeerRef);
 YMDictionaryRef YMPeerGetCertificates(YMPeerRef);

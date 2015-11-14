@@ -20,21 +20,6 @@
 //#define STR(x) YM_TOKEN_STR(x)
 //#pragma message STR(__FILE__) ": example: " STR(example)
 
-// from what i read, a bool yn = ptr warning can't be a thing
-// this is here to periodically check for bugs like one where we were assigning a pointer to a bool
-#ifdef YM_TEST_BOOL_USE
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wuninitialized"
-#undef bool
-#define bool char
-#define ymbool char // this is for code that gets stdbool from 3rd party headers, like mDNS
-#define true 1
-#define false 0
-#else
-#include <stdbool.h>
-#define ymbool bool
-#endif
-
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -44,6 +29,6 @@
 #define YM_VERSION 1
 
 #include "YMBase.h"
-#include "YMPrivate.h"
+#include "YMInternal.h"
 
 #endif /* PrefixHeader_pch */

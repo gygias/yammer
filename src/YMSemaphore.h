@@ -9,9 +9,9 @@
 #ifndef YMSemaphore_h
 #define YMSemaphore_h
 
-typedef struct __YMSemaphore *YMSemaphoreRef;
+typedef YMTypeRef YMSemaphoreRef;
 
-YMSemaphoreRef YMSemaphoreCreate(const char *name, int initialValue);
+YMSemaphoreRef YMSemaphoreCreate(YMStringRef name, int initialValue);
 
 void YMSemaphoreWait(YMSemaphoreRef semaphore);
 void YMSemaphoreSignal(YMSemaphoreRef semaphore);

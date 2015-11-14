@@ -45,9 +45,13 @@ typedef enum
 YMIOResult YMReadFull(int fd, uint8_t *buffer, size_t bytes, size_t *outRead);
 YMIOResult YMWriteFull(int fd, const uint8_t *buffer, size_t bytes, size_t *outWritten);
 
-char *YMStringCreateWithFormat(char *formatStr, ...) __printflike(1, 2);
-char *YMStringCreateByAppendingString(char *baseStr, char *appendStr);
-
 int32_t YMPortReserve(bool ipv4, int *outSocket);
+
+// in utilities for YMAlloc
+#include "YMLock.h"
+ymbool YMCreateMutexWithOptions(YMLockOptions options, pthread_mutex_t *outMutex);
+ymbool YMLockMutex(pthread_mutex_t mutex);
+ymbool YMUnlockMutex(pthread_mutex_t mutex);
+ymbool YMDestroyMutex(pthread_mutex_t mutex);
 
 #endif /* YMUtilities_h */
