@@ -9,7 +9,7 @@
 #ifndef YMSemaphore_h
 #define YMSemaphore_h
 
-typedef YMTypeRef YMSemaphoreRef;
+typedef struct __YMSemaphore *YMSemaphoreRef;
 
 YMSemaphoreRef YMSemaphoreCreate(YMStringRef name, int initialValue);
 

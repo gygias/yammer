@@ -14,12 +14,14 @@
 
 void YMLog( char* format, ... ) __printflike(1, 2);
 
-pthread_once_t gYMLogLockOnce = PTHREAD_ONCE_INIT;
+static pthread_once_t gYMLogLockOnce = PTHREAD_ONCE_INIT;
 YMLockRef gYMLogLock = NULL;
 
 void YMLogInitLock()
 {
-    gYMLogLock = YMLockCreate("ymlog");
+    YMStringRef name = YMSTRC("ymlog");
+    gYMLogLock = YMLockCreate(YMLockDefault,name);
+    YMRelease(name);
 }
 
 // inline

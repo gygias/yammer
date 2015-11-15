@@ -9,7 +9,7 @@
 #ifndef YMString_h
 #define YMString_h
 
-typedef YMTypeRef YMStringRef;
+typedef const struct __ym_string *YMStringRef;
 
 YMStringRef YMStringCreate();
 YMStringRef YMStringCreateWithCString(const char *cString);

@@ -66,7 +66,7 @@ typedef struct __ym_thread_dispatch_context_def
 } ___ym_thread_dispatch_context_def;
 typedef struct __ym_thread_dispatch_context_def *__ym_thread_dispatch_context;
 
-pthread_once_t gDispatchInitOnce = PTHREAD_ONCE_INIT;
+static pthread_once_t gDispatchInitOnce = PTHREAD_ONCE_INIT;
 YMThreadDispatchThreadID gDispatchThreadIDNext = 0; // todo only for keying dictionary, implement linked list?
 YMDictionaryRef gDispatchThreadDefsByID = NULL;
 YMLockRef gDispatchThreadListLock = NULL;
@@ -128,7 +128,7 @@ YMThreadRef _YMThreadCreate(YMStringRef name, bool isDispatchThread, ym_thread_e
         }
         YMLockUnlock(gDispatchThreadListLock);
         
-        thread->dispatchListLock = YMLockCreate("dispatch-list");
+        thread->dispatchListLock = YMLockCreate(YMSTRC("dispatch-list"));
         thread->dispatchesByID = YMDictionaryCreate();
         YMStringRef semName = YMStringCreateWithFormat("%s-dispatch",YMSTR(name),NULL);
         thread->dispatchSemaphore = YMSemaphoreCreate(semName,0);
@@ -201,7 +201,7 @@ bool YMThreadStart(YMThreadRef thread_)
         return false;
     }
     
-    ymlog("thread[%s,%s]: created", thread->name, thread->isDispatchThread ? "dispatch" : "user");
+    ymlog("thread[%s,%s]: created", YMSTR(thread->name), thread->isDispatchThread ? "dispatch" : "user");
     thread->pthread = pthread;
     return true;
 }
@@ -244,7 +244,7 @@ void YMThreadDispatchDispatch(YMThreadRef thread_, ym_thread_dispatch dispatch)
             abort();
         }
         
-        ymlog("thread[%s,dispatch,dt%llu]: adding dispatch '%s': u %p ctx %p",YMSTR(thread->name),thread->dispatchThreadID,dispatchCopy->description,dispatchCopy,dispatchCopy->context);
+        ymlog("thread[%s,dispatch,dt%llu]: adding dispatch '%s': u %p ctx %p",YMSTR(thread->name),thread->dispatchThreadID,YMSTR(dispatchCopy->description),dispatchCopy,dispatchCopy->context);
         YMDictionaryAdd(thread->dispatchesByID, newDispatch->dispatchID, newDispatch);
     }
     YMLockUnlock(thread->dispatchListLock);
@@ -259,7 +259,7 @@ ym_thread_dispatch_ref __YMThreadDispatchCopy(ym_thread_dispatch_ref userDispatc
     copy->context = userDispatchRef->context;
     copy->freeContextWhenDone = userDispatchRef->freeContextWhenDone;
     copy->deallocProc = userDispatchRef->deallocProc;
-    copy->description = strdup(userDispatchRef->description ? userDispatchRef->description : "unnamed");
+    copy->description = userDispatchRef->description ? YMRetain(userDispatchRef->description) : YMSTRC("unnamed");
     
     return copy;
 }
@@ -267,7 +267,7 @@ ym_thread_dispatch_ref __YMThreadDispatchCopy(ym_thread_dispatch_ref userDispatc
 void __YMThreadDispatchInit()
 {
     gDispatchThreadDefsByID = YMDictionaryCreate();
-    gDispatchThreadListLock = YMLockCreate("g-dispatch-list");
+    gDispatchThreadListLock = YMLockCreate(YMSTRC("g-dispatch-list"));
 }
 
 void __ym_thread_dispatch_dispatch_thread_proc(void * ctx)
@@ -283,13 +283,13 @@ void __ym_thread_dispatch_dispatch_thread_proc(void * ctx)
         YMSemaphoreWait(thread->dispatchSemaphore);
         ymlog("thread[%s,dispatch,dt%llu,p%llu]: woke for a dispatch", YMSTR(thread->name), thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber());
         
-        __unused YMThreadDispatchID theDispatchID = -1;
-        __ym_thread_dispatch_context theDispatch = NULL;
+        __unused YMThreadDispatchID aDispatchID = -1;
+        __ym_thread_dispatch_context aDispatch = NULL;
         YMLockLock(thread->dispatchListLock);
         {
             YMDictionaryKey randomKey = YMDictionaryRandomKey(thread->dispatchesByID);
-            theDispatch = (__ym_thread_dispatch_context)YMDictionaryRemove(thread->dispatchesByID,randomKey);
-            if ( ! theDispatch )
+            aDispatch = (__ym_thread_dispatch_context)YMDictionaryRemove(thread->dispatchesByID,randomKey);
+            if ( ! aDispatch )
             {
                 ymerr("thread[%s,dispatch,dt%llu,p%llu]: fatal: thread signaled without target", YMSTR(thread->name), thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber());
                 abort();
@@ -297,11 +297,11 @@ void __ym_thread_dispatch_dispatch_thread_proc(void * ctx)
         }
         YMLockUnlock(thread->dispatchListLock);
         
-        ymlog("thread[%s,dispatch,dt%llu,p%llu]: entering dispatch %llu '%s': u %p ctx %p", YMSTR(thread->name), thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber(), theDispatchID, theDispatch->dispatch->description,theDispatch->dispatch,theDispatch->dispatch->context);
-        theDispatch->dispatch->dispatchProc(theDispatch->dispatch);
-        ymlog("thread[%s,dispatch,dt%llu,p%llu]: finished dispatch %llu '%s': u %p ctx %p", YMSTR(thread->name), thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber(), theDispatchID, theDispatch->dispatch->description,theDispatch->dispatch,theDispatch->dispatch->context);
+        ymlog("thread[%s,dispatch,dt%llu,p%llu]: entering dispatch %llu '%s': u %p ctx %p", YMSTR(thread->name), thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber(), aDispatchID, YMSTR(aDispatch->dispatch->description),aDispatch->dispatch,aDispatch->dispatch->context);
+        aDispatch->dispatch->dispatchProc(aDispatch->dispatch);
+        ymlog("thread[%s,dispatch,dt%llu,p%llu]: finished dispatch %llu '%s': u %p ctx %p", YMSTR(thread->name), thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber(), aDispatchID, YMSTR(aDispatch->dispatch->description),aDispatch->dispatch,aDispatch->dispatch->context);
         
-        __YMThreadFreeDispatchContext(theDispatch);
+        __YMThreadFreeDispatchContext(aDispatch);
     }
     
     YMLockLock(gDispatchThreadListLock);

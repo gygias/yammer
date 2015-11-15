@@ -11,7 +11,7 @@
 #ifndef YMAddress_h
 #define YMAddress_h
 
-typedef YMTypeRef YMAddressRef;
+typedef struct __YMAddressRef *YMAddressRef;
 
 typedef enum
 {

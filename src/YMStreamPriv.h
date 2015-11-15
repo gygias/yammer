@@ -13,17 +13,17 @@
 
 #include "YMLock.h" // for _GetRetainLock only, which should be refactored to work like incoming close/free coordination
 
-typedef int32_t YMStreamChunkSize;
+typedef int32_t YMStreamCommand;
 
 typedef enum
 {
     YMStreamClose = -1
 } YMStreamCommands;
 
-typedef struct _YMStreamChunkHeader
+typedef struct _YMStreamHeader
 {
-    YMStreamCommands command;
-} YMStreamCommand;
+    YMStreamCommand command;
+} YMStreamHeader;
 
 typedef struct _ym_stream_user_info_def
 {
@@ -33,10 +33,10 @@ typedef struct _ym_stream_user_info_def ym_stream_user_info;
 typedef struct ym_stream_user_info *ym_stream_user_info_ref;
 
 YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_ref userInfo);
-typedef void (*_ym_stream_data_available_func)(void *);
+typedef void (*_ym_stream_data_available_func)(YMStreamRef,uint32_t,void *);
 void _YMStreamSetDataAvailableCallback(YMStreamRef stream, _ym_stream_data_available_func, void *ctx);
 
-void _YMStreamDesignatedFree(YMStreamRef stream );
+void _YMStreamDesignatedFree(YMStreamRef stream);
 
 void _YMStreamReadDown(YMStreamRef stream, void *buffer, uint32_t length);
 void _YMStreamWriteUp(YMStreamRef stream, const void *buffer, uint32_t length);

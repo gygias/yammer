@@ -18,7 +18,7 @@ typedef enum
     YMLockErrorCheck = 1 << 1
 } YMLockOptions;
 
-typedef YMTypeRef YMLockRef;
+typedef const struct __ym_lock *YMLockRef;
 
 YMLockRef YMLockCreate();
 YMLockRef YMLockCreateWithOptions(YMLockOptions options);

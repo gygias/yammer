@@ -54,7 +54,7 @@ extern void _YMStringFree(YMTypeRef);
 
 typedef struct __ym_type
 {
-    YMTypeID type;
+    YMTypeID __type;
     int __retainCount; // todo find a better way to preallocate this
     pthread_mutex_t __retainMutex;
 } ___ym_type;
@@ -67,20 +67,21 @@ void __YMFree(__YMTypeRef object);
 
 YMTypeRef _YMAlloc(YMTypeID type, size_t size)
 {
-    if ( size < sizeof(__YMType) )
+    __unused int sss = sizeof(_YMType);
+    if ( size < sizeof(_YMType) )
     {
-        ymerr("base: fatal: bad alloc");
+        fprintf(stderr,"base: fatal: bad alloc");
         abort();
     }
     
     __YMTypeRef object = YMALLOC(size);
-    object->type = type;
+    object->__type = type;
     object->__retainCount = 1;
     
     pthread_mutex_t mutex;
     if ( ! YMCreateMutexWithOptions(YMLockDefault, &mutex) )
     {
-        ymerr("base: fatal: create mutex failed");
+        fprintf(stderr,"base: fatal: create mutex failed");
         abort();
     }
     object->__retainMutex = mutex;
@@ -108,26 +109,39 @@ YMTypeRef YMRetain(YMTypeRef object_)
     return object;
 }
 
+YMTypeRef YMAutorelease(YMTypeRef object)
+{
+#pragma message "AUTORELEASE"
+    return object;
+}
+
 void YMRelease(YMTypeRef object_)
 {
     __YMTypeRef object = (__YMTypeRef)object_;
     YMLockMutex(object->__retainMutex);
+    bool dealloc = false;
     if ( object->__retainCount < 1 )
     {
-        ymerr("base: fatal: retain count inconsistent");
+        ymerr("base: fatal: something has overreleased %p (%c)",object,object->__type);
         abort();
     }
-    else if ( object->__retainCount == 1 )
+    if ( object->__retainCount-- == 1 )
+    {
+        dealloc = true;
         __YMFree(object);
+    }
     YMUnlockMutex(object->__retainMutex);
     
-    YMDestroyMutex(object->__retainMutex);
-    free(object);
+    if ( dealloc )
+    {
+        YMDestroyMutex(object->__retainMutex);
+        free(object);
+    }
 }
 
 void __YMFree(__YMTypeRef object)
 {
-    YMTypeID type = object->type;
+    YMTypeID type = object->__type;
     if ( type == _YMPipeTypeID )
         _YMPipeFree(object);
     else if ( type == _YMStreamTypeID )
@@ -170,7 +184,7 @@ void __YMFree(__YMTypeRef object)
         _YMStringFree(object);
     else
     {
-        ymlog("YMFree unknown type %c",object->type);
+        ymlog("YMFree unknown type %c",type);
         abort();
     }
 }

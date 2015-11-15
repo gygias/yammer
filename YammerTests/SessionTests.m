@@ -66,7 +66,7 @@ SessionTests *gTheSessionTest = nil;
     
     testType = "_ymtest._tcp";
     testName = "twitter-cliche";
-    serverSession = YMSessionCreateServer(testType, testName);
+    serverSession = YMSessionCreateServer(YMSTRC(testType), YMSTRC(testName));
     XCTAssert(serverSession,@"server alloc");
     YMSessionSetSharedCallbacks(serverSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
     YMSessionSetServerCallbacks(serverSession, _ym_session_should_accept_func, (__bridge void *)self);
@@ -74,7 +74,7 @@ SessionTests *gTheSessionTest = nil;
     BOOL started = YMSessionServerStart(serverSession);
     XCTAssert(started,@"server start");
     
-    clientSession = YMSessionCreateClient(testType);
+    clientSession = YMSessionCreateClient(YMSTRC(testType));
     XCTAssert(clientSession,@"client alloc");
     YMSessionSetSharedCallbacks(clientSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
     YMSessionSetClientCallbacks(clientSession, _ym_session_added_peer_func, _ym_session_removed_peer_func, _ym_session_resolve_failed_func, _ym_session_resolved_peer_func, _ym_session_connect_failed_func, (__bridge void *)self);
@@ -202,7 +202,7 @@ typedef struct ManPageThanks
     NSLog(@"server chose %@",file);
     NSFileHandle *handle = [NSFileHandle fileHandleForReadingAtPath:file];
     XCTAssert(handle,@"server file handle");
-    YMStreamRef stream = YMConnectionCreateStream(connection, [[NSString stringWithFormat:@"test-server-write-%@",file] UTF8String]);
+    YMStreamRef stream = YMConnectionCreateStream(connection, YMStringCreateWithFormat("test-server-write-%s",[file UTF8String], NULL));
     XCTAssert(stream,@"server create stream");
     
     bool testAsync = arc4random_uniform(2);
@@ -260,7 +260,7 @@ void _async_forward_callback(void * ctx, uint64_t bytesWritten)
         }
         NoisyLog(@"client sending %@",fullPath);
         
-        YMStreamRef stream = YMConnectionCreateStream(connection, [[NSString stringWithFormat:@"test-client-write-%@",fullPath] UTF8String]);
+        YMStreamRef stream = YMConnectionCreateStream(connection, YMStringCreateWithFormat("test-client-write-%s",[fullPath UTF8String]));
         XCTAssert(stream,@"client stream %@",fullPath);
         NSFileHandle *handle = [NSFileHandle fileHandleForReadingAtPath:fullPath];
         XCTAssert(handle,@"client file handle %@",fullPath);
@@ -367,13 +367,13 @@ void _ym_session_added_peer_func(YMSessionRef session, YMPeerRef peer, void *con
 {
     XCTAssert(context==(__bridge void *)self,@"added context");
     XCTAssert(session==clientSession,@"added session");
-    XCTAssert(0==strcmp(YMPeerGetName(peer),testName),@"added name");
+    XCTAssert(0==strcmp(YMSTR(YMPeerGetName(peer)),testName),@"added name");
     
     if ( stopping )
         return;
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(arc4random_uniform(FAKE_DELAY_MAX) * NSEC_PER_SEC)), dispatch_get_global_queue(0, 0), ^{
-        NSLog(@"resolving %s",YMPeerGetName(peer));
+        NSLog(@"resolving %s",YMSTR(YMPeerGetName(peer)));
         YMSessionClientResolvePeer(session, peer);
     });
 }
@@ -388,7 +388,7 @@ void _ym_session_removed_peer_func(YMSessionRef session, YMPeerRef peer, void *c
 {
     XCTAssert(context==(__bridge void *)self,@"removed context");
     XCTAssert(session==clientSession,@"removed session");
-    XCTAssert(0==strcmp(YMPeerGetName(peer),testName),@"removed name");
+    XCTAssert(0==strcmp(YMSTR(YMPeerGetName(peer)),testName),@"removed name");
     XCTAssert(stopping,@"removed");
 }
 
@@ -402,7 +402,7 @@ void _ym_session_resolve_failed_func(YMSessionRef session, YMPeerRef peer, void 
 {
     XCTAssert(context==(__bridge void *)self,@"resolveFailed context");
     XCTAssert(session==clientSession,@"resolveFailed session");
-    XCTAssert(0==strcmp(YMPeerGetName(peer),testName),@"resolveFailed name");
+    XCTAssert(0==strcmp(YMSTR(YMPeerGetName(peer)),testName),@"resolveFailed name");
     XCTAssert(NO,@"resolveFailed");
 }
 
@@ -416,7 +416,7 @@ void _ym_session_resolved_peer_func(YMSessionRef session, YMPeerRef peer, void *
 {
     XCTAssert(context==(__bridge void *)self,@"resolved context");
     XCTAssert(session==clientSession,@"resolved session");
-    XCTAssert(0==strcmp(YMPeerGetName(peer),testName),@"resolved name");
+    XCTAssert(0==strcmp(YMSTR(YMPeerGetName(peer)),testName),@"resolved name");
     XCTAssert(YMPeerGetAddresses(peer));
     
     if ( stopping )
@@ -424,7 +424,7 @@ void _ym_session_resolved_peer_func(YMSessionRef session, YMPeerRef peer, void *
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(arc4random_uniform(FAKE_DELAY_MAX) * NSEC_PER_SEC)), dispatch_get_global_queue(0, 0), ^{
         BOOL testSync = arc4random_uniform(2);
-        NSLog(@"connecting to %s (%ssync)...",YMPeerGetName(peer),testSync?"":"a");
+        NSLog(@"connecting to %s (%ssync)...",YMSTR(YMPeerGetName(peer)),testSync?"":"a");
         bool okay = YMSessionClientConnectToPeer(session,peer,testSync);
         XCTAssert(okay,@"client connect to peer");
         
@@ -446,7 +446,7 @@ void _ym_session_connect_failed_func(YMSessionRef session, YMPeerRef peer, void 
 {
     XCTAssert(context==(__bridge void *)self,@"connectFailed context");
     XCTAssert(session==clientSession,@"connectFailed session");
-    XCTAssert(0==strcmp(YMPeerGetName(peer),testName),@"connectFailed name");
+    XCTAssert(0==strcmp(YMSTR(YMPeerGetName(peer)),testName),@"connectFailed name");
     XCTAssert(NO,@"connectFailed");
 }
 

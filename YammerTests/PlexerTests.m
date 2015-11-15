@@ -16,9 +16,9 @@
 #include "YMPlexerPriv.h"
 #include "YMLock.h"
 
-#define     PlexerTest1Threads 8
+#define     PlexerTest1Threads 1
 #define     PlexerTest1NewStreamPerRoundTrip true
-#define     PlexerTest1RoundTripsPerThread 50
+#define     PlexerTest1RoundTripsPerThread 1
 
 #define PlexerTest1TimeBased
 //#define PlexerTest1Indefinite
@@ -62,7 +62,7 @@ PlexerTests *gRunningPlexerTest; // xctest seems to make a new object for each -
     [super setUp];
     
     plexerTest1Running = YES;
-    plexerTest1Lock = YMLockCreateWithOptionsAndName(YMLockDefault, [[self className] UTF8String]);
+    plexerTest1Lock = YMLockCreateWithOptionsAndName(YMLockDefault, YMSTRCF("%s",[[self className] UTF8String],NULL));
     awaitingClosures = PlexerTest1StreamClosuresToObserve;
     self.continueAfterFailure = NO;
     streamsCompleted = 0;
@@ -96,10 +96,14 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
     
     gRunningPlexerTest = self;
     
-    YMPipeRef networkSimPipeIn = YMPipeCreate("test-network-sim-pipe-in");
+    YMStringRef aName = YMSTRC("test-network-sim-pipe-in");
+    YMPipeRef networkSimPipeIn = YMPipeCreate(aName);
+    YMRelease(aName);
     int writeToRemote = YMPipeGetInputFile(networkSimPipeIn);
     int readFromLocal = YMPipeGetOutputFile(networkSimPipeIn);
-    YMPipeRef networkSimPipeOut = YMPipeCreate("test-network-sim-pipe-out");
+    aName = YMSTRC("test-network-sim-pipe-out");
+    YMPipeRef networkSimPipeOut = YMPipeCreate(aName);
+    YMRelease(aName);
     int writeToLocal = YMPipeGetInputFile(networkSimPipeOut);
     int readFromRemote = YMPipeGetOutputFile(networkSimPipeOut);
     
@@ -107,13 +111,13 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
     NSLog(@"plexer test using pipes: L(%s)-i%d-o%d <-> i%d-o%d R(%s)",localIsMaster?"M":"S",readFromRemote,writeToRemote,readFromLocal,writeToLocal,localIsMaster?"S":"M");
     NSLog(@"plexer test using %u threads, %u trips per thread, %@ rounds per thread, %@ messages",PlexerTest1Threads,PlexerTest1RoundTripsPerThread,PlexerTest1NewStreamPerRoundTrip?@"new":@"one",PlexerTest1RandomMessages?@"random":@"fixed");
     
-    YMPlexerRef localPlexer = YMPlexerCreate("L",readFromRemote,writeToRemote,localIsMaster);
+    YMPlexerRef localPlexer = YMPlexerCreate(YMSTRC("L"),readFromRemote,writeToRemote,localIsMaster);
     YMPlexerSetSecurityProvider(localPlexer, YMSecurityProviderCreate(readFromRemote,writeToRemote));
     YMPlexerSetInterruptedFunc(localPlexer, local_plexer_interrupted);
     YMPlexerSetNewIncomingStreamFunc(localPlexer, local_plexer_new_stream);
     YMPlexerSetStreamClosingFunc(localPlexer, local_plexer_stream_closing);
     
-    YMPlexerRef fakeRemotePlexer = YMPlexerCreate("R",readFromLocal,writeToLocal,!localIsMaster);
+    YMPlexerRef fakeRemotePlexer = YMPlexerCreate(YMSTRC("R"),readFromLocal,writeToLocal,!localIsMaster);
     YMPlexerSetSecurityProvider(fakeRemotePlexer, YMSecurityProviderCreate(readFromLocal,writeToLocal));
     YMPlexerSetInterruptedFunc(fakeRemotePlexer, remote_plexer_interrupted);
     YMPlexerSetNewIncomingStreamFunc(fakeRemotePlexer, remote_plexer_new_stream);
@@ -169,7 +173,7 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
         YMPlexerStreamID streamID;
         if ( ! aStream || PlexerTest1NewStreamPerRoundTrip )
         {
-            aStream = YMPlexerCreateNewStream(plexer,__FUNCTION__,false);
+            aStream = YMPlexerCreateNewStream(plexer,YMSTRC(__FUNCTION__),false);
             streamID = ((ym_plexer_stream_user_info_ref)_YMStreamGetUserInfo(aStream))->streamID;
         }
         
@@ -244,14 +248,14 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *cont
 }
 
 - (void)newStream:(YMPlexerRef)plexer :(YMStreamRef)stream
-{
+{    
     TestLog(@"%s",__FUNCTION__);
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
-        [self handleANewLocalStream:plexer :stream];
+        [self handleANewRemoteStream:plexer :stream];
     });
 }
 
-- (void)handleANewLocalStream:(YMPlexerRef)plexer :(YMStreamRef)stream
+- (void)handleANewRemoteStream:(YMPlexerRef)plexer :(YMStreamRef)stream
 {
     YMPlexerStreamID streamID = ((ym_plexer_stream_user_info_ref)_YMStreamGetUserInfo(stream))->streamID;
     BOOL protectTheList = ( PlexerTest1Threads > 1 );
@@ -286,7 +290,6 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *cont
     }
     
     TestLog(@"^^^ REMOTE -newStream [%u] exiting (and remoteReleasing)",streamID);
-    YMRelease(stream);
 }
 
 void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *context)
@@ -316,7 +319,6 @@ void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *
         plexerTest1Running = NO;
     }
 #endif
-    
 }
 
 @end

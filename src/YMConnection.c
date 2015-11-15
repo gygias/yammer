@@ -170,6 +170,11 @@ bool YMConnectionConnect(YMConnectionRef connection_)
         return false;
     }
     
+    int yes = 1;
+    int aResult = setsockopt(newSocket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+    if ( aResult != 0 )
+        ymerr("connection: warning: setsockopt failed on %d: %d: %d (%s)",newSocket,aResult,errno,strerror(errno));
+    
     ymlog("connection[%s]: connecting...",YMSTR(YMAddressGetDescription(connection->address)));
     
     struct sockaddr *addr = (struct sockaddr *)YMAddressGetAddressData(connection->address);

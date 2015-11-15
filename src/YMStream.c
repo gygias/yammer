@@ -108,12 +108,6 @@ void _YMStreamSetDataAvailableCallback(YMStreamRef stream_, _ym_stream_data_avai
 void _YMStreamFree(YMTypeRef object)
 {
     __YMStreamRef stream = (__YMStreamRef)object;
-    ymerr("  stream[%s,i%d->o%dV,^o%d<-i%d]: %p deallocating",YMSTR(stream->name),
-          YMPipeGetInputFile(stream->downstreamPipe),
-          YMPipeGetOutputFile(stream->downstreamPipe),
-          YMPipeGetOutputFile(stream->upstreamPipe),
-          YMPipeGetInputFile(stream->upstreamPipe),
-          stream);
     
     if ( ymlog_stream_lifecycle )
         YMLogType(YMLogStreamLifecycle,"  stream[%s,i%d->o%dV,^o%d<-i%d]: %p deallocating",YMSTR(stream->name),
@@ -130,6 +124,8 @@ void _YMStreamFree(YMTypeRef object)
 
 void YMStreamWriteDown(YMStreamRef stream_, const void *buffer, uint16_t length)
 {
+    YM_DEBUG_CHUNK_SIZE(length);
+    
     __YMStreamRef stream = (__YMStreamRef)stream_;
     
     int downstreamWrite = YMPipeGetInputFile(stream->downstreamPipe);
@@ -153,7 +149,7 @@ void YMStreamWriteDown(YMStreamRef stream_, const void *buffer, uint16_t length)
     ymlog("  stream[%s]: wrote buffer for chunk with size %ub",YMSTR(stream->name),length);
     
     // signal the plexer to wake and service this stream
-    stream->dataAvailableFunc(stream->dataAvailableContext);
+    stream->dataAvailableFunc(stream,length,stream->dataAvailableContext);
     
     ymlog("  stream[%s]: wrote %lub + %ub command",YMSTR(stream->name),sizeof(header),length);
 }
@@ -171,6 +167,9 @@ void _YMStreamReadDown(YMStreamRef stream_, void *buffer, uint32_t length)
         ymerr("  stream[%s]: error: failed reading %ub from downstream",YMSTR(stream->name),length);
         abort();
     }
+    
+    if ( length == 2 && *((uint32_t *)buffer) == 0 )
+        abort();
     
     ymlog("  stream[%s]: read %ub from downstream",YMSTR(stream->name),length);
 }
@@ -197,7 +196,7 @@ YMIOResult YMStreamReadUp(YMStreamRef stream_, void *buffer, uint16_t length)
     
     int upstreamRead = YMPipeGetOutputFile(stream->upstreamPipe);
     
-    ymlog("  stream[%s]: reading %ub user data",stream->name,length);
+    ymlog("  stream[%s]: reading %ub user data",YMSTR(stream->name),length);
     YMIOResult result = YMReadFull(upstreamRead, buffer, length, NULL);
     if ( result == YMIOError ) // in-process i/o errors are fatal
     {
@@ -314,7 +313,7 @@ void _YMStreamClose(YMStreamRef stream_)
 //    YMLockLock(stream->retainLock);
 //    {
         YMStreamCommand command = { YMStreamClose };
-        YMIOResult result = YMWriteFull(downstreamWrite, (void *)&command, sizeof(YMStreamClose), NULL);
+        YMIOResult result = YMWriteFull(downstreamWrite, (void *)&command, sizeof(command), NULL);
         if ( result != YMIOSuccess )
         {
             ymerr("  stream[%s]: fatal: writing close byte to plexer: %d (%s)",YMSTR(stream->name),errno,strerror(errno));
@@ -322,9 +321,7 @@ void _YMStreamClose(YMStreamRef stream_)
         }
         
         ymlog("  stream[%s]: closing stream",YMSTR(stream->name));
-        stream->dataAvailableFunc(stream->dataAvailableContext);
-    
-    ymerr("IS RETAIN/RELEASE WORKING YET?");
+        stream->dataAvailableFunc(stream,sizeof(command),stream->dataAvailableContext);
 //    }
 //    YMLockUnlock(stream->retainLock);
 }

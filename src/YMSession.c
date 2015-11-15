@@ -92,7 +92,7 @@ YMSessionRef YMSessionCreateClient(YMStringRef type)
     __YMSessionRef session = __YMSessionCreateShared(type,false);
     session->logDescription = YMStringCreateWithFormat("c:%s",YMSTR(type),NULL);
     session->availablePeers = YMDictionaryCreate();
-    session->availablePeersLock = YMLockCreateWithOptionsAndName(YMLockDefault, "available-peers");
+    session->availablePeersLock = YMLockCreateWithOptionsAndName(YMLockDefault, YMSTRC("available-peers"));
     session->browser = NULL;
     return session;
 }
@@ -119,7 +119,7 @@ __YMSessionRef __YMSessionCreateShared(YMStringRef type, bool isServer)
     session->isServer = isServer;
     session->defaultConnection = NULL;
     session->connectionsByAddress = YMDictionaryCreate();
-    session->connectionsByAddressLock = YMLockCreate(YMLockDefault, "connections-by-address");
+    session->connectionsByAddressLock = YMLockCreate(YMLockDefault, YMSTRC("connections-by-address"));
     return session;
 }
 
@@ -402,7 +402,7 @@ ymbool YMSessionServerStart(YMSessionRef session_)
     bool ipv4 = true;
     
     int32_t port = YMPortReserve(ipv4, &socket);
-    if ( port == -1 || socket == -1 || socket > UINT16_MAX )
+    if ( port < -1 || socket == -1 || socket > UINT16_MAX )
     {
         ymerr("session[%s]: error: failed to reserve port for server start",YMSTR(session->logDescription));
         return false;
@@ -570,7 +570,7 @@ void __ym_session_accept_proc(void * ctx)
         initCtx->addr = (struct sockaddr *)bigEnoughAddr;
         initCtx->addrLen = thisLength;
         initCtx->ipv4 = ipv4;
-        ym_thread_dispatch dispatch = { __ym_session_init_incoming_connection_proc, NULL, false, initCtx, "init-connection" };
+        ym_thread_dispatch dispatch = { __ym_session_init_incoming_connection_proc, NULL, false, initCtx, YMSTRC("init-connection") };
         YMThreadDispatchDispatch(session->initConnectionDispatchThread, dispatch);
     }
     
@@ -741,8 +741,7 @@ void __ym_mdns_service_appeared_func(__unused YMmDNSBrowserRef browser, YMmDNSSe
     __YMSessionRef session = context;
     ymlog("session[%s]: __ym_mdns_service_appeared_func: %s",YMSTR(session->logDescription),YMSTR(service->name));
     
-    const char *name = service->name;
-    YMPeerRef peer = _YMPeerCreate(name, NULL, NULL);
+    YMPeerRef peer = _YMPeerCreate(service->name, NULL, NULL);
     YMLockLock(session->availablePeersLock);
 #pragma message "need to key dictionary off something better now.."
     YMDictionaryAdd(session->availablePeers, (YMDictionaryKey)peer, peer);
@@ -765,7 +764,7 @@ void __ym_mdns_service_removed_func(__unused YMmDNSBrowserRef browser, YMStringR
         while ( myEnum )
         {
             YMPeerRef peer = (YMPeerRef)myEnum->value;
-            if ( strcmp(YMPeerGetName(peer),name) == 0 )
+            if ( strcmp(YMSTR(YMPeerGetName(peer)),YMSTR(name)) == 0 )
             {
                 found = true;
                 mysteryKey = myEnum->key;
@@ -805,7 +804,7 @@ void __ym_mdns_service_resolved_func(__unused YMmDNSBrowserRef browser, bool suc
         while ( myEnum )
         {
             peer = (YMPeerRef)myEnum->value;
-            if ( strcmp(YMPeerGetName(peer),service->name) == 0 )
+            if ( strcmp(YMSTR(YMPeerGetName(peer)),YMSTR(service->name)) == 0 )
             {
                 found = true;
                 peer = (YMPeerRef)myEnum->value;

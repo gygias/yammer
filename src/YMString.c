@@ -74,7 +74,7 @@ YMStringRef _YMStringCreateForYMAlloc(const char *format,...)
 {
     __YMStringFormatLocal
     __YMStringRef string = (__YMStringRef)YMALLOC(sizeof(__YMString));
-    string->_type.type = _YMStringTypeID;
+    string->_type.__type = _YMStringTypeID;
     string->cString = newStr;
     return string;
 }

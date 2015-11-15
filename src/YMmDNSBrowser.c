@@ -81,7 +81,7 @@ YMmDNSBrowserRef YMmDNSBrowserCreateWithCallbacks(YMStringRef type,
 {
     __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)_YMAlloc(_YMmDNSBrowserTypeID,sizeof(__YMmDNSBrowser));
     
-    browser->type = strdup(type);
+    browser->type = YMRetain(type);
     browser->serviceList = NULL;
     YMmDNSBrowserSetServiceAppearedFunc(browser, serviceAppeared);
     YMmDNSBrowserSetServiceUpdatedFunc(browser, serviceUpdated);
@@ -205,7 +205,7 @@ bool YMmDNSBrowserStart(YMmDNSBrowserRef browser_)
     DNSServiceErrorType result = DNSServiceBrowse(browser->browseServiceRef, // DNSServiceRef
                                                   0, // DNSServiceFlags
                                                   0, // interfaceIndex
-                                                  browser->type, // type
+                                                  YMSTR(browser->type), // type
                                                   NULL, // domain
                                                   __YMmDNSBrowseCallback, // callback
                                                   browser); // context
@@ -253,9 +253,9 @@ bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser_, YMStringRef serviceName)
     DNSServiceErrorType result = DNSServiceResolve ( browser->resolveServiceRef, // DNSServiceRef
                                                     0, // DNSServiceFlags
                                                     0, // interfaceIndex
-                                                    serviceName,
-                                                    browser->type, // type
-                                                    theService->domain, // domain
+                                                    YMSTR(serviceName),
+                                                    YMSTR(browser->type), // type
+                                                    YMSTR(theService->domain), // domain
                                                     __YMmDNSResolveCallback,
                                                     browser );
     if ( result != kDNSServiceErr_NoError )
@@ -286,7 +286,7 @@ void __YMmDNSBrowserAddOrUpdateService(__YMmDNSBrowserRef browser, YMmDNSService
     // update?
     while ( aListItem )
     {
-        if ( 0 == strcmp(record->name,((YMmDNSServiceRecord *)aListItem->service)->name) )
+        if ( 0 == strcmp(YMSTR(record->name),YMSTR(((YMmDNSServiceRecord *)aListItem->service)->name)) )
         {
             YMmDNSServiceRecord *oldRecord = aListItem->service;
             aListItem->service = record;
@@ -319,7 +319,7 @@ YMmDNSServiceRecord *__YMmDNSBrowserGetServiceWithName(__YMmDNSBrowserRef browse
     while ( aListItem )
     {
         YMmDNSServiceRecord *aRecord = aListItem->service;
-        if ( 0 == strcmp(aRecord->name, name) )
+        if ( 0 == strcmp(YMSTR(aRecord->name), YMSTR(name)) )
         {
             if ( remove )
             {
@@ -376,7 +376,7 @@ static void DNSSD_API __YMmDNSBrowseCallback(__unused DNSServiceRef serviceRef, 
     bool remove = (flags & kDNSServiceFlagsAdd) == 0;
     
     if ( remove )
-        __YMmDNSBrowserRemoveServiceNamed(browser, name);
+        __YMmDNSBrowserRemoveServiceNamed(browser, YMSTRC(name));
     else
     {
         YMmDNSServiceRecord *record = _YMmDNSCreateServiceRecord(name, type, domain, false, NULL, 0, NULL, 0);
@@ -406,7 +406,7 @@ void DNSSD_API __YMmDNSResolveCallback(__unused DNSServiceRef serviceRef,__unuse
         }
         firstDotPtr[0] = '\0';
         
-        record = _YMmDNSCreateServiceRecord(fullname, browser->type,
+        record = _YMmDNSCreateServiceRecord(fullname, YMSTR(browser->type),
 #ifdef YMmDNS_ENUMERATION
 #error fixme
 #else

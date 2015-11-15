@@ -22,11 +22,12 @@
 
 #define YM_DEBUG_INFO // consolidate extra-curricular stuff under here so it doesn't get forgotten
 
-#define YM_TYPE_RESERVED 16
+#pragma message "does this have to be hard code?"
+#define YM_TYPE_RESERVED (128 - sizeof(YMTypeID))
 
 typedef struct _ym_type
 {
-    YMTypeID type;
+    YMTypeID __type;
     uint8_t __internal[YM_TYPE_RESERVED];
 } __ym_type;
 typedef struct _ym_type _YMType;

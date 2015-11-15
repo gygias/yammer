@@ -70,9 +70,9 @@ void test_service_appeared(YMmDNSBrowserRef browser, YMmDNSServiceRecord *servic
 
 - (void)appeared:(YMmDNSBrowserRef)aBrowser :(YMmDNSServiceRecord *)aService
 {
-    NSLog(@"%s/%s:? appeared",aService->type,aService->name);
+    NSLog(@"%s/%s:? appeared",YMSTR(aService->type),YMSTR(aService->name));
     XCTAssert(aBrowser==browser,@"browser pointers are not equal on service appearance");
-    if ( waitingOnAppearance && 0 == strcmp(aService->name, [testServiceName cStringUsingEncoding:NSASCIIStringEncoding]) )
+    if ( waitingOnAppearance && 0 == strcmp(YMSTR(aService->name), [testServiceName cStringUsingEncoding:NSASCIIStringEncoding]) )
     {
         waitingOnAppearance = NO;
         NSLog(@"resolving...");
@@ -90,7 +90,7 @@ void test_service_updated(YMmDNSBrowserRef browser, YMmDNSServiceRecord *service
 
 - (void)updated:(YMmDNSBrowserRef)aBrowser :(YMmDNSServiceRecord *)aService
 {
-    NSLog(@"%s/%s:? updated",aService->type,aService->name);
+    NSLog(@"%s/%s:? updated",YMSTR(aService->type),YMSTR(aService->name));
     XCTAssert(browser==aBrowser,@"browser pointers %p and %p are not equal on service update",browser,aBrowser);
 }
 
@@ -106,7 +106,7 @@ void test_service_resolved(YMmDNSBrowserRef browser, bool resolved, YMmDNSServic
     XCTAssert(resolved, @"service did not resolve");
     XCTAssert(browser==aBrowser,@"browser pointers %p and %p are not equal on service resolution",browser,aBrowser);
     
-    NSLog(@"%s/%s:%d resolved",aService->type,aService->name,aService->port);
+    NSLog(@"%s/%s:%d resolved",YMSTR(aService->type),YMSTR(aService->name),aService->port);
     YMmDNSTxtRecordKeyPair **keyPairs = aService->txtRecordKeyPairs;
     size_t keyPairsSize = aService->txtRecordKeyPairsSize,
     idx = 0;
@@ -115,7 +115,7 @@ void test_service_resolved(YMmDNSBrowserRef browser, bool resolved, YMmDNSServic
     
     for ( ; idx < keyPairsSize; idx++ )
     {
-        XCTAssert(0 == strcmp(keyPairs[idx]->key, testKeyPairs[idx]->key), @"%zu-th keys '%s' and '%s' don't match",idx,keyPairs[idx]->key,testKeyPairs[idx]->key);
+        XCTAssert(0 == strcmp(YMSTR(keyPairs[idx]->key), YMSTR(testKeyPairs[idx]->key)), @"%zu-th keys '%s' and '%s' don't match",idx,YMSTR(keyPairs[idx]->key),YMSTR(testKeyPairs[idx]->key));
         XCTAssert(keyPairs[idx]->valueLen == testKeyPairs[idx]->valueLen, @"%zu-th values have different lengths of %u and %u",idx,keyPairs[idx]->valueLen,testKeyPairs[idx]->valueLen);
         XCTAssert(0 == memcmp(keyPairs[idx]->value, testKeyPairs[idx]->value, keyPairs[idx]->valueLen), @"%zu-th values of length %u don't match",idx,keyPairs[idx]->valueLen);
     }
@@ -137,7 +137,7 @@ void test_service_removed(YMmDNSBrowserRef browser, YMStringRef serviceName, voi
     XCTAssert(aBrowser==browser,@"browser pointers %p and %p are not equal on service disappearance",browser,aBrowser);
     
     if ( waitingOnAppearance || waitingOnResolution )
-        XCTAssert(strcmp(serviceName,[testServiceName UTF8String]), @"test service disappeared before tearDown");
+        XCTAssert(strcmp(YMSTR(serviceName),[testServiceName UTF8String]), @"test service disappeared before tearDown");
     else
     {
         NSLog(@"target service removed");
@@ -149,7 +149,7 @@ void test_service_removed(YMmDNSBrowserRef browser, YMStringRef serviceName, voi
 {
     BOOL okay;
     testServiceName = YMRandomASCIIStringWithMaxLength(mDNS_SERVICE_NAME_LENGTH_MAX, YES);
-    service = YMmDNSServiceCreate(testServiceType, [testServiceName UTF8String], 5050);
+    service = YMmDNSServiceCreate(YMSTRC(testServiceType), YMSTRC([testServiceName UTF8String]), 5050);
     
     nTestKeyPairs = arc4random_uniform(10);
     size_t idx = 0;
@@ -159,7 +159,7 @@ void test_service_removed(YMmDNSBrowserRef browser, YMStringRef serviceName, voi
     {
         testKeyPairs[idx] = calloc(1,sizeof(YMmDNSTxtRecordKeyPair));
         NSString *randomKey = YMRandomASCIIStringWithMaxLength(testKeyLengthBound, NO);
-        testKeyPairs[idx]->key = strdup((char *)[randomKey cStringUsingEncoding:NSASCIIStringEncoding]);//"test-key";
+        testKeyPairs[idx]->key = YMSTRC([randomKey cStringUsingEncoding:NSASCIIStringEncoding]);//"test-key";
         NSData *valueData = YMRandomDataWithMaxLength((uint8_t)(254 - [randomKey lengthOfBytesUsingEncoding:NSASCIIStringEncoding])); // 256 - '=' - size prefix, ok?
         testKeyPairs[idx]->value = calloc(1,[valueData length]);
         memcpy((void *)testKeyPairs[idx]->value, [valueData bytes], [valueData length]);

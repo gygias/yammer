@@ -105,7 +105,7 @@ YMAddressRef YMAddressCreate(void* addressData, socklen_t length)
         address->description = YMStringCreateWithFormat("%s:%u",ipString,port,NULL);
     }
     
-    return address;
+    return (YMAddressRef)address;
     
 rewind_fail:
     free(address->address);

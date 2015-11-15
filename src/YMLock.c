@@ -61,7 +61,7 @@ YMLockRef _YMLockCreateForYMAlloc(YMLockOptions options, YMStringRef name)
         return NULL;
     
     __YMLockRef lock = (__YMLockRef)YMALLOC(sizeof(__YMLock));
-    lock->_type.type = _YMLockTypeID;
+    lock->_type.__type = _YMLockTypeID;
     
     lock->mutex = mutex;
     lock->name = name ? YMRetain(name) : YMSTRC("unnamed");

@@ -109,7 +109,7 @@ ymbool YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service_, YMmDNSTxtRecordKeyP
     for ( idx = 0; idx < nPairs; idx++ )
     {
         YMmDNSTxtRecordKeyPair **_keyPairs = (YMmDNSTxtRecordKeyPair **)keyPairs;
-        const char *key = _keyPairs[idx]->key;
+        const char *key = YMSTR(_keyPairs[idx]->key);
         const uint8_t *value = _keyPairs[idx]->value;
         uint8_t valueLen = _keyPairs[idx]->valueLen;
         
@@ -171,8 +171,8 @@ ymbool YMmDNSServiceStart( YMmDNSServiceRef service_ )
     DNSServiceErrorType result = DNSServiceRegister(serviceRef,
                                                     0, // DNSServiceFlags
                                                     0, // interfaceIndex (0=all)
-                                                    service->name,
-                                                    service->type,
+                                                    YMSTR(service->name),
+                                                    YMSTR(service->type),
                                                     NULL, // domain
                                                     NULL, // host
                                                     netPort,

@@ -26,14 +26,25 @@
 #define ymbool bool
 #endif
 
+#ifdef FIGURED_OUT_HOW_TO_GET_COMPILER_WARNINGS
+typedef struct ym_not_a_void_star
+{
+    char notAThing[1];
+} _ym_not_a_void_star;
+
+typedef struct ym_not_a_void_star *YMTypeRef;
+#else
 typedef const void *YMTypeRef;
+#endif
 typedef char YMTypeID;
 
 YMTypeRef YMRetain(YMTypeRef object);
+YMTypeRef YMAutorelease(YMTypeRef object);
 void YMRelease(YMTypeRef object);
 
 #define YMSTR(x) YMStringGetCString(x)
-#define YMSTRC(x) YMStringCreateWithCString(x)
+#define YMSTRC(x) YMAutorelease(YMStringCreateWithCString(x))
+#define YMSTRCF(x,...) YMStringCreateWithFormat((x),##__VA_ARGS__)
 #define YMLEN(x) YMStringGetLength(x)
 
 #endif /* YMBase_h */

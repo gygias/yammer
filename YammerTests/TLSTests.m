@@ -65,7 +65,7 @@ typedef struct
     NSString *template = @"ym-tls-test-%u";
     uint32_t suffix = arc4random();
     NSString *nsSockName = [NSString stringWithFormat:template,suffix];
-    YMStringRef sockName = YMStringCreateWithFormat("ym-tls-test-%u",arc4random(), NULL);
+    YMStringRef sockName = YMStringCreateWithFormat("ym-tls-test-%u",suffix, NULL);
     XCTAssert(strcmp([nsSockName UTF8String],YMSTR(sockName))==0,@"ymstring: %s",YMSTR(sockName));
     
     YMLocalSocketPairRef localSocketPair = YMLocalSocketPairCreate(sockName);
@@ -91,8 +91,8 @@ typedef struct
     YMTLSProviderRef remoteProvider = YMTLSProviderCreateWithFullDuplexFile(localIsServer ? clientSocket : serverSocket, !localIsServer);
     XCTAssert(remoteProvider,@"remote provider didn't initialize");
     
-    stateLock = YMLockCreateWithOptionsAndName(YMLockDefault, [[self className] UTF8String]);
-    threadExitSemaphore = YMSemaphoreCreate([[self className] UTF8String], 0);
+    stateLock = YMLockCreateWithOptionsAndName(YMLockDefault, YMSTRC([[self className] UTF8String]));
+    threadExitSemaphore = YMSemaphoreCreate(YMSTRC([[self className] UTF8String]), 0);
     bytesIn = 0;
     bytesOut = 0;
     isTimeBased = TLSTestTimeBased;

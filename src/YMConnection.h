@@ -14,7 +14,7 @@
 #include "YMStream.h"
 #include "YMAddress.h"
 
-typedef YMTypeRef YMConnectionRef;
+typedef const struct __ym_connection *YMConnectionRef;
 
 typedef enum
 {
