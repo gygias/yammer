@@ -43,7 +43,7 @@ const char *__YMLocalSocketPairNameBase = "ym-local-socket";
 static YMThreadRef gYMLocalSocketPairAcceptThread = NULL;
 static pthread_once_t gYMLocalSocketPairAcceptThreadOnce = PTHREAD_ONCE_INIT;
 static YMStringRef gYMLocalSocketPairName = NULL;
-static YMSemaphoreRef gYMLocalSocketInitAndAcceptSemaphore = NULL; // waits for the persistent server thread to find a name, and for accepts to happen for n clients
+static YMSemaphoreRef gYMLocalSocketInitAndAcceptSemaphore = NULL; // waits for the persistent server thread to liste(), and for per-client accept()s
 static bool gYMLocalSocketPairAcceptStopFlag = false;
 static int gYMLocalSocketPairAcceptLast = -1;
 
