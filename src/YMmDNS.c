@@ -49,6 +49,7 @@ void _YMmDNSServiceListFree(YMmDNSServiceList *serviceList)
         struct _YMmDNSServiceRecord *service = (struct _YMmDNSServiceRecord *)aListItem->service;
         if ( service )
             _YMmDNSServiceRecordFree(service);
+        aListItem = aListItem->next;
     }
 }
 

@@ -16,7 +16,7 @@
 #include "YMPlexerPriv.h"
 #include "YMLock.h"
 
-#define     PlexerTest1Threads 1
+#define     PlexerTest1Threads 8
 #define     PlexerTest1NewStreamPerRoundTrip true
 #define     PlexerTest1RoundTripsPerThread 1
 
@@ -154,7 +154,10 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
 #ifdef AND_MEASURE
     }];
 #endif
+    YMPlexerStop(localPlexer);
+    YMPlexerStop(fakeRemotePlexer);
     gTimeBasedEnd = YES;
+    // join on time based fallout, check fds we know about are closed
     NSLog(@"plexer test finished %zu incoming round-trips on %d threads (%d round-trips per %s)",incomingStreamRoundTrips,
           PlexerTest1Threads,
           PlexerTest1RoundTripsPerThread,

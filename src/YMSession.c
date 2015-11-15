@@ -10,12 +10,14 @@
 
 #include "YMmDNSService.h"
 #include "YMmDNSBrowser.h"
+#include "YMConnectionPriv.h"
+#include "YMPlexerPriv.h" // streamid def
+#include "YMStreamPriv.h"
+#include "YMPeerPriv.h"
+
 #include "YMLock.h"
 #include "YMThread.h"
 #include "YMAddress.h"
-#include "YMPeerPriv.h"
-#include "YMStreamPriv.h"
-#include "YMPlexerPriv.h" // streamid def
 
 #include "YMLog.h"
 #undef ymlog_type
@@ -198,7 +200,7 @@ ymbool YMSessionClientStart(YMSessionRef session_)
 {
     __YMSessionRef session = (__YMSessionRef)session_;
     
-    if ( session->browser )
+    if ( session->browser || session->defaultConnection )
         return false;
     
     session->browser = YMmDNSBrowserCreateWithCallbacks(session->type,
@@ -226,12 +228,15 @@ ymbool YMSessionClientStart(YMSessionRef session_)
 ymbool YMSessionClientStop(YMSessionRef session_)
 {
     __YMSessionRef session = (__YMSessionRef)session_;
-    if ( session->browser )
-        return false;
+
+    bool okay = true;
     
-    bool okay = YMmDNSBrowserStop(session->browser);
-    YMRelease(session->browser);
-    session->browser = NULL;
+    if ( session->browser )
+    {
+        okay = YMmDNSBrowserStop(session->browser);
+        YMRelease(session->browser);
+        session->browser = NULL;
+    }
     
     bool anotherOkay = __YMSessionCloseAllConnections(session);
     if ( ! anotherOkay )
@@ -647,23 +652,25 @@ bool __YMSessionCloseAllConnections(YMSessionRef session_)
     __YMSessionRef session = (__YMSessionRef)session_;
     
     bool okay = true;
-    if ( session->defaultConnection )
-    {
-        bool defaultOK = YMConnectionClose(session->defaultConnection);
-        YMRelease(session->defaultConnection);
-        session->defaultConnection = NULL;
-        if ( ! defaultOK )
-            okay = false;
-    }
+//    if ( session->defaultConnection )
+//    {
+//        bool defaultOK = _YMConnectionClose(session->defaultConnection);
+//        YMRelease(session->defaultConnection);
+//        session->defaultConnection = NULL;
+//        if ( ! defaultOK )
+//            okay = false;
+//    }
     
     YMLockLock(session->connectionsByAddressLock);
     {
-        YMDictionaryEnumRef dEnum = YMDictionaryEnumeratorBegin(session->connectionsByAddress);
-        while ( dEnum )
+        while ( YMDictionaryGetCount(session->connectionsByAddress) > 0 )
         {
-            YMConnectionRef aConnection = dEnum->value;
-            bool aOK = YMConnectionClose(aConnection);
-            YMRelease(aConnection);
+            YMDictionaryKey randomKey = YMDictionaryRandomKey(session->connectionsByAddress);
+            YMConnectionRef aConnection = YMDictionaryRemove(session->connectionsByAddress,randomKey);
+            
+            bool aOK = _YMConnectionClose(aConnection);
+            YMRelease(aConnection); // matches our create
+            
             if ( ! aOK )
                 okay = false;
         }
@@ -731,6 +738,8 @@ void __ym_session_connection_interrupted_proc(YMConnectionRef connection, void *
         ymerr("session[%s]: sanity check dictionary: %p v %p",YMSTR(session->logDescription), removedValue, connection);
         abort();
     }
+    
+    YMRelease(connection);
     
     // weird that new stream / stream close don't report connection but this does, should be consistent
     if ( isDefault && session->interruptedFunc )

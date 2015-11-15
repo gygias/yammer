@@ -44,7 +44,7 @@ void YMRelease(YMTypeRef object);
 
 #define YMSTR(x) YMStringGetCString(x)
 #define YMSTRC(x) YMAutorelease(YMStringCreateWithCString(x))
-#define YMSTRCF(x,...) YMStringCreateWithFormat((x),##__VA_ARGS__)
+#define YMSTRCF(x,...) YMAutorelease(YMStringCreateWithFormat((x),##__VA_ARGS__))
 #define YMLEN(x) YMStringGetLength(x)
 
 #endif /* YMBase_h */

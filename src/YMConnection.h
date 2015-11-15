@@ -45,6 +45,4 @@ YMAddressRef YMConnectionGetAddress(YMConnectionRef connection);
 YMStreamRef YMConnectionCreateStream(YMConnectionRef connection, YMStringRef name);
 void YMConnectionCloseStream(YMConnectionRef connection, YMStreamRef stream);
 
-bool YMConnectionClose(YMConnectionRef connection);
-
 #endif /* YMConnection_h */

@@ -256,7 +256,7 @@ rewind_fail:
     return false;
 }
 
-bool YMConnectionClose(YMConnectionRef connection_)
+bool _YMConnectionClose(YMConnectionRef connection_)
 {
     __YMConnectionRef connection = (__YMConnectionRef)connection_;
     return __YMConnectionDestroy(connection);
@@ -264,22 +264,32 @@ bool YMConnectionClose(YMConnectionRef connection_)
 
 bool __YMConnectionDestroy(__YMConnectionRef connection)
 {
+    bool okay = true;
+    if ( connection->security )
+    {
+        okay = YMSecurityProviderClose(connection->security);
+        if ( ! okay )
+            ymerr("connection[%s]: warning: failed to close security",YMSTR(YMAddressGetDescription(connection->address)));
+        
+        YMRelease(connection->security);
+        connection->security = NULL;
+    }
     if ( connection->plexer )
-        YMPlexerStop(connection->plexer);
-    bool securityOK = YMSecurityProviderClose(connection->security);
-    if ( ! securityOK )
-        ymerr("connection[%s]: warning: failed to close security",YMSTR(YMAddressGetDescription(connection->address)));
-    int closeResult = close(connection->socket);
-    if ( closeResult != 0 )
-        ymerr("connection[%s]: warning: close socket failed: %d (%s)",YMSTR(YMAddressGetDescription(connection->address)),errno,strerror(errno));
+    {
+        bool plexerOK = YMPlexerStop(connection->plexer);
+        if ( ! plexerOK )
+        {
+            ymerr("connection[%s]: warning: failed to close plexer",YMSTR(YMAddressGetDescription(connection->address)));
+            okay = plexerOK;
+        }
+        
+        YMRelease(connection->plexer);
+        connection->plexer = NULL;
+    }
     
-    YMRelease(connection->plexer);
-    connection->plexer = NULL;
-    YMRelease(connection->security);
-    connection->security = NULL;
     connection->socket = NULL_SOCKET;
     
-    return securityOK && ( closeResult == 0 );
+    return okay;
 }
 
 uint64_t YMConnectionDoSample(YMConnectionRef connection)

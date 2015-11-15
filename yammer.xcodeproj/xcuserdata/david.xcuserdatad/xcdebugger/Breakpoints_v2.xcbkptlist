@@ -40,11 +40,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "src/YMThread.c"
-            timestampString = "469255852.974125"
+            timestampString = "469320631.257259"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "373"
-            endingLineNumber = "373"
+            startingLineNumber = "379"
+            endingLineNumber = "379"
             landmarkName = "__YMThreadDispatchForward()"
             landmarkType = "7">
          </BreakpointContent>
@@ -173,11 +173,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "src/YMPlexer.c"
-            timestampString = "469256978.479576"
+            timestampString = "469314081.21162"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "202"
-            endingLineNumber = "202"
+            startingLineNumber = "194"
+            endingLineNumber = "194"
             landmarkName = "YMPlexerCreate()"
             landmarkType = "7">
          </BreakpointContent>
@@ -189,27 +189,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "src/YMPlexer.c"
-            timestampString = "469268516.193725"
+            timestampString = "469314081.21162"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "844"
-            endingLineNumber = "844"
-            landmarkName = "__ym_plexer_stream_data_available_proc()"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "src/YMPlexer.c"
-            timestampString = "469256978.479576"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "497"
-            endingLineNumber = "497"
+            startingLineNumber = "603"
+            endingLineNumber = "603"
             landmarkName = "__YMPlexerChooseReadyStream()"
             landmarkType = "7">
          </BreakpointContent>
@@ -221,11 +205,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "YammerTests/PlexerTests.m"
-            timestampString = "469259091.434441"
+            timestampString = "469314081.21162"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "329"
-            endingLineNumber = "329"
+            startingLineNumber = "332"
+            endingLineNumber = "332"
             landmarkName = "-closing::"
             landmarkType = "5">
          </BreakpointContent>
@@ -237,11 +221,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "src/YMPlexer.c"
-            timestampString = "469268516.193725"
+            timestampString = "469314081.21162"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "728"
-            endingLineNumber = "728"
+            startingLineNumber = "836"
+            endingLineNumber = "836"
             landmarkName = "__ym_plexer_service_upstream_proc()"
             landmarkType = "7">
          </BreakpointContent>
@@ -253,11 +237,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "src/YMPlexer.c"
-            timestampString = "469268516.193725"
+            timestampString = "469314081.21162"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "718"
-            endingLineNumber = "718"
+            startingLineNumber = "826"
+            endingLineNumber = "826"
             landmarkName = "__ym_plexer_service_upstream_proc()"
             landmarkType = "7">
          </BreakpointContent>
@@ -269,11 +253,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "src/YMPlexer.c"
-            timestampString = "469256978.479576"
+            timestampString = "469314081.21162"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "650"
-            endingLineNumber = "650"
+            startingLineNumber = "756"
+            endingLineNumber = "756"
             landmarkName = "__YMPlexerServiceADownstream()"
             landmarkType = "7">
          </BreakpointContent>
@@ -285,11 +269,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "src/YMPlexer.c"
-            timestampString = "469256978.479576"
+            timestampString = "469314081.21162"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "599"
-            endingLineNumber = "599"
+            startingLineNumber = "705"
+            endingLineNumber = "705"
             landmarkName = "__YMPlexerServiceADownstream()"
             landmarkType = "7">
          </BreakpointContent>
@@ -301,11 +285,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "YammerTests/PlexerTests.m"
-            timestampString = "469259091.434441"
+            timestampString = "469314081.21162"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "205"
-            endingLineNumber = "205"
+            startingLineNumber = "208"
+            endingLineNumber = "208"
             landmarkName = "-doLocalTest1:"
             landmarkType = "5">
          </BreakpointContent>
@@ -439,19 +423,49 @@
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.SymbolicBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            symbolName = "malloc_printf"
+            moduleName = "">
+            <Locations>
+               <Location
+                  shouldBeEnabled = "No"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "malloc_printf"
+                  moduleName = "libsystem_malloc.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  offsetFromSymbolStart = "0">
+               </Location>
+               <Location
+                  shouldBeEnabled = "No"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "malloc_printf"
+                  moduleName = "libgmalloc.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  offsetFromSymbolStart = "0">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "src/YMPlexer.c"
-            timestampString = "469271787.296717"
+            filePath = "YammerTests/SessionTests.m"
+            timestampString = "469320631.257259"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "848"
-            endingLineNumber = "848"
-            landmarkName = "__YMPlexerInterrupt()"
-            landmarkType = "7">
+            startingLineNumber = "123"
+            endingLineNumber = "123"
+            landmarkName = "-testSessionWritingDevRandomAndReadingManPages"
+            landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

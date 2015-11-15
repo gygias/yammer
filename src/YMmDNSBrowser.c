@@ -26,7 +26,7 @@ typedef struct __ym_mdns_browser
     _YMType _type;
     
     YMStringRef type;
-    YMmDNSServiceList *serviceList;
+    YMmDNSServiceList *serviceList; // convert to collection
     
 #ifdef YMmDNS_ENUMERATION
     bool enumerating;

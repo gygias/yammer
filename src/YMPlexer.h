@@ -32,7 +32,8 @@ void YMPlexerSetCallbackContext(YMPlexerRef plexer, void *context);
 void YMPlexerSetSecurityProvider(YMPlexerRef plexer, YMTypeRef provider); // unsure how to handle this poly in c (yet?)
 
 bool YMPlexerStart(YMPlexerRef plexer);
-void YMPlexerStop(YMPlexerRef plexer);
+// closes the file (or files) associated with this plexer
+bool YMPlexerStop(YMPlexerRef plexer);
 
 YMStreamRef YMPlexerCreateNewStream(YMPlexerRef plexer, YMStringRef name);
 void YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream);

@@ -45,6 +45,7 @@ typedef struct __ym_thread
     YMThreadDispatchThreadID dispatchThreadID;
     YMThreadDispatchID dispatchIDNext;
     YMSemaphoreRef dispatchSemaphore;
+    YMSemaphoreRef dispatchExitSemaphore;
     YMDictionaryRef dispatchesByID;
     YMLockRef dispatchListLock;
 } ___ym_thread;
@@ -130,9 +131,8 @@ YMThreadRef _YMThreadCreate(YMStringRef name, bool isDispatchThread, ym_thread_e
         
         thread->dispatchListLock = YMLockCreate(YMSTRC("dispatch-list"));
         thread->dispatchesByID = YMDictionaryCreate();
-        YMStringRef semName = YMStringCreateWithFormat("%s-dispatch",YMSTR(name),NULL);
-        thread->dispatchSemaphore = YMSemaphoreCreate(semName,0);
-        YMRelease(semName);
+        thread->dispatchSemaphore = YMSemaphoreCreate(YMSTRCF("%s-dispatch",YMSTR(name),NULL),0);
+        thread->dispatchExitSemaphore = YMSemaphoreCreate(YMSTRCF("%s-dispatch-exit",YMSTR(name),NULL), 0);
         thread->dispatchIDNext = 0;
     }
     
@@ -141,22 +141,30 @@ YMThreadRef _YMThreadCreate(YMStringRef name, bool isDispatchThread, ym_thread_e
 
 void _YMThreadFree(YMTypeRef object)
 {
-#pragma message "maybe ymthread should maintain a realistically large enough global set of bools to let threads exit flags reference good memory after deallocation"
     __YMThreadRef thread = (__YMThreadRef)object;
     
     if ( thread->isDispatchThread )
     {
+        __ym_thread_dispatch_thread_context threadDef = NULL;
+        YMLockLock(gDispatchThreadListLock);
+        {
+            threadDef = (__ym_thread_dispatch_thread_context)YMDictionaryRemove(gDispatchThreadDefsByID, thread->dispatchThreadID);
+            *(threadDef->stopFlag) = true;
+            ymlog("thread[%s,dispatch,dt%llu]: flagged pthread to exit on ymfree with %p", YMSTR(thread->name), thread->dispatchThreadID,threadDef->stopFlag);
+        }
+        YMLockUnlock(gDispatchThreadListLock);
+        
+        YMSemaphoreSignal(thread->dispatchSemaphore);
+        YMSemaphoreWait(thread->dispatchExitSemaphore);
+        ymlog("thread[%s,dispatch,dt%llu]: received signal from exiting thread on ymfree", YMSTR(thread->name), thread->dispatchThreadID);
+        
+        free(threadDef->stopFlag);
+        free(threadDef);
+        
         YMRelease(thread->dispatchListLock);
         YMRelease(thread->dispatchesByID);
         YMRelease(thread->dispatchSemaphore);
-        
-        YMLockLock(gDispatchThreadListLock);
-        {
-            __ym_thread_dispatch_thread_context threadDef = (__ym_thread_dispatch_thread_context)YMDictionaryGetItem(gDispatchThreadDefsByID, thread->dispatchThreadID);
-            *(threadDef->stopFlag) = true;
-            ymlog("thread[%s,dispatch,dt%llu]: flagged pthread to exit on ymfree", YMSTR(thread->name), thread->dispatchThreadID);
-        }
-        YMLockUnlock(gDispatchThreadListLock);
+        YMRelease(thread->dispatchExitSemaphore);
     }
     // todo is there anything we should reasonably do to user threads here?
     
@@ -281,12 +289,21 @@ void __ym_thread_dispatch_dispatch_thread_proc(void * ctx)
     {
         ymlog("thread[%s,dispatch,dt%llu,p%llu]: begin dispatch loop", YMSTR(thread->name), thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber());
         YMSemaphoreWait(thread->dispatchSemaphore);
+        
+        // check if we were signaled to exit
+        if ( *stopFlag )
+        {
+            ymlog("thread[%s,dispatch,dt%llu,p%llu]: woke for exit", YMSTR(thread->name), thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber());
+            break;
+        }
+        
         ymlog("thread[%s,dispatch,dt%llu,p%llu]: woke for a dispatch", YMSTR(thread->name), thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber());
         
         __unused YMThreadDispatchID aDispatchID = -1;
         __ym_thread_dispatch_context aDispatch = NULL;
         YMLockLock(thread->dispatchListLock);
         {
+            // todo this should be in order
             YMDictionaryKey randomKey = YMDictionaryRandomKey(thread->dispatchesByID);
             aDispatch = (__ym_thread_dispatch_context)YMDictionaryRemove(thread->dispatchesByID,randomKey);
             if ( ! aDispatch )
@@ -304,22 +321,11 @@ void __ym_thread_dispatch_dispatch_thread_proc(void * ctx)
         __YMThreadFreeDispatchContext(aDispatch);
     }
     
-    YMLockLock(gDispatchThreadListLock);
-    {
-        __ym_thread_dispatch_thread_context sanityCheck = (__ym_thread_dispatch_thread_context)YMDictionaryRemove(gDispatchThreadDefsByID, thread->dispatchThreadID);
-        
-        if ( ! sanityCheck )
-        {
-            ymerr("thread[%s,dispatch,dt%llu,p%llu]: fatal: dispatch thread def not found on exit", YMSTR(thread->name), thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber());
-            abort();
-        }
-        
-        free(sanityCheck->stopFlag);
-        free(sanityCheck);
-    }
-    YMLockUnlock(gDispatchThreadListLock);
-    
     ymlog("thread[%s,dispatch,dt%llu,p%llu]: exiting", YMSTR(thread->name), thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber());
+    
+    // for exit, YMThread signals us after setting stop flag, we signal them back
+    // so they know it's safe to deallocate our stuff
+    YMSemaphoreSignal(thread->dispatchExitSemaphore);
 }
 
 void __YMThreadFreeDispatchContext(__ym_thread_dispatch_context dispatchContext)

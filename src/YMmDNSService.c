@@ -53,7 +53,7 @@ void __YMmDNSRegisterCallback(__unused DNSServiceRef sdRef,
     // DNSServiceRefDeallocate?
 }
 
-void __ym_mdns_service_event_thread(void *);
+//void __ym_mdns_service_event_thread(void *);
 
 YMmDNSServiceRef YMmDNSServiceCreate(YMStringRef type, YMStringRef name, uint16_t port)
 {
@@ -198,11 +198,11 @@ ymbool YMmDNSServiceStart( YMmDNSServiceRef service_ )
     service->dnsService = serviceRef;
     service->advertising = true;
     
-    YMStringRef threadName = YMStringCreateWithFormat("mdns-event-%s-%s",YMSTR(service->type),YMSTR(service->name),NULL);
-    YMThreadRef eventThread = YMThreadCreate(threadName, __ym_mdns_service_event_thread, service);
-    YMRelease(threadName);
-    
-    YMThreadStart(eventThread);
+//    YMStringRef threadName = YMStringCreateWithFormat("mdns-event-%s-%s",YMSTR(service->type),YMSTR(service->name),NULL);
+//    YMThreadRef eventThread = YMThreadCreate(threadName, __ym_mdns_service_event_thread, service);
+//    YMRelease(threadName);
+//    
+//    YMThreadStart(eventThread);
 
     ymlog("mdns: published %s/%s:%u",YMSTR(service->type),YMSTR(service->name),(unsigned)service->port);
     return true;
@@ -230,13 +230,15 @@ ymbool YMmDNSServiceStop( YMmDNSServiceRef service_, ymbool synchronous )
     return okay;
 }
 
-void __ym_mdns_service_event_thread(void * ctx)
-{
-    __YMmDNSServiceRef service = (__YMmDNSServiceRef)ctx;
-    
-    ymlog("mdns: event thread for %s entered...",YMSTR(service->name));
-    while (service->advertising) {
-        sleep(1);
-    }
-    ymlog("mdns: event thread for %s exiting...",YMSTR(service->name));
-}
+//void __ym_mdns_service_event_thread(void * ctx)
+//{
+//    __YMmDNSServiceRef service = (__YMmDNSServiceRef)ctx;
+//    YMRetain(service);
+//    
+//    ymlog("mdns: event thread for %s entered...",YMSTR(service->name));
+//    while (service->advertising) {
+//        sleep(1);
+//    }
+//    ymlog("mdns: event thread for %s exiting...",YMSTR(service->name));
+//    YMRelease(service);
+//}
