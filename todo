@@ -1,3 +1,5 @@
+- does ymstringcreatewithformat need null termination? compiler would probably be confused by our invented 'ymtyperef' token
+- ymlocalsocketpair's server thread probably shouldn't be persistent, would fix name reuse
 - autorelease? stringcreate, classcreate, stringrelease is cumbersome, put pools around [dispatch]threads
 - add isequal and compare, get rid of strcmps on ymstrings
 - test huge single i/o (plex buf)

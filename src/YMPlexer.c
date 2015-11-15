@@ -71,11 +71,6 @@ typedef struct __ym_plexer_stream_user_info_def
     
     bool isLocallyOriginated;
     struct timeval *lastServiceTime; // free me
-    
-    YMLockRef retainLock; // used to synchronize between local stream writing 'close' & plexer free'ing, and between remote exiting -newStream & plexer free'ing
-    bool isPlexerReleased;
-    bool isUserReleased;
-    bool isDeallocated;
 } ___ym_plexer_stream_user_info_def;
 typedef struct __ym_plexer_stream_user_info_def __ym_plexer_stream_user_info;
 typedef __ym_plexer_stream_user_info * __ym_plexer_stream_user_info_ref;
@@ -281,7 +276,7 @@ void YMPlexerSetSecurityProvider(YMPlexerRef plexer_, YMTypeRef provider)
     __YMPlexerRef plexer = (__YMPlexerRef)plexer_;
     if ( ((_YMTypeRef)provider)->__type != _YMSecurityProviderTypeID )
         ymlog(" plexer[%s]: warning: %s: provider is type '%c'",YMSTR(plexer->name),__FUNCTION__,((_YMTypeRef)provider)->__type);
-    plexer->provider = (YMSecurityProviderRef)provider;
+    plexer->provider = (YMSecurityProviderRef)YMRetain(provider);
 }
 
 bool YMPlexerStart(YMPlexerRef plexer_)
@@ -665,19 +660,21 @@ bool __YMPlexerServiceADownstream(__YMPlexerRef plexer, YMStreamRef stream, YMTy
         YMDictionaryRef theList = (YMDictionaryRef)lockAndList[__YMListListIdx];
         YMLockRef theLock = (YMLockRef)lockAndList[__YMLockListIdx];
         
+        if ( ! YM_STREAM_INFO(stream)->isLocallyOriginated )
+            abort();
+        
         YMStreamRef testRemove = NULL;
         YMLockLock(theLock);
         {
             testRemove = (YMStreamRef)YMDictionaryRemove(theList, streamID);
         }
+        YMRelease(stream);
         YMLockUnlock(theLock);
         if ( ! testRemove || testRemove != stream )
         {
             ymerr(" plexer[%s-V,i%d<->o%d,s%u]: fatal: internal check failed removing %u",YMSTR(plexer->name),plexer->inputFile,plexer->outputFile,streamID,streamID);
             abort();
         }
-        
-        YMRelease(stream);
         
         return true;
     }
@@ -817,11 +814,6 @@ YMStreamRef __YMPlexerGetOrCreateRemoteStreamWithID(__YMPlexerRef plexer, YMPlex
                 __ym_plexer_stream_user_info_ref userInfo = (__ym_plexer_stream_user_info_ref)YMALLOC(sizeof(__ym_plexer_stream_user_info));
                 userInfo->streamID = streamID;
                 userInfo->isLocallyOriginated = false;
-#pragma message "RETAIN/RELEASE - these probably don't make sense anymore, get rid of them!"
-                userInfo->retainLock = YMLockCreate(YMLockDefault,memberName);
-                userInfo->isDeallocated = false;
-                userInfo->isUserReleased = false;
-                userInfo->isPlexerReleased = false;
                 userInfo->lastServiceTime = (struct timeval *)YMALLOC(sizeof(struct timeval));
                 if ( 0 != gettimeofday(userInfo->lastServiceTime, NULL) )
                 {
@@ -897,7 +889,7 @@ void YMPlexerStop(YMPlexerRef plexer_)
     plexer->stopped = true;
 }
 
-YMStreamRef YMPlexerCreateNewStream(YMPlexerRef plexer_, YMStringRef name, bool direct)
+YMStreamRef YMPlexerCreateNewStream(YMPlexerRef plexer_, YMStringRef name)
 {
     __YMPlexerRef plexer = (__YMPlexerRef)plexer_;
     
@@ -923,11 +915,6 @@ YMStreamRef YMPlexerCreateNewStream(YMPlexerRef plexer_, YMStringRef name, bool 
         userInfo->name = YMRetain(name);
         userInfo->streamID = newStreamID;
         userInfo->isLocallyOriginated = true;
-#pragma message "RETAIN/RELEASE - these probably don't make sense anymore, get rid of them!"
-        userInfo->retainLock = YMLockCreate(YMLockDefault,name);
-        userInfo->isDeallocated = false;
-        userInfo->isUserReleased = false;
-        userInfo->isPlexerReleased = false;
         userInfo->lastServiceTime = (struct timeval *)YMALLOC(sizeof(struct timeval));
         if ( 0 != gettimeofday(userInfo->lastServiceTime, NULL) )
         {
@@ -942,11 +929,6 @@ YMStreamRef YMPlexerCreateNewStream(YMPlexerRef plexer_, YMStringRef name, bool 
         
         YMDictionaryAdd(plexer->localStreamsByID, newStreamID, newStream);
         
-        if ( direct )
-        {
-            // ???
-            // !!! there is no direct!!
-        }
     } while (false);
     YMLockUnlock(plexer->localAccessLock);
     
@@ -991,17 +973,6 @@ void YMPlexerCloseStream(YMPlexerRef plexer_, YMStreamRef stream)
     
 }
 
-//void YMPlexerRemoteStreamRelease(__unused YMPlexerRef plexer, YMStreamRef stream)
-//{
-//    if ( _YMStreamIsLocallyOriginated(stream) )
-//    {
-//        ymlog(" plexer[%s]: remote releasing locally originated stream %u",YMSTR(plexer->name), _YMStreamGetUserInfo(stream)->streamID);
-//        abort();
-//    }
-//    
-//    _YMStreamRemoteSetUserReleased(stream);
-//}
-
 #pragma mark dispatch
 
 void __YMPlexerDispatchFunctionWithName(__YMPlexerRef plexer, YMStreamRef stream, YMThreadRef targetThread, ym_thread_dispatch_func function, YMStringRef name)
@@ -1009,7 +980,7 @@ void __YMPlexerDispatchFunctionWithName(__YMPlexerRef plexer, YMStreamRef stream
     __ym_dispatch_plexer_and_stream_ref notifyDef = (__ym_dispatch_plexer_and_stream_ref)YMALLOC(sizeof(__ym_dispatch_plexer_and_stream));
     notifyDef->plexer = plexer;
     notifyDef->stream = stream;
-    ym_thread_dispatch dispatch = { function, NULL, true, notifyDef, name };
+    ym_thread_dispatch dispatch = { function, NULL, true, notifyDef, YMRetain(name) };
     
 //#define YMPLEXER_NO_EVENT_QUEUE // for debugging
 #ifdef YMPLEXER_NO_EVENT_QUEUE

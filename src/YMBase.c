@@ -56,7 +56,7 @@ typedef struct __ym_type
 {
     YMTypeID __type;
     int __retainCount; // todo find a better way to preallocate this
-    pthread_mutex_t __retainMutex;
+    pthread_mutex_t *__retainMutex;
 } ___ym_type;
 typedef struct __ym_type __YMType;
 typedef __YMType *__YMTypeRef;
@@ -78,13 +78,12 @@ YMTypeRef _YMAlloc(YMTypeID type, size_t size)
     object->__type = type;
     object->__retainCount = 1;
     
-    pthread_mutex_t mutex;
-    if ( ! YMCreateMutexWithOptions(YMLockDefault, &mutex) )
+    object->__retainMutex = YMCreateMutexWithOptions(YMLockDefault);
+    if ( ! object->__retainMutex )
     {
         fprintf(stderr,"base: fatal: create mutex failed");
         abort();
     }
-    object->__retainMutex = mutex;
     
     // can't divine a way to escape infinite recursion here
     //YMStringRef name = _YMStringCreateForYMAlloc("ymtype-%p", object, NULL);

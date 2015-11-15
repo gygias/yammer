@@ -36,8 +36,6 @@ YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_ref userInfo);
 typedef void (*_ym_stream_data_available_func)(YMStreamRef,uint32_t,void *);
 void _YMStreamSetDataAvailableCallback(YMStreamRef stream, _ym_stream_data_available_func, void *ctx);
 
-void _YMStreamDesignatedFree(YMStreamRef stream);
-
 void _YMStreamReadDown(YMStreamRef stream, void *buffer, uint32_t length);
 void _YMStreamWriteUp(YMStreamRef stream, const void *buffer, uint32_t length);
 void _YMStreamClose(YMStreamRef stream);

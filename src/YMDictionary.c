@@ -14,6 +14,12 @@
 #define ymlog_type YMLogDefault
 #include "YMLog.h"
 
+#ifdef DEBUG
+#define CHECK_CONSISTENCY { if ( ( dict->head == NULL ) ^ ( dict->count == 0 ) ) { abort(); } }
+#else
+#define CHECK_CONSISTENCY
+#endif
+
 typedef struct __YMDictionaryItem
 {
     uint64_t key;
@@ -63,6 +69,7 @@ void _YMDictionaryFree(YMTypeRef object)
 void YMDictionaryAdd(YMDictionaryRef dict_, YMDictionaryKey key, YMDictionaryValue value)
 {
     __YMDictionaryRef dict = (__YMDictionaryRef)dict_;
+    CHECK_CONSISTENCY
     
     if ( dict->count == MAX_OF(typeof(dict->count)) )
     {
@@ -87,12 +94,16 @@ void YMDictionaryAdd(YMDictionaryRef dict_, YMDictionaryKey key, YMDictionaryVal
 bool YMDictionaryContains(YMDictionaryRef dict_, YMDictionaryKey key)
 {
     __YMDictionaryRef dict = (__YMDictionaryRef)dict_;
+    CHECK_CONSISTENCY
+    if ( dict->head == NULL )
+        return false;
     return ( NULL != _YMDictionaryFindItemWithIdentifier(dict->head, key, NULL) );
 }
 
 YMDictionaryKey YMDictionaryRandomKey(YMDictionaryRef dict_)
 {
     __YMDictionaryRef dict = (__YMDictionaryRef)dict_;
+    CHECK_CONSISTENCY
     if ( dict->count == 0 || dict->head == NULL )
     {
         ymerr("error: YMDictionary is empty and has no keys");
@@ -109,6 +120,7 @@ YMDictionaryKey YMDictionaryRandomKey(YMDictionaryRef dict_)
 YMDictionaryValue YMDictionaryGetItem(YMDictionaryRef dict_, YMDictionaryKey key)
 {
     __YMDictionaryRef dict = (__YMDictionaryRef)dict_;
+    CHECK_CONSISTENCY
     _YMDictionaryItemRef foundItem = _YMDictionaryFindItemWithIdentifier(dict->head, key, NULL);
     if ( foundItem )
         return foundItem->value;
@@ -138,6 +150,7 @@ _YMDictionaryItemRef _YMDictionaryFindItemWithIdentifier(_YMDictionaryItemRef he
 YMDictionaryValue YMDictionaryRemove(YMDictionaryRef dict_, YMDictionaryKey key)
 {
     __YMDictionaryRef dict = (__YMDictionaryRef)dict_;
+    CHECK_CONSISTENCY
     
     if ( dict->count == 0 || dict->head == NULL )
     {
@@ -162,31 +175,34 @@ YMDictionaryValue YMDictionaryRemove(YMDictionaryRef dict_, YMDictionaryKey key)
         dict->count--;
         
         outValue = theItem->value;
-        free(theItem);
     }
     
-    if ( dict->count == 0 ^ dict->head == NULL )
-        abort();
-    
+    CHECK_CONSISTENCY
+    free(theItem);
     return outValue;
 }
 
 size_t YMDictionaryGetCount(YMDictionaryRef dict_)
 {
     __YMDictionaryRef dict = (__YMDictionaryRef)dict_;
+    CHECK_CONSISTENCY
     return dict->count;
 }
 
 YMDictionaryEnumRef YMDictionaryEnumeratorBegin(YMDictionaryRef dict_)
 {
     __YMDictionaryRef dict = (__YMDictionaryRef)dict_;
+    CHECK_CONSISTENCY
     
-#ifdef YM_DICT_MAYHAPS_SAFE_ENUM
     if ( ! dict->head )
         return NULL;
     
+#ifdef YM_DICT_MAYHAPS_SAFE_ENUM
+    
+    CHECK_CONSISTENCY
     return (YMDictionaryEnumRef)_YMDictionaryCopyItem(dict->head);
 #else
+    CHECK_CONSISTENCY
     return (YMDictionaryEnumRef)dict->head;
 #endif
 }
@@ -219,6 +235,7 @@ bool __Broken_YMDictionaryPopKeyValue(YMDictionaryRef dict, bool last, YMDiction
 bool __Broken_YMDictionaryPopKeyValue(YMDictionaryRef dict_, bool last, YMDictionaryKey *outKey, YMDictionaryValue *outValue)
 {
     __YMDictionaryRef dict = (__YMDictionaryRef)dict_;
+    CHECK_CONSISTENCY
     
     _YMDictionaryItemRef outItem = dict->head,
                             previous = NULL;

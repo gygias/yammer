@@ -168,7 +168,6 @@ void _YMTLSProviderFree(YMTypeRef object)
         SSL_free(tls->ssl);
     if ( tls->sslCtx )
         SSL_CTX_free(tls->sslCtx);
-    free(tls);
 }
 
 bool __YMTLSProviderInit(__YMSecurityProviderRef provider)

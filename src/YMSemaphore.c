@@ -154,9 +154,9 @@ void YMSemaphoreWait(YMSemaphoreRef semaphore_)
     semaphore->value--;
     if ( semaphore->value < 0 )
     {
-        pthread_mutex_t mutex = _YMLockGetMutex(semaphore->lock);
+        pthread_mutex_t *mutex = _YMLockGetMutex(semaphore->lock);
         ymlog("semaphore[%s,%s]: waiting on %p...",YMSTR(semaphore->name),semaphore);
-        int result = pthread_cond_wait(&semaphore->cond, &mutex);
+        int result = pthread_cond_wait(&semaphore->cond, mutex);
         if ( result != 0 )
         {
             ymerr("semaphore[%s,%s]: fatal: pthread_cond_wait failed: %d (%s)",YMSTR(semaphore->semName),YMSTR(semaphore->name),result,strerror(result));

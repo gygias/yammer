@@ -29,6 +29,6 @@ void YMLockLock(YMLockRef lock);
 void YMLockUnlock(YMLockRef lock);
 
 // for YMSemaphore
-pthread_mutex_t _YMLockGetMutex(YMLockRef lock);
+pthread_mutex_t *_YMLockGetMutex(YMLockRef lock);
 
 #endif /* YMLock_h */

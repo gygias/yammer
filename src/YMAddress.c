@@ -153,7 +153,6 @@ void _YMAddressFree(YMTypeRef object)
     __YMAddressRef address = (__YMAddressRef)object;
     free((void *)address->address);
     YMRelease(address->description);
-    free(address);
 }
 
 const void *YMAddressGetAddressData(YMAddressRef address_)

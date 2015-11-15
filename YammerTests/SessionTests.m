@@ -288,8 +288,10 @@ void _async_forward_callback(void * ctx, uint64_t bytesWritten)
 #define THX_FOR_MAN // disable this to observe running out of open files
 #ifdef THX_FOR_MAN
         struct ManPageThanks thx;
-        YMIOResult result = YMStreamReadUp(stream, &thx, sizeof(thx));
+        uint16_t outLength = 0, length = sizeof(thx);
+        YMIOResult result = YMStreamReadUp(stream, &thx, length,&outLength);
         XCTAssert(result==YMIOSuccess,@"read thx header");
+        XCTAssert(length==outLength,@"length!=outLength");
         NSString *thxFormat = [NSString stringWithFormat:@THXFORMANTEMPLATE,header.name];
         XCTAssert(0==strcmp(thx.thx4Man,[thxFormat cStringUsingEncoding:NSASCIIStringEncoding]),@"is this how one thx for man? %s",thx.thx4Man);
 #endif
@@ -314,8 +316,10 @@ void _async_forward_callback(void * ctx, uint64_t bytesWritten)
     });
     
     struct ManPageHeader header;
-    YMIOResult ymResult = YMStreamReadUp(stream, &header, sizeof(header));
+    uint16_t outLength = 0, length = sizeof(header);
+    YMIOResult ymResult = YMStreamReadUp(stream, &header, length, &outLength);
     XCTAssert(ymResult==YMIOSuccess,@"read man header");
+    XCTAssert(outLength==length,@"outLength!=length");
     XCTAssert(strlen(header.name)>0&&strlen(header.name)<=NAME_MAX, @"??? %s",header.name);
     uint64_t outBytes = 0;
     

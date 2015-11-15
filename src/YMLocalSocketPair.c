@@ -57,8 +57,6 @@ YMLocalSocketPairRef YMLocalSocketPairCreate(YMStringRef name)
     
     pthread_once(&gYMLocalSocketPairAcceptThreadOnce, __YMLocalSocketPairInitOnce);
     
-    YMSemaphoreWait(gYMLocalSocketInitAndAcceptSemaphore);
-    
     int clientSocket = __YMLocalSocketPairCreateClient(name);
     if ( clientSocket < 0 )
     {
@@ -166,6 +164,8 @@ void __YMLocalSocketPairInitOnce(void)
         ymerr("local-socket: fatal: failed to start accept thread");
         abort();
     }
+    
+    YMSemaphoreWait(gYMLocalSocketInitAndAcceptSemaphore);
 }
 
 void __ym_local_socket_accept_proc(__unused void *ctx)
@@ -230,7 +230,7 @@ close_retry:;
     if ( nameSuffixIter > 0 )
         ymerr("local-socket[spawn-server]: chose name '%s'",YMSTR(tryName));
     gYMLocalSocketPairName = tryName;
-    YMSemaphoreSignal(gYMLocalSocketInitAndAcceptSemaphore);
+    YMSemaphoreSignal(gYMLocalSocketInitAndAcceptSemaphore); // signal listen
     
     ymlog("local-socket[spawn-server]: listening on %d",listenSocket);
     
@@ -249,7 +249,7 @@ close_retry:;
         
         ymlog("local-socket[spawn-server]: accepted: %d",newClient);
         
-        YMSemaphoreSignal(gYMLocalSocketInitAndAcceptSemaphore);
+        YMSemaphoreSignal(gYMLocalSocketInitAndAcceptSemaphore); // signal accept
     }
     
     ymlog("__ym_local_socket_accept_proc exiting");

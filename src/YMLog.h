@@ -16,7 +16,7 @@
 // it might be nice if this postpended errno/strerror (or had a designated version for cases that errno is relevant)
 #define ymerr(x,...) YMLogType(YMLogError,(x),##__VA_ARGS__)
 #endif
-#define ymlog_stream_lifecycle true // this might be hairy enough to warrant a special case
+#define ymlog_stream_lifecycle false
 
 #ifndef YMLog_h
 #define YMLog_h

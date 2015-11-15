@@ -49,9 +49,9 @@ int32_t YMPortReserve(bool ipv4, int *outSocket);
 
 // in utilities for YMAlloc
 #include "YMLock.h"
-ymbool YMCreateMutexWithOptions(YMLockOptions options, pthread_mutex_t *outMutex);
-ymbool YMLockMutex(pthread_mutex_t mutex);
-ymbool YMUnlockMutex(pthread_mutex_t mutex);
-ymbool YMDestroyMutex(pthread_mutex_t mutex);
+pthread_mutex_t *YMCreateMutexWithOptions(YMLockOptions options);
+ymbool YMLockMutex(pthread_mutex_t *mutex);
+ymbool YMUnlockMutex(pthread_mutex_t *mutex);
+ymbool YMDestroyMutex(pthread_mutex_t *mutex);
 
 #endif /* YMUtilities_h */

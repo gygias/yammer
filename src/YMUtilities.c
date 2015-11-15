@@ -151,8 +151,9 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
     return -1;
 }
 
-ymbool YMCreateMutexWithOptions(YMLockOptions options, pthread_mutex_t *outMutex)
+pthread_mutex_t *YMCreateMutexWithOptions(YMLockOptions options)
 {
+    pthread_mutex_t *outMutex = NULL;
     pthread_mutex_t mutex;
     pthread_mutexattr_t attributes;
     pthread_mutexattr_t *attributesPtr = NULL;
@@ -182,64 +183,66 @@ ymbool YMCreateMutexWithOptions(YMLockOptions options, pthread_mutex_t *outMutex
         goto catch_release;
     }
     
-    *outMutex = mutex;
+    size_t sizeOfMutex = sizeof(pthread_mutex_t);
+    outMutex = YMALLOC(sizeOfMutex);
+    memcpy(outMutex, &mutex, sizeOfMutex);
     
 catch_release:
     if ( attributesPtr )
         pthread_mutexattr_destroy(attributesPtr);
-    return ( result == 0 );
+    return outMutex;
 }
 
-ymbool YMLockMutex(pthread_mutex_t mutex)
+ymbool YMLockMutex(pthread_mutex_t *mutex)
 {
-    int result = pthread_mutex_lock(&mutex);
+    int result = pthread_mutex_lock(mutex);
     ymbool okay = true;
     switch(result)
     {
         case 0:
             break;
         case EDEADLK:
-            ymerr("mutex: error: %p EDEADLK", &mutex);
+            ymerr("mutex: error: %p EDEADLK", mutex);
             okay = false;
             break;
         case EINVAL:
-            ymerr("mutex: error: %p EINVAL", &mutex);
+            ymerr("mutex: error: %p EINVAL", mutex);
             okay = false;
             break;
         default:
-            ymerr("mutex: error: %p unknown error", &mutex);
+            ymerr("mutex: error: %p unknown error", mutex);
             break;
     }
     
     return okay;
 }
 
-ymbool YMUnlockMutex(pthread_mutex_t mutex)
+ymbool YMUnlockMutex(pthread_mutex_t *mutex)
 {
-    int result = pthread_mutex_unlock(&mutex);
+    int result = pthread_mutex_unlock(mutex);
     ymbool okay = true;
     switch(result)
     {
         case 0:
             break;
         case EPERM:
-            ymerr("mutex: error: unlocking thread doesn't hold %p", &mutex);
+            ymerr("mutex: error: unlocking thread doesn't hold %p", mutex);
             okay = false;
             break;
         case EINVAL:
-            ymerr("mutex: error: unlock EINVAL %p", &mutex);
+            ymerr("mutex: error: unlock EINVAL %p", mutex);
             okay = false;
             break;
         default:
-            ymerr("mutex: error: unknown %p", &mutex);
+            ymerr("mutex: error: unknown %p", mutex);
             break;
     }
     
     return okay;
 }
 
-ymbool YMDestroyMutex(pthread_mutex_t mutex)
+ymbool YMDestroyMutex(pthread_mutex_t *mutex)
 {
-    int result = pthread_mutex_destroy(&mutex);
+    int result = pthread_mutex_destroy(mutex);
     return ( result == 0 );
 }

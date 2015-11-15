@@ -109,7 +109,7 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
     
     BOOL localIsMaster = (BOOL)arc4random_uniform(2);
     NSLog(@"plexer test using pipes: L(%s)-i%d-o%d <-> i%d-o%d R(%s)",localIsMaster?"M":"S",readFromRemote,writeToRemote,readFromLocal,writeToLocal,localIsMaster?"S":"M");
-    NSLog(@"plexer test using %u threads, %u trips per thread, %@ rounds per thread, %@ messages",PlexerTest1Threads,PlexerTest1RoundTripsPerThread,PlexerTest1NewStreamPerRoundTrip?@"new":@"one",PlexerTest1RandomMessages?@"random":@"fixed");
+    NSLog(@"plexer test using %u threads, %u trips per thread, %@ streams per thread, %@ messages",PlexerTest1Threads,PlexerTest1RoundTripsPerThread,PlexerTest1NewStreamPerRoundTrip?@"new":@"one",PlexerTest1RandomMessages?@"random":@"fixed");
     
     YMPlexerRef localPlexer = YMPlexerCreate(YMSTRC("L"),readFromRemote,writeToRemote,localIsMaster);
     YMPlexerSetSecurityProvider(localPlexer, YMSecurityProviderCreate(readFromRemote,writeToRemote));
@@ -164,16 +164,18 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
 - (void)doLocalTest1:(YMPlexerRef)plexer
 {
     YMStreamRef aStream = NULL;
+    unsigned idx = 0;
 #ifdef PlexerTest1TimeBased
     while ( ! gTimeBasedEnd )
 #else
-    for ( unsigned idx = 0; idx < PlexerTest1RoundTripsPerThread; idx++ )
+    for ( ; idx < PlexerTest1RoundTripsPerThread; )
 #endif
     {
+        idx++;
         YMPlexerStreamID streamID;
         if ( ! aStream || PlexerTest1NewStreamPerRoundTrip )
         {
-            aStream = YMPlexerCreateNewStream(plexer,YMSTRC(__FUNCTION__),false);
+            aStream = YMPlexerCreateNewStream(plexer,YMSTRC(__FUNCTION__));
             streamID = ((ym_plexer_stream_user_info_ref)_YMStreamGetUserInfo(aStream))->streamID;
         }
         
@@ -223,10 +225,15 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
 - (NSData *)receiveMessage:(YMStreamRef)stream
 {
     UserMessageHeader header;
-    YMIOResult result = YMStreamReadUp(stream, &header, sizeof(header));
+    uint16_t outLength = 0, length = sizeof(header);
+    YMIOResult result = YMStreamReadUp(stream, &header, length, &outLength);
     XCTAssert(result==YMIOSuccess,@"failed to read header");
+    XCTAssert(outLength==length,@"outLength!=length");
+    XCTAssert(header.length>0,@"header.length<=0");
     uint8_t *buffer = malloc(header.length);
-    result = YMStreamReadUp(stream, buffer, header.length);
+    outLength = 0; length = header.length;
+    result = YMStreamReadUp(stream, buffer, length, &outLength);
+    XCTAssert(outLength==length,@"outLength!=length");
     XCTAssert(result==YMIOSuccess,@"failed to read buffer");
     
     return [NSData dataWithBytesNoCopy:buffer length:header.length freeWhenDone:YES];

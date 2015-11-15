@@ -24,7 +24,7 @@ typedef struct __ym_lock
 {
     _YMType _type;
     
-    pthread_mutex_t mutex;
+    pthread_mutex_t *mutex;
     YMStringRef name;
 } ___ym_lock;
 typedef struct __ym_lock __YMLock;
@@ -42,26 +42,11 @@ YMLockRef YMLockCreateWithOptions(YMLockOptions options)
 
 YMLockRef YMLockCreateWithOptionsAndName(YMLockOptions options, YMStringRef name)
 {
-    pthread_mutex_t mutex;
-    if ( ! YMCreateMutexWithOptions(options, &mutex) )
+    pthread_mutex_t *mutex = YMCreateMutexWithOptions(options);
+    if ( ! mutex )
         return NULL;
     
     __YMLockRef lock = (__YMLockRef)_YMAlloc(_YMLockTypeID,sizeof(__YMLock));
-    
-    lock->mutex = mutex;
-    lock->name = name ? YMRetain(name) : YMSTRC("unnamed");
-    
-    return (YMLockRef)lock;
-}
-
-YMLockRef _YMLockCreateForYMAlloc(YMLockOptions options, YMStringRef name)
-{
-    pthread_mutex_t mutex;
-    if ( ! YMCreateMutexWithOptions(options, &mutex) )
-        return NULL;
-    
-    __YMLockRef lock = (__YMLockRef)YMALLOC(sizeof(__YMLock));
-    lock->_type.__type = _YMLockTypeID;
     
     lock->mutex = mutex;
     lock->name = name ? YMRetain(name) : YMSTRC("unnamed");
@@ -75,10 +60,10 @@ void YMLockLock(YMLockRef lock_)
     
     ymbool okay = YMLockMutex(lock->mutex);
     
-#ifndef DUMB_AND_DUMBER
+//#ifndef DUMB_AND_DUMBER
     if ( ! okay )
         abort();
-#endif
+//#endif
 }
 
 void YMLockUnlock(YMLockRef lock_)
@@ -102,7 +87,7 @@ void _YMLockFree(YMTypeRef object)
     YMRelease(lock->name);
 }
 
-pthread_mutex_t _YMLockGetMutex(YMLockRef lock_)
+pthread_mutex_t *_YMLockGetMutex(YMLockRef lock_)
 {
     __YMLockRef lock = (__YMLockRef)lock_;    
     return lock->mutex;

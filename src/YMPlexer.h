@@ -34,7 +34,7 @@ void YMPlexerSetSecurityProvider(YMPlexerRef plexer, YMTypeRef provider); // uns
 bool YMPlexerStart(YMPlexerRef plexer);
 void YMPlexerStop(YMPlexerRef plexer);
 
-YMStreamRef YMPlexerCreateNewStream(YMPlexerRef plexer, YMStringRef name, bool direct);
+YMStreamRef YMPlexerCreateNewStream(YMPlexerRef plexer, YMStringRef name);
 void YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream);
 
 // if a stream originates remotely, the client must release the (_upstream _read), which might be consumed out-of-band with remote closure notification

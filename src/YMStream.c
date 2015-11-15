@@ -190,14 +190,17 @@ void _YMStreamWriteUp(YMStreamRef stream_, const void *buffer, uint32_t length)
 }
 
 // because user data is opaque (even to user), this should expose eof
-YMIOResult YMStreamReadUp(YMStreamRef stream_, void *buffer, uint16_t length)
+YMIOResult YMStreamReadUp(YMStreamRef stream_, void *buffer, uint16_t length, uint16_t *outLength)
 {
     __YMStreamRef stream = (__YMStreamRef)stream_;
     
     int upstreamRead = YMPipeGetOutputFile(stream->upstreamPipe);
     
     ymlog("  stream[%s]: reading %ub user data",YMSTR(stream->name),length);
-    YMIOResult result = YMReadFull(upstreamRead, buffer, length, NULL);
+    size_t actualLength = 0;
+    YMIOResult result = YMReadFull(upstreamRead, buffer, length, &actualLength);
+    if ( outLength )
+        *outLength = (uint16_t)actualLength;
     if ( result == YMIOError ) // in-process i/o errors are fatal
     {
         ymerr("  stream[%s]: fatal: reading %ub user data: %d (%s)",YMSTR(stream->name),length,errno,strerror(errno));
@@ -233,60 +236,64 @@ YMIOResult __YMStreamForward(__YMStreamRef stream, int file, bool toStream, uint
     void *buffer = YMALLOC(bufferSize);
     
     YMIOResult aResult = YMIOError; // i guess if called with 0 it's an 'error' (?)
-    size_t aBytes = 0;
+    uint16_t aActualLength = 0;
     do
     {
-        uint16_t aChunkSize = inBytes ? ( remainingIfInBytes < bufferSize ? (uint16_t)remainingIfInBytes : bufferSize ) : bufferSize;
+        size_t outWritten = 0;
+        uint16_t aDesiredLength = inBytes ? ( remainingIfInBytes < bufferSize ? (uint16_t)remainingIfInBytes : bufferSize ) : bufferSize;
         
         if ( toStream )
-            aResult = YMReadFull(file, buffer, aChunkSize, &aBytes);
+        {
+            size_t aActualLongLength = 0;
+            aResult = YMReadFull(file, buffer, aDesiredLength, &aActualLongLength);
+            if ( aActualLongLength != aDesiredLength && aResult != YMIOEOF )
+                abort();
+            aActualLength = (uint16_t)aActualLongLength;
+        }
         else
-            aResult = YMStreamReadUp(stream, buffer, aChunkSize);
-            
+            aResult = YMStreamReadUp(stream, buffer, aDesiredLength, &aActualLength);
+        
+        if ( aDesiredLength != aActualLength && aResult != YMIOEOF )
+            abort();
+        
         if ( aResult == YMIOError )
         {
-            ymerr("stream[%s]: error: %d%s forward read %llu-%llu: %d (%s)",YMSTR(stream->name),file,toStream?"->":"<-",off,off+aChunkSize,errno,strerror(errno));
+            ymerr("  stream[%s]: error: %d%s forward read %llu-%llu: %d (%s)",YMSTR(stream->name),file,toStream?"->":"<-",off,off+aActualLength,errno,strerror(errno));
             break;
         }
         else if ( aResult == YMIOEOF )
             lastIter = true;
-        else if ( toStream && aChunkSize != aBytes )
-            ymerr("stream[%s]: warning: %d%s forward read %llu-%llu %u != %zu: %d (%s)",YMSTR(stream->name),file,toStream?"->":"<-",off,off+aChunkSize,aChunkSize,aBytes,errno,strerror(errno));
-        else if ( ! toStream )
-            aBytes = aChunkSize;
+        else if ( toStream && aDesiredLength != aActualLength )
+            ymerr("  stream[%s]: warning: %d%s forward read %llu-%llu %u != %u: %d (%s)",YMSTR(stream->name),file,toStream?"->":"<-",off,off+aDesiredLength,aActualLength,aDesiredLength,errno,strerror(errno));
         
-        if ( aBytes > UINT16_MAX )
-            abort();
-        
-        size_t outWritten = 0;
         if ( toStream )
-            YMStreamWriteDown(stream, buffer, (uint16_t)aBytes);
+            YMStreamWriteDown(stream, buffer, aActualLength);
         else
         {
-            aResult = YMWriteFull(file, buffer, aBytes, &outWritten);
-            if ( aBytes != outWritten )
+            aResult = YMWriteFull(file, buffer, aActualLength, &outWritten);
+            if ( aActualLength != outWritten )
                 abort();
         }
         
         if ( aResult == YMIOError )
         {
-            ymerr("stream[%s]: error: %d%s forward write %llu-%llu: %d (%s)",YMSTR(stream->name),file,toStream?"->":"<-",off,off+aChunkSize,errno,strerror(errno));
+            ymerr("  stream[%s]: error: %d%s forward write %llu-%llu: %d (%s)",YMSTR(stream->name),file,toStream?"->":"<-",off,off+aActualLength,errno,strerror(errno));
             lastIter = true;
         }
-        else if ( ! toStream && aBytes != outWritten )
-            ymerr("stream[%s]: warning: %d%s forward write %llu-%llu %zu != %zu: %d (%s)",YMSTR(stream->name),file,toStream?"->":"<-",off,off+aChunkSize,outWritten,aBytes,errno,strerror(errno));
+        else if ( ! toStream && aActualLength != outWritten )
+            ymerr("  stream[%s]: warning: %d%s forward write %llu-%llu %zu != %u: %d (%s)",YMSTR(stream->name),file,toStream?"->":"<-",off,off+aActualLength,outWritten,aActualLength,errno,strerror(errno));
         
         if ( inBytes )
         {
-            if ( aBytes > remainingIfInBytes ) // todo guard or not, it's all internal
+            if ( aActualLength > remainingIfInBytes ) // todo guard or not, it's all internal
                 abort();
             
-            remainingIfInBytes -= aBytes;
+            remainingIfInBytes -= aActualLength;
             if ( remainingIfInBytes == 0 )
                 lastIter = true;
         }
         
-        off += aChunkSize;
+        off += aActualLength;
     } while ( ! lastIter );
     
     free(buffer);
@@ -295,7 +302,7 @@ YMIOResult __YMStreamForward(__YMStreamRef stream, int file, bool toStream, uint
         *outBytes = off;
     
     if ( inBytes && off != *inBytes )
-        ymerr("stream[%s]: warning: forwarded %llu bytes of requested %llu",YMSTR(stream->name),*inBytes,off);
+        ymerr("  stream[%s]: warning: forwarded %llu bytes of requested %llu",YMSTR(stream->name),*inBytes,off);
     
     return aResult;
 }
@@ -306,24 +313,16 @@ void _YMStreamClose(YMStreamRef stream_)
     
     int downstreamWrite = YMPipeGetInputFile(stream->downstreamPipe);
     
-//    // if we are closing an outgoing stream, the plexer can race us between our write of the 'stream close' command here,
-//    // and freeing this stream object. synchronization is not guaranteed by our semaphore signal below, as all stream signals
-//    // will wake the plexer, and we may win the 'oldest unserviced' selection before we exit this function and the client
-//    // fully relinquishes ownership.
-//    YMLockLock(stream->retainLock);
-//    {
-        YMStreamCommand command = { YMStreamClose };
-        YMIOResult result = YMWriteFull(downstreamWrite, (void *)&command, sizeof(command), NULL);
-        if ( result != YMIOSuccess )
-        {
-            ymerr("  stream[%s]: fatal: writing close byte to plexer: %d (%s)",YMSTR(stream->name),errno,strerror(errno));
-            abort();
-        }
-        
-        ymlog("  stream[%s]: closing stream",YMSTR(stream->name));
-        stream->dataAvailableFunc(stream,sizeof(command),stream->dataAvailableContext);
-//    }
-//    YMLockUnlock(stream->retainLock);
+    YMStreamCommand command = { YMStreamClose };
+    YMIOResult result = YMWriteFull(downstreamWrite, (void *)&command, sizeof(command), NULL);
+    if ( result != YMIOSuccess )
+    {
+        ymerr("  stream[%s]: fatal: writing close byte to plexer: %d (%s)",YMSTR(stream->name),errno,strerror(errno));
+        abort();
+    }
+    
+    ymlog("  stream[%s]: closing stream",YMSTR(stream->name));
+    stream->dataAvailableFunc(stream,sizeof(command),stream->dataAvailableContext);
 }
 
 int _YMStreamGetDownwardRead(YMStreamRef stream_)

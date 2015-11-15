@@ -331,7 +331,7 @@ void __YMThreadFreeDispatchContext(__ym_thread_dispatch_context dispatchContext)
         dispatchContext->dispatch->deallocProc(dispatchContext->dispatch->context);
     }
     
-    free((void *)dispatchContext->dispatch->description);
+    YMRelease(dispatchContext->dispatch->description);
     free(dispatchContext->dispatch);
     free(dispatchContext);
 }

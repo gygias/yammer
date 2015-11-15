@@ -44,8 +44,7 @@ YMSecurityProviderRef YMSecurityProviderCreate(int readFile, int writeFile)
 
 void _YMSecurityProviderFree(YMSecurityProviderRef provider_)
 {
-    __YMSecurityProviderRef provider = (__YMSecurityProviderRef)provider_;
-    free(provider);
+    __unused __YMSecurityProviderRef provider = (__YMSecurityProviderRef)provider_;
 }
 
 void YMSecurityProviderSetInitFunc(YMSecurityProviderRef provider_, ym_security_init_func func)

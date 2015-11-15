@@ -416,6 +416,8 @@ ymbool YMSessionServerStart(YMSessionRef session_)
         goto rewind_fail;
     }
     
+    ymlog("session[%s]: listening on %u",YMSTR(session->logDescription),port);
+    
     if ( ipv4 )
         session->ipv4ListenSocket = socket;
     else
@@ -598,22 +600,23 @@ void __ym_session_init_incoming_connection_proc(ym_thread_dispatch_ref dispatch)
     if ( ! session->shouldAcceptFunc(session,peer,session->callbackContext) )
     {
         ymlog("session[%s]: client rejected peer %s",YMSTR(session->logDescription),YMSTR(YMAddressGetDescription(address)));
-        goto catch_return;
+        goto rewind_fail;
     }
     
     newConnection = YMConnectionCreateIncoming(socket, address, YMConnectionStream, YMTLS);
     if ( ! newConnection )
     {
         ymlog("session[%s]: failed to create new connection",YMSTR(session->logDescription));
-        goto catch_return;
+        goto rewind_fail;
     }
     
     __YMSessionAddConnection(session, newConnection);
     session->connectedFunc(session,newConnection,session->callbackContext);
     
     free(addr);
+    return;
     
-catch_return:
+rewind_fail:
     close(socket);
     free(addr);
     if ( address )
