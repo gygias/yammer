@@ -14,13 +14,13 @@
 #import "YMLock.h"
 #import "YMSemaphore.h"
 
-#define TLSTestRoundTrips 1
-#define TLSTestMessageRoundTrips 100
+#define TLSTestRoundTrips 5
+#define TLSTestMessageRoundTrips 1000
 #define TLSTestRandomMessages true
 #define TLSTestRandomMessageMaxLength 1024
 
 //#define TLSTestIndefinite
-#define TLSTestTimeBased true
+#define TLSTestTimeBased false // todo fix deadlock if client or server happens to be in read/write when time runs out, either close fds or find a cleaner way
 #if TLSTestTimeBased
     #ifdef TLSTestIndefinite
     #define TLSTestEndDate ([NSDate distantFuture])
@@ -146,7 +146,7 @@ typedef struct
 }
 
 const char *testMessage = "security is important. put in the advanced technology. technology consultants international. please check. thanks.";
-const char *testResponse = "i am a technology creative. i am a foodie. i am quirky. here is a picture of my half-eaten food.";
+const char *testResponse = "creative technologist? or technology creative? foodie. quirky. here is a picture of my half-eaten food. ask me about my background in typesetting.";
 
 - (void)runEndpoint:(YMTLSProviderRef)tls :(BOOL)isServer
 {

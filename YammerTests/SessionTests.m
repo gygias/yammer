@@ -37,13 +37,6 @@
 }
 @end
 
-//#define NoisyLog
-#ifdef NoisyLog
-#define NoiseLog(x,...) NSLog(x,##__VA_ARGS__)
-#else
-#define NoisyLog(x,...) ;
-#endif
-
 const uint64_t gSomeLength = 5678900;
 SessionTests *gTheSessionTest = nil;
 
@@ -241,7 +234,7 @@ typedef struct ManPageThanks
             [nonRegularFileNames addObject:aFile];
             continue;
         }
-        NoisyLog(@"client sending %@",fullPath);
+        NoisyTestLog(@"client sending %@",fullPath);
         
         YMStreamRef stream = YMConnectionCreateStream(connection, YMStringCreateWithFormat("test-client-write-%s",[fullPath UTF8String], NULL));
         XCTAssert(stream,@"client stream %@",fullPath);
@@ -252,6 +245,8 @@ typedef struct ManPageThanks
         struct ManPageHeader header = { lastClientFileSize , {0} };
         strncpy(header.name, [aFile UTF8String], NAME_MAX+1);
         YMStreamWriteDown(stream, &header, sizeof(header));
+        if ( stopping )
+            break;
         
         bool testAsync = arc4random_uniform(2);
         ym_thread_dispatch_forward_file_context ctx = {NULL,NULL};
@@ -274,6 +269,8 @@ typedef struct ManPageThanks
         struct ManPageThanks thx;
         uint16_t outLength = 0, length = sizeof(thx);
         YMIOResult result = YMStreamReadUp(stream, &thx, length,&outLength);
+        if ( stopping )
+            break;
         XCTAssert(result==YMIOSuccess,@"read thx header");
         XCTAssert(length==outLength,@"length!=outLength");
         NSString *thxFormat = [NSString stringWithFormat:@THXFORMANTEMPLATE,header.name];
@@ -302,6 +299,8 @@ typedef struct ManPageThanks
     struct ManPageHeader header;
     uint16_t outLength = 0, length = sizeof(header);
     YMIOResult ymResult = YMStreamReadUp(stream, &header, length, &outLength);
+    if ( stopping )
+        return;
     XCTAssert(ymResult==YMIOSuccess,@"read man header");
     XCTAssert(outLength==length,@"outLength!=length");
     XCTAssert(strlen(header.name)>0&&strlen(header.name)<=NAME_MAX, @"??? %s",header.name);
@@ -317,7 +316,7 @@ typedef struct ManPageThanks
     ymResult = YMStreamWriteToFile(stream, [outHandle fileDescriptor], &len64, &outBytes);
     XCTAssert(ymResult==YMIOSuccess,@"eat man result");
     XCTAssert(outBytes>0,@"eat man outBytes");
-    NoisyLog(@"_eatManPages: finished: %llu bytes: %@ : %s",outBytes,tempDir,header.name);
+    NoisyTestLog(@"_eatManPages: finished: %llu bytes: %@ : %s",outBytes,tempDir,header.name);
     [outHandle closeFile];
     
 #define THX_FOR_MAN // disable this to observe running out of open files
@@ -326,6 +325,8 @@ typedef struct ManPageThanks
     NSString *thxString = [NSString stringWithFormat:@THXFORMANTEMPLATE,header.name];
     strncpy(thx.thx4Man,[thxString cStringUsingEncoding:NSASCIIStringEncoding],sizeof(thx.thx4Man));
     YMStreamWriteDown(stream, &thx, sizeof(thx));
+    if ( stopping )
+        return;
 #endif
 }
 
@@ -337,16 +338,19 @@ typedef struct ManPageThanks
     XCTAssert(result>=0,@"eat random out handle %d %s",errno,strerror(errno));
     uint64_t outBytes = 0;
     YMIOResult ymResult = YMStreamWriteToFile(stream, result, NULL, &outBytes);
+    if ( stopping )
+        goto catch_return;
     XCTAssert(ymResult==YMIOSuccess,@"eat random result");
     XCTAssert(outBytes==gSomeLength,@"eat random outBytes");
-    NoisyLog(@"_eatManPages: finished: %llu bytes",outBytes);
+    NoisyTestLog(@"_eatManPages: finished: %llu bytes",outBytes);
+catch_return:
     result = close(result);
     XCTAssert(result==0,@"close rand temp failed %d %s",errno,strerror(errno));
 }
 
 void _server_async_forward_callback(void * ctx, uint64_t bytesWritten)
 {
-    NSLog(@"%s",__PRETTY_FUNCTION__);
+    NoisyTestLog(@"%s",__PRETTY_FUNCTION__);
     struct asyncCallbackInfo *info = (struct asyncCallbackInfo *)ctx;
     SessionTests *SELF = (__bridge SessionTests *)info->theTest;
     [SELF _asyncForwardCallback:YES :ctx :bytesWritten];
@@ -354,7 +358,7 @@ void _server_async_forward_callback(void * ctx, uint64_t bytesWritten)
 
 void _client_async_forward_callback(void * ctx, uint64_t bytesWritten)
 {
-    NSLog(@"%s",__PRETTY_FUNCTION__);
+    NoisyTestLog(@"%s",__PRETTY_FUNCTION__);
     struct asyncCallbackInfo *info = (struct asyncCallbackInfo *)ctx;
     SessionTests *SELF = (__bridge SessionTests *)info->theTest;
     [SELF _asyncForwardCallback:NO :ctx :bytesWritten];
@@ -372,7 +376,7 @@ void _client_async_forward_callback(void * ctx, uint64_t bytesWritten)
     
     dispatch_semaphore_t sem = (__bridge dispatch_semaphore_t)info->semaphore;
     XCTAssert(sem==clientAsyncForwardSemaphore||sem==serverAsyncForwardSemaphore,@"async callback unknown sem");
-    NoisyLog(@"_async_forward_callback (%s): %llu",sem==clientAsyncForwardSemaphore?"client":"server",written);
+    NoisyTestLog(@"_async_forward_callback (%s): %llu",sem==clientAsyncForwardSemaphore?"client":"server",written);
     dispatch_semaphore_signal(sem);
 }
 
@@ -522,7 +526,7 @@ void _ym_session_interrupted_func(YMSessionRef session, void *context)
 // streams
 void _ym_session_new_stream_func(YMSessionRef session, YMStreamRef stream, void *context)
 {
-    NoisyLog(@"%s",__PRETTY_FUNCTION__);
+    NoisyTestLog(@"%s",__PRETTY_FUNCTION__);
     [gTheSessionTest newStream:session :stream :context];
 }
 
@@ -548,7 +552,7 @@ void _ym_session_new_stream_func(YMSessionRef session, YMStreamRef stream, void 
 
 void _ym_session_stream_closing_func(YMSessionRef session, YMStreamRef stream, void *context)
 {
-    NoisyLog(@"%s",__PRETTY_FUNCTION__);
+    NoisyTestLog(@"%s",__PRETTY_FUNCTION__);
     [gTheSessionTest streamClosing:session :stream :context];
 }
 

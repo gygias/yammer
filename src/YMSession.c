@@ -41,6 +41,8 @@ typedef struct __ym_session
     YMDictionaryRef connectionsByAddress;
     YMLockRef connectionsByAddressLock;
     YMConnectionRef defaultConnection;
+    YMLockRef interruptionLock;
+    bool interrupted;
     
     // server
     YMStringRef name;
@@ -74,7 +76,8 @@ typedef __YMSession *__YMSessionRef;
 #pragma mark setup
 
 __YMSessionRef __YMSessionCreateShared(YMStringRef type, bool isServer);
-bool __YMSessionCloseAllConnections(YMSessionRef session_);
+bool __YMSessionInterrupt(__YMSessionRef session);
+bool __YMSessionCloseAllConnections(__YMSessionRef session);
 void __YMSessionAddConnection(YMSessionRef session, YMConnectionRef connection);
 void __ym_session_accept_proc(void *);
 void __ym_session_init_incoming_connection_proc(ym_thread_dispatch_ref);
@@ -122,6 +125,7 @@ __YMSessionRef __YMSessionCreateShared(YMStringRef type, bool isServer)
     session->defaultConnection = NULL;
     session->connectionsByAddress = YMDictionaryCreate();
     session->connectionsByAddressLock = YMLockCreate(YMInternalLockType, YMSTRC("connections-by-address"));
+    session->interruptionLock = YMLockCreate(YMInternalLockType, YMSTRC("connection-interrupt"));
     return session;
 }
 
@@ -162,13 +166,15 @@ void _YMSessionFree(YMTypeRef object)
 {
     __YMSessionRef session = (__YMSessionRef)object;
     
+    __YMSessionInterrupt(session);
+    
     // shared
     YMRelease(session->type);
     YMRelease(session->connectionsByAddress);
     YMRelease(session->connectionsByAddressLock);
     YMRelease(session->logDescription);
-    if ( session->defaultConnection )
-        YMRelease(session->defaultConnection);
+    //if ( session->defaultConnection )
+    //    YMRelease(session->defaultConnection);
     
     // server
     if ( ! session->isServer )
@@ -190,7 +196,6 @@ void _YMSessionFree(YMTypeRef object)
         YMRelease(session->browser);
     }
     YMRelease(session->availablePeers);
-#pragma message "when deallocating member locks, should we join on them?"
     YMRelease(session->availablePeersLock);
 }
 
@@ -222,6 +227,8 @@ ymbool YMSessionClientStart(YMSessionRef session_)
         return false;
     }
     
+    ymlog("session[%s]: client started for '%s'",YMSTR(session->logDescription),YMSTR(session->type));
+    
     return true;
 }
 
@@ -238,7 +245,7 @@ ymbool YMSessionClientStop(YMSessionRef session_)
         session->browser = NULL;
     }
     
-    bool anotherOkay = __YMSessionCloseAllConnections(session);
+    bool anotherOkay = __YMSessionInterrupt(session);
     if ( ! anotherOkay )
         okay = false;
     
@@ -291,7 +298,7 @@ ymbool YMSessionClientConnectToPeer(YMSessionRef session_, YMPeerRef peer, ymboo
         return false;
     
     YMDictionaryRef addresses = YMPeerGetAddresses(peer);
-    YMDictionaryKey aKey = YMDictionaryRandomKey(addresses);
+    YMDictionaryKey aKey = YMDictionaryGetRandomKey(addresses);
     YMAddressRef address = (YMAddressRef)YMDictionaryGetItem(addresses, aKey);
     YMConnectionRef newConnection = YMConnectionCreate(address, YMConnectionStream, YMTLS);
     
@@ -535,7 +542,7 @@ ymbool YMSessionServerStop(YMSessionRef session_)
     if ( ! mdnsOK )
         okay = false;
     
-    bool connectionsOK = __YMSessionCloseAllConnections(session);
+    bool connectionsOK = __YMSessionInterrupt(session);
     if ( ! connectionsOK )
         okay = false;
     
@@ -658,32 +665,46 @@ YMDictionaryRef YMSessionGetConnections(YMSessionRef session_)
     return *(YMDictionaryRef *)session; // todo, sync
 }
 
-bool __YMSessionCloseAllConnections(YMSessionRef session_)
+bool __YMSessionInterrupt(__YMSessionRef session)
 {
-    __YMSessionRef session = (__YMSessionRef)session_;
+    bool firstInterrupt = false;
+    YMLockLock(session->interruptionLock);
+    {
+        if ( ! session->interrupted )
+        {
+            firstInterrupt = true;
+            session->interrupted = true;
+        }
+    }
+    YMLockUnlock(session->interruptionLock);
     
+    if ( ! firstInterrupt )
+        return false;
+    
+    __YMSessionCloseAllConnections(session);
+    
+    return true;
+}
+
+bool __YMSessionCloseAllConnections(__YMSessionRef session)
+{
     bool okay = true;
-//    if ( session->defaultConnection )
-//    {
-//        bool defaultOK = _YMConnectionClose(session->defaultConnection);
-//        YMRelease(session->defaultConnection);
-//        session->defaultConnection = NULL;
-//        if ( ! defaultOK )
-//            okay = false;
-//    }
+    
+    session->defaultConnection = NULL;
     
     YMLockLock(session->connectionsByAddressLock);
     {
-        while ( YMDictionaryGetCount(session->connectionsByAddress) > 0 )
+        while ( YMDictionaryGetCount(session->connectionsByAddress) )
         {
-            YMDictionaryKey randomKey = YMDictionaryRandomKey(session->connectionsByAddress);
-            YMConnectionRef aConnection = YMDictionaryRemove(session->connectionsByAddress,randomKey);
-            
-            bool aOK = _YMConnectionClose(aConnection);
-            YMRelease(aConnection); // matches our create
-            
-            if ( ! aOK )
-                okay = false;
+            YMDictionaryKey aKey = YMDictionaryGetRandomKey(session->connectionsByAddress);
+            YMConnectionRef aConnection = YMDictionaryRemove(session->connectionsByAddress, aKey);
+            if ( ! aConnection )
+            {
+                ymerr("session[%s]: sanity check dictionary: %llu",YMSTR(session->logDescription), aKey);
+                abort();
+            }
+            ymerr("session[%s]: releasing %s",YMSTR(session->logDescription),YMSTR(YMAddressGetDescription(YMConnectionGetAddress(aConnection))));
+            YMRelease(aConnection);
         }
     }
     YMLockUnlock(session->connectionsByAddressLock);
@@ -731,33 +752,18 @@ void __ym_session_connection_interrupted_proc(YMConnectionRef connection, void *
 {
     __YMSessionRef session = context;
     
-    bool isDefault = false;
+    bool isDefault = ( connection == session->defaultConnection );
+    bool first = __YMSessionInterrupt(session);
+    
     YMAddressRef address = YMConnectionGetAddress(connection);
-    if ( connection == session->defaultConnection )
+    
+    if ( first && isDefault )
     {
-        ymerr("session[%s]: default connection interrupted: %s",YMSTR(session->logDescription),YMSTR(YMAddressGetDescription(address)));
-        session->defaultConnection = NULL;
-        isDefault = true;
+        if ( session->interruptedFunc )
+            session->interruptedFunc(session,session->callbackContext);
     }
-    else
-        ymerr("session[%s]: aux connection interrupted: %s",YMSTR(session->logDescription),YMSTR(YMAddressGetDescription(address)));
     
-    YMLockLock(session->connectionsByAddressLock);
-    {
-        YMDictionaryValue removedValue = YMDictionaryRemove(session->connectionsByAddress, (YMDictionaryKey)connection);
-        if ( ! removedValue || ( removedValue != connection ) )
-        {
-            ymerr("session[%s]: sanity check dictionary: %p v %p",YMSTR(session->logDescription), removedValue, connection);
-            abort();
-        }
-    }
-    YMLockUnlock(session->connectionsByAddressLock);
-    
-    YMRelease(connection);
-    
-    // weird that new stream / stream close don't report connection but this does, should be consistent
-    if ( isDefault && session->interruptedFunc )
-        session->interruptedFunc(session,session->callbackContext);
+    ymerr("session[%s]: connection interrupted: %s",YMSTR(session->logDescription),YMSTR(YMAddressGetDescription(address)));
 }
 
 #pragma mark client mdns callbacks

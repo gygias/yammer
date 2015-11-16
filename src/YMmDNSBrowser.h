@@ -47,6 +47,6 @@ bool YMmDNSBrowserStop(YMmDNSBrowserRef browser);
 
 bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser, YMStringRef serviceName);
 
-YMmDNSServiceRecord *YMmDNSBrowserGetServiceWithName(YMmDNSBrowserRef browser, YMStringRef name);
+void _YMmDNSBrowserDebugSetExpectedTxtKeyPairs(YMmDNSBrowserRef browser, uint16_t nPairs);
 
 #endif /* YMmDNSBrowser_h */

@@ -19,6 +19,22 @@
 #endif
 
 #include <netinet/in.h>
+#include <sys/time.h>
+
+const char *YMGetCurrentTimeString(char *buf, size_t bufLen)
+{
+    struct timeval epoch = {0,0};
+    gettimeofday(&epoch, NULL);
+    struct tm *now = localtime(&epoch.tv_sec);
+    if ( ! now )
+        return NULL;
+    size_t result = strftime(buf, bufLen, "%Y-%m-%d %H-%M-%S", now);
+    if ( result == 0 )
+        return NULL;
+    if ( result < bufLen - 3 )
+        snprintf(buf, bufLen - result, "%s.%03d",buf,epoch.tv_usec%1000);
+    return buf;
+}
 
 void YMGetTheBeginningOfPosixTimeForCurrentPlatform(struct timeval *time)
 {

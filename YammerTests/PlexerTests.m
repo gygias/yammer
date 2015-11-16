@@ -25,7 +25,7 @@
 #ifdef PlexerTest1Indefinite
 #define PlexerTest1EndDate ([NSDate distantFuture])
 #else
-#define PlexerTest1EndDate ([NSDate dateWithTimeIntervalSinceNow:10])
+#define PlexerTest1EndDate ([NSDate dateWithTimeIntervalSinceNow:15])
 #endif
 
 BOOL    gTimeBasedEnd = NO;
@@ -185,14 +185,22 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
 #ifdef AND_MEASURE
     }];
 #endif
+    
+    NSLog(@"plexer test is closing the plexers");
+    gTimeBasedEnd = YES;
     YMPlexerStop(localPlexer);
     YMPlexerStop(fakeRemotePlexer);
-    gTimeBasedEnd = YES;
     // join on time based fallout, check fds we know about are closed
     NSLog(@"plexer test finished %zu incoming round-trips on %d threads (%d round-trips per %s)",incomingStreamRoundTrips,
           PlexerTest1Threads,
           PlexerTest1RoundTripsPerThread,
           PlexerTest1NewStreamPerRoundTrip?"stream":"round-trip");
+
+//#define CHECK_THREADS 1
+#ifdef CHECK_THREADS
+    while ( YES )
+        CFRunLoopRunInMode(kCFRunLoopDefaultMode,5,false);
+#endif
 }
 
 - (void)doLocalTest1:(YMPlexerRef)plexer
@@ -228,6 +236,8 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
         [self sendMessage:aStream :outgoingMessage];
         
         NSData *incomingMessage = [self receiveMessage:aStream];
+        if ( gTimeBasedEnd )
+            return;
         if ( protectTheList )
             YMLockLock(plexerTest1Lock);
         NSData *lastMessageWritten = [lastMessageWrittenByStreamID objectForKey:@(streamID)];
@@ -261,12 +271,16 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
     UserMessageHeader header;
     uint16_t outLength = 0, length = sizeof(header);
     YMIOResult result = YMStreamReadUp(stream, &header, length, &outLength);
+    if ( gTimeBasedEnd )
+        return nil;
     XCTAssert(result==YMIOSuccess,@"failed to read header");
     XCTAssert(outLength==length,@"outLength!=length");
     XCTAssert(header.length>0,@"header.length<=0");
     uint8_t *buffer = malloc(header.length);
     outLength = 0; length = header.length;
     result = YMStreamReadUp(stream, buffer, length, &outLength);
+    if ( gTimeBasedEnd )
+        return nil;
     XCTAssert(outLength==length,@"outLength!=length");
     XCTAssert(result==YMIOSuccess,@"failed to read buffer");
     
@@ -291,13 +305,16 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *cont
 }
 
 - (void)remoteNewStream:(YMPlexerRef)plexer :(YMStreamRef)stream :(void *)context
-{    
-    TestLog(@"%s",__FUNCTION__);
+{
+    NoisyTestLog(@"%s",__FUNCTION__);
     XCTAssert(plexer==fakeRemotePlexer,@"remoteNewStream not remote");
     XCTAssert(stream,@"remoteNewStream null");
     XCTAssert(context==(__bridge void *)gRunningPlexerTest,@"remoteNewStream context doesn't match");
+    
+    YMRetain(stream);
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         [self handleANewRemoteStream:plexer :stream];
+        YMRelease(stream);
     });
 }
 
@@ -310,6 +327,8 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *cont
     for ( unsigned idx = 0; idx < iterations; idx++ )
     {
         NSData *incomingMessage = [self receiveMessage:stream];
+        if ( gTimeBasedEnd )
+            return;
         
         if ( protectTheList )
             YMLockLock(plexerTest1Lock);
@@ -335,7 +354,8 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *cont
         incomingStreamRoundTrips++;
     }
     
-    TestLog(@"^^^ REMOTE -newStream [%u] exiting (and remoteReleasing)",streamID);
+    //YMPlexerCloseStream(plexer, stream);
+    NoisyTestLog(@"^^^ REMOTE -newStream [%u] exiting (and remoteReleasing)",streamID);
 }
 
 void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *context)
@@ -356,12 +376,10 @@ void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *
     NSUInteger last = awaitingClosures--;
 #endif
     YMLockUnlock(plexerTest1Lock);
-    TestLog(@"%s: *********** gPlexerTest1AwaitingCloses %zu->%zu!! *****************",__FUNCTION__,last,awaitingClosures);
+    NoisyTestLog(@"%s: *********** gPlexerTest1AwaitingCloses %zu->%zu!! *****************",__FUNCTION__,last,awaitingClosures);
 #ifdef PlexerTest1TimeBased
     if ( streamsCompleted % 10000 == 0 )
-    {
         NSLog(@"handled %zuth stream, approx %zumb in, %zumb out",streamsCompleted,bytesIn/1024/1024,bytesOut/1024/1024);
-    }
 #else
     if ( last - 1 == 0 )
     {

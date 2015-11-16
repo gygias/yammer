@@ -16,6 +16,9 @@
 #define ymlog(x,...) ;
 #endif
 
+#define OPEN_FILE_MIN 0
+#define CLOSED_FILE -1
+
 typedef struct __ym_pipe
 {
     _YMType _type;
@@ -27,13 +30,16 @@ typedef struct __ym_pipe
 typedef struct __ym_pipe __YMPipe;
 typedef __YMPipe *__YMPipeRef;
 
+void __YMPipeCloseInputFile(YMPipeRef pipe_);
+void __YMPipeCloseOutputFile(YMPipeRef pipe_);
+
 YMPipeRef YMPipeCreate(YMStringRef name)
 {
     __YMPipeRef aPipe = (__YMPipeRef)_YMAlloc(_YMPipeTypeID,sizeof(__YMPipe));
     
     aPipe->name = name ? YMRetain(name) : YMSTRC("unnamed");
-    aPipe->inFd = -1;
-    aPipe->outFd = -1;
+    aPipe->inFd = CLOSED_FILE;
+    aPipe->outFd = CLOSED_FILE;
     
     uint64_t iter = 1;
     int fds[2];
@@ -53,6 +59,12 @@ YMPipeRef YMPipeCreate(YMStringRef name)
                 ymerr("pipe[%s]: warning: new files unavailable for pipe()",YMSTR(name));
         }
     }
+  
+#define TOO_MANY_FILES 200
+#ifdef DEBUG
+    if ( fds[0] > TOO_MANY_FILES || fds[1] > TOO_MANY_FILES )
+        abort();
+#endif
     
     aPipe->outFd = fds[0];
     aPipe->inFd = fds[1];
@@ -64,28 +76,8 @@ void _YMPipeFree(YMTypeRef object)
 {
     __YMPipeRef pipe = (__YMPipeRef)object;
     
-    int aClose;
-    if ( pipe->inFd >= 0 )
-    {
-        aClose = close(pipe->inFd);
-        if ( aClose != 0 )
-        {
-            ymerr("   pipe[%s,i%d] fatal: close failed: %d (%s)",YMSTR(pipe->name), pipe->inFd, errno, strerror(errno));
-            abort();
-        }
-    }
-    
-    // todo add 'data remaining' check or warning here?
-    
-    if ( pipe->outFd >= 0 )
-    {
-        aClose = close(pipe->outFd);
-        if ( aClose != 0 )
-        {
-            ymerr("   pipe[%s,i%d] fatal: close failed: %d (%s)",YMSTR(pipe->name), pipe->outFd, errno, strerror(errno));
-            abort();
-        }
-    }
+    __YMPipeCloseInputFile(pipe);
+    __YMPipeCloseOutputFile(pipe);
     
     YMRelease(pipe->name);
 }
@@ -100,4 +92,47 @@ int YMPipeGetOutputFile(YMPipeRef pipe_)
 {
     __YMPipeRef pipe = (__YMPipeRef)pipe_;
     return pipe->outFd;
+}
+
+void _YMPipeCloseInputFile(YMPipeRef pipe)
+{
+    __YMPipeCloseInputFile(pipe);
+}
+
+void __YMPipeCloseInputFile(YMPipeRef pipe_)
+{
+    __YMPipeRef pipe = (__YMPipeRef)pipe_;
+    
+    int aClose = -2;
+    int inFd = pipe->inFd; // don't think we need to be defensive here, but ok
+    pipe->inFd = CLOSED_FILE;
+    if ( inFd >= OPEN_FILE_MIN )
+    {
+        ymlog("   pipe[%s]: closing %d",YMSTR(pipe->name),inFd);
+        aClose = close(inFd);
+        if ( aClose != 0 )
+        {
+            ymerr("   pipe[%s,i%d] fatal: close failed: %d (%s)",YMSTR(pipe->name), inFd, aClose, ( aClose == -2 ) ? "already closed" : strerror(errno));
+            abort();
+        }
+    }
+}
+
+void __YMPipeCloseOutputFile(YMPipeRef pipe_)
+{
+    __YMPipeRef pipe = (__YMPipeRef)pipe_;
+    
+    int aClose = -2;
+    int outFd = pipe->outFd; // don't think we need to be defensive here, but ok
+    pipe->outFd = CLOSED_FILE;
+    if ( outFd >= OPEN_FILE_MIN )
+    {
+        ymlog("   pipe[%s]: closing %d",YMSTR(pipe->name),outFd);
+        aClose = close(outFd);
+        if ( aClose != 0 )
+        {
+            ymerr("   pipe[%s,o%d] fatal: close failed: %d (%s)",YMSTR(pipe->name), outFd, aClose, ( aClose == -2 ) ? "already closed" : strerror(errno));
+            abort();
+        }
+    }
 }

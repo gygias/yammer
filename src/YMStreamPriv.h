@@ -36,13 +36,11 @@ YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_ref userInfo);
 typedef void (*_ym_stream_data_available_func)(YMStreamRef,uint32_t,void *);
 void _YMStreamSetDataAvailableCallback(YMStreamRef stream, _ym_stream_data_available_func, void *ctx);
 
-void _YMStreamReadDown(YMStreamRef stream, void *buffer, uint32_t length);
-void _YMStreamWriteUp(YMStreamRef stream, const void *buffer, uint32_t length);
-void _YMStreamClose(YMStreamRef stream);
+YMIOResult _YMStreamReadDown(YMStreamRef stream, void *buffer, uint32_t length);
+YMIOResult _YMStreamWriteUp(YMStreamRef stream, const void *buffer, uint32_t length);
 
-// these should only be used by the plexer (!!) otherwise hilarity will ensue
-int _YMStreamGetDownwardRead(YMStreamRef);
-int _YMStreamGetUpstreamWrite(YMStreamRef);
+void _YMStreamCloseReadUpFile(YMStreamRef stream);
+void _YMStreamSendClose(YMStreamRef stream);
 
 ym_stream_user_info_ref _YMStreamGetUserInfo(YMStreamRef);
 YMStringRef _YMStreamGetName(YMStreamRef stream);

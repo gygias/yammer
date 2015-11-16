@@ -126,12 +126,12 @@
             BOOL removeRandomly = arc4random_uniform(2);
             if ( removeRandomly)
             {
-                YMDictionaryKey randomKey = YMDictionaryRandomKey(theDictionary);
+                YMDictionaryKey randomKey = YMDictionaryGetRandomKey(theDictionary);
                 YMDictionaryValue randomValue = YMDictionaryRemove(theDictionary, randomKey);
                 XCTAssert(randomKey==string_key||randomKey==data_key,@"randomKey unknown %llu (s%u d%u)",randomKey,string_key,data_key);
                 XCTAssert(randomValue==random_string||randomValue==random_data,@"randomValue unknown %p (s%p d%p)",randomValue,random_string,random_data);
                 
-                YMDictionaryKey randomKey2 = YMDictionaryRandomKey(theDictionary);
+                YMDictionaryKey randomKey2 = YMDictionaryGetRandomKey(theDictionary);
                 YMDictionaryValue randomValue2 = YMDictionaryRemove(theDictionary,randomKey2);
                 XCTAssert(randomKey!=randomKey2,@"randomKey==randomKey2");
                 XCTAssert(randomValue2!=randomValue,@"randomValue==randomValue2");

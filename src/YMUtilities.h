@@ -31,6 +31,7 @@ typedef enum
     EqualTo = 0,
     GreaterThan = 1
 } ComparisonResult;
+const char *YMGetCurrentTimeString(char *buf, size_t bufLen);
 ComparisonResult YMTimevalCompare(struct timeval *a, struct timeval *b);
 // ensure portability of the end of time for the watchtower platform
 void YMGetTheBeginningOfPosixTimeForCurrentPlatform(struct timeval *time);

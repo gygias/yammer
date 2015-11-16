@@ -14,15 +14,15 @@
 
 //#define     Logging 1
 #ifdef      Logging
-#define     TestLog(x,...) NSLog((x),##__VA_ARGS__)
+#define     NoisyTestLog(x,...) NSLog((x),##__VA_ARGS__)
 #else
-#define     TestLog(x,...) ;
+#define     NoisyTestLog(x,...) ;
 #endif
 
 // this is the best way of ordering XCTestCase classes that i could find, at the time
 #define DictionaryTests B_DictionaryTests
 #define CryptoTests     C_CryptoTests
-#define mDNSTests       A_mDNSTests
+#define mDNSTests       D_mDNSTests
 #define TLSTests        E_TLSTests
 #define PlexerTests     F_PlexerTests
 #define ConnectionTests G_ConnectionTests

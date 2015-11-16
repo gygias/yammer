@@ -27,16 +27,7 @@
 #define ymbool bool
 #endif
 
-#ifdef FIGURED_OUT_HOW_TO_GET_COMPILER_WARNINGS
-typedef struct ym_not_a_void_star
-{
-    char notAThing[1];
-} _ym_not_a_void_star;
-
-typedef struct ym_not_a_void_star *YMTypeRef;
-#else
 typedef const void *YMTypeRef;
-#endif
 typedef char YMTypeID;
 
 YMTypeRef YMRetain(YMTypeRef object);

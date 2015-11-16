@@ -46,6 +46,8 @@ typedef struct __ym_mdns_browser
     ym_mdns_service_updated_func serviceUpdated;
     ym_mdns_service_resolved_func serviceResolved;
     void *callbackContext;
+    
+    uint16_t debugExpectedPairs;
 } ___ym_mdns_browser;
 typedef struct __ym_mdns_browser __YMmDNSBrowser;
 typedef __YMmDNSBrowser *__YMmDNSBrowserRef;
@@ -60,8 +62,6 @@ void DNSSD_API __ym_mdns_resolve_callback(DNSServiceRef serviceRef, DNSServiceFl
                                       const char *host, uint16_t port, uint16_t txtLen, const unsigned char *txtRecord, void *context );
 
 void __ym_mdns_browser_event_proc(void *);
-
-#pragma mark private
 void __YMmDNSBrowserAddOrUpdateService(__YMmDNSBrowserRef browser, YMmDNSServiceRecord *record);
 void __YMmDNSBrowserRemoveServiceNamed(__YMmDNSBrowserRef browser, YMStringRef name);
 
@@ -88,6 +88,8 @@ YMmDNSBrowserRef YMmDNSBrowserCreateWithCallbacks(YMStringRef type,
     YMmDNSBrowserSetServiceResolvedFunc(browser, serviceResolved);
     YMmDNSBrowserSetServiceRemovedFunc(browser, serviceRemoved);
     YMmDNSBrowserSetCallbackContext(browser, context);
+    
+    browser->debugExpectedPairs = UINT16_MAX;
     return browser;
 }
 
@@ -427,6 +429,17 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
                                             NULL,
 #endif
                                             true, host, ntohs(hostPort), txtRecord, txtLength); // could be optimized
+        if ( browser->debugExpectedPairs != UINT16_MAX && record->txtRecordKeyPairsSize != browser->debugExpectedPairs )
+        {
+            record = _YMmDNSCreateServiceRecord(fullname, YMSTR(browser->type),
+#ifdef YMmDNS_ENUMERATION
+#error fixme
+#else
+                                                NULL,
+#endif
+                                                true, host, ntohs(hostPort), txtRecord, txtLength); // could be optimized
+            abort();
+        }
         __YMmDNSBrowserAddOrUpdateService(browser, record);
     }
     
@@ -443,16 +456,19 @@ catch_callback_and_release:
 void __ym_mdns_browser_event_proc( void *ctx )
 {
     __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)ctx;
-    bool keepGoing = true;
-    while ( keepGoing )
-    {
-        int fd  = DNSServiceRefSockFD(
+    int fd  = DNSServiceRefSockFD(
 #ifdef YMmDNS_ENUMERATION
 #error fixme
 #else
-                                      *(browser->browseServiceRef)
+                                  *(browser->browseServiceRef)
 #endif
-                                      );
+                                  );
+    
+    ymlog("mDNS event thread %d entered",fd);
+    
+    bool keepGoing = true;
+    while ( keepGoing )
+    {
         int nfds = fd + 1;
         fd_set readfds;
         fd_set* nullFd = (fd_set*) NULL;
@@ -486,8 +502,7 @@ void __ym_mdns_browser_event_proc( void *ctx )
             }
             if (err != kDNSServiceErr_NoError)
             {
-                fprintf(stderr,
-                        "DNSServiceProcessResult returned %d\n", err);
+                ymerr("mdns: DNSServiceProcessResult on %d returned %d", fd, err);
                 keepGoing = false;
             }
         }
@@ -497,10 +512,16 @@ void __ym_mdns_browser_event_proc( void *ctx )
         }
         else
         {
-            ymlog("mDNS browser event select returned: %d: %d (%s)",result,errno,strerror(errno));
+            ymlog("mDNS: browser select on %d returned: %d: %d (%s)",fd, result,errno,strerror(errno));
             keepGoing = false;
         }
     }
     
-    ymlog("mDNS event thread exiting");
+    ymlog("mDNS event thread %d exiting",fd);
+}
+
+void _YMmDNSBrowserDebugSetExpectedTxtKeyPairs(YMmDNSBrowserRef browser_, uint16_t nPairs)
+{
+    __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)browser_;
+    browser->debugExpectedPairs = nPairs;
 }

@@ -18,7 +18,7 @@ YMDictionaryRef YMDictionaryCreate();
 
 void YMDictionaryAdd(YMDictionaryRef, YMDictionaryKey key, YMDictionaryValue item);
 bool YMDictionaryContains(YMDictionaryRef, YMDictionaryKey key);
-YMDictionaryKey YMDictionaryRandomKey(YMDictionaryRef dict);
+YMDictionaryKey YMDictionaryGetRandomKey(YMDictionaryRef dict);
 YMDictionaryValue YMDictionaryGetItem(YMDictionaryRef, YMDictionaryKey key);
 YMDictionaryValue YMDictionaryRemove(YMDictionaryRef, YMDictionaryKey key);
 

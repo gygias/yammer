@@ -168,13 +168,12 @@ YMmDNSTxtRecordKeyPair **_YMmDNSCreateTxtKeyPairs(const unsigned char *txtRecord
             break;
         
         aPairLength = txtRecord[currentPairOffset];
-        
-        if ( aPairLength == 0 )
-            break;
     }
     
     if ( outSize )
         *outSize = listSize;
+    
+    ymlog("mdns: created list size %zd from blob length %u",listSize,txtLength);
     
     return keyPairList;
 }

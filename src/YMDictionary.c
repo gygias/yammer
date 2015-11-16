@@ -104,7 +104,7 @@ bool YMDictionaryContains(YMDictionaryRef dict_, YMDictionaryKey key)
     return ( NULL != _YMDictionaryFindItemWithIdentifier(dict->head, key, NULL) );
 }
 
-YMDictionaryKey YMDictionaryRandomKey(YMDictionaryRef dict_)
+YMDictionaryKey YMDictionaryGetRandomKey(YMDictionaryRef dict_)
 {
     __YMDictionaryRef dict = (__YMDictionaryRef)dict_;
     CHECK_CONSISTENCY

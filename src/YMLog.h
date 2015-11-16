@@ -10,7 +10,7 @@
 #define ymlog_type YMLogDefault
 #endif
 #ifndef ymlog_target
-#define ymlog_target YMLogThread
+#define ymlog_target YMLogmDNS
 //#define ymlog_target YMLogEverything
 // Token pasting of ',' and __VA_ARGS__ is a GNU extension
 YM_WPPUSH
@@ -29,9 +29,9 @@ typedef enum
     YMLogNothing = 0,
     YMLogError,
     YMLogDefault,
+    YMLogmDNS,
     YMLogSession,
     YMLogSecurity,
-    YMLogmDNS,
     YMLogConnection,
     YMLogThread,
     YMLogThreadDispatch, // todo: time to split out dispatch

@@ -8,6 +8,7 @@
 
 #include "YMLog.h"
 #include "YMLock.h"
+#include "YMUtilities.h"
 
 #include <stdarg.h>
 #include <pthread.h>
@@ -15,12 +16,14 @@
 void YMLog( char* format, ... ) __printflike(1, 2);
 
 static pthread_once_t gYMLogLockOnce = PTHREAD_ONCE_INIT;
-YMLockRef gYMLogLock = NULL;
+static YMLockRef gYMLogLock = NULL;
+static char *gTimeFormatBuf = NULL;
+#define gTimeFormatBufLen 128
 
 void YMLogInitLock()
 {
     YMStringRef name = YMSTRC("ymlog");
-    gYMLogLock = YMLockCreate(YMInternalLockType,name);
+    gYMLogLock = YMLockCreateWithOptionsAndName(YMInternalLockType,name);
     YMRelease(name);
 }
 
@@ -28,22 +31,25 @@ void YMLogInitLock()
 void __YMLogInit()
 {
     pthread_once(&gYMLogLockOnce, YMLogInitLock);
+    gTimeFormatBuf = YMALLOC(gTimeFormatBufLen);
 }
 
-void YMLogType( YMLogLevel level, char* format, ... )
+void YMLogType( __unused YMLogLevel level, char* format, ... )
 {
     __YMLogInit();
     
-    if ( level > ymlog_target
-        && ( ymlog_stream_lifecycle && level != YMLogStreamLifecycle ) )
-        abort();
-    
     YMLockLock(gYMLogLock);
     {
+        const char *timeStr = YMGetCurrentTimeString(gTimeFormatBuf, gTimeFormatBufLen);
+        if ( timeStr )
+            printf("%s yammer: ",timeStr);
+        
         va_list args;
         va_start(args,format);
         vprintf(format, args);
         va_end(args);
+        
+        
         printf("\n");
         fflush(stdout);
     }

@@ -63,7 +63,7 @@ mDNSTests *gGlobalSelf;
         _YMmDNSTxtRecordKeyPairsFree(testKeyPairs, nTestKeyPairs);
 }
 
-- (void)testmDNSTxtRecordParsing
+- (void)test_mDNSTxtRecordParsing
 {
     for(int i = 0; i < 1000; i++)
     {
@@ -83,7 +83,7 @@ mDNSTests *gGlobalSelf;
 - (void)testmDNSCreateDiscoverResolve
 {
     BOOL okay;
-    testServiceName = YMRandomASCIIStringWithMaxLength(mDNS_SERVICE_NAME_LENGTH_MAX, YES);
+    testServiceName = YMRandomASCIIStringWithMaxLength(mDNS_SERVICE_NAME_LENGTH_MAX - 1, YES);
     service = YMmDNSServiceCreate(YMSTRC(testServiceType), YMSTRC([testServiceName UTF8String]), 5050);
     
     nTestKeyPairs = arc4random_uniform(10);
@@ -96,6 +96,7 @@ mDNSTests *gGlobalSelf;
     
     // i had these as separate functions, but apparently "self" is a new object for each -test* method, which isn't what we need here
     browser = YMmDNSBrowserCreateWithCallbacks(YMSTRC(testServiceType), test_service_appeared, test_service_updated, test_service_resolved, test_service_removed, (__bridge void *)(self));
+    _YMmDNSBrowserDebugSetExpectedTxtKeyPairs(browser,nTestKeyPairs);
     okay = YMmDNSBrowserStart(browser);
     XCTAssert(okay,@"YMmDNSBrowserStartBrowsing failed");
     
@@ -161,7 +162,7 @@ mDNSTests *gGlobalSelf;
         
         actualSize++;
         debugBlobSize += 1 + [randomKey length] + 1 + [valueData length];
-        NSLog(@"aKeyPair[%u]: [%u] <= [%d]'%s'", (unsigned)idx, (unsigned)[randomKey length],  (int)[valueData length], [randomKey UTF8String]);
+        NSLog(@"aKeyPair[%zd]: [%zu] <= [%zu]'%s'", idx,  [valueData length], [randomKey length], [randomKey UTF8String]);
         
         if ( remaining == 0 )
             break;
@@ -169,7 +170,7 @@ mDNSTests *gGlobalSelf;
             abort();
     }
     
-    NSLog(@"made txt record length %zu out of requested %zu (blob size %zu)",actualSize,requestedSize,debugBlobSize);
+    NoisyTestLog(@"made txt record length %zu out of requested %zu (blob size %zu)",actualSize,requestedSize,debugBlobSize);
     *inOutnKeypairs = actualSize;
     
     return keyPairs;

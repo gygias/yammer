@@ -9,6 +9,8 @@
 #ifndef YMPlexerPriv_h
 #define YMPlexerPriv_h
 
+#include "YMLock.h"
+
 // shouldn't really exist outside of YMPlexer.c, but for now during development let others 'see into' the stream id
 typedef uint32_t YMPlexerStreamID;
 #define YMPlexerStreamIDMax UINT32_MAX

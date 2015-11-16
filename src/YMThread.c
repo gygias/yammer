@@ -129,7 +129,7 @@ YMThreadRef _YMThreadCreate(YMStringRef name, bool isDispatchThread, ym_thread_e
         }
         YMLockUnlock(gDispatchThreadListLock);
         
-        thread->dispatchListLock = YMLockCreate(YMInternalLockType,YMSTRC("dispatch-list"));
+        thread->dispatchListLock = YMLockCreateWithOptionsAndName(YMInternalLockType,YMSTRC("dispatch-list"));
         thread->dispatchesByID = YMDictionaryCreate();
         thread->dispatchSemaphore = YMSemaphoreCreate(YMSTRCF("%s-dispatch",YMSTR(name),NULL),0);
         thread->dispatchExitSemaphore = YMSemaphoreCreate(YMSTRCF("%s-dispatch-exit",YMSTR(name),NULL), 0);
@@ -275,7 +275,7 @@ ym_thread_dispatch_ref __YMThreadDispatchCopy(ym_thread_dispatch_ref userDispatc
 void __YMThreadDispatchInit()
 {
     gDispatchThreadDefsByID = YMDictionaryCreate();
-    gDispatchThreadListLock = YMLockCreate(YMInternalLockType,YMSTRC("g-dispatch-list"));
+    gDispatchThreadListLock = YMLockCreateWithOptionsAndName(YMInternalLockType,YMSTRC("g-dispatch-list"));
 }
 
 void __ym_thread_dispatch_dispatch_thread_proc(void * ctx)
@@ -304,7 +304,7 @@ void __ym_thread_dispatch_dispatch_thread_proc(void * ctx)
         YMLockLock(thread->dispatchListLock);
         {
             // todo this should be in order
-            YMDictionaryKey randomKey = YMDictionaryRandomKey(thread->dispatchesByID);
+            YMDictionaryKey randomKey = YMDictionaryGetRandomKey(thread->dispatchesByID);
             aDispatch = (__ym_thread_dispatch_context)YMDictionaryRemove(thread->dispatchesByID,randomKey);
             if ( ! aDispatch )
             {

@@ -10,6 +10,7 @@
 
 #include "YMStreamPriv.h"
 #include "YMPipe.h"
+#include "YMPipePriv.h"
 #include "YMLock.h"
 
 #ifdef USE_FTIME
@@ -116,17 +117,20 @@ void YMStreamWriteDown(YMStreamRef stream_, const void *buffer, uint16_t length)
     
     __YMStreamRef stream = (__YMStreamRef)stream_;
     
+    YMIOResult result;
     int downstreamWrite = YMPipeGetInputFile(stream->downstreamPipe);
     
+#ifdef USE_STREAM_COMMANDS_DOWN
     YMStreamCommand header = { length };
     ymlog("  stream[%s]: writing header for command: %ub",YMSTR(stream->name),length);
-    YMIOResult result = YMWriteFull(downstreamWrite, (void *)&header, sizeof(header), NULL);
+    result = YMWriteFull(downstreamWrite, (void *)&header, sizeof(header), NULL);
     if ( result != YMIOSuccess )
     {
         ymerr("  stream[%s]: fatal: failed writing header for stream chunk size %ub",YMSTR(stream->name),length);
         abort();
     }
     ymlog("  stream[%s]: wrote header for command: %u",YMSTR(stream->name),length);
+#endif
     
     result = YMWriteFull(downstreamWrite, buffer, length, NULL);
     if ( result != YMIOSuccess )
@@ -139,11 +143,11 @@ void YMStreamWriteDown(YMStreamRef stream_, const void *buffer, uint16_t length)
     // signal the plexer to wake and service this stream
     stream->dataAvailableFunc(stream,length,stream->dataAvailableContext);
     
-    ymlog("  stream[%s]: wrote %lub + %ub command",YMSTR(stream->name),sizeof(header),length);
+    ymlog("  stream[%s]: wrote %ub chunk",YMSTR(stream->name),length);
 }
 
 // void: only ever does in-process i/o
-void _YMStreamReadDown(YMStreamRef stream_, void *buffer, uint32_t length)
+YMIOResult _YMStreamReadDown(YMStreamRef stream_, void *buffer, uint32_t length)
 {
     __YMStreamRef stream = (__YMStreamRef)stream_;
     
@@ -151,19 +155,14 @@ void _YMStreamReadDown(YMStreamRef stream_, void *buffer, uint32_t length)
     ymlog("  stream[%s]: reading %ub from downstream",YMSTR(stream->name),length);
     YMIOResult result = YMReadFull(downstreamRead, buffer, length, NULL);
     if ( result != YMIOSuccess )
-    {
         ymerr("  stream[%s]: error: failed reading %ub from downstream",YMSTR(stream->name),length);
-        abort();
-    }
-    
-    if ( length == 2 && *((uint32_t *)buffer) == 0 )
-        abort();
-    
-    ymlog("  stream[%s]: read %ub from downstream",YMSTR(stream->name),length);
+    else
+        ymlog("  stream[%s]: read %ub from downstream",YMSTR(stream->name),length);
+    return result;
 }
 
 // void: only ever does in-process i/o
-void _YMStreamWriteUp(YMStreamRef stream_, const void *buffer, uint32_t length)
+YMIOResult _YMStreamWriteUp(YMStreamRef stream_, const void *buffer, uint32_t length)
 {
     __YMStreamRef stream = (__YMStreamRef)stream_;
     
@@ -171,10 +170,11 @@ void _YMStreamWriteUp(YMStreamRef stream_, const void *buffer, uint32_t length)
     
     YMIOResult result = YMWriteFull(upstreamWrite, buffer, length, NULL);
     if ( result == YMIOError )
-    {
         ymerr("  stream[%s]: fatal: failed writing %u bytes to upstream",YMSTR(stream->name),length);
-        abort();
-    }
+    else
+        ymlog("  stream[%s]: wrote %ub to upstream",YMSTR(stream->name),length);
+    
+    return result;
 }
 
 // because user data is opaque (even to user), this should expose eof
@@ -295,7 +295,13 @@ YMIOResult __YMStreamForward(__YMStreamRef stream, int file, bool toStream, uint
     return aResult;
 }
 
-void _YMStreamClose(YMStreamRef stream_)
+void _YMStreamCloseReadUpFile(YMStreamRef stream_)
+{
+    __YMStreamRef stream = (__YMStreamRef)stream_;
+    _YMPipeCloseInputFile(stream->upstreamPipe);
+}
+
+void _YMStreamSendClose(YMStreamRef stream_)
 {
     __YMStreamRef stream = (__YMStreamRef)stream_;
     
@@ -311,18 +317,6 @@ void _YMStreamClose(YMStreamRef stream_)
     
     ymlog("  stream[%s]: closing stream",YMSTR(stream->name));
     stream->dataAvailableFunc(stream,sizeof(command),stream->dataAvailableContext);
-}
-
-int _YMStreamGetDownwardRead(YMStreamRef stream_)
-{
-    __YMStreamRef stream = (__YMStreamRef)stream_;
-    return YMPipeGetOutputFile(stream->downstreamPipe);
-}
-
-int _YMStreamGetUpstreamWrite(YMStreamRef stream_)
-{
-    __YMStreamRef stream = (__YMStreamRef)stream_;
-    return YMPipeGetInputFile(stream->upstreamPipe);
 }
 
 ym_stream_user_info_ref _YMStreamGetUserInfo(YMStreamRef stream_)
