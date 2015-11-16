@@ -54,9 +54,9 @@ typedef __YMmDNSBrowser *__YMmDNSBrowserRef;
 #ifdef YMmDNS_ENUMERATION
 void DNSSD_API __YMmDNSEnumerateReply(DNSServiceRef sdRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *replyDomain, void *context);
 #endif
-static void DNSSD_API __YMmDNSBrowseCallback(DNSServiceRef sdRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *serviceName,
+static void DNSSD_API __ym_mdns_browse_callback(DNSServiceRef sdRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *serviceName,
                                             const char *reg_type, const char *reply_domain, void *context);
-void DNSSD_API __YMmDNSResolveCallback(DNSServiceRef serviceRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *name,
+void DNSSD_API __ym_mdns_resolve_callback(DNSServiceRef serviceRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *name,
                                       const char *host, uint16_t port, uint16_t txtLen, const unsigned char *txtRecord, void *context );
 
 void __ym_mdns_browser_event_proc(void *);
@@ -207,7 +207,7 @@ bool YMmDNSBrowserStart(YMmDNSBrowserRef browser_)
                                                   0, // interfaceIndex
                                                   YMSTR(browser->type), // type
                                                   NULL, // domain
-                                                  __YMmDNSBrowseCallback, // callback
+                                                  __ym_mdns_browse_callback, // callback
                                                   browser); // context
     
     if( result != kDNSServiceErr_NoError )
@@ -256,7 +256,7 @@ bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser_, YMStringRef serviceName)
                                                     YMSTR(serviceName),
                                                     YMSTR(browser->type), // type
                                                     YMSTR(theService->domain), // domain
-                                                    __YMmDNSResolveCallback,
+                                                    __ym_mdns_resolve_callback,
                                                     browser );
     if ( result != kDNSServiceErr_NoError )
     {
@@ -360,11 +360,17 @@ void DNSSD_API __YMmDNSEnumerateReply(DNSServiceRef sdRef, DNSServiceFlags flags
 }
 #endif
 
-static void DNSSD_API __YMmDNSBrowseCallback(__unused DNSServiceRef serviceRef, DNSServiceFlags flags, __unused uint32_t ifIdx, DNSServiceErrorType result, const char *name, const char *type,
-                                            const char *domain, void *context)
+static void DNSSD_API __ym_mdns_browse_callback(__unused DNSServiceRef serviceRef,
+                                                DNSServiceFlags flags,
+                                                __unused uint32_t ifIdx,
+                                                DNSServiceErrorType result,
+                                                const char *name,
+                                                const char *type,
+                                                const char *domain,
+                                                void *context)
 {
     
-    //ymlog("_YMmDNSBrowseCallback: %s/%s:?: if: %u flags: %04x", type, name, ifIdx, result);
+    //ymlog("__ym_mdns_browse_callback: %s/%s:?: if: %u flags: %04x", type, name, ifIdx, result);
     __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)context;
     if ( result != kDNSServiceErr_NoError )
     {
@@ -384,11 +390,19 @@ static void DNSSD_API __YMmDNSBrowseCallback(__unused DNSServiceRef serviceRef, 
     }    
 }
 
-void DNSSD_API __YMmDNSResolveCallback(__unused DNSServiceRef serviceRef,__unused DNSServiceFlags flags, __unused uint32_t interfaceIndex, DNSServiceErrorType result, const char *fullname,
-                                      const char *host, uint16_t port, uint16_t txtLength, const unsigned char *txtRecord, void *context )
+void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
+                                          __unused DNSServiceFlags flags,
+                                          __unused uint32_t interfaceIndex,
+                                          DNSServiceErrorType result,
+                                          const char *fullname,
+                                          const char *host,
+                                          uint16_t port,
+                                          uint16_t txtLength,
+                                          const unsigned char *txtRecord,
+                                          void *context )
 {
     __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)context;
-    //ymlog("_YMmDNSResolveCallback: %s/%s -> %s:%u",browser->type,fullname,host,(unsigned)port);
+    //ymlog("__ym_mdns_resolve_callback: %s/%s -> %s:%u",browser->type,fullname,host,(unsigned)port);
     uint16_t hostPort = ntohs(port);
     
     bool okay = ( result == kDNSServiceErr_NoError );
@@ -400,7 +414,7 @@ void DNSSD_API __YMmDNSResolveCallback(__unused DNSServiceRef serviceRef,__unuse
         char *firstDotPtr = strstr(fullname, ".");
         if ( ! firstDotPtr )
         {
-            ymlog("_YMmDNSResolveCallback doesn't know how to parse name '%s'",fullname);
+            ymlog("__ym_mdns_resolve_callback doesn't know how to parse name '%s'",fullname);
             okay = false;
             goto catch_callback_and_release;
         }

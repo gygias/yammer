@@ -25,11 +25,9 @@ typedef void (*ym_thread_dispatch_func)(ym_thread_dispatch_ref);
 typedef ym_void_voidp_func ym_thread_entry;
 
 // function pointers for YMThreadDispatchUserInfo
-#pragma message "todo: make parameter explicitly YMThreadDispatchUserInfoRef, i got confused thinkng it was userInfo->context"
 typedef ym_thread_dispatch_func ym_thread_dispatch_dealloc;
 
 YMThreadRef YMThreadCreate(YMStringRef name, ym_thread_entry entryPoint, void *context);
-#pragma message "there needs to be a way to stop these, use it in session -serverStop"
 YMThreadRef YMThreadDispatchCreate(YMStringRef name);
 
 void YMThreadSetContext(YMThreadRef thread, void *context);
@@ -42,7 +40,6 @@ typedef struct ym_thread_dispatch_def
     bool freeContextWhenDone; // optional convenience for YMALLOC'd context pointers. will be free'd after deallocProc, if it is specified.
     void *context; // weak
     YMStringRef description; // optional, assigns a name that will be included in logging from YMThreadDispatch
-#pragma message "OWNERSHIP"
 } _ym_thread_dispatch_def;
 
 // description (and other non-opaque types) will be copied

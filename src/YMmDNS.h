@@ -41,7 +41,8 @@ typedef struct _YMmDNSServiceList
 
 YMmDNSServiceRecord *_YMmDNSCreateServiceRecord(const char *name, const char*type, const char *domain, bool resolved, const char *hostname,
                                                 uint16_t port, const unsigned char *txtRecord, uint16_t txtLength);
-YMmDNSTxtRecordKeyPair **__YMmDNSCreateTxtKeyPairs(const unsigned char *txtRecord, uint16_t txtLength, size_t *outSize);
+YMmDNSTxtRecordKeyPair **_YMmDNSCreateTxtKeyPairs(const unsigned char *txtRecord, uint16_t txtLength, size_t *outSize);
+const unsigned char  *_YMmDNSCreateTxtBlobFromKeyPairs(YMmDNSTxtRecordKeyPair **keyPairList, uint16_t *inSizeOutLength);
 void _YMmDNSServiceListFree(YMmDNSServiceList *serviceList); // xxx
 void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *service);
 void _YMmDNSTxtRecordKeyPairsFree(YMmDNSTxtRecordKeyPair **keyPairList, size_t size);

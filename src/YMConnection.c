@@ -20,6 +20,8 @@
 #define ymlog(x,...) ;
 #endif
 
+#define YM_CON_DESC (connection->address ? YMSTR(YMAddressGetDescription(connection->address)) : "*")
+
 #include <sys/socket.h>
 
 #define NULL_SOCKET (-1)
@@ -81,7 +83,7 @@ YMConnectionRef YMConnectionCreateIncoming(int socket, YMAddressRef address, YMC
     bool commonInitOK = __YMConnectionInitCommon(connection, socket, true);
     if ( ! commonInitOK )
     {
-        ymlog("connection[%s]: server init failed",YMSTR(YMAddressGetDescription(address)));
+        ymlog("connection[%s]: server init failed",YM_CON_DESC);
         YMRelease(connection);
         return NULL;
     }
@@ -99,7 +101,7 @@ __YMConnectionRef __YMConnectionCreate(bool isIncoming, int socket, YMAddressRef
     
     connection->socket = socket;
     connection->isIncoming = isIncoming;
-    connection->address = address;
+    connection->address = (YMAddressRef)YMRetain(address); // ugh
     connection->type = type;
     connection->securityType = securityType;
     
@@ -120,7 +122,8 @@ __YMConnectionRef __YMConnectionCreate(bool isIncoming, int socket, YMAddressRef
 void _YMConnectionFree(YMTypeRef object)
 {
     __YMConnectionRef connection = (__YMConnectionRef)object;
-    __YMConnectionDestroy(connection);
+    __YMConnectionDestroy(connection); // frees security and plexer
+    YMRelease(connection->address);
 }
 
 void YMConnectionSetCallbacks(YMConnectionRef connection_,
@@ -144,7 +147,7 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     
     if ( connection->socket >= 0 || connection->isIncoming )
     {
-        ymerr("connection[%s]: connect called on connected socket",YMSTR(YMAddressGetDescription(connection->address)));
+        ymerr("connection[%s]: connect called on connected socket",YM_CON_DESC);
         return false;
     }    
     
@@ -166,7 +169,7 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     int newSocket = socket(domain, type, protocol); // xxx
     if ( newSocket < 0 )
     {
-        ymerr("connection: socket(%s) failed: %d (%s)",YMSTR(YMAddressGetDescription(connection->address)),errno,strerror(errno));
+        ymerr("connection: socket(%s) failed: %d (%s)",YM_CON_DESC,errno,strerror(errno));
         return false;
     }
     
@@ -175,7 +178,7 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     if ( aResult != 0 )
         ymerr("connection: warning: setsockopt failed on %d: %d: %d (%s)",newSocket,aResult,errno,strerror(errno));
     
-    ymlog("connection[%s]: connecting...",YMSTR(YMAddressGetDescription(connection->address)));
+    ymlog("connection[%s]: connecting...",YM_CON_DESC);
     
     struct sockaddr *addr = (struct sockaddr *)YMAddressGetAddressData(connection->address);
     socklen_t addrLen = YMAddressGetLength(connection->address);
@@ -190,7 +193,7 @@ bool YMConnectionConnect(YMConnectionRef connection_)
         return false;
     }
     
-    ymlog("connection[%s]: connected",YMSTR(YMAddressGetDescription(connection->address)));
+    ymlog("connection[%s]: connected",YM_CON_DESC);
     
     bool commonInitOK = __YMConnectionInitCommon(connection, newSocket, false);
     if ( ! commonInitOK )
@@ -218,14 +221,14 @@ bool __YMConnectionInitCommon(__YMConnectionRef connection, int newSocket, bool 
             security = (YMSecurityProviderRef)YMTLSProviderCreateWithFullDuplexFile(newSocket, asServer);
             break;
         default:
-            ymerr("connection[%s]: unknown security type",YMSTR(YMAddressGetDescription(connection->address)));
+            ymerr("connection[%s]: unknown security type",YM_CON_DESC);
             goto rewind_fail;
     }
     
     bool securityOK = YMSecurityProviderInit(security);
     if ( ! securityOK )
     {
-        ymerr("connection[%s]: security type %d failed to initialize",YMSTR(YMAddressGetDescription(connection->address)),connection->securityType);
+        ymerr("connection[%s]: security type %d failed to initialize",YM_CON_DESC,connection->securityType);
         goto rewind_fail;
     }
     
@@ -233,7 +236,7 @@ bool __YMConnectionInitCommon(__YMConnectionRef connection, int newSocket, bool 
     bool plexerOK = YMPlexerStart(plexer);
     if ( ! plexerOK )
     {
-        ymerr("connection[%s]: plexer failed to initialize",YMSTR(YMAddressGetDescription(connection->address)));
+        ymerr("connection[%s]: plexer failed to initialize",YM_CON_DESC);
         goto rewind_fail;
     }
     
@@ -269,7 +272,7 @@ bool __YMConnectionDestroy(__YMConnectionRef connection)
     {
         okay = YMSecurityProviderClose(connection->security);
         if ( ! okay )
-            ymerr("connection[%s]: warning: failed to close security",YMSTR(YMAddressGetDescription(connection->address)));
+            ymerr("connection[%s]: warning: failed to close security",YM_CON_DESC);
         
         YMRelease(connection->security);
         connection->security = NULL;
@@ -279,7 +282,7 @@ bool __YMConnectionDestroy(__YMConnectionRef connection)
         bool plexerOK = YMPlexerStop(connection->plexer);
         if ( ! plexerOK )
         {
-            ymerr("connection[%s]: warning: failed to close plexer",YMSTR(YMAddressGetDescription(connection->address)));
+            ymerr("connection[%s]: warning: failed to close plexer",YM_CON_DESC);
             okay = plexerOK;
         }
         

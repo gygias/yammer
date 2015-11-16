@@ -385,6 +385,9 @@ void __YMSessionAddConnection(YMSessionRef session_, YMConnectionRef connection)
     
     if ( isNewDefault )
         session->defaultConnection = connection;
+    
+    if ( session->defaultConnection == NULL )
+        abort();
 }
 
 #pragma mark server
@@ -617,9 +620,15 @@ void __ym_session_init_incoming_connection_proc(ym_thread_dispatch_ref dispatch)
         goto rewind_fail;
     }
     
+    ymlog("session[%s]: new connection %s",YMSTR(session->logDescription),YMSTR(YMAddressGetDescription(address)));
+    
     __YMSessionAddConnection(session, newConnection);
+    if ( session->defaultConnection == NULL )
+        abort();
     session->connectedFunc(session,newConnection,session->callbackContext);
     
+    if ( address )
+        YMRelease(address);
     free(addr);
     return;
     

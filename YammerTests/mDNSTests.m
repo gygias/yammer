@@ -12,11 +12,13 @@
 #import "YMmDNSService.h"
 #import "YMmDNSBrowser.h"
 
+#include <stdint.h> // uintptr_t and ptr ^ ptr
+
 @interface mDNSTests : XCTestCase
 {
     NSString *testServiceName;
     YMmDNSTxtRecordKeyPair **testKeyPairs;
-    size_t nTestKeyPairs;
+    uint16_t nTestKeyPairs;
 
     YMmDNSBrowserRef browser;
     YMmDNSServiceRef service;
@@ -34,7 +36,7 @@ mDNSTests *gGlobalSelf;
 #pragma mark mDNS tests
 
 #define testServiceType "_yammer._tcp"
-#define testKeyLengthBound 128
+#define testKeyMaxLen ( UINT8_MAX - 1 - 1 ) // length char and '=', assuming data can be empty
 
 #if 0 // actually debugging
 #define testTimeout (10 * 60)
@@ -59,6 +61,138 @@ mDNSTests *gGlobalSelf;
     
     if ( testKeyPairs )
         _YMmDNSTxtRecordKeyPairsFree(testKeyPairs, nTestKeyPairs);
+}
+
+- (void)testmDNSTxtRecordParsing
+{
+    for(int i = 0; i < 1000; i++)
+    {
+        uint16_t desiredAndActualSize = (size_t)arc4random_uniform(3);
+        YMmDNSTxtRecordKeyPair **keyPairList = [self makeTxtRecordKeyPairs:&desiredAndActualSize];
+        uint16_t inSizeOutBlobLen = desiredAndActualSize;
+        const unsigned char *listBlob = _YMmDNSCreateTxtBlobFromKeyPairs(keyPairList, &inSizeOutBlobLen);
+        size_t outListLen = 0;
+        YMmDNSTxtRecordKeyPair **outKeyPairList = _YMmDNSCreateTxtKeyPairs(listBlob, inSizeOutBlobLen, &outListLen);
+        [self compareList:keyPairList size:desiredAndActualSize toList:outKeyPairList size:outListLen];
+        
+        _YMmDNSTxtRecordKeyPairsFree(keyPairList, desiredAndActualSize);
+        _YMmDNSTxtRecordKeyPairsFree(outKeyPairList, outListLen);
+    }
+}
+
+- (void)testmDNSCreateDiscoverResolve
+{
+    BOOL okay;
+    testServiceName = YMRandomASCIIStringWithMaxLength(mDNS_SERVICE_NAME_LENGTH_MAX, YES);
+    service = YMmDNSServiceCreate(YMSTRC(testServiceType), YMSTRC([testServiceName UTF8String]), 5050);
+    
+    nTestKeyPairs = arc4random_uniform(10);
+    testKeyPairs = [self makeTxtRecordKeyPairs:&nTestKeyPairs];
+    
+    okay = YMmDNSServiceSetTXTRecord(service, testKeyPairs, nTestKeyPairs);
+    XCTAssert(okay||nTestKeyPairs==0,@"YMmDNSServiceSetTXTRecord failed");
+    okay = YMmDNSServiceStart(service);
+    XCTAssert(okay,@"YMmDNSServiceStart failed");
+    
+    // i had these as separate functions, but apparently "self" is a new object for each -test* method, which isn't what we need here
+    browser = YMmDNSBrowserCreateWithCallbacks(YMSTRC(testServiceType), test_service_appeared, test_service_updated, test_service_resolved, test_service_removed, (__bridge void *)(self));
+    okay = YMmDNSBrowserStart(browser);
+    XCTAssert(okay,@"YMmDNSBrowserStartBrowsing failed");
+    
+    NSArray *steps = @[ @[ @"appearance", [NSValue valueWithPointer:&waitingOnAppearance] ],
+                        @[ @"resolution", [NSValue valueWithPointer:&waitingOnResolution] ],
+                        @[ @"disappearance", [NSValue valueWithPointer:&waitingOnDisappearance] ] ];
+    
+    [steps enumerateObjectsUsingBlock:^(id  _Nonnull obj, __unused NSUInteger _idx, BOOL * _Nonnull stop) {
+        NSArray *stepArray = (NSArray *)obj;
+        NSString *stepName = stepArray[0];
+        BOOL *flag = [(NSValue *)stepArray[1] pointerValue];
+        
+        NSDate *then = [NSDate date];
+        while ( *flag )
+        {
+            if ( [[NSDate date] timeIntervalSinceDate:then] >= testTimeout )
+            {
+                *stop = YES;
+                XCTAssert(NO, @"timed out waiting for %@",stepName);
+                return;
+            }
+            CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.5, false); // not using semaphore to avoid starving whatever thread, likely main, this runs on. event delivery isn't configurable.
+        }
+        
+        NSLog(@"%@ happened",stepName);
+    }];
+}
+
+- (YMmDNSTxtRecordKeyPair **)makeTxtRecordKeyPairs:(uint16_t *)inOutnKeypairs
+{
+    size_t requestedSize = *inOutnKeypairs;
+    size_t actualSize = 0;
+    size_t debugBlobSize = 0;
+    
+    if ( requestedSize == 0 )
+        return NULL;
+    
+    YMmDNSTxtRecordKeyPair **keyPairs = (YMmDNSTxtRecordKeyPair **)calloc(*inOutnKeypairs,sizeof(YMmDNSTxtRecordKeyPair *));
+    
+    uint16_t remaining = UINT16_MAX;
+    for ( size_t idx = 0; idx < requestedSize; idx++ )
+    {
+        keyPairs[idx] = calloc(1,sizeof(YMmDNSTxtRecordKeyPair));
+        
+        remaining -= 1; // '=' for one keypair, assuming length byte isn't part of the 'max'
+        
+        // The "Name" MUST be at least one character. Strings beginning with an '=' character (i.e. the name is missing) SHOULD be silently ignored.
+        uint8_t aKeyLenMax = ( testKeyMaxLen > remaining ) ? ( remaining - 1 ) : testKeyMaxLen;
+        NSString *randomKey = YMRandomASCIIStringWithMaxLength(aKeyLenMax, NO);
+        keyPairs[idx]->key = YMSTRC([randomKey cStringUsingEncoding:NSASCIIStringEncoding]);//"test-key";
+        
+        remaining -= [randomKey length];
+        
+        // as far as i can tell, value can be empty
+        uint8_t valueLenMax = ( UINT8_MAX - [randomKey length] - 1 );
+        uint16_t aValueLenMax = ( valueLenMax > remaining ) ? remaining : valueLenMax;
+        NSData *valueData = YMRandomDataWithMaxLength(aValueLenMax);
+        keyPairs[idx]->value = calloc(1,[valueData length]);
+        memcpy((void *)keyPairs[idx]->value, [valueData bytes], [valueData length]);
+        keyPairs[idx]->valueLen = (uint8_t)[valueData length];
+        
+        remaining -= [valueData length];
+        
+        actualSize++;
+        debugBlobSize += 1 + [randomKey length] + 1 + [valueData length];
+        NSLog(@"aKeyPair[%u]: [%u] <= [%d]'%s'", (unsigned)idx, (unsigned)[randomKey length],  (int)[valueData length], [randomKey UTF8String]);
+        
+        if ( remaining == 0 )
+            break;
+        if ( remaining < 0 )
+            abort();
+    }
+    
+    NSLog(@"made txt record length %zu out of requested %zu (blob size %zu)",actualSize,requestedSize,debugBlobSize);
+    *inOutnKeypairs = actualSize;
+    
+    return keyPairs;
+}
+
+- (void)compareList:(YMmDNSTxtRecordKeyPair **)aList size:(size_t)aSize
+             toList:(YMmDNSTxtRecordKeyPair **)bList size:(size_t)bSize
+{
+    XCTAssert(aSize==bSize,@"sizes don't match");
+    
+    if ( aList == NULL && bList == NULL ) // i guess
+        return;
+    
+    XCTAssert( (uintptr_t)aList ^ (uintptr_t)bList, @"null list vs non-null list");
+    
+    for ( size_t i = 0; i < aSize; i++ )
+    {
+        XCTAssert(aList[i]->key&&bList[i],@"a key %zdth null",i);
+        XCTAssert(0 == strcmp(YMSTR(aList[i]->key), YMSTR(bList[i]->key)), @"%zd-th keys '%s' and '%s' don't match",i,YMSTR(aList[i]->key),YMSTR(bList[i]->key));
+        XCTAssert(aList[i]->value&&aList[i]->value,@"a value %zdth null",i);
+        XCTAssert(aList[i]->valueLen == bList[i]->valueLen, @"%zd-th values have different lengths of %u and %u",i,aList[i]->valueLen,bList[i]->valueLen);
+        XCTAssert(0 == memcmp(aList[i]->value, bList[i]->value, aList[i]->valueLen), @"%zu-th values of length %u don't match",i,aList[i]->valueLen);
+    }
 }
 
 void test_service_appeared(YMmDNSBrowserRef browser, YMmDNSServiceRecord *service, void *context)
@@ -108,17 +242,9 @@ void test_service_resolved(YMmDNSBrowserRef browser, bool resolved, YMmDNSServic
     
     NSLog(@"%s/%s:%d resolved",YMSTR(aService->type),YMSTR(aService->name),aService->port);
     YMmDNSTxtRecordKeyPair **keyPairs = aService->txtRecordKeyPairs;
-    size_t keyPairsSize = aService->txtRecordKeyPairsSize,
-    idx = 0;
+    size_t keyPairsSize = aService->txtRecordKeyPairsSize;
     
-    XCTAssert(keyPairsSize==nTestKeyPairs, @"txt record sizes do not match (%u,%u)",(unsigned)keyPairsSize,(unsigned)nTestKeyPairs);
-    
-    for ( ; idx < keyPairsSize; idx++ )
-    {
-        XCTAssert(0 == strcmp(YMSTR(keyPairs[idx]->key), YMSTR(testKeyPairs[idx]->key)), @"%zu-th keys '%s' and '%s' don't match",idx,YMSTR(keyPairs[idx]->key),YMSTR(testKeyPairs[idx]->key));
-        XCTAssert(keyPairs[idx]->valueLen == testKeyPairs[idx]->valueLen, @"%zu-th values have different lengths of %u and %u",idx,keyPairs[idx]->valueLen,testKeyPairs[idx]->valueLen);
-        XCTAssert(0 == memcmp(keyPairs[idx]->value, testKeyPairs[idx]->value, keyPairs[idx]->valueLen), @"%zu-th values of length %u don't match",idx,keyPairs[idx]->valueLen);
-    }
+    [self compareList:keyPairs size:keyPairsSize toList:testKeyPairs size:nTestKeyPairs];
     
     waitingOnResolution = NO;
     YMmDNSServiceStop(service, false);
@@ -144,70 +270,5 @@ void test_service_removed(YMmDNSBrowserRef browser, YMStringRef serviceName, voi
         waitingOnDisappearance = NO;
     }
 }
-
-- (void)testBonjourCreateServiceDiscoverAndResolve
-{
-    BOOL okay;
-    testServiceName = YMRandomASCIIStringWithMaxLength(mDNS_SERVICE_NAME_LENGTH_MAX, YES);
-    service = YMmDNSServiceCreate(YMSTRC(testServiceType), YMSTRC([testServiceName UTF8String]), 5050);
-    
-    nTestKeyPairs = arc4random_uniform(10);
-    size_t idx = 0;
-    testKeyPairs = (YMmDNSTxtRecordKeyPair **)calloc(nTestKeyPairs,sizeof(YMmDNSTxtRecordKeyPair *));
-    
-    for ( ; idx < nTestKeyPairs; idx++ )
-    {
-        testKeyPairs[idx] = calloc(1,sizeof(YMmDNSTxtRecordKeyPair));
-        NSString *randomKey = YMRandomASCIIStringWithMaxLength(testKeyLengthBound, NO);
-        testKeyPairs[idx]->key = YMSTRC([randomKey cStringUsingEncoding:NSASCIIStringEncoding]);//"test-key";
-        NSData *valueData = YMRandomDataWithMaxLength((uint8_t)(254 - [randomKey lengthOfBytesUsingEncoding:NSASCIIStringEncoding])); // 256 - '=' - size prefix, ok?
-        testKeyPairs[idx]->value = calloc(1,[valueData length]);
-        memcpy((void *)testKeyPairs[idx]->value, [valueData bytes], [valueData length]);
-        testKeyPairs[idx]->valueLen = (uint8_t)[valueData length];
-        
-        NSLog(@"aKeyPair[%u]: [%u]%s => [%d]", (unsigned)idx, (unsigned)[randomKey length], [randomKey UTF8String], (int)[valueData length]);
-    }
-    
-    okay = YMmDNSServiceSetTXTRecord(service, testKeyPairs, nTestKeyPairs);
-    XCTAssert(okay||nTestKeyPairs==0,@"YMmDNSServiceSetTXTRecord failed");
-    okay = YMmDNSServiceStart(service);
-    XCTAssert(okay,@"YMmDNSServiceStart failed");
-    
-    // i had these as separate functions, but apparently "self" is a new object for each -test* method, which isn't what we need here
-    browser = YMmDNSBrowserCreateWithCallbacks(YMSTRC(testServiceType), test_service_appeared, test_service_updated, test_service_resolved, test_service_removed, (__bridge void *)(self));
-    okay = YMmDNSBrowserStart(browser);
-    XCTAssert(okay,@"YMmDNSBrowserStartBrowsing failed");
-    
-    NSArray *steps = @[ @[ @"appearance", [NSValue valueWithPointer:&waitingOnAppearance] ],
-                        @[ @"resolution", [NSValue valueWithPointer:&waitingOnResolution] ],
-                        @[ @"disappearance", [NSValue valueWithPointer:&waitingOnDisappearance] ] ];
-    
-    [steps enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger _idx, BOOL * _Nonnull stop) {
-        NSArray *stepArray = (NSArray *)obj;
-        NSString *stepName = stepArray[0];
-        BOOL *flag = [(NSValue *)stepArray[1] pointerValue];
-        
-        NSDate *then = [NSDate date];
-        while ( *flag )
-        {
-            if ( [[NSDate date] timeIntervalSinceDate:then] >= testTimeout )
-            {
-                *stop = YES;
-                XCTAssert(NO, @"timed out waiting for %@",stepName);
-                return;
-            }
-            CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.5, false); // not using semaphore to avoid starving whatever thread, likely main, this runs on. event delivery isn't configurable.
-        }
-        
-        NSLog(@"%@ happened",stepName);
-    }];
-}
-
-//- (void)testPerformanceExample {
-//    // This is an example of a performance test case.
-//    [self measureBlock:^{
-//        // Put the code you want to measure the time of here.
-//    }];
-//}
 
 @end

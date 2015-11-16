@@ -45,6 +45,10 @@ typedef struct
     YMLockRef plexerTest1Lock;
     BOOL plexerTest1Running;
     
+    // for comparing callback contexts
+    YMPlexerRef localPlexer;
+    YMPlexerRef fakeRemotePlexer;
+    
     NSUInteger awaitingClosures;
     NSUInteger streamsCompleted;
     NSUInteger bytesIn, bytesOut;
@@ -77,16 +81,41 @@ PlexerTests *gRunningPlexerTest; // xctest seems to make a new object for each -
 void local_plexer_interrupted(YMPlexerRef plexer, void *context)
 {
     NSLog(@"%s",__FUNCTION__);
+    [gRunningPlexerTest localInterrupted:plexer :context];
+}
+
+- (void)localInterrupted:(YMPlexerRef)plexer :(void *)context
+{
+    XCTAssert(plexer==localPlexer,@"localInterrupted not local");
+    XCTAssert(context==(__bridge void *)gRunningPlexerTest,@"localInterrupted context doesn't match");
 }
 
 void local_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *context)
 {
     NSLog(@"%s",__FUNCTION__);
+    [gRunningPlexerTest localNewStream:plexer :stream :context];
+}
+
+- (void)localNewStream:(YMPlexerRef)plexer :(YMStreamRef)stream :(void *)context
+{
+    XCTAssert(plexer==localPlexer,@"localNewStream not local");
+    XCTAssert(stream,@"localNewStream null");
+    XCTAssert(context==(__bridge void *)gRunningPlexerTest,@"localNewStream context doesn't match");
+    XCTAssert(NO,@"localNewStream");
 }
 
 void local_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *context)
 {
     NSLog(@"%s",__FUNCTION__);
+    [gRunningPlexerTest localStreamClosing:plexer :stream :context];
+}
+
+- (void)localStreamClosing:(YMPlexerRef)plexer :(YMStreamRef)stream :(void *)context
+{
+    XCTAssert(plexer==localPlexer,@"localStreamClosing not local");
+    XCTAssert(stream,@"localStreamClosing null");
+    XCTAssert(context==(__bridge void *)gRunningPlexerTest,@"localStreamClosing context doesn't match");
+    XCTAssert(NO,@"localStreamClosing");
 }
 
 const char *testLocalMessage = "this is a test message. one, two, three. four. sometimes five.";
@@ -111,17 +140,19 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
     NSLog(@"plexer test using pipes: L(%s)-i%d-o%d <-> i%d-o%d R(%s)",localIsMaster?"M":"S",readFromRemote,writeToRemote,readFromLocal,writeToLocal,localIsMaster?"S":"M");
     NSLog(@"plexer test using %u threads, %u trips per thread, %@ streams per thread, %@ messages",PlexerTest1Threads,PlexerTest1RoundTripsPerThread,PlexerTest1NewStreamPerRoundTrip?@"new":@"one",PlexerTest1RandomMessages?@"random":@"fixed");
     
-    YMPlexerRef localPlexer = YMPlexerCreate(YMSTRC("L"),readFromRemote,writeToRemote,localIsMaster);
+    localPlexer = YMPlexerCreate(YMSTRC("L"),readFromRemote,writeToRemote,localIsMaster);
     YMPlexerSetSecurityProvider(localPlexer, YMSecurityProviderCreate(readFromRemote,writeToRemote));
     YMPlexerSetInterruptedFunc(localPlexer, local_plexer_interrupted);
     YMPlexerSetNewIncomingStreamFunc(localPlexer, local_plexer_new_stream);
     YMPlexerSetStreamClosingFunc(localPlexer, local_plexer_stream_closing);
+    YMPlexerSetCallbackContext(localPlexer, (__bridge void *)(self));
     
-    YMPlexerRef fakeRemotePlexer = YMPlexerCreate(YMSTRC("R"),readFromLocal,writeToLocal,!localIsMaster);
+    fakeRemotePlexer = YMPlexerCreate(YMSTRC("R"),readFromLocal,writeToLocal,!localIsMaster);
     YMPlexerSetSecurityProvider(fakeRemotePlexer, YMSecurityProviderCreate(readFromLocal,writeToLocal));
     YMPlexerSetInterruptedFunc(fakeRemotePlexer, remote_plexer_interrupted);
     YMPlexerSetNewIncomingStreamFunc(fakeRemotePlexer, remote_plexer_new_stream);
     YMPlexerSetStreamClosingFunc(fakeRemotePlexer, remote_plexer_stream_closing);
+    YMPlexerSetCallbackContext(fakeRemotePlexer, (__bridge void *)(self));
     
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         bool okay = YMPlexerStart(localPlexer);
@@ -242,24 +273,29 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
     return [NSData dataWithBytesNoCopy:buffer length:header.length freeWhenDone:YES];
 }
 
-void remote_plexer_interrupted(YMPlexerRef plexer, void *context)
+void remote_plexer_interrupted(__unused YMPlexerRef plexer, void *context)
 {
-    [gRunningPlexerTest interrupted:plexer];
+    [gRunningPlexerTest remoteInterrupted:plexer :context];
 }
 
-- (void)interrupted:(YMPlexerRef)plexer
+- (void)remoteInterrupted:(YMPlexerRef)plexer :(void *)context
 {
+    XCTAssert(plexer==fakeRemotePlexer,@"remoteInterrupted not remote");
+    XCTAssert(context==(__bridge void *)gRunningPlexerTest,@"remoteInterrupted context doesn't match");
     NSLog(@"%s",__FUNCTION__);
 }
 
 void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *context)
 {
-    [gRunningPlexerTest newStream:plexer :stream];
+    [gRunningPlexerTest remoteNewStream:plexer :stream :context];
 }
 
-- (void)newStream:(YMPlexerRef)plexer :(YMStreamRef)stream
+- (void)remoteNewStream:(YMPlexerRef)plexer :(YMStreamRef)stream :(void *)context
 {    
     TestLog(@"%s",__FUNCTION__);
+    XCTAssert(plexer==fakeRemotePlexer,@"remoteNewStream not remote");
+    XCTAssert(stream,@"remoteNewStream null");
+    XCTAssert(context==(__bridge void *)gRunningPlexerTest,@"remoteNewStream context doesn't match");
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         [self handleANewRemoteStream:plexer :stream];
     });
@@ -304,11 +340,15 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *cont
 
 void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *context)
 {
-    [gRunningPlexerTest closing:plexer :stream];
+    [gRunningPlexerTest remoteClosing:plexer :stream :context];
 }
 
-- (void)closing:(YMPlexerRef)plexer :(YMStreamRef)stream
+- (void)remoteClosing:(YMPlexerRef)plexer :(YMStreamRef)stream :(void *)context
 {
+    XCTAssert(plexer==fakeRemotePlexer,@"remoteClosing not local");
+    XCTAssert(stream,@"remoteClosing null");
+    XCTAssert(context==(__bridge void *)gRunningPlexerTest,@"remoteClosing context doesn't match");
+    
     YMLockLock(plexerTest1Lock);
 #ifdef PlexerTest1TimeBased
     streamsCompleted++;

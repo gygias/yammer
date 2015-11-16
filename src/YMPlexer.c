@@ -599,7 +599,7 @@ void __ym_plexer_service_downstream_proc(void * ctx)
         }
     }
     
-    ymlog(" plexer[%s]: downstream service thread exiting",YMSTR(plexer->name));
+    ymerr(" plexer[%s]: downstream service thread exiting",YMSTR(plexer->name));
     YMRelease(plexer);
 }
 
@@ -882,7 +882,7 @@ void __ym_plexer_service_upstream_proc(void * ctx)
         ymlog(" plexer[%s-^,i%d->o%d,si%d!,s%u] wrote plex buffer %zub",YMSTR(plexer->name),plexer->inputFile,plexer->outputFile,streamInFd,streamID,chunkLength);
     }
     
-    ymlog(" plexer[%s-^,i%d->o%d]: upstream service thread exiting",YMSTR(plexer->name),plexer->inputFile,plexer->outputFile);
+    ymerr(" plexer[%s-^,i%d->o%d]: upstream service thread exiting",YMSTR(plexer->name),plexer->inputFile,plexer->outputFile);
     
     YMRelease(plexer);
 }

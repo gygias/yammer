@@ -29,7 +29,7 @@
 
 - (void)testConnection {
     
-    YMLocalSocketPairRef socketPair = YMLocalSocketPairCreate(YMSTRC("connection-test"));
+    //YMLocalSocketPairRef socketPair = YMLocalSocketPairCreate(YMSTRC("connection-test"));
     
     //YMConnectionRef connectionA = YMConnectionCreate(<#YMAddressRef address#>, <#YMConnectionType type#>, <#YMConnectionSecurityType securityType#>)
     

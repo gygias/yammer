@@ -22,7 +22,7 @@
 // this is the best way of ordering XCTestCase classes that i could find, at the time
 #define DictionaryTests B_DictionaryTests
 #define CryptoTests     C_CryptoTests
-#define mDNSTests       D_mDNSTests
+#define mDNSTests       A_mDNSTests
 #define TLSTests        E_TLSTests
 #define PlexerTests     F_PlexerTests
 #define ConnectionTests G_ConnectionTests

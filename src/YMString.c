@@ -23,6 +23,8 @@ typedef struct __ym_string
     _YMType _type;
     
     const char *cString;
+    // lazy
+    size_t length;
 } ___ym_string;
 typedef struct __ym_string __YMString;
 typedef __YMString *__YMStringRef;
@@ -60,6 +62,7 @@ YMStringRef YMStringCreateWithCString(const char *cString)
     
     string->cString = YMALLOC(length + 1);
     strncpy((char *)string->cString, cString, length + 1);
+    string->length = length;
     
     return string;
 }
@@ -277,7 +280,7 @@ void _YMStringFree(YMTypeRef object)
 size_t YMStringGetLength(YMStringRef string_)
 {
     __YMStringRef string = (__YMStringRef)string_;
-    return strlen(string->cString);
+    return string->length;
 }
 
 const char *YMStringGetCString(YMStringRef string_)

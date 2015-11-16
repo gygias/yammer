@@ -21,6 +21,7 @@
     
     YMConnectionRef serverConnection;
     YMConnectionRef clientConnection;
+    uint64_t lastClientFileSize;
     
     NSMutableArray *nonRegularFileNames;
     NSString *tempFile;
@@ -132,11 +133,11 @@ SessionTests *gTheSessionTest = nil;
         NSData *output = [[outputPipe fileHandleForReading] readDataToEndOfFile];
         NSString *outputStr = [[NSString alloc] initWithData:output encoding:NSUTF8StringEncoding];
         NSArray *lines = [outputStr componentsSeparatedByString:@"\n"];
-        [lines enumerateObjectsUsingBlock:^(id  _Nonnull line, NSUInteger idx, BOOL * _Nonnull stop) {
+        [lines enumerateObjectsUsingBlock:^(id  _Nonnull line, __unused NSUInteger idx, BOOL * _Nonnull stop) {
             if ( [(NSString *)line length] == 0 )
                 return;
             __block BOOL lineOK = NO;
-            [nonRegularFileNames enumerateObjectsUsingBlock:^(id  _Nonnull name, NSUInteger idx2, BOOL * _Nonnull stop2) {
+            [nonRegularFileNames enumerateObjectsUsingBlock:^(id  _Nonnull name, __unused NSUInteger idx2, BOOL * _Nonnull stop2) {
                 if ( [(NSString *)line containsString:(NSString *)name] )
                 {
                     NSLog(@"making exception for %@ based on '%@'",name,line);
@@ -165,9 +166,8 @@ SessionTests *gTheSessionTest = nil;
     
 #define CHECK_THREADS
 #ifdef CHECK_THREADS
-    CFRunLoopRunInMode(kCFRunLoopDefaultMode, 1, false);
-    for 
-    NSLog(@"thread check: %@",[[NSThread threa]]);
+    CFRunLoopRunInMode(kCFRunLoopDefaultMode, 2, false);
+    [[NSTask launchedTaskWithLaunchPath:@"/usr/bin/sample" arguments:@[@"-file",@"/dev/stdout",@"xctest",@"1",@"1000"]] waitUntilExit];
 #endif
 }
 
@@ -192,22 +192,10 @@ typedef struct ManPageThanks
 - (void)_runServer:(YMSessionRef)server
 {
     YMConnectionRef connection = YMSessionGetDefaultConnection(server);
+    // todo sometimes this is inexplicably null, yet not in the session by the time the test runs
     XCTAssert(connection,@"server connection");
     
-    NSFileManager *fm = [NSFileManager defaultManager];
     NSString *file = @"/dev/random"; // @"/var/vm/sleepimage"; not user readable
-    BOOL fileIsLarge = YES;
-    if ( ! [fm fileExistsAtPath:file] )
-    {
-        file = [[fm contentsOfDirectoryAtPath:@"/cores" error:NULL] firstObject];
-        if ( file )
-            file = [@"/cores" stringByAppendingPathComponent:file];
-        if ( ! [fm fileExistsAtPath:file] )
-        {
-            file = @"/System/Library/CoreServices/boot.efi";
-            fileIsLarge = NO;
-        }
-    }
     
     NSLog(@"server chose %@",file);
     NSFileHandle *handle = [NSFileHandle fileHandleForReadingAtPath:file];
@@ -219,7 +207,7 @@ typedef struct ManPageThanks
     ym_thread_dispatch_forward_file_context ctx = {NULL,NULL};
     if ( testAsync )
     {
-        ctx.callback = _async_forward_callback;
+        ctx.callback = _server_async_forward_callback;
         struct asyncCallbackInfo *info = malloc(sizeof(struct asyncCallbackInfo));
         info->theTest = (__bridge void *)(self);
         info->semaphore = (__bridge void *)(serverAsyncForwardSemaphore);
@@ -235,21 +223,6 @@ typedef struct ManPageThanks
     
     NSLog(@"server thread exiting");
     dispatch_semaphore_signal(threadExitSemaphore);
-}
-
-void _async_forward_callback(void * ctx, uint64_t bytesWritten)
-{
-    struct asyncCallbackInfo *info = (struct asyncCallbackInfo *)ctx;
-    SessionTests *SELF = (__bridge SessionTests *)info->theTest;
-    dispatch_semaphore_t sem = (__bridge dispatch_semaphore_t)info->semaphore;
-    [SELF _asyncForwardCallback:sem :bytesWritten];
-}
-
-- (void)_asyncForwardCallback:(dispatch_semaphore_t)sem :(uint64_t)written
-{
-    XCTAssert(sem==clientAsyncForwardSemaphore||sem==serverAsyncForwardSemaphore,@"async callback unknown sem");
-    NoisyLog(@"_async_forward_callback (%s): %llu",sem==clientAsyncForwardSemaphore?"client":"server",written);
-    dispatch_semaphore_signal(sem);
 }
 
 - (void)_runClient:(YMSessionRef)client
@@ -275,7 +248,8 @@ void _async_forward_callback(void * ctx, uint64_t bytesWritten)
         NSFileHandle *handle = [NSFileHandle fileHandleForReadingAtPath:fullPath];
         XCTAssert(handle,@"client file handle %@",fullPath);
         
-        struct ManPageHeader header = { [(NSNumber *)attributes[NSFileSize] unsignedLongLongValue], {0} };
+        lastClientFileSize = [(NSNumber *)attributes[NSFileSize] unsignedLongLongValue];
+        struct ManPageHeader header = { lastClientFileSize , {0} };
         strncpy(header.name, [aFile UTF8String], NAME_MAX+1);
         YMStreamWriteDown(stream, &header, sizeof(header));
         
@@ -283,7 +257,7 @@ void _async_forward_callback(void * ctx, uint64_t bytesWritten)
         ym_thread_dispatch_forward_file_context ctx = {NULL,NULL};
         if ( testAsync )
         {
-            ctx.callback = _async_forward_callback;
+            ctx.callback = _client_async_forward_callback;
             struct asyncCallbackInfo *info = malloc(sizeof(struct asyncCallbackInfo));
             info->theTest = (__bridge void *)(self);
             info->semaphore = (__bridge void *)(clientAsyncForwardSemaphore);
@@ -333,7 +307,7 @@ void _async_forward_callback(void * ctx, uint64_t bytesWritten)
     XCTAssert(strlen(header.name)>0&&strlen(header.name)<=NAME_MAX, @"??? %s",header.name);
     uint64_t outBytes = 0;
     
-    NSString *filePath = [tempDir stringByAppendingPathComponent:[NSString stringWithUTF8String:header.name]];
+    NSString *filePath = [tempDir stringByAppendingPathComponent:(NSString *_Nonnull)[NSString stringWithUTF8String:header.name]];
     BOOL okay = [[NSFileManager defaultManager] createFileAtPath:filePath contents:[NSData data] attributes:nil];
     XCTAssert(okay,@"touch man file %@",filePath);
     NSFileHandle *outHandle = [NSFileHandle fileHandleForWritingAtPath:filePath];
@@ -368,6 +342,38 @@ void _async_forward_callback(void * ctx, uint64_t bytesWritten)
     NoisyLog(@"_eatManPages: finished: %llu bytes",outBytes);
     result = close(result);
     XCTAssert(result==0,@"close rand temp failed %d %s",errno,strerror(errno));
+}
+
+void _server_async_forward_callback(void * ctx, uint64_t bytesWritten)
+{
+    NSLog(@"%s",__PRETTY_FUNCTION__);
+    struct asyncCallbackInfo *info = (struct asyncCallbackInfo *)ctx;
+    SessionTests *SELF = (__bridge SessionTests *)info->theTest;
+    [SELF _asyncForwardCallback:YES :ctx :bytesWritten];
+}
+
+void _client_async_forward_callback(void * ctx, uint64_t bytesWritten)
+{
+    NSLog(@"%s",__PRETTY_FUNCTION__);
+    struct asyncCallbackInfo *info = (struct asyncCallbackInfo *)ctx;
+    SessionTests *SELF = (__bridge SessionTests *)info->theTest;
+    [SELF _asyncForwardCallback:NO :ctx :bytesWritten];
+}
+
+- (void)_asyncForwardCallback:(BOOL)isServer :(void *)ctx :(uint64_t)written
+{
+    XCTAssert(ctx,@"client callback ctx null");
+    struct asyncCallbackInfo *info = (struct asyncCallbackInfo *)ctx;
+    
+    if ( isServer )
+        XCTAssert(written==gSomeLength,@"lengths don't match");
+    else
+        XCTAssert(written==lastClientFileSize,@"lengths don't match");
+    
+    dispatch_semaphore_t sem = (__bridge dispatch_semaphore_t)info->semaphore;
+    XCTAssert(sem==clientAsyncForwardSemaphore||sem==serverAsyncForwardSemaphore,@"async callback unknown sem");
+    NoisyLog(@"_async_forward_callback (%s): %llu",sem==clientAsyncForwardSemaphore?"client":"server",written);
+    dispatch_semaphore_signal(sem);
 }
 
 // client, discover->connect
