@@ -19,6 +19,7 @@
 //#define smaxof(t) (((0x1ULL << ((sizeof(t) * 8ULL) - 1ULL)) - 1ULL) | \
 //(0x7ULL << ((sizeof(t) * 8ULL) - 4ULL)))
 //#define maxof(t) ((unsigned long long) (issigned(t) ? smaxof(t) : umaxof(t)))
+
 #define MAX_OF(type) \
 (((type)(~0LLU) > (type)((1LLU<<((sizeof(type)<<3)-1))-1LLU)) ? (long long unsigned int)(type)(~0LLU) : (long long unsigned int)(type)((1LLU<<((sizeof(type)<<3)-1))-1LLU))
 #define MIN_OF(type) \

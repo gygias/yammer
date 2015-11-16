@@ -10,5 +10,6 @@
 #define YMOpenssl_h
 
 #define openssl_success 1
+#define openssl_fail 0
 
 #endif /* YMOpenssl_h */

@@ -166,7 +166,8 @@ SessionTests *gTheSessionTest = nil;
 #define CHECK_THREADS
 #ifdef CHECK_THREADS
     CFRunLoopRunInMode(kCFRunLoopDefaultMode, 1, false);
-    NSLog(@"check threads now");
+    for 
+    NSLog(@"thread check: %@",[[NSThread threa]]);
 #endif
 }
 

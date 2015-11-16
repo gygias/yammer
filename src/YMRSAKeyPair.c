@@ -144,6 +144,7 @@ bool YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair_)
     unsigned long rsaErr = 0;
     const char* rsaErrFunc = NULL;
     
+    int result = openssl_fail;
     BIGNUM *e = BN_new();
     if ( ! e )
     {
@@ -151,7 +152,7 @@ bool YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair_)
         goto catch_return;
     }
     
-    int result = BN_set_word(e, keyPair->publicE);
+    result = BN_set_word(e, keyPair->publicE);
     if ( ERR_LIB_NONE != result )
     {
         rsaErrFunc = "BN_set_word";

@@ -71,7 +71,11 @@ void YMDictionaryAdd(YMDictionaryRef dict_, YMDictionaryKey key, YMDictionaryVal
     __YMDictionaryRef dict = (__YMDictionaryRef)dict_;
     CHECK_CONSISTENCY
     
-    if ( dict->count == MAX_OF(typeof(dict->count)) )
+    YM_WPPUSH
+    bool full = ( dict->count == MAX_OF(typeof(dict->count)) );
+    YM_WPOP
+    
+    if ( full )
     {
         ymerr("error: YMDictionary is full");
         abort();

@@ -21,6 +21,7 @@
 #define ymbool char // this is for code that gets stdbool from 3rd party headers, like mDNS
 #define true 1
 #define false 0
+#pragma GCC diagnostic pop
 #else
 #include <stdbool.h>
 #define ymbool bool
@@ -42,9 +43,18 @@ YMTypeRef YMRetain(YMTypeRef object);
 YMTypeRef YMAutorelease(YMTypeRef object);
 void YMRelease(YMTypeRef object);
 
+#define YM_WPPUSH \
+    _Pragma("GCC diagnostic push") \
+    _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
+#define YM_WPOP \
+    _Pragma("GCC diagnostic pop")
+
 #define YMSTR(x) YMStringGetCString(x)
 #define YMSTRC(x) YMAutorelease(YMStringCreateWithCString(x))
+// Token pasting of ',' and __VA_ARGS__ is a GNU extension
+YM_WPPUSH
 #define YMSTRCF(x,...) YMAutorelease(YMStringCreateWithFormat((x),##__VA_ARGS__))
+YM_WPOP
 #define YMLEN(x) YMStringGetLength(x)
 
 #endif /* YMBase_h */

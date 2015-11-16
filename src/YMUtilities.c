@@ -22,14 +22,21 @@
 
 void YMGetTheBeginningOfPosixTimeForCurrentPlatform(struct timeval *time)
 {
+    // todo i'm not sure what 'extension used' or have any idea how this macro works
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
     time->tv_sec = MIN_OF(typeof(time->tv_sec));
     time->tv_usec = MIN_OF(typeof(time->tv_usec));
+#pragma GCC diagnostic pop
 }
 
 void YMGetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
     time->tv_sec = MAX_OF(typeof(time->tv_sec));
     time->tv_usec = MAX_OF(typeof(time->tv_usec));
+#pragma GCC diagnostic pop
 }
 
 ComparisonResult YMTimevalCompare(struct timeval *a, struct timeval *b)
@@ -51,12 +58,15 @@ ComparisonResult YMTimevalCompare(struct timeval *a, struct timeval *b)
 
 YMIOResult YMReadFull(int fd, uint8_t *buffer, size_t bytes, size_t *outRead)
 {
+    if ( buffer == NULL || bytes == 0 || fd < 0 )
+        return YMIOError; // is this success or failure? :)
+    
     YMIOResult result = YMIOSuccess;
     
     size_t off = 0;
     while ( off < bytes )
     {
-        ssize_t aRead = read(fd, (void *)buffer + off, bytes - off);
+        ssize_t aRead = read(fd, buffer + off, bytes - off);
         if ( aRead == 0 )
         {
             result = YMIOEOF;
@@ -76,6 +86,9 @@ YMIOResult YMReadFull(int fd, uint8_t *buffer, size_t bytes, size_t *outRead)
 
 YMIOResult YMWriteFull(int fd, const uint8_t *buffer, size_t bytes, size_t *outWritten)
 {
+    if ( buffer == NULL || bytes == 0 || fd < 0 )
+        return YMIOError;
+    
     YMIOResult result = YMIOSuccess;
     ssize_t aWrite;
     size_t off = 0;
