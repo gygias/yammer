@@ -118,7 +118,7 @@ typedef struct __ym_plexer
     YMThreadRef remoteServiceThread;
     YMThreadRef eventDeliveryThread;
     YMLockRef interruptionLock;
-    YMSemaphoreRef streamMessageSemaphore;
+    YMSemaphoreRef downstreamReadySemaphore;
     
     // user
     ym_plexer_interrupted_func interruptedFunc;
@@ -178,14 +178,14 @@ YMPlexerRef YMPlexerCreate(YMStringRef name, int inputFile, int outputFile, bool
     
     plexer->localStreamsByID = YMDictionaryCreate();
     YMStringRef aString = YMStringCreateWithFormat("%s-local",YMSTR(plexer->name), NULL);
-    plexer->localAccessLock = YMLockCreate(aString);
+    plexer->localAccessLock = YMLockCreate(YMInternalLockType,aString);
     YMRelease(aString);
     plexer->localPlexBufferSize = YMPlexerDefaultBufferSize;
     plexer->localPlexBuffer = YMALLOC(plexer->localPlexBufferSize);
     
     plexer->remoteStreamsByID = YMDictionaryCreate();
     aString = YMStringCreateWithFormat("%s-remote",YMSTR(plexer->name),NULL);
-    plexer->remoteAccessLock = YMLockCreate(aString);
+    plexer->remoteAccessLock = YMLockCreate(YMInternalLockType,aString);
     YMRelease(aString);
     plexer->remotePlexBufferSize = YMPlexerDefaultBufferSize;
     plexer->remotePlexBuffer = YMALLOC(plexer->remotePlexBufferSize);
@@ -203,11 +203,11 @@ YMPlexerRef YMPlexerCreate(YMStringRef name, int inputFile, int outputFile, bool
     YMRelease(aString);
     
     aString = YMStringCreateWithFormat("%s-interrupt",YMSTR(plexer->name),NULL);
-    plexer->interruptionLock = YMLockCreate(aString);
+    plexer->interruptionLock = YMLockCreate(YMInternalLockType,aString);
     YMRelease(aString);
     
-    aString = YMStringCreateWithFormat("%s-signal",YMSTR(plexer->name),NULL);
-    plexer->streamMessageSemaphore = YMSemaphoreCreate(aString,0);
+    aString = YMStringCreateWithFormat("%s-down-signal",YMSTR(plexer->name),NULL);
+    plexer->downstreamReadySemaphore = YMSemaphoreCreate(aString,0);
     YMRelease(aString);
     
     plexer->interruptedFunc = NULL;
@@ -243,7 +243,7 @@ void _YMPlexerFree(YMPlexerRef plexer_)
     if ( plexer->eventDeliveryThread )
         YMRelease(plexer->eventDeliveryThread);
     YMRelease(plexer->interruptionLock);
-    YMRelease(plexer->streamMessageSemaphore);
+    YMRelease(plexer->downstreamReadySemaphore);
 }
 
 void YMPlexerSetInterruptedFunc(YMPlexerRef plexer_, ym_plexer_interrupted_func func)
@@ -436,7 +436,6 @@ void __YMRegisterSigpipe()
 void __ym_sigpipe_handler (__unused int signum)
 {
     ymerr("sigpipe happened");
-    abort();
 }
 
 const char *YMPlexerMasterHello = "オス、王様でおるべし";
@@ -553,11 +552,17 @@ void __ym_plexer_service_downstream_proc(void * ctx)
     
     ymlog(" plexer[%s]: downstream service thread entered",YMSTR(plexer->name));
     
-    while(plexer->active)
+    while( plexer->active )
     {
         ymlog(" plexer[%s-V]: awaiting signal",YMSTR(plexer->name));
         // there is only one thread consuming this semaphore, so i think it's ok not to actually lock around this loop iteration
-        YMSemaphoreWait(plexer->streamMessageSemaphore);
+        YMSemaphoreWait(plexer->downstreamReadySemaphore);
+        
+        if ( ! plexer->active )
+        {
+            ymerr("plexer[%s-V] signaled to exit",YMSTR(plexer->name));
+            break;
+        }
         
 #define __YMOutgoingListIdx 0
 #define __YMIncomingListIdx 1
@@ -952,7 +957,7 @@ void __ym_plexer_stream_data_available_proc(YMStreamRef stream, uint32_t bytes, 
     __YMPlexerRef plexer = (__YMPlexerRef)ctx;
     YMPlexerStreamID streamID = YM_STREAM_INFO(stream)->streamID;
     ymlog("plexer[%s]: stream %u reports it has %u bytes ready !!!!!",YMSTR(plexer->name),streamID,bytes);
-    YMSemaphoreSignal(plexer->streamMessageSemaphore);
+    YMSemaphoreSignal(plexer->downstreamReadySemaphore);
 }
 
 // tears down the plexer, returning whether or not this was the 'first call' to interrupted
@@ -976,6 +981,7 @@ bool __YMPlexerInterrupt(__YMPlexerRef plexer)
         
         // fds are set on Create, so they should always be 'valid' (save user error)
         // so given that we're in a lock here, this check might not be necessary
+        // these closes() will cause the upstream thread to exit
         if ( plexer->inputFile >= 0 )
         {
             bool ioSame = plexer->inputFile == plexer->outputFile;
@@ -992,6 +998,9 @@ bool __YMPlexerInterrupt(__YMPlexerRef plexer)
                 else
                     ymlog("plexer[%s]: closed output file %d",YMSTR(plexer->name),plexer->outputFile);
             }
+            
+            // let the downstream thread wake once more to exit
+            YMSemaphoreSignal(plexer->downstreamReadySemaphore);
             
             plexer->inputFile = -1;
             plexer->outputFile = -1;

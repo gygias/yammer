@@ -62,7 +62,7 @@ PlexerTests *gRunningPlexerTest; // xctest seems to make a new object for each -
     [super setUp];
     
     plexerTest1Running = YES;
-    plexerTest1Lock = YMLockCreateWithOptionsAndName(YMLockDefault, YMSTRCF("%s",[[self className] UTF8String],NULL));
+    plexerTest1Lock = YMLockCreateWithOptionsAndName(YMInternalLockType, YMSTRCF("%s",[[self className] UTF8String],NULL));
     awaitingClosures = PlexerTest1StreamClosuresToObserve;
     self.continueAfterFailure = NO;
     streamsCompleted = 0;

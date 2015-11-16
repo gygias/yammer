@@ -18,6 +18,12 @@ typedef enum
     YMLockErrorCheck = 1 << 1
 } YMLockOptions;
 
+#ifdef DEBUG
+#define YMInternalLockType YMLockErrorCheck
+#else
+#define YMInternalLockType YMLockDefault
+#endif
+
 typedef const struct __ym_lock *YMLockRef;
 
 YMLockRef YMLockCreate();

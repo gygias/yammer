@@ -111,7 +111,7 @@ void test_service_resolved(YMmDNSBrowserRef browser, bool resolved, YMmDNSServic
     size_t keyPairsSize = aService->txtRecordKeyPairsSize,
     idx = 0;
     
-    XCTAssert(keyPairsSize == nTestKeyPairs, @"txt record sizes do not match (%u,%u)",(unsigned)keyPairsSize,(unsigned)nTestKeyPairs);
+    XCTAssert(keyPairsSize==nTestKeyPairs, @"txt record sizes do not match (%u,%u)",(unsigned)keyPairsSize,(unsigned)nTestKeyPairs);
     
     for ( ; idx < keyPairsSize; idx++ )
     {
@@ -169,7 +169,7 @@ void test_service_removed(YMmDNSBrowserRef browser, YMStringRef serviceName, voi
     }
     
     okay = YMmDNSServiceSetTXTRecord(service, testKeyPairs, nTestKeyPairs);
-    XCTAssert(okay,@"YMmDNSServiceSetTXTRecord failed");
+    XCTAssert(okay||nTestKeyPairs==0,@"YMmDNSServiceSetTXTRecord failed");
     okay = YMmDNSServiceStart(service);
     XCTAssert(okay,@"YMmDNSServiceStart failed");
     

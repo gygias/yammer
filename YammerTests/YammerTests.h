@@ -22,10 +22,11 @@
 // this is the best way of ordering XCTestCase classes that i could find, at the time
 #define DictionaryTests B_DictionaryTests
 #define CryptoTests     C_CryptoTests
-#define TLSTests        D_TLSTests
-#define PlexerTests     A_PlexerTests
-#define ConnectionTests F_ConnectionTests
-#define SessionTests    G_SessionTests
+#define mDNSTests       D_mDNSTests
+#define TLSTests        E_TLSTests
+#define PlexerTests     F_PlexerTests
+#define ConnectionTests G_ConnectionTests
+#define SessionTests    H_SessionTests
 
 NSString *YMRandomASCIIStringWithMaxLength(uint16_t maxLength, BOOL for_mDNSServiceName);
 NSData *YMRandomDataWithMaxLength(uint16_t length);

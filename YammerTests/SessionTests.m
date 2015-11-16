@@ -162,6 +162,12 @@ SessionTests *gTheSessionTest = nil;
     [[NSTask launchedTaskWithLaunchPath:@"/bin/rm" arguments:@[@"-rf",@"/tmp/ymsessiontest*"]] waitUntilExit];
     
     NSLog(@"session test finished");
+    
+#define CHECK_THREADS
+#ifdef CHECK_THREADS
+    CFRunLoopRunInMode(kCFRunLoopDefaultMode, 1, false);
+    NSLog(@"check threads now");
+#endif
 }
 
 typedef struct asyncCallbackInfo

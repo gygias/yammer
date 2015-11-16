@@ -94,7 +94,7 @@ YMSessionRef YMSessionCreateClient(YMStringRef type)
     __YMSessionRef session = __YMSessionCreateShared(type,false);
     session->logDescription = YMStringCreateWithFormat("c:%s",YMSTR(type),NULL);
     session->availablePeers = YMDictionaryCreate();
-    session->availablePeersLock = YMLockCreateWithOptionsAndName(YMLockDefault, YMSTRC("available-peers"));
+    session->availablePeersLock = YMLockCreateWithOptionsAndName(YMInternalLockType, YMSTRC("available-peers"));
     session->browser = NULL;
     return session;
 }
@@ -121,7 +121,7 @@ __YMSessionRef __YMSessionCreateShared(YMStringRef type, bool isServer)
     session->isServer = isServer;
     session->defaultConnection = NULL;
     session->connectionsByAddress = YMDictionaryCreate();
-    session->connectionsByAddressLock = YMLockCreate(YMLockDefault, YMSTRC("connections-by-address"));
+    session->connectionsByAddressLock = YMLockCreate(YMInternalLockType, YMSTRC("connections-by-address"));
     return session;
 }
 
@@ -359,13 +359,15 @@ void __YMSessionAddConnection(YMSessionRef session_, YMConnectionRef connection)
     __YMSessionRef session = (__YMSessionRef)session_;
     
     YMLockLock(session->connectionsByAddressLock);
-    YMDictionaryKey key = (YMDictionaryKey)connection;
-    if ( YMDictionaryContains(session->connectionsByAddress, key) )
     {
-        ymerr("session[%s]: error: connections list already contains %llu",YMSTR(session->logDescription),key);
-        abort();
+        YMDictionaryKey key = (YMDictionaryKey)connection;
+        if ( YMDictionaryContains(session->connectionsByAddress, key) )
+        {
+            ymerr("session[%s]: error: connections list already contains %llu",YMSTR(session->logDescription),key);
+            abort();
+        }
+        YMDictionaryAdd(session->connectionsByAddress, key, connection);
     }
-    YMDictionaryAdd(session->connectionsByAddress, key, connection);
     YMLockUnlock(session->connectionsByAddressLock);
     
     YMConnectionSetCallbacks(connection, __ym_session_new_stream_proc, session,
@@ -732,12 +734,15 @@ void __ym_session_connection_interrupted_proc(YMConnectionRef connection, void *
         ymerr("session[%s]: aux connection interrupted: %s",YMSTR(session->logDescription),YMSTR(YMAddressGetDescription(address)));
     
     YMLockLock(session->connectionsByAddressLock);
-    YMDictionaryValue removedValue = YMDictionaryRemove(session->connectionsByAddress, (YMDictionaryKey)connection);
-    if ( ! removedValue || ( removedValue != connection ) )
     {
-        ymerr("session[%s]: sanity check dictionary: %p v %p",YMSTR(session->logDescription), removedValue, connection);
-        abort();
+        YMDictionaryValue removedValue = YMDictionaryRemove(session->connectionsByAddress, (YMDictionaryKey)connection);
+        if ( ! removedValue || ( removedValue != connection ) )
+        {
+            ymerr("session[%s]: sanity check dictionary: %p v %p",YMSTR(session->logDescription), removedValue, connection);
+            abort();
+        }
     }
+    YMLockUnlock(session->connectionsByAddressLock);
     
     YMRelease(connection);
     

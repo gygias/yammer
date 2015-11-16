@@ -156,13 +156,18 @@ YMmDNSTxtRecordKeyPair **__YMmDNSCreateTxtKeyPairs(const unsigned char *txtRecor
         aKeyPair->valueLen = (uint8_t)valueLength;
         keyPairList[listSize] = aKeyPair;
         
+        ymlog("mdns: parsed [%zd][%zu] <- '%s'",listSize,valueLength,keyStr);
+        
+        listSize++;
+        
+        currentPairOffset += aPairLength + 1;
         if ( currentPairOffset == txtLength )
             break;
         
-        currentPairOffset += aPairLength + 1;
         aPairLength = txtRecord[currentPairOffset];
         
-        listSize++;
+        if ( aPairLength == 0 )
+            break;
     }
     
     if ( outSize )

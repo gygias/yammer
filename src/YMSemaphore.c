@@ -51,7 +51,7 @@ static pthread_once_t gYMSemaphoreIndexInit = PTHREAD_ONCE_INIT;
 
 void _YMSemaphoreInit()
 {
-    gYMSemaphoreIndexLock = YMLockCreateWithOptionsAndName(YMLockDefault, YMSTRC(YM_TOKEN_STR(gYMSemaphoreIndex)));
+    gYMSemaphoreIndexLock = YMLockCreateWithOptionsAndName(YMInternalLockType, YMSTRC(YM_TOKEN_STR(gYMSemaphoreIndex)));
 }
 
 YMSemaphoreRef YMSemaphoreCreate(YMStringRef name, int initialValue)
@@ -77,7 +77,7 @@ YMSemaphoreRef YMSemaphoreCreate(YMStringRef name, int initialValue)
     __YMSemaphoreRef semaphore = (__YMSemaphoreRef)_YMAlloc(_YMSemaphoreTypeID,sizeof(__YMSemaphore));
     
     semaphore->userName = YMStringCreateWithFormat("%s-%p",name?YMSTR(name):"unnamed",semaphore, NULL);
-    semaphore->lock = YMLockCreateWithOptionsAndName(YMLockDefault, YMSTRC("__ymsemaphore_mutex"));
+    semaphore->lock = YMLockCreateWithOptionsAndName(YMInternalLockType, YMSTRC("__ymsemaphore_mutex"));
     
     YMLockLock(gYMSemaphoreIndexLock);
     uint16_t thisIndex = gYMSemaphoreIndex++;

@@ -20,7 +20,7 @@ YMLockRef gYMLogLock = NULL;
 void YMLogInitLock()
 {
     YMStringRef name = YMSTRC("ymlog");
-    gYMLogLock = YMLockCreate(YMLockDefault,name);
+    gYMLogLock = YMLockCreate(YMInternalLockType,name);
     YMRelease(name);
 }
 

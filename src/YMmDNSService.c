@@ -73,6 +73,7 @@ YMmDNSServiceRef YMmDNSServiceCreate(YMStringRef type, YMStringRef name, uint16_
     service->port = port;
     service->advertising = false;
     service->txtRecord = NULL;
+    service->txtRecordLen = 0;
     return (YMmDNSServiceRef)service;
 }
 
@@ -95,6 +96,9 @@ void _YMmDNSServiceFree(YMTypeRef object)
 ymbool YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service_, YMmDNSTxtRecordKeyPair *keyPairs[], size_t nPairs )
 {
     __YMmDNSServiceRef service = (__YMmDNSServiceRef)service_;
+    
+    if ( keyPairs == NULL || nPairs == 0 )
+        return false;
     
     size_t idx;
 #ifdef MANUAL_TXT

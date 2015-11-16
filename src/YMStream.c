@@ -74,18 +74,6 @@ YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_ref userInfo)
     stream->dataAvailableContext = NULL;
     
     stream->userInfo = userInfo;
-//    stream->__dataAvailableSemaphore = NULL;
-//    stream->__lastServiceTime = (struct timeval *)YMALLOC(sizeof(struct timeval));
-//    if ( 0 != gettimeofday(stream->__lastServiceTime, NULL) )
-//    {
-//        ymlog("warning: error setting initial service time for stream: %d (%s)",errno,strerror(errno));
-//        YMGetTheBeginningOfPosixTimeForCurrentPlatform(stream->__lastServiceTime);
-//    }
-//    
-//    stream->retainLock = YMLockCreateWithOptionsAndName(YMLockDefault, stream->name);
-//    stream->isUserReleased = false;
-//    stream->isPlexerReleased = false;
-//    stream->isDeallocated = false;
     
     if ( ymlog_stream_lifecycle )
         YMLogType(YMLogStreamLifecycle,"  stream[%s,i%d->o%dV,^o%d<-i%d]: %p allocating",YMSTR(stream->name),

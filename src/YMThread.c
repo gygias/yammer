@@ -129,7 +129,7 @@ YMThreadRef _YMThreadCreate(YMStringRef name, bool isDispatchThread, ym_thread_e
         }
         YMLockUnlock(gDispatchThreadListLock);
         
-        thread->dispatchListLock = YMLockCreate(YMSTRC("dispatch-list"));
+        thread->dispatchListLock = YMLockCreate(YMInternalLockType,YMSTRC("dispatch-list"));
         thread->dispatchesByID = YMDictionaryCreate();
         thread->dispatchSemaphore = YMSemaphoreCreate(YMSTRCF("%s-dispatch",YMSTR(name),NULL),0);
         thread->dispatchExitSemaphore = YMSemaphoreCreate(YMSTRCF("%s-dispatch-exit",YMSTR(name),NULL), 0);
@@ -275,7 +275,7 @@ ym_thread_dispatch_ref __YMThreadDispatchCopy(ym_thread_dispatch_ref userDispatc
 void __YMThreadDispatchInit()
 {
     gDispatchThreadDefsByID = YMDictionaryCreate();
-    gDispatchThreadListLock = YMLockCreate(YMSTRC("g-dispatch-list"));
+    gDispatchThreadListLock = YMLockCreate(YMInternalLockType,YMSTRC("g-dispatch-list"));
 }
 
 void __ym_thread_dispatch_dispatch_thread_proc(void * ctx)

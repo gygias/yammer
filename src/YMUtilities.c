@@ -156,18 +156,18 @@ pthread_mutex_t *YMCreateMutexWithOptions(YMLockOptions options)
     pthread_mutex_t *outMutex = NULL;
     pthread_mutex_t mutex;
     pthread_mutexattr_t attributes;
-    pthread_mutexattr_t *attributesPtr = NULL;
+    pthread_mutexattr_t *attributesPtr = &attributes;
     int result;
+    
+    result = pthread_mutexattr_init(attributesPtr);
+    if ( result != 0 )
+    {
+        ymerr("pthread_mutexattr_init failed: %d (%s)", result, strerror(result));
+        return NULL;
+    }
     
     if ( options & YMLockRecursive )
     {
-        attributesPtr = &attributes;
-        result = pthread_mutexattr_init(attributesPtr);
-        if ( result != 0 )
-        {
-            ymerr("pthread_mutexattr_init failed: %d (%s)", result, strerror(result));
-            return false;
-        }
         result = pthread_mutexattr_settype(attributesPtr, PTHREAD_MUTEX_RECURSIVE);
         if ( result != 0 )
         {
@@ -175,6 +175,20 @@ pthread_mutex_t *YMCreateMutexWithOptions(YMLockOptions options)
             goto catch_release;
         }
     }
+    // todo if enabled conveniently like this, openssl seems to lock & unlock
+    // across threads. i don't know if this indicates a bug.
+//#ifndef DEBUG
+    if ( options & YMLockErrorCheck )
+//#endif
+    {
+        result = pthread_mutexattr_settype(attributesPtr, PTHREAD_MUTEX_ERRORCHECK);
+        if ( result != 0 )
+        {
+            ymerr("pthread_mutexattr_settype failed: %d (%s)", result, strerror(result));
+            goto catch_release;
+        }
+    }
+    
     
     result = pthread_mutex_init(&mutex, attributesPtr);
     if ( result != 0 )

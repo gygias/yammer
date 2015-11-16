@@ -91,7 +91,7 @@ typedef struct
     YMTLSProviderRef remoteProvider = YMTLSProviderCreateWithFullDuplexFile(localIsServer ? clientSocket : serverSocket, !localIsServer);
     XCTAssert(remoteProvider,@"remote provider didn't initialize");
     
-    stateLock = YMLockCreateWithOptionsAndName(YMLockDefault, YMSTRC([[self className] UTF8String]));
+    stateLock = YMLockCreateWithOptionsAndName(YMInternalLockType, YMSTRC([[self className] UTF8String]));
     threadExitSemaphore = YMSemaphoreCreate(YMSTRC([[self className] UTF8String]), 0);
     bytesIn = 0;
     bytesOut = 0;
@@ -192,7 +192,7 @@ const char *testResponse = "i am a technology creative. i am a foodie. i am quir
     if ( looped )
         YMLockUnlock(stateLock);
     
-    NSLog(@"runLocal exiting...");
+    NSLog(@"run %@ exiting...",isServer?@"server":@"client");
     YMSemaphoreSignal(threadExitSemaphore);
 }
 

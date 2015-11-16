@@ -10,7 +10,7 @@
 #define ymlog_type YMLogDefault
 #endif
 #ifndef ymlog_target
-#define ymlog_target YMLogSession
+#define ymlog_target YMLogThread
 //#define ymlog_target YMLogEverything
 #define ymlog(x,...) if ( ymlog_type <= ymlog_target ) YMLogType(ymlog_type,(x),##__VA_ARGS__)
 // it might be nice if this postpended errno/strerror (or had a designated version for cases that errno is relevant)

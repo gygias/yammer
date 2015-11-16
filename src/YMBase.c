@@ -87,7 +87,7 @@ YMTypeRef _YMAlloc(YMTypeID type, size_t size)
     
     // can't divine a way to escape infinite recursion here
     //YMStringRef name = _YMStringCreateForYMAlloc("ymtype-%p", object, NULL);
-    //object->__retainLock = _YMLockCreateForYMAlloc(YMLockDefault, name);
+    //object->__retainLock = _YMLockCreateForYMAlloc(YMInternalLockType, name);
     //YMRelease(name);
     
     return object;
