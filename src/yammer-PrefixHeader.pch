@@ -16,7 +16,6 @@
 #define YM_CALL_V(func, firstType, first, ...) func(first,__VA_ARGS__) // iso c requires 'first'
 #define YM_CALL_DV(func, firstType, first, ...) { void func(firstType arg1,...); func(first,__VA_ARGS__); } // iso c requires 'first'
 
-
 //#define STR(x) YM_TOKEN_STR(x)
 //#pragma message STR(__FILE__) ": example: " STR(example)
 

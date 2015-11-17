@@ -19,7 +19,7 @@
 		630A5CFA1BE95E36003292EE /* YMThread.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CF81BE95E36003292EE /* YMThread.c */; };
 		630A5CFB1BE95E36003292EE /* YMThread.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5CF91BE95E36003292EE /* YMThread.h */; };
 		630A5D031BE96CE9003292EE /* YammerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 630A5D021BE96CE9003292EE /* YammerTests.m */; };
-		630A5D051BE96CE9003292EE /* libyammer.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63225D421BE9026200C28F05 /* libyammer.dylib */; };
+		630A5D051BE96CE9003292EE /* liblibyammer.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63225D421BE9026200C28F05 /* liblibyammer.dylib */; };
 		630A5D161BE9777C003292EE /* YMmDNSBrowser.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5D141BE9777C003292EE /* YMmDNSBrowser.c */; };
 		630A5D171BE9777C003292EE /* YMmDNSBrowser.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5D151BE9777C003292EE /* YMmDNSBrowser.h */; };
 		630A5D1C1BE98199003292EE /* YMmDNS.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5D1B1BE98199003292EE /* YMmDNS.c */; };
@@ -102,7 +102,7 @@
 		630A5D1B1BE98199003292EE /* YMmDNS.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMmDNS.c; path = src/YMmDNS.c; sourceTree = "<group>"; };
 		631683931BEEF1FB00F6AB99 /* DictionaryTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DictionaryTests.m; sourceTree = "<group>"; };
 		631799691BF9B05B0086EB05 /* YMPipePriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMPipePriv.h; path = src/YMPipePriv.h; sourceTree = "<group>"; };
-		63225D421BE9026200C28F05 /* libyammer.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libyammer.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		63225D421BE9026200C28F05 /* liblibyammer.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = liblibyammer.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		63225D521BE9074700C28F05 /* YMPipe.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMPipe.c; path = src/YMPipe.c; sourceTree = "<group>"; };
 		63225D531BE9074700C28F05 /* YMPipe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMPipe.h; path = src/YMPipe.h; sourceTree = "<group>"; };
 		63225D5A1BE9092500C28F05 /* YMStream.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMStream.c; path = src/YMStream.c; sourceTree = "<group>"; };
@@ -168,7 +168,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				630A5D051BE96CE9003292EE /* libyammer.dylib in Frameworks */,
+				630A5D051BE96CE9003292EE /* liblibyammer.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -224,7 +224,7 @@
 		63225D431BE9026200C28F05 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				63225D421BE9026200C28F05 /* libyammer.dylib */,
+				63225D421BE9026200C28F05 /* liblibyammer.dylib */,
 				630A5D001BE96CE9003292EE /* YammerTests.xctest */,
 				63345ACD1BFAC91300569B3C /* Yammer.framework */,
 			);
@@ -406,9 +406,9 @@
 			productReference = 630A5D001BE96CE9003292EE /* YammerTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		63225D411BE9026200C28F05 /* yammer */ = {
+		63225D411BE9026200C28F05 /* libyammer */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 63225D461BE9026200C28F05 /* Build configuration list for PBXNativeTarget "yammer" */;
+			buildConfigurationList = 63225D461BE9026200C28F05 /* Build configuration list for PBXNativeTarget "libyammer" */;
 			buildPhases = (
 				63225D3E1BE9026200C28F05 /* Sources */,
 				63225D3F1BE9026200C28F05 /* Frameworks */,
@@ -418,9 +418,9 @@
 			);
 			dependencies = (
 			);
-			name = yammer;
+			name = libyammer;
 			productName = yammer;
-			productReference = 63225D421BE9026200C28F05 /* libyammer.dylib */;
+			productReference = 63225D421BE9026200C28F05 /* liblibyammer.dylib */;
 			productType = "com.apple.product-type.library.dynamic";
 		};
 		63345ACC1BFAC91300569B3C /* Yammer */ = {
@@ -473,7 +473,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				63225D411BE9026200C28F05 /* yammer */,
+				63225D411BE9026200C28F05 /* libyammer */,
 				630A5CFF1BE96CE9003292EE /* YammerTests */,
 				63345ACC1BFAC91300569B3C /* Yammer */,
 			);
@@ -556,7 +556,7 @@
 /* Begin PBXTargetDependency section */
 		630A5D071BE96CE9003292EE /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 63225D411BE9026200C28F05 /* yammer */;
+			target = 63225D411BE9026200C28F05 /* libyammer */;
 			targetProxy = 630A5D061BE96CE9003292EE /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -742,6 +742,7 @@
 					/opt/local/lib,
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PUBLIC_HEADERS_FOLDER_PATH = /usr/local/include/yammer;
 			};
 			name = Debug;
 		};
@@ -762,6 +763,7 @@
 					/opt/local/lib,
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PUBLIC_HEADERS_FOLDER_PATH = /usr/local/include/yammer;
 			};
 			name = Release;
 		};
@@ -828,7 +830,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		63225D461BE9026200C28F05 /* Build configuration list for PBXNativeTarget "yammer" */ = {
+		63225D461BE9026200C28F05 /* Build configuration list for PBXNativeTarget "libyammer" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				63225D471BE9026200C28F05 /* Debug */,
