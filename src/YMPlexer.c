@@ -10,6 +10,7 @@
 #include "YMPlexerPriv.h"
 
 #include "YMUtilities.h"
+#include "YMSemaphore.h"
 #include "YMStreamPriv.h"
 #include "YMSecurityProvider.h"
 #include "YMDictionary.h"

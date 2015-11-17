@@ -13,6 +13,9 @@
 #include "YMPipePriv.h"
 #include "YMLock.h"
 
+#include "YMUtilities.h"
+#include "YMSemaphore.h"
+
 #ifdef USE_FTIME
 #include <sys/timeb.h>
 #error todo

@@ -9,7 +9,7 @@
 #ifndef Yammer_h
 #define Yammer_h
 
-#include <YMBase.h>
-#include <YMString.h>
+#include "YMBase.h"
+#include "YMString.h"
 
 #endif /* Yammer_h */

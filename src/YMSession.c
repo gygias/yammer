@@ -14,10 +14,10 @@
 #include "YMPlexerPriv.h" // streamid def
 #include "YMStreamPriv.h"
 #include "YMPeerPriv.h"
-
 #include "YMLock.h"
 #include "YMThread.h"
 #include "YMAddress.h"
+#include "YMUtilities.h"
 
 #include "YMLog.h"
 #undef ymlog_type

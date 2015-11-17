@@ -9,9 +9,7 @@
 #ifndef YMStream_h
 #define YMStream_h
 
-#include "YMUtilities.h"
-
-#include "YMSemaphore.h"
+#include "YMStream.h"
 
 typedef YMTypeRef YMStreamRef;
 

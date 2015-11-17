@@ -339,7 +339,7 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *cont
     });
 }
 
-- (void)handleANewRemoteStream:(YMPlexerRef)plexer :(YMStreamRef)stream
+- (void)handleANewRemoteStream:(__unused YMPlexerRef)plexer :(YMStreamRef)stream
 {
     YMPlexerStreamID streamID = ((ym_plexer_stream_user_info_ref)_YMStreamGetUserInfo(stream))->streamID;
     BOOL protectTheList = ( PlexerTest1Threads > 1 );

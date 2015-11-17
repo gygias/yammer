@@ -37,13 +37,6 @@ ComparisonResult YMTimevalCompare(struct timeval *a, struct timeval *b);
 void YMGetTheBeginningOfPosixTimeForCurrentPlatform(struct timeval *time);
 void YMGetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time);
 
-typedef enum
-{
-    YMIOSuccess = 1,
-    YMIOEOF = 0,
-    YMIOError = -1
-} YMIOResult;
-
 YMIOResult YMReadFull(int fd, uint8_t *buffer, size_t bytes, size_t *outRead);
 YMIOResult YMWriteFull(int fd, const uint8_t *buffer, size_t bytes, size_t *outWritten);
 
