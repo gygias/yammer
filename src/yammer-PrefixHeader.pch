@@ -37,8 +37,8 @@
 #define YM_INSANE_CHUNK_SIZE 65535
 #define YM_DEBUG_CHUNK_SIZE(x) { if ( ( (x) == 0 ) || ( (x) > YM_INSANE_CHUNK_SIZE ) ) { ymerr("debug: chunk length not sane: %u",(x)); abort(); } }
 #else
-#define YM_DEBUG_ABORT_IF_BOGUS(x) ;
-#define YM_DEBUG_ABORT_IF_BOGUS(x) ;
+#define YM_DEBUG_ASSERT_MALLOC(x) ;
+#define YM_DEBUG_CHUNK_SIZE(x) ;
 #endif
 
 #endif /* PrefixHeader_pch */
