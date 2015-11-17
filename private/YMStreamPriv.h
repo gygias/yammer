@@ -11,8 +11,6 @@
 
 #include "YMStream.h"
 
-#include "YMLock.h" // for _GetRetainLock only, which should be refactored to work like incoming close/free coordination
-
 typedef int32_t YMStreamCommand;
 
 typedef enum

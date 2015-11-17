@@ -7,7 +7,7 @@
 //
 
 #include "YMSecurityProvider.h"
-#include "YMSecurityProviderVeryPriv.h"
+#include "YMSecurityProviderInternal.h"
 
 #include "YMUtilities.h"
 
