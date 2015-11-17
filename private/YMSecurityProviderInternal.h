@@ -1,13 +1,13 @@
 //
-//  YMSecurityProviderVeryPriv.h
+//  YMSecurityProviderInternal.h
 //  yammer
 //
 //  Created by david on 11/10/15.
 //  Copyright © 2015 combobulated. All rights reserved.
 //
 
-#ifndef YMSecurityProviderVeryPriv_h
-#define YMSecurityProviderVeryPriv_h
+#ifndef YMSecurityProviderInternal_h
+#define YMSecurityProviderInternal_h
 
 typedef struct __ym_security_provider __YMSecurityProvider;
 typedef __YMSecurityProvider *__YMSecurityProviderRef;
@@ -29,4 +29,4 @@ typedef struct __ym_security_provider
     ym_security_close_func  closeFunc;
 } ___ym_security_provider;
 
-#endif /* YMSecurityProviderVeryPriv_h */
+#endif /* YMSecurityProviderInternal_h */

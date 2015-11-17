@@ -149,7 +149,7 @@
 		637E3D5C1BF262EE00D702ED /* YMX509Certificate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMX509Certificate.h; path = private/YMX509Certificate.h; sourceTree = "<group>"; };
 		637E3D5F1BF2680B00D702ED /* YMOpenssl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMOpenssl.h; path = private/YMOpenssl.h; sourceTree = "<group>"; };
 		637E3D601BF2CD7300D702ED /* TLSTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TLSTests.m; sourceTree = "<group>"; };
-		637E3D621BF2D12100D702ED /* YMSecurityProviderVeryPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMSecurityProviderVeryPriv.h; path = private/YMSecurityProviderVeryPriv.h; sourceTree = "<group>"; };
+		637E3D621BF2D12100D702ED /* YMSecurityProviderInternal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMSecurityProviderInternal.h; path = private/YMSecurityProviderInternal.h; sourceTree = "<group>"; };
 		63A40EF81BEC239C0085ABD0 /* YMThreadPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMThreadPriv.h; path = private/YMThreadPriv.h; sourceTree = "<group>"; };
 		63BD75CC1BF3F0E700D01F70 /* YMLocalSocketPair.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMLocalSocketPair.c; path = src/YMLocalSocketPair.c; sourceTree = "<group>"; };
 		63BD75CD1BF3F0E700D01F70 /* YMLocalSocketPair.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMLocalSocketPair.h; path = private/YMLocalSocketPair.h; sourceTree = "<group>"; };
@@ -258,7 +258,7 @@
 				6332A4BB1BF134DD004BB764 /* yammer.pch */,
 				637816CA1BF6FFF800BF79E2 /* YMStringPriv.h */,
 				63225D631BE90A6400C28F05 /* YMSecurityProvider.h */,
-				637E3D621BF2D12100D702ED /* YMSecurityProviderVeryPriv.h */,
+				637E3D621BF2D12100D702ED /* YMSecurityProviderInternal.h */,
 				6307F77D1BECA44A009C64CD /* YMStreamPriv.h */,
 				63344DDD1BF935730049712F /* YMConnectionPriv.h */,
 				63225D621BE90A6400C28F05 /* YMSecurityProvider.c */,
