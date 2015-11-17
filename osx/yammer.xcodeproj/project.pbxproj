@@ -435,6 +435,7 @@
 		63225D3A1BE9026200C28F05 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				CLASSPREFIX = YM;
 				LastUpgradeCheck = 0710;
 				ORGANIZATIONNAME = combobulated;
 				TargetAttributes = {
