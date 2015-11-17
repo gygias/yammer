@@ -1048,7 +1048,7 @@ bool __YMPlexerInterrupt(__YMPlexerRef plexer, bool requested)
                 YMDictionaryKey randomKey = YMDictionaryGetRandomKey(aList);
                 __unused YMStreamRef aStream = YMDictionaryRemove(aList, randomKey);
                 ymlog("plexer[%s]: hanging up stream %u",YMSTR(plexer->name),YM_STREAM_INFO(aStream)->streamID);
-                _YMStreamCloseReadUpFile(aStream); // "readup" :/
+                _YMStreamCloseReadUpFile(aStream); // "readup" :/ todo still a free race here
                 //YMRelease(aStream);
             }
         }

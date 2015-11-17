@@ -9,14 +9,15 @@
 #ifndef YMPeer_h
 #define YMPeer_h
 
-#include "YMDictionary.h"
-#include "YMAddress.h"
+#include <yammer/YMDictionary.h>
+#include <yammer/YMPeer.h>
+#include <yammer/YMAddress.h>
 
 typedef YMTypeRef YMPeerRef;
 
-YMStringRef YMPeerGetName(YMPeerRef);
-YMDictionaryRef YMPeerGetAddresses(YMPeerRef);
-uint16_t YMPeerGetPort(YMPeerRef);
-YMDictionaryRef YMPeerGetCertificates(YMPeerRef);
+YMStringRef YMPeerGetName(YMPeerRef peer);
+YMDictionaryRef YMPeerGetAddresses(YMPeerRef peer);
+uint16_t YMPeerGetPort(YMPeerRef peer);
+YMDictionaryRef YMPeerGetCertificates(YMPeerRef peer);
 
 #endif /* YMPeer_h */

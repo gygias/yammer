@@ -9,7 +9,7 @@
 #ifndef YMStream_h
 #define YMStream_h
 
-#include "YMStream.h"
+#include <yammer/YMBase.h>
 
 typedef YMTypeRef YMStreamRef;
 
