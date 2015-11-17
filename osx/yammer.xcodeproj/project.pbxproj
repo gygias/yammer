@@ -120,7 +120,7 @@
 		63225D9D1BE9372800C28F05 /* libssl.1.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libssl.1.0.0.dylib; path = /opt/local/lib/libssl.1.0.0.dylib; sourceTree = "<absolute>"; };
 		6332A4B91BEFCDCF004BB764 /* YammerTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = YammerTests.h; sourceTree = "<group>"; };
 		6332A4BA1BF12C12004BB764 /* lldb_source.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = lldb_source.sh; sourceTree = "<group>"; };
-		6332A4BB1BF134DD004BB764 /* yammer-PrefixHeader.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "yammer-PrefixHeader.pch"; path = "src/yammer-PrefixHeader.pch"; sourceTree = "<group>"; };
+		6332A4BB1BF134DD004BB764 /* yammer.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = yammer.pch; path = private/yammer.pch; sourceTree = "<group>"; };
 		63344DDD1BF935730049712F /* YMConnectionPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMConnectionPriv.h; path = private/YMConnectionPriv.h; sourceTree = "<group>"; };
 		6335CABD1BF453A800412CC9 /* YMAddress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMAddress.c; path = src/YMAddress.c; sourceTree = "<group>"; };
 		6335CABE1BF453A800412CC9 /* YMAddress.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMAddress.h; path = yammer/YMAddress.h; sourceTree = "<group>"; };
@@ -221,7 +221,7 @@
 		63225D491BE9027000C28F05 /* src */ = {
 			isa = PBXGroup;
 			children = (
-				6332A4BB1BF134DD004BB764 /* yammer-PrefixHeader.pch */,
+				6332A4BB1BF134DD004BB764 /* yammer.pch */,
 				63476A471BEB05B400D10081 /* API */,
 				63476A481BEB05DC00D10081 /* Private */,
 				63476A461BEAF4E900D10081 /* Utility */,
@@ -666,7 +666,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				ENABLE_NS_ASSERTIONS = YES;
 				EXECUTABLE_PREFIX = lib;
-				GCC_PREFIX_HEADER = "../src/yammer-PrefixHeader.pch";
+				GCC_PREFIX_HEADER = ../private/yammer.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"YM_TEST_BOOL_USE=1",
@@ -691,7 +691,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				ENABLE_NS_ASSERTIONS = YES;
 				EXECUTABLE_PREFIX = lib;
-				GCC_PREFIX_HEADER = "../src/yammer-PrefixHeader.pch";
+				GCC_PREFIX_HEADER = ../private/yammer.pch;
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
 				LIBRARY_SEARCH_PATHS = (
