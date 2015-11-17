@@ -37,7 +37,6 @@ typedef void(*ym_session_new_stream_func)(YMSessionRef,YMStreamRef,void*);
 typedef void(*ym_session_stream_closing_func)(YMSessionRef,YMStreamRef,void*);
 
 YMSessionRef YMSessionCreateClient(YMStringRef type);
-#pragma message "option to have client reserve and specify port?"
 YMSessionRef YMSessionCreateServer(YMStringRef type, YMStringRef name);
 
 void YMSessionSetClientCallbacks(YMSessionRef session, ym_session_added_peer_func added, ym_session_removed_peer_func removed,

@@ -22,7 +22,6 @@
 
 #define YM_DEBUG_INFO // consolidate extra-curricular stuff under here so it doesn't get forgotten
 
-#pragma message "does this have to be hard code?"
 #define YM_TYPE_RESERVED (128 - sizeof(YMTypeID))
 
 typedef struct _ym_type

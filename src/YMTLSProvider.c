@@ -303,7 +303,6 @@ catch_return:
     return initOkay;
 }
 
-#pragma message "i'm pretty sure all the 'call it twice' cases for these i/o wrappers are for non-blocking files, which we're (thank god) not using, but go back through"
 bool __YMTLSProviderRead(__YMSecurityProviderRef provider, uint8_t *buffer, size_t bytes)
 {
     __YMTLSProviderRef tls = (__YMTLSProviderRef)provider;

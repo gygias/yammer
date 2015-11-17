@@ -110,8 +110,7 @@ YMTypeRef YMRetain(YMTypeRef object_)
 
 YMTypeRef YMAutorelease(YMTypeRef object)
 {
-#pragma message "AUTORELEASE, be careful some stuff (like mdns service record/list) isn't ready for YMSTRC* to imply autorelease"
-    return object;
+    return object; // todo, lol
 }
 
 void YMRelease(YMTypeRef object_)

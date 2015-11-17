@@ -768,7 +768,7 @@ bool __YMPlexerServiceADownstream(__YMPlexerRef plexer, YMStreamRef stream)
             abort();
         }
 #else
-#pragma message "todo never realloc, chunk chunks..."
+        // todo never realloc, chunk chunks
         if ( bytesAvailable > UINT32_MAX )
             abort();
         chunkLength = (uint32_t)bytesAvailable;
@@ -910,7 +910,6 @@ YMStreamRef __YMPlexerGetOrCreateRemoteStreamWithID(__YMPlexerRef plexer, YMPlex
 {
     YMStreamRef theStream = NULL;
     
-#pragma message "__YMPlexerChooseReadyStream should handle up (is it local or remote?) as well as down (which is the oldest signaled?)?"
     YMLockLock(plexer->localAccessLock);
     {
         theStream = (YMStreamRef)YMDictionaryGetItem(plexer->localStreamsByID,streamID);

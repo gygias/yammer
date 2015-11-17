@@ -413,7 +413,6 @@ ymbool YMSessionServerStart(YMSessionRef session_)
     if ( session->service )
         return false;
     
-#pragma message "in case of v4 and v6, two services?"
     bool mDNSOK = false;
     int socket = -1;
     bool ipv4 = true;
@@ -775,7 +774,6 @@ void __ym_mdns_service_appeared_func(__unused YMmDNSBrowserRef browser, YMmDNSSe
     
     YMPeerRef peer = _YMPeerCreate(service->name, NULL, NULL);
     YMLockLock(session->availablePeersLock);
-#pragma message "need to key dictionary off something better now.."
     YMDictionaryAdd(session->availablePeers, (YMDictionaryKey)peer, peer);
     YMLockUnlock(session->availablePeersLock);
     
@@ -858,11 +856,9 @@ void __ym_mdns_service_resolved_func(__unused YMmDNSBrowserRef browser, bool suc
         ymerr("session[%s]: error: failed to resolve addresses for '%s'",YMSTR(session->logDescription),service->hostNames->h_name);
     else
     {
-#pragma message "move this into YMAddress"
         struct addrinfo *addrInfoIter = outAddrInfo;
         while ( addrInfoIter )
         {
-#pragma message "revisit"
             if ( addrInfoIter->ai_family == AF_INET /*|| addrInfoIter->ai_family == AF_INET6*/ )
             {
                 YMAddressRef address = YMAddressCreate(addrInfoIter->ai_addr, addrInfoIter->ai_addrlen);

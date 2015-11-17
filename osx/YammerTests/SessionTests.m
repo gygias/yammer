@@ -155,13 +155,14 @@ SessionTests *gTheSessionTest = nil;
     NSLog(@"cleaning up");
     [[NSTask launchedTaskWithLaunchPath:@"/bin/rm" arguments:@[@"-rf",@"/tmp/ymsessiontest*"]] waitUntilExit];
     
-    NSLog(@"session test finished");
     
 #define CHECK_THREADS
 #ifdef CHECK_THREADS
     CFRunLoopRunInMode(kCFRunLoopDefaultMode, 2, false);
     [[NSTask launchedTaskWithLaunchPath:@"/usr/bin/sample" arguments:@[@"-file",@"/dev/stdout",@"xctest",@"1",@"1000"]] waitUntilExit];
 #endif
+    
+    NSLog(@"session test finished");
 }
 
 typedef struct asyncCallbackInfo
