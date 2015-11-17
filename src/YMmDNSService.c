@@ -93,7 +93,7 @@ void _YMmDNSServiceFree(YMTypeRef object)
 }
 
 // todo this should be replaced by the TxtRecord* family in dns_sd.h
-ymbool YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service_, YMmDNSTxtRecordKeyPair *keyPairs[], size_t nPairs )
+bool YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service_, YMmDNSTxtRecordKeyPair *keyPairs[], size_t nPairs )
 {
     __YMmDNSServiceRef service = (__YMmDNSServiceRef)service_;
     
@@ -163,7 +163,7 @@ ymbool YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service_, YMmDNSTxtRecordKeyP
     return true;
 }
 
-ymbool YMmDNSServiceStart( YMmDNSServiceRef service_ )
+bool YMmDNSServiceStart( YMmDNSServiceRef service_ )
 {
     __YMmDNSServiceRef service = (__YMmDNSServiceRef)service_;
     
@@ -212,7 +212,7 @@ ymbool YMmDNSServiceStart( YMmDNSServiceRef service_ )
     return true;
 }
 
-ymbool YMmDNSServiceStop( YMmDNSServiceRef service_, ymbool synchronous )
+bool YMmDNSServiceStop( YMmDNSServiceRef service_, bool synchronous )
 {
     __YMmDNSServiceRef service = (__YMmDNSServiceRef)service_;
     
@@ -221,7 +221,7 @@ ymbool YMmDNSServiceStop( YMmDNSServiceRef service_, ymbool synchronous )
     
     service->advertising = false; // let event thread fall out
     
-    ymbool okay = true;
+    bool okay = true;
     
     DNSServiceRefDeallocate(*(service->dnsService));
     free(service->dnsService);

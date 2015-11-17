@@ -46,15 +46,15 @@ void YMSessionSetServerCallbacks(YMSessionRef session,ym_session_should_accept_f
 void YMSessionSetSharedCallbacks(YMSessionRef session, ym_session_connected_func connected, ym_session_interrupted_func interrupted,
                                  ym_session_new_stream_func new_, ym_session_stream_closing_func closing);
 
-ymbool YMSessionClientStart(YMSessionRef session);
-ymbool YMSessionClientResolvePeer(YMSessionRef session, YMPeerRef peer);
-ymbool YMSessionClientConnectToPeer(YMSessionRef session, YMPeerRef peer, ymbool sync);
-ymbool YMSessionClientStop(YMSessionRef session);
+bool YMSessionClientStart(YMSessionRef session);
+bool YMSessionClientResolvePeer(YMSessionRef session, YMPeerRef peer);
+bool YMSessionClientConnectToPeer(YMSessionRef session, YMPeerRef peer, bool sync);
+bool YMSessionClientStop(YMSessionRef session);
 
 YMConnectionRef YMSessionGetDefaultConnection(YMSessionRef session);
 YMDictionaryRef YMSessionGetConnections(YMSessionRef session);
 
-ymbool YMSessionServerStart(YMSessionRef session);
-ymbool YMSessionServerStop(YMSessionRef session);
+bool YMSessionServerStart(YMSessionRef session);
+bool YMSessionServerStop(YMSessionRef session);
 
 #endif /* YMSession_h */

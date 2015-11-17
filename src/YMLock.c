@@ -58,7 +58,7 @@ void YMLockLock(YMLockRef lock_)
 {
     __YMLockRef lock = (__YMLockRef)lock_;
     
-    ymbool okay = YMLockMutex(lock->mutex);
+    bool okay = YMLockMutex(lock->mutex);
     
 //#ifndef DUMB_AND_DUMBER
     if ( ! okay )
@@ -80,7 +80,7 @@ void _YMLockFree(YMTypeRef object)
 {
     __YMLockRef lock = (__YMLockRef)object;
     
-    ymbool okay = YMDestroyMutex(lock->mutex);
+    bool okay = YMDestroyMutex(lock->mutex);
     if ( ! okay )
         ymerr("warning: cannot destroy mutex (%s), something may deadlock", YMSTR(lock->name));
     

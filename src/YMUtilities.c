@@ -236,10 +236,10 @@ catch_release:
     return outMutex;
 }
 
-ymbool YMLockMutex(pthread_mutex_t *mutex)
+bool YMLockMutex(pthread_mutex_t *mutex)
 {
     int result = pthread_mutex_lock(mutex);
-    ymbool okay = true;
+    bool okay = true;
     switch(result)
     {
         case 0:
@@ -260,10 +260,10 @@ ymbool YMLockMutex(pthread_mutex_t *mutex)
     return okay;
 }
 
-ymbool YMUnlockMutex(pthread_mutex_t *mutex)
+bool YMUnlockMutex(pthread_mutex_t *mutex)
 {
     int result = pthread_mutex_unlock(mutex);
-    ymbool okay = true;
+    bool okay = true;
     switch(result)
     {
         case 0:
@@ -284,7 +284,7 @@ ymbool YMUnlockMutex(pthread_mutex_t *mutex)
     return okay;
 }
 
-ymbool YMDestroyMutex(pthread_mutex_t *mutex)
+bool YMDestroyMutex(pthread_mutex_t *mutex)
 {
     int result = pthread_mutex_destroy(mutex);
     return ( result == 0 );

@@ -28,4 +28,12 @@ YMStringRef YMStringCreateByAppendingString(YMStringRef base, YMStringRef append
 size_t YMStringGetLength(YMStringRef string);
 const char *YMStringGetCString(YMStringRef string);
 
+#define YMSTR(x) YMStringGetCString(x)
+#define YMSTRC(x) YMAutorelease(YMStringCreateWithCString(x))
+// Token pasting of ',' and __VA_ARGS__ is a GNU extension
+YM_WPPUSH
+#define YMSTRCF(x,...) YMAutorelease(YMStringCreateWithFormat((x),##__VA_ARGS__))
+YM_WPOP
+#define YMLEN(x) YMStringGetLength(x)
+
 #endif /* YMString_h */

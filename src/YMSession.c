@@ -201,7 +201,7 @@ void _YMSessionFree(YMTypeRef object)
 
 #pragma mark client
 
-ymbool YMSessionClientStart(YMSessionRef session_)
+bool YMSessionClientStart(YMSessionRef session_)
 {
     __YMSessionRef session = (__YMSessionRef)session_;
     
@@ -232,7 +232,7 @@ ymbool YMSessionClientStart(YMSessionRef session_)
     return true;
 }
 
-ymbool YMSessionClientStop(YMSessionRef session_)
+bool YMSessionClientStop(YMSessionRef session_)
 {
     __YMSessionRef session = (__YMSessionRef)session_;
 
@@ -252,7 +252,7 @@ ymbool YMSessionClientStop(YMSessionRef session_)
     return okay;
 }
 
-ymbool YMSessionClientResolvePeer(YMSessionRef session_, YMPeerRef peer)
+bool YMSessionClientResolvePeer(YMSessionRef session_, YMPeerRef peer)
 {
     __YMSessionRef session = (__YMSessionRef)session_;
     
@@ -280,7 +280,7 @@ typedef struct __ym_session_connect_async_context_def
 } ___ym_session_connect_async_context_def;
 typedef struct __ym_session_connect_async_context_def *__ym_session_connect_async_context;
 
-ymbool YMSessionClientConnectToPeer(YMSessionRef session_, YMPeerRef peer, ymbool sync)
+bool YMSessionClientConnectToPeer(YMSessionRef session_, YMPeerRef peer, bool sync)
 {
     __YMSessionRef session = (__YMSessionRef)session_;
     
@@ -406,7 +406,7 @@ typedef struct __ym_session_accept_thread_context_def
 } _ym_session_accept_thread_context_def;
 typedef struct __ym_session_accept_thread_context_def *__ym_session_accept_thread_context;
 
-ymbool YMSessionServerStart(YMSessionRef session_)
+bool YMSessionServerStart(YMSessionRef session_)
 {
     __YMSessionRef session = (__YMSessionRef)session_;
     
@@ -509,7 +509,7 @@ rewind_fail:
     return false;
 }
 
-ymbool YMSessionServerStop(YMSessionRef session_)
+bool YMSessionServerStop(YMSessionRef session_)
 {
     __YMSessionRef session = (__YMSessionRef)session_;
     session->acceptThreadExitFlag = true;
