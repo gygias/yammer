@@ -38,8 +38,6 @@
 		63225D6E1BE91B3B00C28F05 /* YMLog.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D6C1BE91B3B00C28F05 /* YMLog.h */; };
 		63225D981BE92B6000C28F05 /* YMBase.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D971BE92B6000C28F05 /* YMBase.c */; };
 		63225D9E1BE9372800C28F05 /* libssl.1.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63225D9D1BE9372800C28F05 /* libssl.1.0.0.dylib */; };
-		63312D051BFAF9E600039336 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 63312D041BFAF9E600039336 /* main.m */; };
-		63312D0A1BFAFD6D00039336 /* libyammer.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63225D421BE9026200C28F05 /* libyammer.dylib */; };
 		63345AC61BFAC7FD00569B3C /* YMBase.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D661BE90B2D00C28F05 /* YMBase.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		63345AC71BFAC80800569B3C /* Yammer.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5D0B1BE96D6E003292EE /* Yammer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6335CABF1BF453A800412CC9 /* YMAddress.c in Sources */ = {isa = PBXBuildFile; fileRef = 6335CABD1BF453A800412CC9 /* YMAddress.c */; };
@@ -47,7 +45,6 @@
 		6335CAC21BF47A1D00412CC9 /* ConnectionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6335CAC11BF47A1D00412CC9 /* ConnectionTests.m */; };
 		6335CAC51BF480DC00412CC9 /* YMPeer.c in Sources */ = {isa = PBXBuildFile; fileRef = 6335CAC31BF480DC00412CC9 /* YMPeer.c */; };
 		6335CAC61BF480DC00412CC9 /* YMPeer.h in Headers */ = {isa = PBXBuildFile; fileRef = 6335CAC41BF480DC00412CC9 /* YMPeer.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		6335CAC91BF4A36D00412CC9 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 6335CAC81BF4A36D00412CC9 /* main.m */; };
 		63476A3F1BEAE54100D10081 /* mDNSTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 63476A3E1BEAE54100D10081 /* mDNSTests.m */; };
 		63476A411BEAEFC500D10081 /* PlexerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 63476A401BEAEFC500D10081 /* PlexerTests.m */; };
 		63476A441BEAF4DB00D10081 /* YMLock.c in Sources */ = {isa = PBXBuildFile; fileRef = 63476A421BEAF4DB00D10081 /* YMLock.c */; };
@@ -65,6 +62,8 @@
 		637E3D611BF2CD7300D702ED /* TLSTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 637E3D601BF2CD7300D702ED /* TLSTests.m */; };
 		63BD75CE1BF3F0E700D01F70 /* YMLocalSocketPair.c in Sources */ = {isa = PBXBuildFile; fileRef = 63BD75CC1BF3F0E700D01F70 /* YMLocalSocketPair.c */; };
 		63BD75CF1BF3F0E700D01F70 /* YMLocalSocketPair.h in Headers */ = {isa = PBXBuildFile; fileRef = 63BD75CD1BF3F0E700D01F70 /* YMLocalSocketPair.h */; };
+		63EEC75D1BFB6AD100990ECE /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 63DDCB311BFB68AA009F91CD /* main.c */; };
+		63EEC75E1BFB6BCF00990ECE /* libyammer.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63225D421BE9026200C28F05 /* libyammer.dylib */; };
 		63FD5B5A1BF1899800174824 /* YMRSAKeyPair.c in Sources */ = {isa = PBXBuildFile; fileRef = 63FD5B581BF1899800174824 /* YMRSAKeyPair.c */; };
 		63FD5B5B1BF1899800174824 /* YMRSAKeyPair.h in Headers */ = {isa = PBXBuildFile; fileRef = 63FD5B591BF1899800174824 /* YMRSAKeyPair.h */; };
 		63FD5B5D1BF1B93400174824 /* libcrypto.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 63FD5B5C1BF1B93400174824 /* libcrypto.tbd */; };
@@ -82,7 +81,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		63312D001BFAF9E600039336 /* CopyFiles */ = {
+		63EEC7541BFB6AA400990ECE /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = /usr/share/man/man1/;
@@ -132,9 +131,7 @@
 		63225D971BE92B6000C28F05 /* YMBase.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMBase.c; path = src/YMBase.c; sourceTree = "<group>"; };
 		63225D991BE92CBA00C28F05 /* YMDebug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMDebug.h; path = private/YMDebug.h; sourceTree = "<group>"; };
 		63225D9D1BE9372800C28F05 /* libssl.1.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libssl.1.0.0.dylib; path = /opt/local/lib/libssl.1.0.0.dylib; sourceTree = "<absolute>"; };
-		63312D021BFAF9E600039336 /* chat */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = chat; sourceTree = BUILT_PRODUCTS_DIR; };
-		63312D041BFAF9E600039336 /* main.m */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; name = main.m; path = ../misc/chat/main.m; sourceTree = "<group>"; };
-		63312D091BFAFD3100039336 /* defs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = defs.h; path = ../misc/chat/defs.h; sourceTree = "<group>"; };
+		63312D091BFAFD3100039336 /* defs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = defs.h; sourceTree = "<group>"; };
 		6332A4B91BEFCDCF004BB764 /* YammerTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = YammerTests.h; sourceTree = "<group>"; };
 		6332A4BA1BF12C12004BB764 /* lldb_source.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = lldb_source.sh; sourceTree = "<group>"; };
 		6332A4BB1BF134DD004BB764 /* yammer.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = yammer.pch; path = private/yammer.pch; sourceTree = "<group>"; };
@@ -145,7 +142,6 @@
 		6335CAC31BF480DC00412CC9 /* YMPeer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMPeer.c; path = src/YMPeer.c; sourceTree = "<group>"; };
 		6335CAC41BF480DC00412CC9 /* YMPeer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMPeer.h; path = yammer/YMPeer.h; sourceTree = "<group>"; };
 		6335CAC71BF4813A00412CC9 /* YMPeerPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMPeerPriv.h; path = private/YMPeerPriv.h; sourceTree = "<group>"; };
-		6335CAC81BF4A36D00412CC9 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = ../../misc/chat/main.m; sourceTree = "<group>"; };
 		63476A3E1BEAE54100D10081 /* mDNSTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = mDNSTests.m; sourceTree = "<group>"; };
 		63476A401BEAEFC500D10081 /* PlexerTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PlexerTests.m; sourceTree = "<group>"; };
 		63476A421BEAF4DB00D10081 /* YMLock.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMLock.c; path = src/YMLock.c; sourceTree = "<group>"; };
@@ -170,6 +166,8 @@
 		63A40EF81BEC239C0085ABD0 /* YMThreadPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMThreadPriv.h; path = private/YMThreadPriv.h; sourceTree = "<group>"; };
 		63BD75CC1BF3F0E700D01F70 /* YMLocalSocketPair.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMLocalSocketPair.c; path = src/YMLocalSocketPair.c; sourceTree = "<group>"; };
 		63BD75CD1BF3F0E700D01F70 /* YMLocalSocketPair.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMLocalSocketPair.h; path = private/YMLocalSocketPair.h; sourceTree = "<group>"; };
+		63DDCB311BFB68AA009F91CD /* main.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = main.c; sourceTree = "<group>"; };
+		63EEC7561BFB6AA400990ECE /* chat */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = chat; sourceTree = BUILT_PRODUCTS_DIR; };
 		63FD5B581BF1899800174824 /* YMRSAKeyPair.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMRSAKeyPair.c; path = src/YMRSAKeyPair.c; sourceTree = "<group>"; };
 		63FD5B591BF1899800174824 /* YMRSAKeyPair.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMRSAKeyPair.h; path = private/YMRSAKeyPair.h; sourceTree = "<group>"; };
 		63FD5B5C1BF1B93400174824 /* libcrypto.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libcrypto.tbd; path = usr/lib/libcrypto.tbd; sourceTree = SDKROOT; };
@@ -194,11 +192,11 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		63312CFF1BFAF9E600039336 /* Frameworks */ = {
+		63EEC7531BFB6AA400990ECE /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				63312D0A1BFAFD6D00039336 /* libyammer.dylib in Frameworks */,
+				63EEC75E1BFB6BCF00990ECE /* libyammer.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -218,7 +216,6 @@
 				637E3D601BF2CD7300D702ED /* TLSTests.m */,
 				6332A4BA1BF12C12004BB764 /* lldb_source.sh */,
 				6335CAC11BF47A1D00412CC9 /* ConnectionTests.m */,
-				6335CAC81BF4A36D00412CC9 /* main.m */,
 			);
 			path = YammerTests;
 			sourceTree = "<group>";
@@ -240,7 +237,7 @@
 			children = (
 				63225D421BE9026200C28F05 /* libyammer.dylib */,
 				630A5D001BE96CE9003292EE /* YammerTests.xctest */,
-				63312D021BFAF9E600039336 /* chat */,
+				63EEC7561BFB6AA400990ECE /* chat */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -257,11 +254,11 @@
 		63312D031BFAF9E600039336 /* chat */ = {
 			isa = PBXGroup;
 			children = (
-				63312D041BFAF9E600039336 /* main.m */,
+				63DDCB311BFB68AA009F91CD /* main.c */,
 				63312D091BFAFD3100039336 /* defs.h */,
 			);
 			name = chat;
-			path = testprompt;
+			path = ../misc/chat;
 			sourceTree = "<group>";
 		};
 		63476A471BEB05B400D10081 /* Public */ = {
@@ -415,21 +412,21 @@
 			productReference = 63225D421BE9026200C28F05 /* libyammer.dylib */;
 			productType = "com.apple.product-type.library.dynamic";
 		};
-		63312D011BFAF9E600039336 /* chat */ = {
+		63EEC7551BFB6AA400990ECE /* chat */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 63312D061BFAF9E600039336 /* Build configuration list for PBXNativeTarget "chat" */;
+			buildConfigurationList = 63EEC75A1BFB6AA400990ECE /* Build configuration list for PBXNativeTarget "chat" */;
 			buildPhases = (
-				63312CFE1BFAF9E600039336 /* Sources */,
-				63312CFF1BFAF9E600039336 /* Frameworks */,
-				63312D001BFAF9E600039336 /* CopyFiles */,
+				63EEC7521BFB6AA400990ECE /* Sources */,
+				63EEC7531BFB6AA400990ECE /* Frameworks */,
+				63EEC7541BFB6AA400990ECE /* CopyFiles */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			name = chat;
-			productName = testprompt;
-			productReference = 63312D021BFAF9E600039336 /* chat */;
+			productName = chat;
+			productReference = 63EEC7561BFB6AA400990ECE /* chat */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -439,7 +436,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0710;
-				ORGANIZATIONNAME = "Combobulated Software";
+				ORGANIZATIONNAME = combobulated;
 				TargetAttributes = {
 					630A5CFF1BE96CE9003292EE = {
 						CreatedOnToolsVersion = 7.1;
@@ -447,7 +444,7 @@
 					63225D411BE9026200C28F05 = {
 						CreatedOnToolsVersion = 7.1;
 					};
-					63312D011BFAF9E600039336 = {
+					63EEC7551BFB6AA400990ECE = {
 						CreatedOnToolsVersion = 7.1;
 					};
 				};
@@ -466,7 +463,7 @@
 			targets = (
 				63225D411BE9026200C28F05 /* yammer */,
 				630A5CFF1BE96CE9003292EE /* YammerTests */,
-				63312D011BFAF9E600039336 /* chat */,
+				63EEC7551BFB6AA400990ECE /* chat */,
 			);
 		};
 /* End PBXProject section */
@@ -486,7 +483,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6335CAC91BF4A36D00412CC9 /* main.m in Sources */,
 				630A5D031BE96CE9003292EE /* YammerTests.m in Sources */,
 				637E3D611BF2CD7300D702ED /* TLSTests.m in Sources */,
 				631683941BEEF1FB00F6AB99 /* DictionaryTests.m in Sources */,
@@ -528,11 +524,11 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		63312CFE1BFAF9E600039336 /* Sources */ = {
+		63EEC7521BFB6AA400990ECE /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				63312D051BFAF9E600039336 /* main.m in Sources */,
+				63EEC75D1BFB6AD100990ECE /* main.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -756,18 +752,16 @@
 			};
 			name = Release;
 		};
-		63312D071BFAF9E600039336 /* Debug */ = {
+		63EEC75B1BFB6AA400990ECE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
 		};
-		63312D081BFAF9E600039336 /* Release */ = {
+		63EEC75C1BFB6AA400990ECE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -802,14 +796,13 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		63312D061BFAF9E600039336 /* Build configuration list for PBXNativeTarget "chat" */ = {
+		63EEC75A1BFB6AA400990ECE /* Build configuration list for PBXNativeTarget "chat" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				63312D071BFAF9E600039336 /* Debug */,
-				63312D081BFAF9E600039336 /* Release */,
+				63EEC75B1BFB6AA400990ECE /* Debug */,
+				63EEC75C1BFB6AA400990ECE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
