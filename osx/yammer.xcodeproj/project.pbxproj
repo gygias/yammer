@@ -47,7 +47,7 @@
 		6335CAC21BF47A1D00412CC9 /* ConnectionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6335CAC11BF47A1D00412CC9 /* ConnectionTests.m */; };
 		6335CAC51BF480DC00412CC9 /* YMPeer.c in Sources */ = {isa = PBXBuildFile; fileRef = 6335CAC31BF480DC00412CC9 /* YMPeer.c */; };
 		6335CAC61BF480DC00412CC9 /* YMPeer.h in Headers */ = {isa = PBXBuildFile; fileRef = 6335CAC41BF480DC00412CC9 /* YMPeer.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		6335CAC91BF4A36D00412CC9 /* SessionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6335CAC81BF4A36D00412CC9 /* SessionTests.m */; };
+		6335CAC91BF4A36D00412CC9 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 6335CAC81BF4A36D00412CC9 /* main.m */; };
 		63476A3F1BEAE54100D10081 /* mDNSTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 63476A3E1BEAE54100D10081 /* mDNSTests.m */; };
 		63476A411BEAEFC500D10081 /* PlexerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 63476A401BEAEFC500D10081 /* PlexerTests.m */; };
 		63476A441BEAF4DB00D10081 /* YMLock.c in Sources */ = {isa = PBXBuildFile; fileRef = 63476A421BEAF4DB00D10081 /* YMLock.c */; };
@@ -133,8 +133,8 @@
 		63225D991BE92CBA00C28F05 /* YMDebug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMDebug.h; path = private/YMDebug.h; sourceTree = "<group>"; };
 		63225D9D1BE9372800C28F05 /* libssl.1.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libssl.1.0.0.dylib; path = /opt/local/lib/libssl.1.0.0.dylib; sourceTree = "<absolute>"; };
 		63312D021BFAF9E600039336 /* chat */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = chat; sourceTree = BUILT_PRODUCTS_DIR; };
-		63312D041BFAF9E600039336 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = main.m; path = ../../misc/chat/main.m; sourceTree = "<group>"; };
-		63312D091BFAFD3100039336 /* defs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = defs.h; path = ../../misc/chat/defs.h; sourceTree = "<group>"; };
+		63312D041BFAF9E600039336 /* main.m */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; name = main.m; path = ../misc/chat/main.m; sourceTree = "<group>"; };
+		63312D091BFAFD3100039336 /* defs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = defs.h; path = ../misc/chat/defs.h; sourceTree = "<group>"; };
 		6332A4B91BEFCDCF004BB764 /* YammerTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = YammerTests.h; sourceTree = "<group>"; };
 		6332A4BA1BF12C12004BB764 /* lldb_source.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = lldb_source.sh; sourceTree = "<group>"; };
 		6332A4BB1BF134DD004BB764 /* yammer.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = yammer.pch; path = private/yammer.pch; sourceTree = "<group>"; };
@@ -145,7 +145,7 @@
 		6335CAC31BF480DC00412CC9 /* YMPeer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMPeer.c; path = src/YMPeer.c; sourceTree = "<group>"; };
 		6335CAC41BF480DC00412CC9 /* YMPeer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMPeer.h; path = yammer/YMPeer.h; sourceTree = "<group>"; };
 		6335CAC71BF4813A00412CC9 /* YMPeerPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMPeerPriv.h; path = private/YMPeerPriv.h; sourceTree = "<group>"; };
-		6335CAC81BF4A36D00412CC9 /* SessionTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SessionTests.m; sourceTree = "<group>"; };
+		6335CAC81BF4A36D00412CC9 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = ../../misc/chat/main.m; sourceTree = "<group>"; };
 		63476A3E1BEAE54100D10081 /* mDNSTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = mDNSTests.m; sourceTree = "<group>"; };
 		63476A401BEAEFC500D10081 /* PlexerTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PlexerTests.m; sourceTree = "<group>"; };
 		63476A421BEAF4DB00D10081 /* YMLock.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMLock.c; path = src/YMLock.c; sourceTree = "<group>"; };
@@ -218,7 +218,7 @@
 				637E3D601BF2CD7300D702ED /* TLSTests.m */,
 				6332A4BA1BF12C12004BB764 /* lldb_source.sh */,
 				6335CAC11BF47A1D00412CC9 /* ConnectionTests.m */,
-				6335CAC81BF4A36D00412CC9 /* SessionTests.m */,
+				6335CAC81BF4A36D00412CC9 /* main.m */,
 			);
 			path = YammerTests;
 			sourceTree = "<group>";
@@ -486,7 +486,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6335CAC91BF4A36D00412CC9 /* SessionTests.m in Sources */,
+				6335CAC91BF4A36D00412CC9 /* main.m in Sources */,
 				630A5D031BE96CE9003292EE /* YammerTests.m in Sources */,
 				637E3D611BF2CD7300D702ED /* TLSTests.m in Sources */,
 				631683941BEEF1FB00F6AB99 /* DictionaryTests.m in Sources */,
@@ -809,6 +809,7 @@
 				63312D081BFAF9E600039336 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
