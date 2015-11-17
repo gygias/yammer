@@ -9,7 +9,19 @@
 #ifndef YMBase_h
 #define YMBase_h
 
+#ifndef WIN32
 #define YM_VARGS_SENTINEL_REQUIRED __attribute__((sentinel(0,1)))
+#define YM_WPPUSH \
+    _Pragma("GCC diagnostic push") \
+    _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
+#define YM_WPOP \
+    _Pragma("GCC diagnostic pop")
+#else
+#define YM_VARGS_SENTINEL_REQUIRED
+#define __printflike(x,y)
+#define YM_WPPUSH
+#define YM_WPOP
+#endif
 
 typedef const void *YMTypeRef;
 typedef char YMTypeID;
@@ -24,11 +36,5 @@ typedef enum
     YMIOEOF = 0,
     YMIOError = -1
 } YMIOResult;
-
-#define YM_WPPUSH \
-    _Pragma("GCC diagnostic push") \
-    _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
-#define YM_WPOP \
-    _Pragma("GCC diagnostic pop")
 
 #endif /* YMBase_h */

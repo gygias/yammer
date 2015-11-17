@@ -9,7 +9,9 @@
 #ifndef YMLock_h
 #define YMLock_h
 
+#ifndef WIN32
 #include <pthread.h>
+#endif
 
 typedef enum
 {
@@ -35,6 +37,10 @@ void YMLockLock(YMLockRef lock);
 void YMLockUnlock(YMLockRef lock);
 
 // for YMSemaphore
+#ifndef WIN32
 pthread_mutex_t *_YMLockGetMutex(YMLockRef lock);
+#else
+HANDLE _YMLockGetMutex(YMLockRef lock);
+#endif
 
 #endif /* YMLock_h */
