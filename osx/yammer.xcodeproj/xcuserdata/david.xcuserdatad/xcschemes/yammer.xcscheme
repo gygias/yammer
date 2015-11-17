@@ -14,9 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "63225D411BE9026200C28F05"
-               BuildableName = "libyammer.dylib"
-               BlueprintName = "yammer"
+               BlueprintIdentifier = "63345ACC1BFAC91300569B3C"
+               BuildableName = "Yammer.framework"
+               BlueprintName = "Yammer"
                ReferencedContainer = "container:yammer.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -26,60 +26,10 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      shouldUseLaunchSchemeArgsEnv = "NO"
-      codeCoverageEnabled = "YES">
-      <PreActions>
-         <ExecutionAction
-            ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
-            <ActionContent
-               title = "Run Script"
-               scriptText = "lldb --source &quot;$SRCROOT/YammerTests/lldb_source.sh&quot;&#10;"
-               shellToInvoke = "/bin/bash">
-            </ActionContent>
-         </ExecutionAction>
-      </PreActions>
+      shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "630A5CFF1BE96CE9003292EE"
-               BuildableName = "YammerTests.xctest"
-               BlueprintName = "YammerTests"
-               ReferencedContainer = "container:yammer.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
       </Testables>
-      <MacroExpansion>
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "63225D411BE9026200C28F05"
-            BuildableName = "libyammer.dylib"
-            BlueprintName = "yammer"
-            ReferencedContainer = "container:yammer.xcodeproj">
-         </BuildableReference>
-      </MacroExpansion>
       <AdditionalOptions>
-         <AdditionalOption
-            key = "MallocStackLogging"
-            value = ""
-            isEnabled = "YES">
-         </AdditionalOption>
-         <AdditionalOption
-            key = "DYLD_INSERT_LIBRARIES"
-            value = "/usr/lib/libgmalloc.dylib"
-            isEnabled = "YES">
-         </AdditionalOption>
-         <AdditionalOption
-            key = "MallocGuardEdges"
-            value = ""
-            isEnabled = "YES">
-         </AdditionalOption>
-         <AdditionalOption
-            key = "MallocScribble"
-            value = ""
-            isEnabled = "YES">
-         </AdditionalOption>
       </AdditionalOptions>
    </TestAction>
    <LaunchAction
@@ -95,9 +45,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "63225D411BE9026200C28F05"
-            BuildableName = "libyammer.dylib"
-            BlueprintName = "yammer"
+            BlueprintIdentifier = "63345ACC1BFAC91300569B3C"
+            BuildableName = "Yammer.framework"
+            BlueprintName = "Yammer"
             ReferencedContainer = "container:yammer.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -113,9 +63,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "63225D411BE9026200C28F05"
-            BuildableName = "libyammer.dylib"
-            BlueprintName = "yammer"
+            BlueprintIdentifier = "63345ACC1BFAC91300569B3C"
+            BuildableName = "Yammer.framework"
+            BlueprintName = "Yammer"
             ReferencedContainer = "container:yammer.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
