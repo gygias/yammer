@@ -13,9 +13,9 @@
 		630A5CED1BE9428C003292EE /* YMmDNSService.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CEB1BE9428C003292EE /* YMmDNSService.c */; };
 		630A5CEE1BE9428C003292EE /* YMmDNSService.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5CEC1BE9428C003292EE /* YMmDNSService.h */; };
 		630A5CF21BE950F1003292EE /* YMConnection.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CF01BE950F1003292EE /* YMConnection.c */; };
-		630A5CF31BE950F1003292EE /* YMConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5CF11BE950F1003292EE /* YMConnection.h */; };
+		630A5CF31BE950F1003292EE /* YMConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5CF11BE950F1003292EE /* YMConnection.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		630A5CF61BE9518A003292EE /* YMSession.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CF41BE9518A003292EE /* YMSession.c */; };
-		630A5CF71BE9518A003292EE /* YMSession.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5CF51BE9518A003292EE /* YMSession.h */; };
+		630A5CF71BE9518A003292EE /* YMSession.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5CF51BE9518A003292EE /* YMSession.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		630A5CFA1BE95E36003292EE /* YMThread.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CF81BE95E36003292EE /* YMThread.c */; };
 		630A5CFB1BE95E36003292EE /* YMThread.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5CF91BE95E36003292EE /* YMThread.h */; };
 		630A5D031BE96CE9003292EE /* YammerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 630A5D021BE96CE9003292EE /* YammerTests.m */; };
@@ -27,7 +27,7 @@
 		63225D541BE9074700C28F05 /* YMPipe.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D521BE9074700C28F05 /* YMPipe.c */; };
 		63225D551BE9074700C28F05 /* YMPipe.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D531BE9074700C28F05 /* YMPipe.h */; };
 		63225D5C1BE9092500C28F05 /* YMStream.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D5A1BE9092500C28F05 /* YMStream.c */; };
-		63225D5D1BE9092500C28F05 /* YMStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D5B1BE9092500C28F05 /* YMStream.h */; };
+		63225D5D1BE9092500C28F05 /* YMStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D5B1BE9092500C28F05 /* YMStream.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		63225D601BE909BB00C28F05 /* YMPlexer.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D5E1BE909BB00C28F05 /* YMPlexer.c */; };
 		63225D611BE909BB00C28F05 /* YMPlexer.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D5F1BE909BB00C28F05 /* YMPlexer.h */; };
 		63225D641BE90A6400C28F05 /* YMSecurityProvider.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D621BE90A6400C28F05 /* YMSecurityProvider.c */; };
@@ -38,11 +38,13 @@
 		63225D6E1BE91B3B00C28F05 /* YMLog.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D6C1BE91B3B00C28F05 /* YMLog.h */; };
 		63225D981BE92B6000C28F05 /* YMBase.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D971BE92B6000C28F05 /* YMBase.c */; };
 		63225D9E1BE9372800C28F05 /* libssl.1.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63225D9D1BE9372800C28F05 /* libssl.1.0.0.dylib */; };
+		63345AC61BFAC7FD00569B3C /* YMBase.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D661BE90B2D00C28F05 /* YMBase.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		63345AC71BFAC80800569B3C /* Yammer.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5D0B1BE96D6E003292EE /* Yammer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6335CABF1BF453A800412CC9 /* YMAddress.c in Sources */ = {isa = PBXBuildFile; fileRef = 6335CABD1BF453A800412CC9 /* YMAddress.c */; };
 		6335CAC01BF453A800412CC9 /* YMAddress.h in Headers */ = {isa = PBXBuildFile; fileRef = 6335CABE1BF453A800412CC9 /* YMAddress.h */; };
 		6335CAC21BF47A1D00412CC9 /* ConnectionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6335CAC11BF47A1D00412CC9 /* ConnectionTests.m */; };
 		6335CAC51BF480DC00412CC9 /* YMPeer.c in Sources */ = {isa = PBXBuildFile; fileRef = 6335CAC31BF480DC00412CC9 /* YMPeer.c */; };
-		6335CAC61BF480DC00412CC9 /* YMPeer.h in Headers */ = {isa = PBXBuildFile; fileRef = 6335CAC41BF480DC00412CC9 /* YMPeer.h */; };
+		6335CAC61BF480DC00412CC9 /* YMPeer.h in Headers */ = {isa = PBXBuildFile; fileRef = 6335CAC41BF480DC00412CC9 /* YMPeer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6335CAC91BF4A36D00412CC9 /* SessionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6335CAC81BF4A36D00412CC9 /* SessionTests.m */; };
 		63476A3F1BEAE54100D10081 /* mDNSTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 63476A3E1BEAE54100D10081 /* mDNSTests.m */; };
 		63476A411BEAEFC500D10081 /* PlexerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 63476A401BEAEFC500D10081 /* PlexerTests.m */; };
@@ -55,7 +57,7 @@
 		63476A531BEB319000D10081 /* YMSemaphore.c in Sources */ = {isa = PBXBuildFile; fileRef = 63476A511BEB319000D10081 /* YMSemaphore.c */; };
 		63476A541BEB319000D10081 /* YMSemaphore.h in Headers */ = {isa = PBXBuildFile; fileRef = 63476A521BEB319000D10081 /* YMSemaphore.h */; };
 		637816C71BF68B8F00BF79E2 /* YMString.c in Sources */ = {isa = PBXBuildFile; fileRef = 637816C51BF68B8F00BF79E2 /* YMString.c */; };
-		637816C81BF68B8F00BF79E2 /* YMString.h in Headers */ = {isa = PBXBuildFile; fileRef = 637816C61BF68B8F00BF79E2 /* YMString.h */; };
+		637816C81BF68B8F00BF79E2 /* YMString.h in Headers */ = {isa = PBXBuildFile; fileRef = 637816C61BF68B8F00BF79E2 /* YMString.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		637E3D5D1BF262EE00D702ED /* YMX509Certificate.c in Sources */ = {isa = PBXBuildFile; fileRef = 637E3D5B1BF262EE00D702ED /* YMX509Certificate.c */; };
 		637E3D5E1BF262EE00D702ED /* YMX509Certificate.h in Headers */ = {isa = PBXBuildFile; fileRef = 637E3D5C1BF262EE00D702ED /* YMX509Certificate.h */; };
 		637E3D611BF2CD7300D702ED /* TLSTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 637E3D601BF2CD7300D702ED /* TLSTests.m */; };
@@ -225,6 +227,7 @@
 				63476A461BEAF4E900D10081 /* Utility */,
 			);
 			name = src;
+			path = ..;
 			sourceTree = "<group>";
 		};
 		63225D9C1BE9314100C28F05 /* libs */ = {
@@ -324,26 +327,28 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				63476A451BEAF4DB00D10081 /* YMLock.h in Headers */,
+				63345AC61BFAC7FD00569B3C /* YMBase.h in Headers */,
+				63345AC71BFAC80800569B3C /* Yammer.h in Headers */,
+				630A5CF71BE9518A003292EE /* YMSession.h in Headers */,
+				6335CAC61BF480DC00412CC9 /* YMPeer.h in Headers */,
 				630A5CF31BE950F1003292EE /* YMConnection.h in Headers */,
+				637816C81BF68B8F00BF79E2 /* YMString.h in Headers */,
+				63225D5D1BE9092500C28F05 /* YMStream.h in Headers */,
+				63476A451BEAF4DB00D10081 /* YMLock.h in Headers */,
 				63225D6A1BE9184000C28F05 /* YMUtilities.h in Headers */,
 				63476A501BEB159C00D10081 /* YMDictionary.h in Headers */,
 				630A5CFB1BE95E36003292EE /* YMThread.h in Headers */,
 				637E3D5E1BF262EE00D702ED /* YMX509Certificate.h in Headers */,
-				63225D5D1BE9092500C28F05 /* YMStream.h in Headers */,
 				63476A4C1BEB074C00D10081 /* YMLinkedList.h in Headers */,
 				63225D611BE909BB00C28F05 /* YMPlexer.h in Headers */,
 				63225D6E1BE91B3B00C28F05 /* YMLog.h in Headers */,
 				63225D551BE9074700C28F05 /* YMPipe.h in Headers */,
 				630A5CEA1BE93BEF003292EE /* YMTLSProvider.h in Headers */,
-				630A5CF71BE9518A003292EE /* YMSession.h in Headers */,
 				6307F77E1BECA44A009C64CD /* YMStreamPriv.h in Headers */,
 				6335CAC01BF453A800412CC9 /* YMAddress.h in Headers */,
 				630A5D171BE9777C003292EE /* YMmDNSBrowser.h in Headers */,
 				63476A541BEB319000D10081 /* YMSemaphore.h in Headers */,
-				637816C81BF68B8F00BF79E2 /* YMString.h in Headers */,
 				63FD5B5B1BF1899800174824 /* YMRSAKeyPair.h in Headers */,
-				6335CAC61BF480DC00412CC9 /* YMPeer.h in Headers */,
 				630A5CEE1BE9428C003292EE /* YMmDNSService.h in Headers */,
 				63225D651BE90A6400C28F05 /* YMSecurityProvider.h in Headers */,
 				63BD75CF1BF3F0E700D01F70 /* YMLocalSocketPair.h in Headers */,
@@ -497,6 +502,10 @@
 				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = NO;
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_WARN_UNUSED_PARAMETER = NO;
+				HEADER_SEARCH_PATHS = (
+					/opt/local/include,
+					../src,
+				);
 				INFOPLIST_FILE = YammerTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.combobulated.YammerTests;
@@ -514,6 +523,10 @@
 				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = NO;
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_WARN_UNUSED_PARAMETER = NO;
+				HEADER_SEARCH_PATHS = (
+					/opt/local/include,
+					../src,
+				);
 				INFOPLIST_FILE = YammerTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.combobulated.YammerTests;
@@ -651,7 +664,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				ENABLE_NS_ASSERTIONS = YES;
 				EXECUTABLE_PREFIX = lib;
-				GCC_PREFIX_HEADER = "src/yammer-PrefixHeader.pch";
+				GCC_PREFIX_HEADER = "../src/yammer-PrefixHeader.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"YM_TEST_BOOL_USE=1",
@@ -675,7 +688,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				ENABLE_NS_ASSERTIONS = YES;
 				EXECUTABLE_PREFIX = lib;
-				GCC_PREFIX_HEADER = "src/yammer-PrefixHeader.pch";
+				GCC_PREFIX_HEADER = "../src/yammer-PrefixHeader.pch";
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
 				LIBRARY_SEARCH_PATHS = (
