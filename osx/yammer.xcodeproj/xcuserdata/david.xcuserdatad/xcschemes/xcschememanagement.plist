@@ -19,6 +19,11 @@
 			<key>orderHint</key>
 			<integer>1</integer>
 		</dict>
+		<key>chat.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>3</integer>
+		</dict>
 		<key>yammer.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
@@ -38,6 +43,11 @@
 			<true/>
 		</dict>
 		<key>63225D411BE9026200C28F05</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>63312D011BFAF9E600039336</key>
 		<dict>
 			<key>primary</key>
 			<true/>

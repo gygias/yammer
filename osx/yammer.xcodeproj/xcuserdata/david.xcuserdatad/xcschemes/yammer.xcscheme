@@ -15,8 +15,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "63225D411BE9026200C28F05"
-               BuildableName = "liblibyammer.dylib"
-               BlueprintName = "libyammer"
+               BuildableName = "libyammer.dylib"
+               BlueprintName = "yammer"
                ReferencedContainer = "container:yammer.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -54,8 +54,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "63225D411BE9026200C28F05"
-            BuildableName = "liblibyammer.dylib"
-            BlueprintName = "libyammer"
+            BuildableName = "libyammer.dylib"
+            BlueprintName = "yammer"
             ReferencedContainer = "container:yammer.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -96,8 +96,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "63225D411BE9026200C28F05"
-            BuildableName = "liblibyammer.dylib"
-            BlueprintName = "libyammer"
+            BuildableName = "libyammer.dylib"
+            BlueprintName = "yammer"
             ReferencedContainer = "container:yammer.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -114,8 +114,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "63225D411BE9026200C28F05"
-            BuildableName = "liblibyammer.dylib"
-            BlueprintName = "libyammer"
+            BuildableName = "libyammer.dylib"
+            BlueprintName = "yammer"
             ReferencedContainer = "container:yammer.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
