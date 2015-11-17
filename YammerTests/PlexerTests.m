@@ -28,8 +28,6 @@
 #define PlexerTest1EndDate ([NSDate dateWithTimeIntervalSinceNow:15])
 #endif
 
-BOOL    gTimeBasedEnd = NO;
-
 #define     PlexerTest1RandomMessages true // todo
 #define     PlexerTest1RandomMessageMaxLength 1024
 #define     PlexerTest1StreamClosuresToObserve ( PlexerTest1Threads * ( PlexerTest1NewStreamPerRoundTrip ? PlexerTest1RoundTripsPerThread : 1 ) )
@@ -44,10 +42,14 @@ typedef struct
     NSUInteger incomingStreamRoundTrips;
     YMLockRef plexerTest1Lock;
     BOOL plexerTest1Running;
+    BOOL timeBasedTimeOver;
+    BOOL awaitingInterrupt;
     
     // for comparing callback contexts
     YMPlexerRef localPlexer;
     YMPlexerRef fakeRemotePlexer;
+    YMPlexerRef closedPlexer;
+    dispatch_semaphore_t interruptNotificationSem;
     
     NSUInteger awaitingClosures;
     NSUInteger streamsCompleted;
@@ -68,6 +70,8 @@ PlexerTests *gRunningPlexerTest; // xctest seems to make a new object for each -
     plexerTest1Running = YES;
     plexerTest1Lock = YMLockCreateWithOptionsAndName(YMInternalLockType, YMSTRCF("%s",[[self className] UTF8String],NULL));
     awaitingClosures = PlexerTest1StreamClosuresToObserve;
+    awaitingInterrupt = NO;
+    timeBasedTimeOver = NO;
     self.continueAfterFailure = NO;
     streamsCompleted = 0;
     lastMessageWrittenByStreamID = [NSMutableDictionary dictionary];
@@ -88,6 +92,9 @@ void local_plexer_interrupted(YMPlexerRef plexer, void *context)
 {
     XCTAssert(plexer==localPlexer,@"localInterrupted not local");
     XCTAssert(context==(__bridge void *)gRunningPlexerTest,@"localInterrupted context doesn't match");
+    XCTAssert(awaitingInterrupt&&(fakeRemotePlexer==closedPlexer),@"got interrupt note from wrong plexer");
+    
+    dispatch_semaphore_signal(interruptNotificationSem);
 }
 
 void local_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *context)
@@ -186,10 +193,21 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
     }];
 #endif
     
-    NSLog(@"plexer test is closing the plexers");
-    gTimeBasedEnd = YES;
-    YMPlexerStop(localPlexer);
-    YMPlexerStop(fakeRemotePlexer);
+    timeBasedTimeOver = YES;
+    if ( arc4random_uniform(2) )
+    {
+        NSLog(@"closing local");
+        closedPlexer = localPlexer;
+    }
+    else
+    {
+        NSLog(@"closing remote");
+        closedPlexer = fakeRemotePlexer;
+    }
+    interruptNotificationSem = dispatch_semaphore_create(0);
+    awaitingInterrupt = YES;
+    YMPlexerStop(closedPlexer);
+    dispatch_semaphore_wait(interruptNotificationSem, DISPATCH_TIME_FOREVER);
     // join on time based fallout, check fds we know about are closed
     NSLog(@"plexer test finished %zu incoming round-trips on %d threads (%d round-trips per %s)",incomingStreamRoundTrips,
           PlexerTest1Threads,
@@ -208,7 +226,7 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
     YMStreamRef aStream = NULL;
     unsigned idx = 0;
 #ifdef PlexerTest1TimeBased
-    while ( ! gTimeBasedEnd )
+    while ( ! timeBasedTimeOver )
 #else
     for ( ; idx < PlexerTest1RoundTripsPerThread; )
 #endif
@@ -236,7 +254,7 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
         [self sendMessage:aStream :outgoingMessage];
         
         NSData *incomingMessage = [self receiveMessage:aStream];
-        if ( gTimeBasedEnd )
+        if ( timeBasedTimeOver )
             return;
         if ( protectTheList )
             YMLockLock(plexerTest1Lock);
@@ -271,7 +289,7 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
     UserMessageHeader header;
     uint16_t outLength = 0, length = sizeof(header);
     YMIOResult result = YMStreamReadUp(stream, &header, length, &outLength);
-    if ( gTimeBasedEnd )
+    if ( timeBasedTimeOver )
         return nil;
     XCTAssert(result==YMIOSuccess,@"failed to read header");
     XCTAssert(outLength==length,@"outLength!=length");
@@ -279,7 +297,7 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
     uint8_t *buffer = malloc(header.length);
     outLength = 0; length = header.length;
     result = YMStreamReadUp(stream, buffer, length, &outLength);
-    if ( gTimeBasedEnd )
+    if ( timeBasedTimeOver )
         return nil;
     XCTAssert(outLength==length,@"outLength!=length");
     XCTAssert(result==YMIOSuccess,@"failed to read buffer");
@@ -296,7 +314,10 @@ void remote_plexer_interrupted(__unused YMPlexerRef plexer, void *context)
 {
     XCTAssert(plexer==fakeRemotePlexer,@"remoteInterrupted not remote");
     XCTAssert(context==(__bridge void *)gRunningPlexerTest,@"remoteInterrupted context doesn't match");
+    XCTAssert(awaitingInterrupt&&(localPlexer==closedPlexer),@"got interrupt note from wrong plexer");
     NSLog(@"%s",__FUNCTION__);
+    
+    dispatch_semaphore_signal(interruptNotificationSem);
 }
 
 void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *context)
@@ -327,7 +348,7 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *cont
     for ( unsigned idx = 0; idx < iterations; idx++ )
     {
         NSData *incomingMessage = [self receiveMessage:stream];
-        if ( gTimeBasedEnd )
+        if ( timeBasedTimeOver )
             return;
         
         if ( protectTheList )

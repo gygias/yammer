@@ -167,11 +167,15 @@ void YMSemaphoreWait(YMSemaphoreRef semaphore_)
     
     YMLockUnlock(semaphore->lock);
 #else
+sem_retry:
     ymlog("semaphore[%s,%s]: waiting",YMSTR(semaphore->semName),YMSTR(semaphore->userName));
     int result = sem_wait(semaphore->sem);
     if ( result != 0 )
     {
-        ymerr("semaphore[%s,%s]: fatal: sem_wait failed: %d (%s)",YMSTR(semaphore->semName),YMSTR(semaphore->userName),errno,strerror(errno));
+        bool retry = ( errno == EINTR );
+        ymerr("semaphore[%s,%s]: sem_wait failed%s: %d (%s)",YMSTR(semaphore->semName),YMSTR(semaphore->userName),retry?", retrying":"",errno,strerror(errno));
+        if ( retry )
+            goto sem_retry;
         abort();
     }
     ymlog("semaphore[%s,%s]: waited!->",YMSTR(semaphore->semName),YMSTR(semaphore->userName));
