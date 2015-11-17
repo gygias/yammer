@@ -207,7 +207,8 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
     interruptNotificationSem = dispatch_semaphore_create(0);
     awaitingInterrupt = YES;
     YMPlexerStop(closedPlexer);
-    dispatch_semaphore_wait(interruptNotificationSem, DISPATCH_TIME_FOREVER);
+    long wait = dispatch_semaphore_wait(interruptNotificationSem, dispatch_time(DISPATCH_TIME_NOW, 5*NSEC_PER_SEC));
+    XCTAssert(wait==0,@"no interrupt notification");
     // join on time based fallout, check fds we know about are closed
     NSLog(@"plexer test finished %zu incoming round-trips on %d threads (%d round-trips per %s)",incomingStreamRoundTrips,
           PlexerTest1Threads,

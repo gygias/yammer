@@ -263,10 +263,9 @@ void _YMPlexerFree(YMPlexerRef plexer_)
     YMRelease(plexer->remoteAccessLock);
     YMRelease(plexer->remoteServiceThread);
     
-    // should have happened on natural interrupt, stop, or forced interrupt above,
-    // so might never be 'true' on free
-    if ( plexer->eventDeliveryThread )
-        YMRelease(plexer->eventDeliveryThread);
+    // free'd (but not null'd) in __Interrupt
+    //if ( plexer->eventDeliveryThread )
+    //    YMRelease(plexer->eventDeliveryThread);
     YMRelease(plexer->interruptionLock);
     YMRelease(plexer->downstreamReadySemaphore);
 }
@@ -1048,8 +1047,8 @@ bool __YMPlexerInterrupt(__YMPlexerRef plexer, bool requested)
             {
                 YMDictionaryKey randomKey = YMDictionaryGetRandomKey(aList);
                 __unused YMStreamRef aStream = YMDictionaryRemove(aList, randomKey);
-                //ymlog("plexer[%s]: hanging up stream %u",YMSTR(plexer->name),YM_STREAM_INFO(aStream)->streamID);
-                //_YMStreamCloseReadUpFile(aStream); // "readup" :/
+                ymlog("plexer[%s]: hanging up stream %u",YMSTR(plexer->name),YM_STREAM_INFO(aStream)->streamID);
+                _YMStreamCloseReadUpFile(aStream); // "readup" :/
                 //YMRelease(aStream);
             }
         }
@@ -1067,9 +1066,9 @@ bool __YMPlexerInterrupt(__YMPlexerRef plexer, bool requested)
     {
         // releasing a dispatch thread should cause YMThreadDispatch to set the stop flag
         // in the context struct (allocated on creation, free'd by the exiting thread)
-        // allowing it to go away.
+        // allowing it to go away. don't null it, or we'd need another handshake on the
+        // thread referencing itself via plexer and exiting.
         YMRelease(plexer->eventDeliveryThread);
-        plexer->eventDeliveryThread = NULL;
     }
     
     return true;

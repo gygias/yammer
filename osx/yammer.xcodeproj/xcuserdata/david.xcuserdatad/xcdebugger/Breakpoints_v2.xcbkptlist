@@ -205,11 +205,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "YammerTests/PlexerTests.m"
-            timestampString = "469419461.563813"
+            timestampString = "469430882.027668"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "411"
-            endingLineNumber = "411"
+            startingLineNumber = "412"
+            endingLineNumber = "412"
             landmarkName = "-remoteClosing:::"
             landmarkType = "5">
          </BreakpointContent>
@@ -253,11 +253,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "YammerTests/PlexerTests.m"
-            timestampString = "469419461.563813"
+            timestampString = "469430882.027668"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "267"
-            endingLineNumber = "267"
+            startingLineNumber = "268"
+            endingLineNumber = "268"
             landmarkName = "-doLocalTest1:"
             landmarkType = "5">
          </BreakpointContent>
@@ -418,22 +418,6 @@
             endingLineNumber = "434"
             landmarkName = "__ym_mdns_resolve_callback()"
             landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "YammerTests/SessionTests.m"
-            timestampString = "469420558.983091"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "165"
-            endingLineNumber = "165"
-            landmarkName = "-testSessionWritingDevRandomAndReadingManPages"
-            landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
