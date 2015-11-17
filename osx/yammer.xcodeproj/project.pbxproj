@@ -42,9 +42,9 @@
 		63345AC71BFAC80800569B3C /* Yammer.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5D0B1BE96D6E003292EE /* Yammer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6335CABF1BF453A800412CC9 /* YMAddress.c in Sources */ = {isa = PBXBuildFile; fileRef = 6335CABD1BF453A800412CC9 /* YMAddress.c */; };
 		6335CAC01BF453A800412CC9 /* YMAddress.h in Headers */ = {isa = PBXBuildFile; fileRef = 6335CABE1BF453A800412CC9 /* YMAddress.h */; };
-		6335CAC21BF47A1D00412CC9 /* ConnectionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6335CAC11BF47A1D00412CC9 /* ConnectionTests.m */; };
 		6335CAC51BF480DC00412CC9 /* YMPeer.c in Sources */ = {isa = PBXBuildFile; fileRef = 6335CAC31BF480DC00412CC9 /* YMPeer.c */; };
 		6335CAC61BF480DC00412CC9 /* YMPeer.h in Headers */ = {isa = PBXBuildFile; fileRef = 6335CAC41BF480DC00412CC9 /* YMPeer.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		633CAC111BFBBF4800304DCD /* SessionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 633CAC101BFBBF4800304DCD /* SessionTests.m */; };
 		63476A3F1BEAE54100D10081 /* mDNSTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 63476A3E1BEAE54100D10081 /* mDNSTests.m */; };
 		63476A411BEAEFC500D10081 /* PlexerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 63476A401BEAEFC500D10081 /* PlexerTests.m */; };
 		63476A441BEAF4DB00D10081 /* YMLock.c in Sources */ = {isa = PBXBuildFile; fileRef = 63476A421BEAF4DB00D10081 /* YMLock.c */; };
@@ -138,10 +138,10 @@
 		63344DDD1BF935730049712F /* YMConnectionPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMConnectionPriv.h; path = private/YMConnectionPriv.h; sourceTree = "<group>"; };
 		6335CABD1BF453A800412CC9 /* YMAddress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMAddress.c; path = src/YMAddress.c; sourceTree = "<group>"; };
 		6335CABE1BF453A800412CC9 /* YMAddress.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMAddress.h; path = yammer/YMAddress.h; sourceTree = "<group>"; };
-		6335CAC11BF47A1D00412CC9 /* ConnectionTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ConnectionTests.m; sourceTree = "<group>"; };
 		6335CAC31BF480DC00412CC9 /* YMPeer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMPeer.c; path = src/YMPeer.c; sourceTree = "<group>"; };
 		6335CAC41BF480DC00412CC9 /* YMPeer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMPeer.h; path = yammer/YMPeer.h; sourceTree = "<group>"; };
 		6335CAC71BF4813A00412CC9 /* YMPeerPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMPeerPriv.h; path = private/YMPeerPriv.h; sourceTree = "<group>"; };
+		633CAC101BFBBF4800304DCD /* SessionTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SessionTests.m; sourceTree = "<group>"; };
 		63476A3E1BEAE54100D10081 /* mDNSTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = mDNSTests.m; sourceTree = "<group>"; };
 		63476A401BEAEFC500D10081 /* PlexerTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PlexerTests.m; sourceTree = "<group>"; };
 		63476A421BEAF4DB00D10081 /* YMLock.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMLock.c; path = src/YMLock.c; sourceTree = "<group>"; };
@@ -207,15 +207,15 @@
 			isa = PBXGroup;
 			children = (
 				6332A4B91BEFCDCF004BB764 /* YammerTests.h */,
-				630A5D021BE96CE9003292EE /* YammerTests.m */,
-				63476A3E1BEAE54100D10081 /* mDNSTests.m */,
-				630A5D041BE96CE9003292EE /* Info.plist */,
-				63476A401BEAEFC500D10081 /* PlexerTests.m */,
 				631683931BEEF1FB00F6AB99 /* DictionaryTests.m */,
 				63FD5B5E1BF1B94A00174824 /* CryptoTests.m */,
+				63476A3E1BEAE54100D10081 /* mDNSTests.m */,
 				637E3D601BF2CD7300D702ED /* TLSTests.m */,
+				63476A401BEAEFC500D10081 /* PlexerTests.m */,
+				633CAC101BFBBF4800304DCD /* SessionTests.m */,
+				630A5D021BE96CE9003292EE /* YammerTests.m */,
+				630A5D041BE96CE9003292EE /* Info.plist */,
 				6332A4BA1BF12C12004BB764 /* lldb_source.sh */,
-				6335CAC11BF47A1D00412CC9 /* ConnectionTests.m */,
 			);
 			path = YammerTests;
 			sourceTree = "<group>";
@@ -484,11 +484,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				633CAC111BFBBF4800304DCD /* SessionTests.m in Sources */,
 				630A5D031BE96CE9003292EE /* YammerTests.m in Sources */,
 				637E3D611BF2CD7300D702ED /* TLSTests.m in Sources */,
 				631683941BEEF1FB00F6AB99 /* DictionaryTests.m in Sources */,
 				63476A411BEAEFC500D10081 /* PlexerTests.m in Sources */,
-				6335CAC21BF47A1D00412CC9 /* ConnectionTests.m in Sources */,
 				63FD5B5F1BF1B94A00174824 /* CryptoTests.m in Sources */,
 				63476A3F1BEAE54100D10081 /* mDNSTests.m in Sources */,
 			);

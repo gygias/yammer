@@ -1,9 +1,6 @@
-#!/bin/bash
+command script import lldb.macosx.heap
 
-#  lldb_source.sh
-#  yammer
-#
-#  Created by david on 11/9/15.
-#  Copyright © 2015 combobulated. All rights reserved.
+command process handle -n true -p true -s false SIGPIPE
 
-command script import lldb.macosx.heapcommand
+command alias p print
+command alias mh malloc_info --stack-history

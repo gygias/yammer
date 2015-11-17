@@ -248,7 +248,7 @@ void _YMPlexerFree(YMPlexerRef plexer_)
     __YMPlexerRef plexer = (__YMPlexerRef)plexer_;
     
     // ensure that if we haven't been stopped, or interrupted, we hang up
-    bool first = __YMPlexerInterrupt(plexer, true);
+    bool first = __YMPlexerInterrupt(plexer, false);
     ymerr("plexer[%s]: deallocating (%s)",YMSTR(plexer->name),first?"stopping":"already stopped");
     
     YMRelease(plexer->name);
@@ -1007,7 +1007,7 @@ bool __YMPlexerInterrupt(__YMPlexerRef plexer, bool requested)
     if ( ! firstInterrupt )
         return false;
     
-    ymlog(" plexer[%s]: interrupted",YMSTR(plexer->name));
+    ymerr(" plexer[%s]: interrupted",YMSTR(plexer->name));
     
     // fds are set on Create, so they should always be 'valid' (save user error)
     // so given that we're in a lock here, this check might not be necessary
@@ -1019,14 +1019,14 @@ bool __YMPlexerInterrupt(__YMPlexerRef plexer, bool requested)
         if ( result != 0 )
             ymerr("plexer[%s]: error: close input failed: %d (%s)",YMSTR(plexer->name),errno,strerror(errno));
         else
-            ymlog("plexer[%s]: closed input file %d",YMSTR(plexer->name),plexer->inputFile);
+            ymerr("plexer[%s]: closed input file %d",YMSTR(plexer->name),plexer->inputFile);
         if ( ! ioSame )
         {
             result = close(plexer->outputFile);
             if ( result != 0 )
                 ymerr("plexer[%s]: error: close output failed: %d (%s)",YMSTR(plexer->name),errno,strerror(errno));
             else
-                ymlog("plexer[%s]: closed output file %d",YMSTR(plexer->name),plexer->outputFile);
+                ymerr("plexer[%s]: closed output file %d",YMSTR(plexer->name),plexer->outputFile);
         }
         
         // let the downstream thread wake once more to exit
@@ -1047,7 +1047,7 @@ bool __YMPlexerInterrupt(__YMPlexerRef plexer, bool requested)
             {
                 YMDictionaryKey randomKey = YMDictionaryGetRandomKey(aList);
                 __unused YMStreamRef aStream = YMDictionaryRemove(aList, randomKey);
-                ymlog("plexer[%s]: hanging up stream %u",YMSTR(plexer->name),YM_STREAM_INFO(aStream)->streamID);
+                ymerr("plexer[%s]: hanging up stream %u",YMSTR(plexer->name),YM_STREAM_INFO(aStream)->streamID);
                 _YMStreamCloseReadUpFile(aStream); // "readup" :/ todo still a free race here
                 //YMRelease(aStream);
             }
