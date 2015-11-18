@@ -277,3 +277,8 @@ const char *YMStringGetCString(YMStringRef string_)
     __YMStringRef string = (__YMStringRef)string_;
     return string->cString;
 }
+
+bool YMStringEquals(YMStringRef stringA, YMStringRef stringB)
+{
+    return ( 0 == strcmp(YMSTR(stringA),YMSTR(stringB)) );
+}

@@ -1,3 +1,5 @@
+- peer lookup in ymsession should be consolidated, and should be keyed off strings not pointers
+- connection ownership not clear like stream
 - one-shot 'connect with type and name' function on ymsession
 
 - does ymstringcreatewithformat need null termination? compiler would probably be confused by our invented 'ymtyperef' token

@@ -47,6 +47,7 @@ bool YMSessionStartAdvertising(YMSessionRef session, YMStringRef name);
 bool YMSessionStopAdvertising(YMSessionRef session);
 
 bool YMSessionStartBrowsing(YMSessionRef session);
+YMPeerRef YMSessionGetPeerNamed(YMSessionRef session, YMStringRef peerName);
 bool YMSessionResolvePeer(YMSessionRef session, YMPeerRef peer);
 bool YMSessionConnectToPeer(YMSessionRef session, YMPeerRef peer, bool sync);
 bool YMSessionStopBrowsing(YMSessionRef session);

@@ -10,18 +10,19 @@
 
 @interface YMSession : NSObject
 
-typedef void (^YMSessionInterruptedHandler)(YMSession *session);
-typedef void (^YMSessionNewServiceHandler)(YMSession *session, NSString *name);
+typedef void (^YMSessionNewPeerHandler)(YMSession *session, NSString *name);
+typedef void (^YMSessionNewConnectionHandler)(YMSession *session, YMConnection *connection);
 typedef void (^YMSessionNewStreamHandler)(YMSession *session, YMConnection *connection, YMStream *stream);
 typedef void (^YMSessionStreamClosingHandler)(YMSession *session, YMConnection *connection, YMStream *stream);
+typedef void (^YMSessionInterruptedHandler)(YMSession *session);
 
 - (id)initWithType:(NSString *)type name:(NSString *)name;
 
 - (void)setInterruptionHandler:(YMSessionInterruptedHandler)handler;
 
-- (BOOL)startServer;
+- (BOOL)startAdvertisingWithName:(NSString *)name;
 
-- (void)browseServicesWithHandler:(YMSessionNewServiceHandler)handler;
-- (BOOL)connectToServiceNamed:(NSString *)name;
+- (BOOL)browsePeersWithHandler:(YMSessionNewPeerHandler)handler;
+- (BOOL)connectToPeerNamed:(NSString *)name handler:(YMSessionNewConnectionHandler)handler;
 
 @end

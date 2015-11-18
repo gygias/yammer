@@ -27,6 +27,7 @@ YMStringRef YMStringCreateByAppendingString(YMStringRef base, YMStringRef append
 
 size_t YMStringGetLength(YMStringRef string);
 const char *YMStringGetCString(YMStringRef string);
+bool YMStringEquals(YMStringRef stringA, YMStringRef stringB);
 
 #define YMSTR(x) YMStringGetCString(x)
 #define YMSTRC(x) YMAutorelease(YMStringCreateWithCString(x))

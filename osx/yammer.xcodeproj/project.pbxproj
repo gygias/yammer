@@ -31,6 +31,7 @@
 		631916401BFCFFAA001475FC /* YMConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 6319163E1BFCFFAA001475FC /* YMConnection.m */; };
 		631916431BFCFFB4001475FC /* YMStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 631916411BFCFFB4001475FC /* YMStream.h */; };
 		631916441BFCFFB4001475FC /* YMStream.m in Sources */ = {isa = PBXBuildFile; fileRef = 631916421BFCFFB4001475FC /* YMStream.m */; };
+		631916471BFD1CA3001475FC /* libyammer.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63225D421BE9026200C28F05 /* libyammer.dylib */; };
 		63225D541BE9074700C28F05 /* YMPipe.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D521BE9074700C28F05 /* YMPipe.c */; };
 		63225D551BE9074700C28F05 /* YMPipe.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D531BE9074700C28F05 /* YMPipe.h */; };
 		63225D5C1BE9092500C28F05 /* YMStream.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D5A1BE9092500C28F05 /* YMStream.c */; };
@@ -206,6 +207,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				631916471BFD1CA3001475FC /* libyammer.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

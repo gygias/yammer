@@ -13,10 +13,11 @@
 @property (nonatomic,copy) NSString *type;
 @property (nonatomic,copy) NSString *name;
 
-@property (nonatomic,copy) YMSessionInterruptedHandler interruptHandler;
-@property (nonatomic,copy) YMSessionNewServiceHandler serviceHandler;
+@property (nonatomic,copy) YMSessionNewConnectionHandler connectionHandler;
+@property (nonatomic,copy) YMSessionNewPeerHandler serviceHandler;
 @property (nonatomic,copy) YMSessionNewStreamHandler streamHandler;
 @property (nonatomic,copy) YMSessionStreamClosingHandler streamClosingHandler;
+@property (nonatomic,copy) YMSessionInterruptedHandler interruptHandler;
 
 @property (nonatomic) YMSessionRef ymsession;
 
@@ -41,19 +42,33 @@
     self.interruptHandler = handler;
 }
 
-- (BOOL)startServer
+- (BOOL)startAdvertisingWithName:(NSString *)name
 {
-    return YES;
+    if ( ! self.ymsession )
+        return NO;
+    return YMSessionStartAdvertising(self.ymsession, YMSTRC([name UTF8String]));
 }
 
-- (void)browseServicesWithHandler:(YMSessionNewServiceHandler)handler
+- (BOOL)browsePeersWithHandler:(YMSessionNewPeerHandler)handler
 {
+    if ( ! self.ymsession )
+        return NO;
     
+    self.serviceHandler = handler;
+    return YMSessionStartBrowsing(self.ymsession);
 }
 
-- (BOOL)connectToServiceNamed:(NSString *)name
+- (BOOL)connectToPeerNamed:(NSString *)name handler:(YMSessionNewConnectionHandler)handler
 {
-    return YES;
+    if ( ! self.ymsession )
+        return NO;
+    
+    YMPeerRef peer = YMSessionGetPeerNamed(self.ymsession, YMSTRC([name UTF8String]));
+    if ( ! peer )
+        return NO;
+    
+    self.connectionHandler = handler;
+    return YMSessionConnectToPeer(self.ymsession, peer, false);
 }
 
 @end

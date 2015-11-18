@@ -54,8 +54,8 @@ typedef struct __ym_session
     
     // client
     YMmDNSBrowserRef browser;
-    YMDictionaryRef availablePeers;
-    YMLockRef availablePeersLock;
+    YMDictionaryRef knownPeers;
+    YMLockRef knownPeersLock;
     
     ym_session_added_peer_func addedFunc;
     ym_session_removed_peer_func removedFunc;
@@ -107,8 +107,8 @@ YMSessionRef YMSessionCreate(YMStringRef type)
     session->connectionsByAddress = YMDictionaryCreate();
     session->connectionsByAddressLock = YMLockCreate(YMInternalLockType, YMSTRC("connections-by-address"));
     session->interruptionLock = YMLockCreate(YMInternalLockType, YMSTRC("connection-interrupt"));
-    session->availablePeers = YMDictionaryCreate();
-    session->availablePeersLock = YMLockCreateWithOptionsAndName(YMInternalLockType, YMSTRC("available-peers"));
+    session->knownPeers = YMDictionaryCreate();
+    session->knownPeersLock = YMLockCreateWithOptionsAndName(YMInternalLockType, YMSTRC("available-peers"));
     return session;
 }
 
@@ -178,8 +178,8 @@ void _YMSessionFree(YMTypeRef object)
         YMmDNSBrowserStop(session->browser);
         YMRelease(session->browser);
     }
-    YMRelease(session->availablePeers);
-    YMRelease(session->availablePeersLock);
+    YMRelease(session->knownPeers);
+    YMRelease(session->knownPeersLock);
     YMRelease(session->interruptionLock);
 }
 
@@ -239,19 +239,43 @@ bool YMSessionCloseAllConnections(YMSessionRef session_)
     return okay;
 }
 
+YMPeerRef YMSessionGetPeerNamed(YMSessionRef session_, YMStringRef peerName)
+{
+    __YMSessionRef session = (__YMSessionRef)session_;
+    YMPeerRef thePeer = NULL;
+    
+    YMLockLock(session->knownPeersLock);
+    {
+        YMDictionaryEnumRef peerEnum = YMDictionaryEnumeratorBegin(session->knownPeers);
+        while ( peerEnum )
+        {
+            if ( YMStringEquals(YMPeerGetName((YMPeerRef)peerEnum->value), peerName) )
+            {
+                thePeer = peerEnum->value;
+                break;
+            }
+            peerEnum = YMDictionaryEnumeratorGetNext(peerEnum);
+        }
+        YMDictionaryEnumeratorEnd(peerEnum);
+    }
+    YMLockUnlock(session->knownPeersLock);
+    
+    return thePeer;
+}
+
 bool YMSessionResolvePeer(YMSessionRef session_, YMPeerRef peer)
 {
     __YMSessionRef session = (__YMSessionRef)session_;
     
-    YMLockLock(session->availablePeersLock);
+    YMLockLock(session->knownPeersLock);
     YMStringRef peerName = YMPeerGetName(peer);
     bool knownPeer = true;
-    if ( ! YMDictionaryContains(session->availablePeers, (YMDictionaryKey)peer) )
+    if ( ! YMDictionaryContains(session->knownPeers, (YMDictionaryKey)peer) )
     {
         ymerr("session[%s]: requested resolve of unknown peer: %s",YMSTR(session->logDescription),YMSTR(peerName));
         knownPeer = false;
     }
-    YMLockUnlock(session->availablePeersLock);
+    YMLockUnlock(session->knownPeersLock);
     
     if ( ! knownPeer )
         return false;
@@ -272,14 +296,14 @@ bool YMSessionConnectToPeer(YMSessionRef session_, YMPeerRef peer, bool sync)
     __YMSessionRef session = (__YMSessionRef)session_;
     
     bool knownPeer = true;
-    YMLockLock(session->availablePeersLock);
+    YMLockLock(session->knownPeersLock);
     YMStringRef peerName = YMPeerGetName(peer);
-    if ( ! YMDictionaryContains(session->availablePeers, (YMDictionaryKey)peer) )
+    if ( ! YMDictionaryContains(session->knownPeers, (YMDictionaryKey)peer) )
     {
         ymerr("session[%s]: requested connect to unknown peer: %s",YMSTR(session->logDescription),YMSTR(peerName));
         knownPeer = false;
     }
-    YMLockUnlock(session->availablePeersLock);
+    YMLockUnlock(session->knownPeersLock);
     
     if ( ! knownPeer )
         return false;
@@ -764,9 +788,9 @@ void __ym_mdns_service_appeared_func(__unused YMmDNSBrowserRef browser, YMmDNSSe
     ymlog("session[%s]: __ym_mdns_service_appeared_func: %s",YMSTR(session->logDescription),YMSTR(service->name));
     
     YMPeerRef peer = _YMPeerCreate(service->name, NULL, NULL);
-    YMLockLock(session->availablePeersLock);
-    YMDictionaryAdd(session->availablePeers, (YMDictionaryKey)peer, peer);
-    YMLockUnlock(session->availablePeersLock);
+    YMLockLock(session->knownPeersLock);
+    YMDictionaryAdd(session->knownPeers, (YMDictionaryKey)peer, peer);
+    YMLockUnlock(session->knownPeersLock);
     
     session->addedFunc(session,peer,session->callbackContext);
 }
@@ -777,11 +801,11 @@ void __ym_mdns_service_removed_func(__unused YMmDNSBrowserRef browser, YMStringR
     
     ymlog("session[%s]: __ym_mdns_service_removed_func %s",YMSTR(session->logDescription),YMSTR(name));
     
-    YMLockLock(session->availablePeersLock);
+    YMLockLock(session->knownPeersLock);
     {
         YMDictionaryKey mysteryKey = MAX_OF(YMDictionaryKey);
         bool found = false;
-        YMDictionaryEnumRef myEnum = YMDictionaryEnumeratorBegin(session->availablePeers);
+        YMDictionaryEnumRef myEnum = YMDictionaryEnumeratorBegin(session->knownPeers);
         while ( myEnum )
         {
             YMPeerRef peer = (YMPeerRef)myEnum->value;
@@ -795,14 +819,14 @@ void __ym_mdns_service_removed_func(__unused YMmDNSBrowserRef browser, YMStringR
         YMDictionaryEnumeratorEnd(myEnum);
         
         if ( found )
-            YMDictionaryRemove(session->availablePeers, mysteryKey);
+            YMDictionaryRemove(session->knownPeers, mysteryKey);
         else
         {
             ymerr("session[%s]: notified of removal of unknown peer: %s",YMSTR(session->logDescription),YMSTR(name));
             abort();
         }
     }
-    YMLockUnlock(session->availablePeersLock);
+    YMLockUnlock(session->knownPeersLock);
 }
 
 void __ym_mdns_service_updated_func(__unused YMmDNSBrowserRef browser, YMmDNSServiceRecord *service, void *context)
@@ -819,9 +843,9 @@ void __ym_mdns_service_resolved_func(__unused YMmDNSBrowserRef browser, bool suc
     
     bool found = false;
     YMPeerRef peer = NULL;
-    YMLockLock(session->availablePeersLock);
+    YMLockLock(session->knownPeersLock);
     {
-        YMDictionaryEnumRef myEnum = YMDictionaryEnumeratorBegin(session->availablePeers);
+        YMDictionaryEnumRef myEnum = YMDictionaryEnumeratorBegin(session->knownPeers);
         while ( myEnum )
         {
             peer = (YMPeerRef)myEnum->value;
@@ -867,7 +891,7 @@ void __ym_mdns_service_resolved_func(__unused YMmDNSBrowserRef browser, bool suc
         _YMPeerSetPort(peer, service->port);
     }
     
-    YMLockUnlock(session->availablePeersLock);
+    YMLockUnlock(session->knownPeersLock);
     
     if ( found )
     {
