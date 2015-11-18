@@ -28,14 +28,7 @@
 
 typedef struct __ym_tls_provider
 {
-    _YMType _type;
-    
-    int socket;
-    int FAKE_UNION_FILLER_FIX_ME;
-    ym_security_init_func   initFunc;
-    ym_security_read_func   readFunc;
-    ym_security_write_func  writeFunc;
-    ym_security_close_func  closeFunc;
+    struct __ym_security_provider _common;
     
     bool isServer;
     bool isWrappingSocket;
@@ -122,19 +115,20 @@ YMTLSProviderRef __YMTLSProviderCreateWithFullDuplexFile(int file, bool isWrappi
     
     __YMTLSProviderRef tls = (__YMTLSProviderRef)_YMAlloc(_YMTLSProviderTypeID,sizeof(__YMTLSProvider));
     
-    tls->socket = file;
+    tls->_common.readFile = file;
+    tls->_common.writeFile = file;
     tls->isWrappingSocket = isWrappingSocket;
     tls->isServer = isServer;
+    
+    tls->_common.initFunc = __YMTLSProviderInit;
+    tls->_common.readFunc = __YMTLSProviderRead;
+    tls->_common.writeFunc = __YMTLSProviderWrite;
+    tls->_common.closeFunc = __YMTLSProviderClose;
     
     tls->localCertsFunc = NULL;
     tls->localCertsContext = NULL;
     tls->peerCertsFunc = NULL;
     tls->peerCertsContext = NULL;
-    
-    tls->initFunc = __YMTLSProviderInit;
-    tls->readFunc = __YMTLSProviderRead;
-    tls->writeFunc = __YMTLSProviderWrite;
-    tls->closeFunc = __YMTLSProviderClose;
     
     tls->ssl = NULL;
     tls->sslCtx = NULL;
@@ -197,7 +191,7 @@ bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
     }
     
     //tls->bio = BIO_new(&ym_bio_methods);
-    tls->bio = BIO_new_socket(tls->socket, 0);
+    tls->bio = BIO_new_socket(tls->_common.readFile, 0);
     if ( ! tls->bio )
     {
         sslError = ERR_get_error();
@@ -217,14 +211,14 @@ bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
     int result = SSL_CTX_use_certificate(tls->sslCtx, YMX509CertificateGetX509(cert));
     if ( result != 1 )
     {
-        sslError = ERR_get_error(); // todo "latest" or "earliest"? i'd have thought "latest", but X509_/RSA_ man pages say to get_error, while SSL_ merely "check the stack structure"
+        sslError = ERR_get_error(); // todo*n "latest" or "earliest"? i'd have thought "latest", but X509_/RSA_ man pages say to get_error, while SSL_ merely "check the stack structure"
         ymerr("tls[%d]: SSL_CTX_use_certificate failed: %d: ssl err: %lu (%s)",tls->isServer , result, sslError, ERR_error_string(sslError,NULL));
         goto catch_return;
     }
     result = SSL_CTX_use_RSAPrivateKey(tls->sslCtx, YMRSAKeyPairGetRSA(rsa));
     if ( result != 1 )
     {
-        sslError = ERR_get_error(); // todo "latest" or "earliest"? i'd have thought "latest", but X509_/RSA_ man pages say to get_error, while SSL_ merely "check the stack structure"
+        sslError = ERR_get_error();
         ymerr("tls[%d]: SSL_CTX_use_RSAPrivateKey failed: %d: ssl err: %lu (%s)",tls->isServer , result, sslError, ERR_error_string(sslError,NULL));
         goto catch_return;
     }
@@ -232,22 +226,22 @@ bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
     result = SSL_use_certificate(tls->ssl, YMX509CertificateGetX509(cert));
     if ( result != 1 )
     {
-        sslError = ERR_get_error(); // todo "latest" or "earliest"? i'd have thought "latest", but X509_/RSA_ man pages say to get_error, while SSL_ merely "check the stack structure"
+        sslError = ERR_get_error();
         ymerr("tls[%d]: SSL_use_certificate failed: %d: ssl err: %lu (%s)",tls->isServer , result, sslError, ERR_error_string(sslError,NULL));
         goto catch_return;
     }
     result = SSL_use_RSAPrivateKey(tls->ssl, YMRSAKeyPairGetRSA(rsa));
     if ( result != 1 )
     {
-        sslError = ERR_get_error(); // todo "latest" or "earliest"? i'd have thought "latest", but X509_/RSA_ man pages say to get_error, while SSL_ merely "check the stack structure"
+        sslError = ERR_get_error();
         ymerr("tls[%d]: SSL_CTX_use_RSAPrivateKey failed: %d: ssl err: %lu (%s)",tls->isServer , result, sslError, ERR_error_string(sslError,NULL));
         goto catch_return;
     }
     
-    result = SSL_set_cipher_list(tls->ssl, "AES256-SHA");
+    result = SSL_set_cipher_list(tls->ssl, "AES256-SHA"); // todo
     if ( result != 1 )
     {
-        sslError = ERR_get_error(); // todo "latest" or "earliest"? i'd have thought "latest", but X509_/RSA_ man pages say to get_error, while SSL_ merely "check the stack structure"
+        sslError = ERR_get_error();
         ymerr("tls[%d]: SSL_set_cipher_list failed: %d: ssl err: %lu (%s)",tls->isServer , result, sslError, ERR_error_string(sslError,NULL));
         goto catch_return;
     }
@@ -274,7 +268,7 @@ bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
     
     if ( 1 != result )
     {
-        sslError = SSL_get_error(tls->ssl, result); // todo "latest" or "earliest"? i'd have thought "latest", but X509_/RSA_ man pages say to get_error, while SSL_ merely "check the stack structure"
+        sslError = SSL_get_error(tls->ssl, result);
         ymerr("tls[%d]: SSL_do_handshake failed: %d: ssl err: %lu (%s)",tls->isServer , result, sslError, ERR_error_string(sslError,NULL));
         goto catch_return;
     }
