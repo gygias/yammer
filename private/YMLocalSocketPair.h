@@ -11,7 +11,11 @@
 
 typedef YMTypeRef YMLocalSocketPairRef;
 
-YMLocalSocketPairRef YMLocalSocketPairCreate(YMStringRef name);
+YMLocalSocketPairRef YMLocalSocketPairCreate(YMStringRef name, bool moreComing);
+
+// if previous calls to YMLocalSocketPairCreate said 'moreComing', this function can be used to
+// free associated resources. it is not thread-safe (with itself or with YMLocalSocketPairCreate).
+void YMLocalSocketPairStop();
 
 int YMLocalSocketPairGetA(YMLocalSocketPairRef pair);
 int YMLocalSocketPairGetB(YMLocalSocketPairRef pair);

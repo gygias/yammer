@@ -36,6 +36,6 @@ bool YMPlexerStart(YMPlexerRef plexer);
 bool YMPlexerStop(YMPlexerRef plexer);
 
 YMStreamRef YMPlexerCreateStream(YMPlexerRef plexer, YMStringRef name);
-void YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream); // not thread safe
+void YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream);
 
 #endif /* YMPlexer_h */

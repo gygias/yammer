@@ -180,7 +180,7 @@ mDNSTests *gGlobalSelf;
 - (void)compareList:(YMmDNSTxtRecordKeyPair **)aList size:(size_t)aSize
              toList:(YMmDNSTxtRecordKeyPair **)bList size:(size_t)bSize
 {
-    XCTAssert(aSize==bSize,@"sizes don't match");
+    XCTAssert(aSize==bSize,@"sizes don't match"); // todo still happens... documentation
     
     if ( aList == NULL && bList == NULL ) // i guess
         return;

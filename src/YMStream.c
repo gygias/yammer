@@ -31,7 +31,7 @@
 #define ymlog(x,...) ;
 #endif
 
-#define LOG_STREAM_LIFECYCLE
+//#define LOG_STREAM_LIFECYCLE
 #ifdef LOG_STREAM_LIFECYCLE
 #undef LOG_STREAM_LIFECYCLE
 #define LOG_STREAM_LIFECYCLE(x) \

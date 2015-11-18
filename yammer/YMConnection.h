@@ -44,6 +44,6 @@ uint64_t YMConnectionDoSample(YMConnectionRef connection);
 YMAddressRef YMConnectionGetAddress(YMConnectionRef connection);
 
 YMStreamRef YMConnectionCreateStream(YMConnectionRef connection, YMStringRef name);
-void YMConnectionCloseStream(YMConnectionRef connection, YMStreamRef stream); // not thread safe
+void YMConnectionCloseStream(YMConnectionRef connection, YMStreamRef stream);
 
 #endif /* YMConnection_h */

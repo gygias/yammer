@@ -68,7 +68,7 @@ typedef struct
     YMStringRef sockName = YMStringCreateWithFormat("ym-tls-test-%u",suffix, NULL);
     XCTAssert(strcmp([nsSockName UTF8String],YMSTR(sockName))==0,@"ymstring: %s",YMSTR(sockName));
     
-    YMLocalSocketPairRef localSocketPair = YMLocalSocketPairCreate(sockName);
+    YMLocalSocketPairRef localSocketPair = YMLocalSocketPairCreate(sockName, false);
     XCTAssert(localSocketPair,@"socket pair didn't initialize");
     int serverSocket = YMLocalSocketPairGetA(localSocketPair);
     int clientSocket = YMLocalSocketPairGetB(localSocketPair);

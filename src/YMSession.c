@@ -751,6 +751,8 @@ void __ym_session_connection_interrupted_proc(YMConnectionRef connection, void *
 {
     __YMSessionRef session = context;
     
+    YMRetain(connection);
+    
     bool isDefault = ( connection == session->defaultConnection );
     bool first = __YMSessionInterrupt(session);
     
@@ -763,6 +765,8 @@ void __ym_session_connection_interrupted_proc(YMConnectionRef connection, void *
     }
     
     ymerr("session[%s]: connection interrupted: %s",YMSTR(session->logDescription),YMSTR(YMAddressGetDescription(address)));
+    
+    YMRelease(connection);
 }
 
 #pragma mark client mdns callbacks

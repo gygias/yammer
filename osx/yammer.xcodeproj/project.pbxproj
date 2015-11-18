@@ -38,6 +38,7 @@
 		63225D6E1BE91B3B00C28F05 /* YMLog.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D6C1BE91B3B00C28F05 /* YMLog.h */; };
 		63225D981BE92B6000C28F05 /* YMBase.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D971BE92B6000C28F05 /* YMBase.c */; };
 		63225D9E1BE9372800C28F05 /* libssl.1.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63225D9D1BE9372800C28F05 /* libssl.1.0.0.dylib */; };
+		633165FF1BFC29DF0094F801 /* LocalSocketPairTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 633165FE1BFC29DF0094F801 /* LocalSocketPairTests.m */; };
 		63345AC61BFAC7FD00569B3C /* YMBase.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D661BE90B2D00C28F05 /* YMBase.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		63345AC71BFAC80800569B3C /* Yammer.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5D0B1BE96D6E003292EE /* Yammer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6335CABF1BF453A800412CC9 /* YMAddress.c in Sources */ = {isa = PBXBuildFile; fileRef = 6335CABD1BF453A800412CC9 /* YMAddress.c */; };
@@ -132,6 +133,7 @@
 		63225D991BE92CBA00C28F05 /* YMDebug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMDebug.h; path = private/YMDebug.h; sourceTree = "<group>"; };
 		63225D9D1BE9372800C28F05 /* libssl.1.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libssl.1.0.0.dylib; path = /opt/local/lib/libssl.1.0.0.dylib; sourceTree = "<absolute>"; };
 		63312D091BFAFD3100039336 /* defs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = defs.h; sourceTree = "<group>"; };
+		633165FE1BFC29DF0094F801 /* LocalSocketPairTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LocalSocketPairTests.m; sourceTree = "<group>"; };
 		6332A4B91BEFCDCF004BB764 /* YammerTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = YammerTests.h; sourceTree = "<group>"; };
 		6332A4BA1BF12C12004BB764 /* lldb_source.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = lldb_source.sh; sourceTree = "<group>"; };
 		6332A4BB1BF134DD004BB764 /* yammer.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = yammer.pch; path = private/yammer.pch; sourceTree = "<group>"; };
@@ -216,6 +218,7 @@
 				630A5D021BE96CE9003292EE /* YammerTests.m */,
 				630A5D041BE96CE9003292EE /* Info.plist */,
 				6332A4BA1BF12C12004BB764 /* lldb_source.sh */,
+				633165FE1BFC29DF0094F801 /* LocalSocketPairTests.m */,
 			);
 			path = YammerTests;
 			sourceTree = "<group>";
@@ -488,6 +491,7 @@
 				630A5D031BE96CE9003292EE /* YammerTests.m in Sources */,
 				637E3D611BF2CD7300D702ED /* TLSTests.m in Sources */,
 				631683941BEEF1FB00F6AB99 /* DictionaryTests.m in Sources */,
+				633165FF1BFC29DF0094F801 /* LocalSocketPairTests.m in Sources */,
 				63476A411BEAEFC500D10081 /* PlexerTests.m in Sources */,
 				63FD5B5F1BF1B94A00174824 /* CryptoTests.m in Sources */,
 				63476A3F1BEAE54100D10081 /* mDNSTests.m in Sources */,
