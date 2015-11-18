@@ -73,7 +73,7 @@ void ym_tls_lock_callback(int mode, int type, __unused char *file, __unused int 
     if ( ! theLock )
     {
         YMStringRef name = YMStringCreateWithFormat("ym_tls_lock_callback-%d",type, NULL);
-        theLock = YMLockCreateWithOptionsAndName(YMLockDefault, name);
+        theLock = YMLockCreateWithOptionsAndName(YMLockNone, name);
         YMRelease(name);
     }
     

@@ -36,7 +36,8 @@ mDNSTests *gGlobalSelf;
 #pragma mark mDNS tests
 
 #define testServiceType "_yammer._tcp"
-#define testKeyMaxLen ( UINT8_MAX - 1 - 1 ) // length char and '=', assuming data can be empty
+#define testKeyPairReserved ( 2 ) // length char and '=', assuming data can be empty
+#define testKeyMaxLen ( UINT8_MAX - testKeyPairReserved )
 
 #if 0 // actually debugging
 #define testTimeout (10 * 60)
@@ -151,7 +152,7 @@ mDNSTests *gGlobalSelf;
         remaining -= [randomKey length];
         
         // as far as i can tell, value can be empty
-        uint8_t valueLenMax = ( UINT8_MAX - [randomKey length] - 1 );
+        uint8_t valueLenMax = ( UINT8_MAX - [randomKey length] - testKeyPairReserved );
         uint16_t aValueLenMax = ( valueLenMax > remaining ) ? remaining : valueLenMax;
         NSData *valueData = YMRandomDataWithMaxLength(aValueLenMax);
         keyPairs[idx]->value = calloc(1,[valueData length]);
@@ -162,7 +163,7 @@ mDNSTests *gGlobalSelf;
         
         actualSize++;
         debugBlobSize += 1 + [randomKey length] + 1 + [valueData length];
-        NSLog(@"aKeyPair[%zd]: [%zu] <= [%zu]'%s'", idx,  [valueData length], [randomKey length], [randomKey UTF8String]);
+        NoisyTestLog(@"aKeyPair[%zd]: [%zu] <= [%zu]'%s'", idx,  [valueData length], [randomKey length], [randomKey UTF8String]);
         
         if ( remaining == 0 )
             break;

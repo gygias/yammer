@@ -109,6 +109,8 @@ void local_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *conte
     XCTAssert(stream,@"localNewStream null");
     XCTAssert(context==(__bridge void *)gRunningPlexerTest,@"localNewStream context doesn't match");
     XCTAssert(NO,@"localNewStream");
+    
+    YMPlexerCloseStream(plexer,stream);
 }
 
 void local_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *context)
@@ -123,6 +125,8 @@ void local_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *c
     XCTAssert(stream,@"localStreamClosing null");
     XCTAssert(context==(__bridge void *)gRunningPlexerTest,@"localStreamClosing context doesn't match");
     XCTAssert(NO,@"localStreamClosing");
+    
+    YMPlexerCloseStream(plexer, stream);
 }
 
 const char *testLocalMessage = "this is a test message. one, two, three. four. sometimes five.";
@@ -236,7 +240,7 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
         YMPlexerStreamID streamID;
         if ( ! aStream || PlexerTest1NewStreamPerRoundTrip )
         {
-            aStream = YMPlexerCreateNewStream(plexer,YMSTRC(__FUNCTION__));
+            aStream = YMPlexerCreateStream(plexer,YMSTRC(__FUNCTION__));
             streamID = ((ym_plexer_stream_user_info_ref)_YMStreamGetUserInfo(aStream))->streamID;
         }
         
@@ -333,10 +337,9 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *cont
     XCTAssert(stream,@"remoteNewStream null");
     XCTAssert(context==(__bridge void *)gRunningPlexerTest,@"remoteNewStream context doesn't match");
     
-    YMRetain(stream);
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         [self handleANewRemoteStream:plexer :stream];
-        YMRelease(stream);
+        YMPlexerCloseStream(plexer,stream);
     });
 }
 
@@ -376,13 +379,14 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *cont
         incomingStreamRoundTrips++;
     }
     
-    //YMPlexerCloseStream(plexer, stream);
     NoisyTestLog(@"^^^ REMOTE -newStream [%u] exiting (and remoteReleasing)",streamID);
 }
 
 void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *context)
 {
     [gRunningPlexerTest remoteClosing:plexer :stream :context];
+    
+    // we closed in handlenewremote
 }
 
 - (void)remoteClosing:(YMPlexerRef)plexer :(YMStreamRef)stream :(void *)context

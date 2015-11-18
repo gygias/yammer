@@ -429,17 +429,7 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
                                             NULL,
 #endif
                                             true, host, ntohs(hostPort), txtRecord, txtLength); // could be optimized
-        if ( browser->debugExpectedPairs != UINT16_MAX && record->txtRecordKeyPairsSize != browser->debugExpectedPairs )
-        {
-            record = _YMmDNSCreateServiceRecord(fullname, YMSTR(browser->type),
-#ifdef YMmDNS_ENUMERATION
-#error fixme
-#else
-                                                NULL,
-#endif
-                                                true, host, ntohs(hostPort), txtRecord, txtLength); // could be optimized
-            abort();
-        }
+        
         __YMmDNSBrowserAddOrUpdateService(browser, record);
     }
     

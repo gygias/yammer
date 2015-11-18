@@ -15,15 +15,16 @@
 
 typedef enum
 {
-    YMLockDefault = 0,
+    YMLockNone = 0,
     YMLockRecursive = 1 << 0,
-    YMLockErrorCheck = 1 << 1
+    YMLockErrorCheck = 1 << 1,
+    YMLockOptionsAll = YMLockRecursive | YMLockErrorCheck
 } YMLockOptions;
 
 #ifdef DEBUG
 #define YMInternalLockType YMLockErrorCheck
 #else
-#define YMInternalLockType YMLockDefault
+#define YMInternalLockType YMLockNone
 #endif
 
 typedef const struct __ym_lock *YMLockRef;

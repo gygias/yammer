@@ -31,6 +31,20 @@
 #define ymlog(x,...) ;
 #endif
 
+#define LOG_STREAM_LIFECYCLE
+#ifdef LOG_STREAM_LIFECYCLE
+#undef LOG_STREAM_LIFECYCLE
+#define LOG_STREAM_LIFECYCLE(x) \
+                ymerr("  stream[%s,i%d->o%dV,^o%d<-i%d]: %p %sallocating",YMSTR(stream->name), \
+                      YMPipeGetInputFile(stream->downstreamPipe), \
+                      YMPipeGetOutputFile(stream->downstreamPipe), \
+                      YMPipeGetOutputFile(stream->upstreamPipe), \
+                      YMPipeGetInputFile(stream->upstreamPipe), \
+                      stream, (x) ? "":"de" );
+#else
+#define LOG_STREAM_LIFECYCLE(x) ;
+#endif
+
 typedef struct __ym_stream
 {
     _YMType _type;
@@ -79,13 +93,7 @@ YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_ref userInfo)
     
     stream->userInfo = userInfo;
     
-    if ( ymlog_stream_lifecycle )
-        YMLogType(YMLogStreamLifecycle,"  stream[%s,i%d->o%dV,^o%d<-i%d]: %p allocating",YMSTR(stream->name),
-          YMPipeGetInputFile(stream->downstreamPipe),
-          YMPipeGetOutputFile(stream->downstreamPipe),
-          YMPipeGetOutputFile(stream->upstreamPipe),
-          YMPipeGetInputFile(stream->upstreamPipe),
-          stream);
+    LOG_STREAM_LIFECYCLE(true);
     
     return (YMStreamRef)stream;
 }
@@ -101,20 +109,39 @@ void _YMStreamFree(YMTypeRef object)
 {
     __YMStreamRef stream = (__YMStreamRef)object;
     
-    if ( ymlog_stream_lifecycle )
-        YMLogType(YMLogStreamLifecycle,"  stream[%s,i%d->o%dV,^o%d<-i%d]: %p deallocating",YMSTR(stream->name),
-                  YMPipeGetInputFile(stream->downstreamPipe),
-                  YMPipeGetOutputFile(stream->downstreamPipe),
-                  YMPipeGetOutputFile(stream->upstreamPipe),
-                  YMPipeGetInputFile(stream->upstreamPipe),
-                  stream);
+    LOG_STREAM_LIFECYCLE(false);
     
     YMRelease(stream->downstreamPipe);
     YMRelease(stream->upstreamPipe);
     YMRelease(stream->name);
 }
 
-void YMStreamWriteDown(YMStreamRef stream_, const void *buffer, uint16_t length)
+// because user data is opaque (even to user), this should expose eof
+YMIOResult YMStreamReadUp(YMStreamRef stream_, void *buffer, uint16_t length, uint16_t *outLength)
+{
+    __YMStreamRef stream = (__YMStreamRef)stream_;
+    
+    int upstreamRead = YMPipeGetOutputFile(stream->upstreamPipe);
+    
+    ymlog("  stream[%s]: reading %ub user data",YMSTR(stream->name),length);
+    size_t actualLength = 0;
+    YMIOResult result = YMReadFull(upstreamRead, buffer, length, &actualLength);
+    if ( outLength )
+        *outLength = (uint16_t)actualLength;
+    if ( result == YMIOError ) // in-process i/o errors are fatal
+    {
+        ymerr("  stream[%s]: fatal: reading %ub user data: %d (%s)",YMSTR(stream->name),length,errno,strerror(errno));
+        abort();
+    }
+    else if ( result == YMIOEOF )
+        ymerr("  stream[%s]: EOF from upstream",YMSTR(stream->name));
+    else
+        ymlog("  stream[%s]: read %ub from upstream",YMSTR(stream->name),length);
+    
+    return result;
+}
+
+YMIOResult YMStreamWriteDown(YMStreamRef stream_, const void *buffer, uint16_t length)
 {
     YM_DEBUG_CHUNK_SIZE(length);
     
@@ -129,8 +156,8 @@ void YMStreamWriteDown(YMStreamRef stream_, const void *buffer, uint16_t length)
     result = YMWriteFull(downstreamWrite, (void *)&header, sizeof(header), NULL);
     if ( result != YMIOSuccess )
     {
-        ymerr("  stream[%s]: fatal: failed writing header for stream chunk size %ub",YMSTR(stream->name),length);
-        abort();
+        ymerr("  stream[%s]: failed writing header for stream chunk size %ub",YMSTR(stream->name),length);
+        return result;
     }
     ymlog("  stream[%s]: wrote header for command: %u",YMSTR(stream->name),length);
 #endif
@@ -138,8 +165,8 @@ void YMStreamWriteDown(YMStreamRef stream_, const void *buffer, uint16_t length)
     result = YMWriteFull(downstreamWrite, buffer, length, NULL);
     if ( result != YMIOSuccess )
     {
-        ymerr("  stream[%s]: fatal: failed writing stream chunk with size %ub",YMSTR(stream->name),length);
-        abort();
+        ymerr("  stream[%s]: failed writing stream chunk with size %ub",YMSTR(stream->name),length);
+        return result;
     }
     ymlog("  stream[%s]: wrote buffer for chunk with size %ub",YMSTR(stream->name),length);
     
@@ -147,6 +174,8 @@ void YMStreamWriteDown(YMStreamRef stream_, const void *buffer, uint16_t length)
     stream->dataAvailableFunc(stream,length,stream->dataAvailableContext);
     
     ymlog("  stream[%s]: wrote %ub chunk",YMSTR(stream->name),length);
+    
+    return result;
 }
 
 // void: only ever does in-process i/o
@@ -176,31 +205,6 @@ YMIOResult _YMStreamWriteUp(YMStreamRef stream_, const void *buffer, uint32_t le
         ymerr("  stream[%s]: fatal: failed writing %u bytes to upstream",YMSTR(stream->name),length);
     else
         ymlog("  stream[%s]: wrote %ub to upstream",YMSTR(stream->name),length);
-    
-    return result;
-}
-
-// because user data is opaque (even to user), this should expose eof
-YMIOResult YMStreamReadUp(YMStreamRef stream_, void *buffer, uint16_t length, uint16_t *outLength)
-{
-    __YMStreamRef stream = (__YMStreamRef)stream_;
-    
-    int upstreamRead = YMPipeGetOutputFile(stream->upstreamPipe);
-    
-    ymlog("  stream[%s]: reading %ub user data",YMSTR(stream->name),length);
-    size_t actualLength = 0;
-    YMIOResult result = YMReadFull(upstreamRead, buffer, length, &actualLength);
-    if ( outLength )
-        *outLength = (uint16_t)actualLength;
-    if ( result == YMIOError ) // in-process i/o errors are fatal
-    {
-        ymerr("  stream[%s]: fatal: reading %ub user data: %d (%s)",YMSTR(stream->name),length,errno,strerror(errno));
-        abort();
-    }
-    else if ( result == YMIOEOF )
-        ymerr("  stream[%s]: EOF from upstream",YMSTR(stream->name));
-    else
-        ymlog("  stream[%s]: read %ub from upstream",YMSTR(stream->name),length);
     
     return result;
 }

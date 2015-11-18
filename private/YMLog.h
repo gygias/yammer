@@ -10,40 +10,37 @@
 #define ymlog_type YMLogDefault
 #endif
 #ifndef ymlog_target
-#define ymlog_target YMLogmDNS
+#define ymlog_target ( YMLogError /*| YMLogSession | YMLogStream*/ )
 //#define ymlog_target YMLogEverything
 // Token pasting of ',' and __VA_ARGS__ is a GNU extension
 YM_WPPUSH
-#define ymlog(x,...) if ( ymlog_type <= ymlog_target ) YMLogType(ymlog_type,(x),##__VA_ARGS__)
+#define ymlog(x,...) if ( ymlog_type & ymlog_target ) __YMLogType((x),##__VA_ARGS__)
 // it might be nice if this postpended errno/strerror (or had a designated version for cases that errno is relevant)
-#define ymerr(x,...) YMLogType(YMLogError,(x),##__VA_ARGS__)
+#define ymerr(x,...) __YMLogType((x),##__VA_ARGS__)
 YM_WPOP
 #endif
-#define ymlog_stream_lifecycle false
 
 #ifndef YMLog_h
 #define YMLog_h
 
 typedef enum
 {
-    YMLogNothing = 0,
-    YMLogError,
-    YMLogDefault,
-    YMLogmDNS,
-    YMLogSession,
-    YMLogSecurity,
-    YMLogConnection,
-    YMLogThread,
-    YMLogThreadDispatch, // todo: time to split out dispatch
-    YMLogPlexer,
-    YMLogStreamLifecycle,
-    YMLogThreadSync,
-    YMLogStream,
-    YMLogPipe,
-    YMLogIO,
-    YMLogEverything
+    YMLogError = 1 << 0,
+    YMLogDefault = 1 << 1,
+    YMLogmDNS = 1 << 2,
+    YMLogSession = 1 << 3,
+    YMLogSecurity = 1 << 4,
+    YMLogConnection = 1 << 5,
+    YMLogThread = 1 << 6,
+    YMLogThreadDispatch = 1 << 7, // todo: time to split out dispatch
+    YMLogPlexer = 1 << 8,
+    YMLogThreadSync = 1 << 9,
+    YMLogStream = 1 << 10,
+    YMLogPipe = 1 << 11,
+    YMLogIO = 1 << 12,
+    YMLogEverything = 0xFFFF
 } YMLogLevel;
 
-void YMLogType( YMLogLevel, char* format, ... ) __printflike(2, 3);
+extern void __YMLogType( char* format, ... ) __printflike(1, 2);
 
 #endif /* YMLog_h */

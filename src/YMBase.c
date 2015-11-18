@@ -78,7 +78,7 @@ YMTypeRef _YMAlloc(YMTypeID type, size_t size)
     object->__type = type;
     object->__retainCount = 1;
     
-    object->__retainMutex = YMCreateMutexWithOptions(YMLockDefault);
+    object->__retainMutex = YMCreateMutexWithOptions(YMInternalLockType);
     if ( ! object->__retainMutex )
     {
         fprintf(stderr,"base: fatal: create mutex failed");
@@ -120,6 +120,7 @@ void YMRelease(YMTypeRef object_)
     bool dealloc = false;
     if ( object->__retainCount < 1 )
     {
+        // we will just as easily crash before we reach this
         ymerr("base: fatal: something has overreleased %p (%c)",object,object->__type);
         abort();
     }

@@ -27,7 +27,7 @@ typedef ym_void_voidp_func ym_thread_entry;
 // function pointers for YMThreadDispatchUserInfo
 typedef ym_thread_dispatch_func ym_thread_dispatch_dealloc;
 
-YMThreadRef YMThreadCreate(YMStringRef name, ym_thread_entry entryPoint, void *context);
+YMThreadRef YMThreadCreate(YMStringRef name, ym_thread_entry entryPoint, const void *context);
 YMThreadRef YMThreadDispatchCreate(YMStringRef name);
 
 void YMThreadSetContext(YMThreadRef thread, void *context);

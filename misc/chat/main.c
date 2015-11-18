@@ -155,7 +155,7 @@ void _ym_session_interrupted_func(__unused YMSessionRef session, __unused void* 
 }
 
 // streams
-void _ym_session_new_stream_func(__unused YMSessionRef session, YMStreamRef stream, __unused void* context)
+void _ym_session_new_stream_func(__unused YMSessionRef session, __unused YMConnectionRef connection, YMStreamRef stream, __unused void* context)
 {
     printf("stream arrived\n");
     char hello;
@@ -167,7 +167,7 @@ void _ym_session_new_stream_func(__unused YMSessionRef session, YMStreamRef stre
     }
 }
 
-void _ym_session_stream_closing_func(__unused YMSessionRef session, __unused YMStreamRef stream, __unused void* context)
+void _ym_session_stream_closing_func(__unused YMSessionRef session, __unused YMConnectionRef connection, __unused YMStreamRef stream, __unused void* context)
 {
     printf("stream closed\n");
     exit(1);

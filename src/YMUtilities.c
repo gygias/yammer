@@ -28,7 +28,7 @@ const char *YMGetCurrentTimeString(char *buf, size_t bufLen)
     struct tm *now = localtime(&epoch.tv_sec);
     if ( ! now )
         return NULL;
-    size_t result = strftime(buf, bufLen, "%Y-%m-%d %H-%M-%S", now);
+    size_t result = strftime(buf, bufLen, "%Y-%m-%d %H:%M:%S", now);
     if ( result == 0 )
         return NULL;
     if ( result < bufLen - 3 )
@@ -186,35 +186,28 @@ pthread_mutex_t *YMCreateMutexWithOptions(YMLockOptions options)
     pthread_mutex_t mutex;
     pthread_mutexattr_t attributes;
     pthread_mutexattr_t *attributesPtr = &attributes;
-    int result;
     
-    result = pthread_mutexattr_init(attributesPtr);
+    int result = pthread_mutexattr_init(attributesPtr);
     if ( result != 0 )
     {
-        ymerr("pthread_mutexattr_init failed: %d (%s)", result, strerror(result));
-        return NULL;
+        fprintf(stdout,"pthread_mutexattr_init failed: %d (%s)\n", result, strerror(result));
+        goto catch_release;
     }
     
-    if ( options & YMLockRecursive )
+    if ( options )
     {
-        result = pthread_mutexattr_settype(attributesPtr, PTHREAD_MUTEX_RECURSIVE);
-        if ( result != 0 )
+        int optionsList[4] = { YMLockRecursive, PTHREAD_MUTEX_RECURSIVE, YMLockErrorCheck, PTHREAD_MUTEX_ERRORCHECK };
+        for(uint8_t i = 0; i < 4; i+=2 )
         {
-            ymerr("pthread_mutexattr_settype failed: %d (%s)", result, strerror(result));
-            goto catch_release;
-        }
-    }
-    // todo if enabled conveniently like this, openssl seems to lock & unlock
-    // across threads. i don't know if this indicates a bug.
-//#ifndef DEBUG
-    if ( options & YMLockErrorCheck )
-//#endif
-    {
-        result = pthread_mutexattr_settype(attributesPtr, PTHREAD_MUTEX_ERRORCHECK);
-        if ( result != 0 )
-        {
-            ymerr("pthread_mutexattr_settype failed: %d (%s)", result, strerror(result));
-            goto catch_release;
+            if ( options & optionsList[i] )
+            {
+                result = pthread_mutexattr_settype(attributesPtr, optionsList[i+1]);
+                if ( result != 0 )
+                {
+                    fprintf(stdout,"pthread_mutexattr_settype failed: %d (%s)\n", result, strerror(result));
+                    goto catch_release;
+                }
+            }
         }
     }
     
@@ -222,7 +215,7 @@ pthread_mutex_t *YMCreateMutexWithOptions(YMLockOptions options)
     result = pthread_mutex_init(&mutex, attributesPtr);
     if ( result != 0 )
     {
-        ymerr("pthread_mutex_init failed: %d (%s)", result, strerror(result));
+        fprintf(stdout,"pthread_mutex_init failed: %d (%s)", result, strerror(result));
         goto catch_release;
     }
     

@@ -247,8 +247,10 @@ typedef struct ManPageThanks
         strncpy(header.name, [aFile UTF8String], NAME_MAX+1);
         YMStreamWriteDown(stream, &header, sizeof(header));
         if ( stopping )
+        {
+            YMConnectionCloseStream(connection, stream);
             break;
-        
+        }
         bool testAsync = arc4random_uniform(2);
         ym_thread_dispatch_forward_file_context ctx = {NULL,NULL};
         if ( testAsync )
@@ -271,7 +273,10 @@ typedef struct ManPageThanks
         uint16_t outLength = 0, length = sizeof(thx);
         YMIOResult result = YMStreamReadUp(stream, &thx, length,&outLength);
         if ( stopping )
+        {
+            YMConnectionCloseStream(connection, stream);
             break;
+        }
         XCTAssert(result==YMIOSuccess,@"read thx header");
         XCTAssert(length==outLength,@"length!=outLength");
         NSString *thxFormat = [NSString stringWithFormat:@THXFORMANTEMPLATE,header.name];
@@ -525,13 +530,13 @@ void _ym_session_interrupted_func(YMSessionRef session, void *context)
 }
 
 // streams
-void _ym_session_new_stream_func(YMSessionRef session, YMStreamRef stream, void *context)
+void _ym_session_new_stream_func(YMSessionRef session, YMConnectionRef connection, YMStreamRef stream, void *context)
 {
     NoisyTestLog(@"%s",__PRETTY_FUNCTION__);
-    [gTheSessionTest newStream:session :stream :context];
+    [gTheSessionTest newStream:session :connection :stream :context];
 }
 
-- (void)newStream:(YMSessionRef)session :(YMStreamRef)stream :(void *)context
+- (void)newStream:(YMSessionRef)session :(YMConnectionRef)connection :(YMStreamRef)stream :(void *)context
 {
     XCTAssert(context==(__bridge void *)self,@"newStream context");
     XCTAssert(session==clientSession||session==serverSession,@"newStream session");
@@ -539,29 +544,29 @@ void _ym_session_new_stream_func(YMSessionRef session, YMStreamRef stream, void 
     
     BOOL isServer = session==serverSession;
     
-    YMRetain(stream);
-    
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         if ( isServer )
             [self _eatManPage:stream];
         else
             [self _eatRandom:stream];
         
-        YMRelease(stream);
+        // todo randomize whether we close here, during streamClosing, after streamClosing, dispatch_after?
+        YMConnectionCloseStream(connection,stream);
     });
 }
 
-void _ym_session_stream_closing_func(YMSessionRef session, YMStreamRef stream, void *context)
+void _ym_session_stream_closing_func(YMSessionRef session, YMConnectionRef connection, YMStreamRef stream, void *context)
 {
     NoisyTestLog(@"%s",__PRETTY_FUNCTION__);
-    [gTheSessionTest streamClosing:session :stream :context];
+    [gTheSessionTest streamClosing:session :connection :stream :context];
 }
 
-- (void)streamClosing:(YMSessionRef)session :(YMStreamRef)stream :(void *)context
+- (void)streamClosing:(YMSessionRef)session :(YMConnectionRef)connection :(YMStreamRef)stream :(void *)context
 {
-    XCTAssert(context==(__bridge void *)self,@"newStream context");
-    XCTAssert(session==clientSession||session==serverSession,@"newStream session");
-    XCTAssert(stream,@"newStream stream");
+    XCTAssert(context==(__bridge void *)self,@"streamClosing context");
+    XCTAssert(session==clientSession||session==serverSession,@"streamClosing session");
+    XCTAssert(connection,@"streamClosing connection");
+    XCTAssert(stream,@"streamClosing stream");
 }
 
 @end

@@ -100,8 +100,6 @@ const char *___YMStringFormat(const char *format,...)
     va_list vargs;
     va_start(vargs, format);
     
-    //printf("%u argument(s):\n", n_args);
-    
     while ( currentTokenPtr )
     {
         int aInt[2];
@@ -241,11 +239,6 @@ const char *___YMStringFormat(const char *format,...)
     
     va_end(vargs);
     
-    
-//    for (i = 0; i < n_args; i++) {
-//        arg = va_arg(ap, unsigned int);
-//        printf("  %u\n", arg);
-//    }
 catch_fail:
     va_end(vargs);
     return NULL;

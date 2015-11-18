@@ -32,7 +32,7 @@ typedef __YMLock *__YMLockRef;
 
 YMLockRef YMLockCreate()
 {
-    return YMLockCreateWithOptionsAndName(YMLockDefault, NULL);
+    return YMLockCreateWithOptionsAndName(YMLockNone, NULL);
 }
 
 YMLockRef YMLockCreateWithOptions(YMLockOptions options)

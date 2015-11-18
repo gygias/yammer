@@ -33,8 +33,8 @@ typedef void(*ym_session_connected_func)(YMSessionRef,YMConnectionRef,void*);
 typedef void(*ym_session_interrupted_func)(YMSessionRef,void*);
 
 // streams
-typedef void(*ym_session_new_stream_func)(YMSessionRef,YMStreamRef,void*);
-typedef void(*ym_session_stream_closing_func)(YMSessionRef,YMStreamRef,void*);
+typedef void(*ym_session_new_stream_func)(YMSessionRef,YMConnectionRef,YMStreamRef,void*);
+typedef void(*ym_session_stream_closing_func)(YMSessionRef,YMConnectionRef,YMStreamRef,void*);
 
 YMSessionRef YMSessionCreateClient(YMStringRef type);
 YMSessionRef YMSessionCreateServer(YMStringRef type, YMStringRef name);

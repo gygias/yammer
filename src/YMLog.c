@@ -20,29 +20,25 @@ static YMLockRef gYMLogLock = NULL;
 static char *gTimeFormatBuf = NULL;
 #define gTimeFormatBufLen 128
 
-void YMLogInitLock()
-{
-    YMStringRef name = YMSTRC("ymlog");
-    gYMLogLock = YMLockCreateWithOptionsAndName(YMInternalLockType,name);
-    YMRelease(name);
-}
-
-// inline
 void __YMLogInit()
 {
-    pthread_once(&gYMLogLockOnce, YMLogInitLock);
+    YMStringRef name = YMSTRC("ymlog");
+    gYMLogLock = YMLockCreateWithOptionsAndName(YMLockRecursive,name);
+    YMRelease(name);
     gTimeFormatBuf = YMALLOC(gTimeFormatBufLen);
 }
 
-void YMLogType( __unused YMLogLevel level, char* format, ... )
+void __YMLogType( char* format, ... )
 {
-    __YMLogInit();
+    pthread_once(&gYMLogLockOnce, __YMLogInit);
     
     YMLockLock(gYMLogLock);
     {
         const char *timeStr = YMGetCurrentTimeString(gTimeFormatBuf, gTimeFormatBufLen);
+        uint64_t threadID = UINT64_MAX;
+        pthread_threadid_np(pthread_self(), &threadID);
         if ( timeStr )
-            printf("%s yammer: ",timeStr);
+            fprintf(stdout,"%s yammer[%llu]: ",timeStr,threadID);
         
         va_list args;
         va_start(args,format);
@@ -50,7 +46,7 @@ void YMLogType( __unused YMLogLevel level, char* format, ... )
         va_end(args);
         
         
-        printf("\n");
+        fprintf(stdout,"\n");
         fflush(stdout);
     }
     YMLockUnlock(gYMLogLock);

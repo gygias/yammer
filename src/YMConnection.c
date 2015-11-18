@@ -313,7 +313,7 @@ YMStreamRef YMConnectionCreateStream(YMConnectionRef connection_, YMStringRef na
     if ( NOT_CONNECTED )
         return NULL;
     
-    return YMPlexerCreateNewStream(connection->plexer, name);
+    return YMPlexerCreateStream(connection->plexer, name);
 }
 
 void YMConnectionCloseStream(YMConnectionRef connection_, YMStreamRef stream)

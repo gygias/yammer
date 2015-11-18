@@ -35,11 +35,7 @@ bool YMPlexerStart(YMPlexerRef plexer);
 // closes the file (or files) associated with this plexer
 bool YMPlexerStop(YMPlexerRef plexer);
 
-YMStreamRef YMPlexerCreateNewStream(YMPlexerRef plexer, YMStringRef name);
-void YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream);
-
-// if a stream originates remotely, the client must release the (_upstream _read), which might be consumed out-of-band with remote closure notification
-// this has to go through the plexer, because notify_close happens asynchronously
-//void YMPlexerRemoteStreamRelease(YMPlexerRef plexer, YMStreamRef stream);
+YMStreamRef YMPlexerCreateStream(YMPlexerRef plexer, YMStringRef name);
+void YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream); // not thread safe
 
 #endif /* YMPlexer_h */

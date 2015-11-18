@@ -726,7 +726,7 @@ void __ym_session_new_stream_proc(YMConnectionRef connection, YMStreamRef stream
     
     // is it weird that we don't report 'connection' here, despite user only being concerned with "active"?
     if ( session->newStreamFunc )
-        session->newStreamFunc(session,stream,session->callbackContext);
+        session->newStreamFunc(session,connection,stream,session->callbackContext);
 }
 
 void __ym_session_stream_closing_proc(YMConnectionRef connection, YMStreamRef stream, void *context)
@@ -744,7 +744,7 @@ void __ym_session_stream_closing_proc(YMConnectionRef connection, YMStreamRef st
     }
     
     if ( session->streamClosingFunc )
-        session->streamClosingFunc(session,stream,session->callbackContext);
+        session->streamClosingFunc(session,connection,stream,session->callbackContext);
 }
 
 void __ym_session_connection_interrupted_proc(YMConnectionRef connection, void *context)

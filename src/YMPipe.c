@@ -60,6 +60,8 @@ YMPipeRef YMPipeCreate(YMStringRef name)
         }
     }
   
+    // todo this number is based on mac test cases, if open files rises above 200
+    // something isn't closing/releasing their streams (in practice doesn't seem to go above 100)
 #define TOO_MANY_FILES 200
 #ifdef DEBUG
     if ( fds[0] > TOO_MANY_FILES || fds[1] > TOO_MANY_FILES )

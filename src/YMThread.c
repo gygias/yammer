@@ -34,7 +34,7 @@ typedef struct __ym_thread
     
     YMStringRef name;
     ym_thread_entry entryPoint;
-    void *context;
+    const void *context;
     pthread_t pthread;
     
     // thread state
@@ -94,7 +94,7 @@ ym_thread_dispatch_ref __YMThreadDispatchCopy(ym_thread_dispatch_ref userDispatc
 void __YMThreadFreeDispatchContext(__ym_thread_dispatch_context);
 bool __YMThreadDispatchForward(YMStreamRef stream, int file, bool toStream, bool limited, uint64_t byteLimit, bool sync, ym_thread_dispatch_forward_file_context callbackInfo);
 
-YMThreadRef _YMThreadCreate(YMStringRef name, bool isDispatchThread, ym_thread_entry entryPoint, void *context)
+YMThreadRef _YMThreadCreate(YMStringRef name, bool isDispatchThread, ym_thread_entry entryPoint, const void *context)
 {
     __YMThreadRef thread = (__YMThreadRef)_YMAlloc(_YMThreadTypeID,sizeof(__YMThread));
     
@@ -172,7 +172,7 @@ void _YMThreadFree(YMTypeRef object)
 }
 
 
-YMThreadRef YMThreadCreate(YMStringRef name, ym_thread_entry entryPoint, void *context)
+YMThreadRef YMThreadCreate(YMStringRef name, ym_thread_entry entryPoint, const void *context)
 {
     return _YMThreadCreate(name, false, entryPoint, context);
 }
@@ -203,7 +203,7 @@ bool YMThreadStart(YMThreadRef thread_)
     pthread_t pthread;
     int result;
     
-    if ( ( result = pthread_create(&pthread, NULL, (void *(*)(void *))thread->entryPoint, thread->context) ) )
+    if ( ( result = pthread_create(&pthread, NULL, (void *(*)(void *))thread->entryPoint, (void *)thread->context) ) )
     {
         ymerr("thread[%s,%s]: error: pthread_create %d %s", YMSTR(thread->name), thread->isDispatchThread?"dispatch":"user", result, strerror(result));
         return false;
@@ -369,7 +369,7 @@ bool __YMThreadDispatchForward(YMStreamRef stream, int file, bool toStream, bool
     __ym_thread_dispatch_forward_file_async_context_ref context = YMALLOC(sizeof(__ym_thread_dispatch_forward_file_async_context));
     context->threadOrNull = forwardingThread;
     context->file = file;
-    context->stream = stream;
+    context->stream = YMRetain(stream);
     context->toStream = toStream;
     context->limited = limited;
     context->nBytes = byteLimit;
@@ -456,5 +456,6 @@ void *__ym_thread_dispatch_forward_file_proc(__ym_thread_dispatch_forward_file_a
     if ( callbackInfo.callback )
         callbackInfo.callback(callbackInfo.context,outBytes);
     
+    YMRelease(stream);
     return ret;
 }
