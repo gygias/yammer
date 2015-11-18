@@ -326,6 +326,8 @@ YMmDNSServiceRecord *__YMmDNSBrowserGetServiceWithName(__YMmDNSBrowserRef browse
             if ( remove )
             {
                 previousListItem->next = aListItem->next; // nil or not
+                if ( aListItem == browser->serviceList )
+                    browser->serviceList = NULL;
                 _YMmDNSServiceRecordFree(aRecord);
                 free(aListItem);
                 matchedRecord = _YMmDNSServiceFoundAndRemovedHack;
