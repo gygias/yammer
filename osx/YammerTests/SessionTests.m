@@ -110,11 +110,14 @@ SessionTests *gTheSessionTest = nil;
     okay = stopServerFirst ? YMSessionCloseAllConnections(serverSession) : YMSessionCloseAllConnections(clientSession);
     XCTAssert(okay,@"first (%@) session close",stopServerFirst?@"server":@"client");
     okay = stopServerFirst ? YMSessionStopBrowsing(clientSession) : YMSessionStopAdvertising(serverSession);
-    okay = stopServerFirst ? YMSessionCloseAllConnections(clientSession) : YMSessionCloseAllConnections(serverConnection);
+    okay = stopServerFirst ? YMSessionCloseAllConnections(clientSession) : YMSessionCloseAllConnections(serverSession);
     // i don't think we can expect this to always succeed in-process.
     // we're racing the i/o threads as soon as we stop the server
     // but we can randomize which we close first to find real bugs.
     //XCTAssert(okay,@"second (%@) session close",stopServerFirst?@"client":@"server");
+    
+    YMRelease(serverSession);
+    YMRelease(clientSession);
     
     NSLog(@"diffing %@",tempDir);
     NSPipe *outputPipe = [NSPipe pipe];
