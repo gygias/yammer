@@ -153,7 +153,10 @@ SessionTests *gTheSessionTest = nil;
     dispatch_semaphore_wait(threadExitSemaphore, DISPATCH_TIME_FOREVER);
     XCTAssert([diff terminationStatus]==0||checkOK,@"diff");
     NSLog(@"cleaning up");
-    [[NSTask launchedTaskWithLaunchPath:@"/bin/rm" arguments:@[@"-rf",@"/tmp/ymsessiontest*"]] waitUntilExit];
+    okay = [[NSFileManager defaultManager] removeItemAtPath:tempFile error:NULL];
+    XCTAssert(okay,@"tempFile");
+    okay = [[NSFileManager defaultManager] removeItemAtPath:tempDir error:NULL];
+    XCTAssert(okay,@"tempDir");
     
     
 #define CHECK_THREADS

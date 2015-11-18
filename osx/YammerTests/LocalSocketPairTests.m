@@ -8,7 +8,7 @@
 
 #import "YammerTests.h"
 
-#import "YMLocalSocketPair.h";
+#import "YMLocalSocketPair.h"
 
 @interface LocalSocketPairTests : XCTestCase
 
@@ -81,13 +81,6 @@
     XCTAssert(socketA>=0&&socketB>=0,@"sockets < 0");
     
     YMRelease(oneMorePair);
-}
-
-- (void)testPerformanceExample {
-    // This is an example of a performance test case.
-    [self measureBlock:^{
-        // Put the code you want to measure the time of here.
-    }];
 }
 
 @end

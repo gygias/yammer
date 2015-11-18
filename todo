@@ -1,3 +1,5 @@
+- one-shot 'connect with type and name' function on ymsession
+
 - does ymstringcreatewithformat need null termination? compiler would probably be confused by our invented 'ymtyperef' token
 - ymlocalsocketpair's server thread probably shouldn't be persistent, would fix name reuse
 - autorelease? stringcreate, classcreate, stringrelease is cumbersome, put pools around [dispatch]threads

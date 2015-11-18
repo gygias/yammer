@@ -18,9 +18,9 @@
 
 #define     PlexerTest1Threads 8
 #define     PlexerTest1NewStreamPerRoundTrip true
-#define     PlexerTest1RoundTripsPerThread 1
+#define     PlexerTest1RoundTripsPerThread 8
 
-#define PlexerTest1TimeBased
+#define PlexerTest1TimeBased true
 //#define PlexerTest1Indefinite
 #ifdef PlexerTest1Indefinite
 #define PlexerTest1EndDate ([NSDate distantFuture])
@@ -29,7 +29,7 @@
 #endif
 
 #define     PlexerTest1RandomMessages true // todo
-#define     PlexerTest1RandomMessageMaxLength 1024
+#define     PlexerTest1RandomMessageMaxLength 2048
 #define     PlexerTest1StreamClosuresToObserve ( PlexerTest1Threads * ( PlexerTest1NewStreamPerRoundTrip ? PlexerTest1RoundTripsPerThread : 1 ) )
 
 typedef struct
@@ -183,19 +183,15 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
         });
     }
 
-//#define AND_MEASURE
-#ifdef AND_MEASURE
-    [self measureBlock:^{
-#endif
-#ifndef PlexerTest1TimeBased
+    if ( ! PlexerTest1TimeBased )
+    {
         while ( plexerTest1Running )
             CFRunLoopRunInMode(kCFRunLoopDefaultMode,0.5,false);
-#else
+    }
+    else
+    {
         CFRunLoopRunInMode(kCFRunLoopDefaultMode, [PlexerTest1EndDate timeIntervalSinceDate:[NSDate date]], false);
-#endif
-#ifdef AND_MEASURE
-    }];
-#endif
+    }
     
     timeBasedTimeOver = YES;
     if ( arc4random_uniform(2) )
@@ -395,24 +391,26 @@ void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *
     XCTAssert(stream,@"remoteClosing null");
     XCTAssert(context==(__bridge void *)gRunningPlexerTest,@"remoteClosing context doesn't match");
     
+    
     YMLockLock(plexerTest1Lock);
-#ifdef PlexerTest1TimeBased
+    bool last = --awaitingClosures == 0;
     streamsCompleted++;
-#else
-    NSUInteger last = awaitingClosures--;
-#endif
     YMLockUnlock(plexerTest1Lock);
+    
     NoisyTestLog(@"%s: *********** gPlexerTest1AwaitingCloses %zu->%zu!! *****************",__FUNCTION__,last,awaitingClosures);
-#ifdef PlexerTest1TimeBased
-    if ( streamsCompleted % 10000 == 0 )
-        NSLog(@"handled %zuth stream, approx %zumb in, %zumb out",streamsCompleted,bytesIn/1024/1024,bytesOut/1024/1024);
-#else
-    if ( last - 1 == 0 )
+    if ( PlexerTest1TimeBased )
     {
-        NSLog(@"%s last stream closed, signaling exit",__FUNCTION__);
-        plexerTest1Running = NO;
+        if ( streamsCompleted % 10000 == 0 )
+            NSLog(@"handled %zuth stream, approx %zumb in, %zumb out",streamsCompleted,bytesIn/1024/1024,bytesOut/1024/1024);
     }
-#endif
+    else
+    {
+        if ( last )
+        {
+            NSLog(@"%s last stream closed, signaling exit",__FUNCTION__);
+            plexerTest1Running = NO;
+        }
+    }
 }
 
 @end

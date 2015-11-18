@@ -113,16 +113,9 @@ typedef struct
         if ( okay )
             [self runEndpoint:theClient :!localIsServer];
     });
-    
-    //#define AND_MEASURE
-#ifdef AND_MEASURE
-    [self measureBlock:^{
-#endif
+
 #if TLSTestTimeBased
         CFRunLoopRunInMode(kCFRunLoopDefaultMode, [TLSTestEndDate timeIntervalSinceDate:[NSDate date]], false);
-#endif
-#ifdef AND_MEASURE
-    }];
 #endif
     
     // signal threads to exit and wait for them
