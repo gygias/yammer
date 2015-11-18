@@ -6,8 +6,12 @@
 //  Copyright © 2015 combobulated. All rights reserved.
 //
 
-#include "YMAddress.h"
+#ifdef WIN32
+#include "YMBase.h"
+#include "YMInternal.h"
+#endif
 
+#include "YMAddress.h"
 #include "YMUtilities.h"
 
 #include "YMLog.h"
@@ -18,17 +22,20 @@
 #define ymlog(x,...) ;
 #endif
 
+#ifndef WIN32
 #include <sys/socket.h>
-
-// protocols
-#include <netinet/in.h>
+#include <netinet/in.h> // protocols
 #include <arpa/inet.h>
+#else
+#include <winsock.h>
+typedef unsigned __int32 socklen_t;
+#endif
 
 #define YM_IPV4_LEN sizeof(struct sockaddr_in)
 #define YM_IPV6_LEN sizeof(struct sockaddr_in6)
 
-#define YM_IS_IPV4(x) ( ( x->sa_family == AF_INET ) && ( x->sa_len == YM_IPV4_LEN ) )
-#define YM_IS_IPV6(x) ( ( x->sa_family == AF_INET6 ) && ( x->sa_len == YM_IPV6_LEN ) )
+#define YM_IS_IPV4(x) ( x->sa_family == AF_INET )
+#define YM_IS_IPV6(x) ( x->sa_family == AF_INET6 )
 
 typedef struct __ym_address
 {
@@ -56,11 +63,13 @@ YMAddressRef YMAddressCreate(void* addressData, socklen_t length)
         type = YMAddressIPV4;
         isIP = isIPV4 = true;
     }
+#ifndef WIN32
     else if ( YM_IS_IPV6(addr) )
     {
         type = YMAddressIPV6;
         isIP = true;
     }
+#endif
     else
     {
         ymlog("address: warning: yammer doesn't support address family %d",addr->sa_family);

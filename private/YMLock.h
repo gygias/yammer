@@ -11,6 +11,10 @@
 
 #ifndef WIN32
 #include <pthread.h>
+#define MUTEX_TYPE pthread_mutex_t
+#else
+#include <windows.h>
+#define MUTEX_TYPE HANDLE
 #endif
 
 typedef enum

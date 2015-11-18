@@ -25,8 +25,6 @@
 #ifndef WIN32
 #include <stdbool.h>
 #include <unistd.h>
-#else
-#define uint8_t unsigned char
 #endif
 
 #define YM_VERSION 1

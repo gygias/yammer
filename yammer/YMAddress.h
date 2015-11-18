@@ -11,6 +11,11 @@
 #ifndef YMAddress_h
 #define YMAddress_h
 
+#ifdef WIN32
+#include <yammer/YMBase.h>
+#include <yammer/YMString.h>
+#endif
+
 typedef struct __YMAddressRef *YMAddressRef;
 
 typedef enum
