@@ -9,12 +9,12 @@
 #ifndef YMSession_h
 #define YMSession_h
 
-#include <yammer/YMBase.h>
+#include <libyammer/YMBase.h>
 
-#include <yammer/YMString.h>
-#include <yammer/YMDictionary.h>
-#include <yammer/YMPeer.h>
-#include <yammer/YMConnection.h>
+#include <libyammer/YMString.h>
+#include <libyammer/YMDictionary.h>
+#include <libyammer/YMPeer.h>
+#include <libyammer/YMConnection.h>
 
 typedef YMTypeRef YMSessionRef;
 

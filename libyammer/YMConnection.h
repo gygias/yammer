@@ -9,11 +9,11 @@
 #ifndef YMConnection_h
 #define YMConnection_h
 
-#include <yammer/YMBase.h>
+#include <libyammer/YMBase.h>
 
-#include <yammer/YMConnection.h>
-#include <yammer/YMStream.h>
-#include <yammer/YMAddress.h>
+#include <libyammer/YMConnection.h>
+#include <libyammer/YMStream.h>
+#include <libyammer/YMAddress.h>
 
 typedef const struct __ym_connection *YMConnectionRef;
 

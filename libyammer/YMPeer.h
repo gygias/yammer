@@ -9,9 +9,9 @@
 #ifndef YMPeer_h
 #define YMPeer_h
 
-#include <yammer/YMDictionary.h>
-#include <yammer/YMPeer.h>
-#include <yammer/YMAddress.h>
+#include <libyammer/YMDictionary.h>
+#include <libyammer/YMPeer.h>
+#include <libyammer/YMAddress.h>
 
 typedef YMTypeRef YMPeerRef;
 
