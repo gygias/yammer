@@ -751,12 +751,11 @@ void __ym_session_connection_interrupted_proc(YMConnectionRef connection, void *
 {
     __YMSessionRef session = context;
     
-    YMRetain(connection);
+    YMAddressRef address = (YMAddressRef)YMRetain(YMConnectionGetAddress(connection));
     
     bool isDefault = ( connection == session->defaultConnection );
-    bool first = __YMSessionInterrupt(session);
+    bool first = __YMSessionInterrupt(session); // connection probably getting deallocated here
     
-    YMAddressRef address = YMConnectionGetAddress(connection);
     
     if ( first && isDefault )
     {
@@ -766,7 +765,7 @@ void __ym_session_connection_interrupted_proc(YMConnectionRef connection, void *
     
     ymerr("session[%s]: connection interrupted: %s",YMSTR(session->logDescription),YMSTR(YMAddressGetDescription(address)));
     
-    YMRelease(connection);
+    YMRelease(address);
 }
 
 #pragma mark client mdns callbacks
