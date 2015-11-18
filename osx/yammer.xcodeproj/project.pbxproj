@@ -133,6 +133,8 @@
 		631916411BFCFFB4001475FC /* YMStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = YMStream.h; sourceTree = "<group>"; };
 		631916421BFCFFB4001475FC /* YMStream.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = YMStream.m; sourceTree = "<group>"; };
 		631916451BFD02A1001475FC /* Yammer-pch.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Yammer-pch.h"; sourceTree = "<group>"; };
+		631916481BFD3062001475FC /* YMConnectionPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = YMConnectionPriv.h; sourceTree = "<group>"; };
+		631916491BFD34A3001475FC /* YMStreamPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = YMStreamPriv.h; sourceTree = "<group>"; };
 		63225D421BE9026200C28F05 /* libyammer.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libyammer.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		63225D521BE9074700C28F05 /* YMPipe.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMPipe.c; path = src/YMPipe.c; sourceTree = "<group>"; };
 		63225D531BE9074700C28F05 /* YMPipe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMPipe.h; path = private/YMPipe.h; sourceTree = "<group>"; };
@@ -258,8 +260,10 @@
 				631916391BFCFF93001475FC /* YMSession.h */,
 				6319163A1BFCFF93001475FC /* YMSession.m */,
 				6319163D1BFCFFAA001475FC /* YMConnection.h */,
+				631916481BFD3062001475FC /* YMConnectionPriv.h */,
 				6319163E1BFCFFAA001475FC /* YMConnection.m */,
 				631916411BFCFFB4001475FC /* YMStream.h */,
+				631916491BFD34A3001475FC /* YMStreamPriv.h */,
 				631916421BFCFFB4001475FC /* YMStream.m */,
 			);
 			path = Yammer;

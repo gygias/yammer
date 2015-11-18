@@ -8,6 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
+#import <Yammer/YMStream.h>
+
 @interface YMConnection : NSObject
 
 @end
