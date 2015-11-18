@@ -60,20 +60,20 @@ SessionTests *gTheSessionTest = nil;
     
     testType = "_ymtest._tcp";
     testName = "twitter-cliche";
-    serverSession = YMSessionCreateServer(YMSTRC(testType), YMSTRC(testName));
+    serverSession = YMSessionCreate(YMSTRC(testType));
     XCTAssert(serverSession,@"server alloc");
-    YMSessionSetSharedCallbacks(serverSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
-    YMSessionSetServerCallbacks(serverSession, _ym_session_should_accept_func, (__bridge void *)self);
+    YMSessionSetCommonCallbacks(serverSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
+    YMSessionSetAdvertisingCallbacks(serverSession, _ym_session_should_accept_func, (__bridge void *)self);
     
-    BOOL started = YMSessionServerStart(serverSession);
+    BOOL started = YMSessionStartAdvertising(serverSession, YMSTRC(testName));
     XCTAssert(started,@"server start");
     
-    clientSession = YMSessionCreateClient(YMSTRC(testType));
+    clientSession = YMSessionCreate(YMSTRC(testType));
     XCTAssert(clientSession,@"client alloc");
-    YMSessionSetSharedCallbacks(clientSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
-    YMSessionSetClientCallbacks(clientSession, _ym_session_added_peer_func, _ym_session_removed_peer_func, _ym_session_resolve_failed_func, _ym_session_resolved_peer_func, _ym_session_connect_failed_func, (__bridge void *)self);
+    YMSessionSetCommonCallbacks(clientSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
+    YMSessionSetBrowsingCallbacks(clientSession, _ym_session_added_peer_func, _ym_session_removed_peer_func, _ym_session_resolve_failed_func, _ym_session_resolved_peer_func, _ym_session_connect_failed_func, (__bridge void *)self);
     
-    started = YMSessionClientStart(clientSession);
+    started = YMSessionStartBrowsing(clientSession);
     XCTAssert(started,@"client start");
     
     nonRegularFileNames = [NSMutableArray new];
@@ -106,13 +106,15 @@ SessionTests *gTheSessionTest = nil;
     stopping = YES;
     bool okay = true;
     bool stopServerFirst = arc4random_uniform(2);
-    okay = stopServerFirst ? YMSessionServerStop(serverSession) : YMSessionClientStop(clientSession);
+    okay = stopServerFirst ? YMSessionStopAdvertising(serverSession) : YMSessionStopBrowsing(clientSession);
+    okay = stopServerFirst ? YMSessionCloseAllConnections(serverSession) : YMSessionCloseAllConnections(clientSession);
     XCTAssert(okay,@"first (%@) session close",stopServerFirst?@"server":@"client");
-    okay = stopServerFirst? YMSessionClientStop(clientSession) : YMSessionServerStop(serverSession);
+    okay = stopServerFirst ? YMSessionStopBrowsing(clientSession) : YMSessionStopAdvertising(serverSession);
+    okay = stopServerFirst ? YMSessionCloseAllConnections(clientSession) : YMSessionCloseAllConnections(serverConnection);
     // i don't think we can expect this to always succeed in-process.
     // we're racing the i/o threads as soon as we stop the server
     // but we can randomize which we close first to find real bugs.
-    //XCTAssert(okay,@"client session close");
+    //XCTAssert(okay,@"second (%@) session close",stopServerFirst?@"client":@"server");
     
     NSLog(@"diffing %@",tempDir);
     NSPipe *outputPipe = [NSPipe pipe];
@@ -407,7 +409,7 @@ void _ym_session_added_peer_func(YMSessionRef session, YMPeerRef peer, void *con
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(arc4random_uniform(FAKE_DELAY_MAX) * NSEC_PER_SEC)), dispatch_get_global_queue(0, 0), ^{
         NSLog(@"resolving %s",YMSTR(YMPeerGetName(peer)));
-        YMSessionClientResolvePeer(session, peer);
+        YMSessionResolvePeer(session, peer);
     });
 }
 
@@ -458,7 +460,7 @@ void _ym_session_resolved_peer_func(YMSessionRef session, YMPeerRef peer, void *
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(arc4random_uniform(FAKE_DELAY_MAX) * NSEC_PER_SEC)), dispatch_get_global_queue(0, 0), ^{
         BOOL testSync = arc4random_uniform(2);
         NSLog(@"connecting to %s (%ssync)...",YMSTR(YMPeerGetName(peer)),testSync?"":"a");
-        bool okay = YMSessionClientConnectToPeer(session,peer,testSync);
+        bool okay = YMSessionConnectToPeer(session,peer,testSync);
         XCTAssert(okay,@"client connect to peer");
         
         if ( testSync )

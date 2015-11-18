@@ -12,7 +12,7 @@
 #include <stdbool.h>
 #include <pthread.h>
 
-#import <yammer/Yammer.h>
+#import <libyammer/Yammer.h>
 #import "defs.h"
 
 YMSessionRef gYMSession = NULL;
@@ -38,19 +38,19 @@ int main(int argc, const char * argv[]) {
         if ( argc == 3 )
         {
             gIsServer = true;
-            gYMSession = YMSessionCreateServer(YMSTRC(argv[1]), YMSTRC(argv[2]));
-            YMSessionSetSharedCallbacks(gYMSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
-            YMSessionSetServerCallbacks(gYMSession, _ym_session_should_accept_func, NULL);
-            if ( ! YMSessionServerStart(gYMSession) )
+            gYMSession = YMSessionCreate(YMSTRC(argv[1]));
+            YMSessionSetCommonCallbacks(gYMSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
+            YMSessionSetAdvertisingCallbacks(gYMSession, _ym_session_should_accept_func, NULL);
+            if ( ! YMSessionStartAdvertising(gYMSession, YMSTRC(argv[2])) )
                 exit(1);
         }
         else
         {
             gIsServer = false;
-            gYMSession = YMSessionCreateClient(YMSTRC(argv[1]));
-            YMSessionSetSharedCallbacks(gYMSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
-            YMSessionSetClientCallbacks(gYMSession, _ym_session_added_peer_func, _ym_session_removed_peer_func, _ym_session_resolve_failed_func, _ym_session_resolved_peer_func, _ym_session_connect_failed_func, NULL);
-            if ( ! YMSessionClientStart(gYMSession) )
+            gYMSession = YMSessionCreate(YMSTRC(argv[1]));
+            YMSessionSetCommonCallbacks(gYMSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
+            YMSessionSetBrowsingCallbacks(gYMSession, _ym_session_added_peer_func, _ym_session_removed_peer_func, _ym_session_resolve_failed_func, _ym_session_resolved_peer_func, _ym_session_connect_failed_func, NULL);
+            if ( ! YMSessionStartBrowsing(gYMSession) )
                 exit(1);
         }
         
@@ -100,7 +100,7 @@ void print_incoming(YMStreamRef stream)
 void _ym_session_added_peer_func(YMSessionRef session, YMPeerRef peer, __unused void* context)
 {
     printf("resolving %s...\n", YMSTR(YMPeerGetName(peer)));
-    YMSessionClientResolvePeer(session, peer);
+    YMSessionResolvePeer(session, peer);
 }
 
 void _ym_session_removed_peer_func(__unused YMSessionRef session, YMPeerRef peer, __unused void* context)
@@ -118,7 +118,7 @@ void _ym_session_resolve_failed_func(__unused YMSessionRef session, YMPeerRef pe
 void _ym_session_resolved_peer_func(__unused YMSessionRef session, YMPeerRef peer, __unused void* context)
 {
     printf("resolved %s...\n", YMSTR(YMPeerGetName(peer)));
-    YMSessionClientConnectToPeer(session, peer, false);
+    YMSessionConnectToPeer(session, peer, false);
 }
 
 void _ym_session_connect_failed_func(__unused YMSessionRef session, YMPeerRef peer, __unused void* context)

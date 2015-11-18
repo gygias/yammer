@@ -30,6 +30,8 @@
     {
         self.type = type;
         self.name = name;
+        
+        // todo: since we're the 'friendly objc' wrapper, should probably check args rather than crash in the c lib
     }
     return self;
 }

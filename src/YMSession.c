@@ -35,7 +35,6 @@ typedef struct __ym_session
     _YMType _type;
     
     // shared
-    bool isServer;
     YMStringRef type;
     YMStringRef logDescription;
     YMDictionaryRef connectionsByAddress;
@@ -92,44 +91,28 @@ void __ym_mdns_service_removed_func(YMmDNSBrowserRef browser, YMStringRef name, 
 void __ym_mdns_service_updated_func(YMmDNSBrowserRef browser, YMmDNSServiceRecord *service, void *context);
 void __ym_mdns_service_resolved_func(YMmDNSBrowserRef browser, bool success, YMmDNSServiceRecord *service, void *context);
 
-YMSessionRef YMSessionCreateClient(YMStringRef type)
+YMSessionRef YMSessionCreate(YMStringRef type)
 {
-    __YMSessionRef session = __YMSessionCreateShared(type,false);
-    session->logDescription = YMStringCreateWithFormat("c:%s",YMSTR(type),NULL);
-    session->availablePeers = YMDictionaryCreate();
-    session->availablePeersLock = YMLockCreateWithOptionsAndName(YMInternalLockType, YMSTRC("available-peers"));
-    session->browser = NULL;
-    return session;
-}
-
-YMSessionRef YMSessionCreateServer(YMStringRef type, YMStringRef name)
-{
-    __YMSessionRef session = __YMSessionCreateShared(type,true);
-    session->name = name;
+    __YMSessionRef session = (__YMSessionRef)_YMAlloc(_YMSessionTypeID,sizeof(__YMSession));
+    session->type = YMRetain(type);
     session->ipv4ListenSocket = -1;
     session->ipv6ListenSocket = -1;
-    session->logDescription = YMStringCreateWithFormat("s:%s:%s",YMSTR(type),YMSTR(name),NULL);
+    session->logDescription = YMStringCreateWithFormat("session:%s",YMSTR(type),NULL);
     session->service = NULL;
+    session->browser = NULL;
     session->acceptThread = NULL;
     session->acceptThreadExitFlag = false;
     session->initConnectionDispatchThread = NULL;
-    return session;
-}
-
-__YMSessionRef __YMSessionCreateShared(YMStringRef type, bool isServer)
-{
-    __YMSessionRef session = (__YMSessionRef)_YMAlloc(_YMSessionTypeID,sizeof(__YMSession));
-    
-    session->type = type;
-    session->isServer = isServer;
     session->defaultConnection = NULL;
     session->connectionsByAddress = YMDictionaryCreate();
     session->connectionsByAddressLock = YMLockCreate(YMInternalLockType, YMSTRC("connections-by-address"));
     session->interruptionLock = YMLockCreate(YMInternalLockType, YMSTRC("connection-interrupt"));
+    session->availablePeers = YMDictionaryCreate();
+    session->availablePeersLock = YMLockCreateWithOptionsAndName(YMInternalLockType, YMSTRC("available-peers"));
     return session;
 }
 
-void YMSessionSetClientCallbacks(YMSessionRef session_, ym_session_added_peer_func added, ym_session_removed_peer_func removed,
+void YMSessionSetBrowsingCallbacks(YMSessionRef session_, ym_session_added_peer_func added, ym_session_removed_peer_func removed,
                                  ym_session_resolve_failed_func rFailed, ym_session_resolved_peer_func resolved,
                                  ym_session_connect_failed_func cFailed, void *context)
 {
@@ -143,7 +126,7 @@ void YMSessionSetClientCallbacks(YMSessionRef session_, ym_session_added_peer_fu
     session->callbackContext = context;
 }
 
-void YMSessionSetServerCallbacks(YMSessionRef session_,ym_session_should_accept_func should, void* context)
+void YMSessionSetAdvertisingCallbacks(YMSessionRef session_,ym_session_should_accept_func should, void* context)
 {
     __YMSessionRef session = (__YMSessionRef)session_;
     
@@ -151,7 +134,7 @@ void YMSessionSetServerCallbacks(YMSessionRef session_,ym_session_should_accept_
     session->callbackContext = context;
 }
 
-void YMSessionSetSharedCallbacks(YMSessionRef session_, ym_session_connected_func connected, ym_session_interrupted_func interrupted,
+void YMSessionSetCommonCallbacks(YMSessionRef session_, ym_session_connected_func connected, ym_session_interrupted_func interrupted,
                                                         ym_session_new_stream_func new_, ym_session_stream_closing_func closing)
 {
     __YMSessionRef session = (__YMSessionRef)session_;
@@ -177,7 +160,7 @@ void _YMSessionFree(YMTypeRef object)
     //    YMRelease(session->defaultConnection);
     
     // server
-    if ( ! session->isServer )
+    if ( session->name )
         YMRelease(session->name);
     if ( session->service )
     {
@@ -197,11 +180,12 @@ void _YMSessionFree(YMTypeRef object)
     }
     YMRelease(session->availablePeers);
     YMRelease(session->availablePeersLock);
+    YMRelease(session->interruptionLock);
 }
 
 #pragma mark client
 
-bool YMSessionClientStart(YMSessionRef session_)
+bool YMSessionStartBrowsing(YMSessionRef session_)
 {
     __YMSessionRef session = (__YMSessionRef)session_;
     
@@ -232,7 +216,7 @@ bool YMSessionClientStart(YMSessionRef session_)
     return true;
 }
 
-bool YMSessionClientStop(YMSessionRef session_)
+bool YMSessionStopBrowsing(YMSessionRef session_)
 {
     __YMSessionRef session = (__YMSessionRef)session_;
 
@@ -245,14 +229,17 @@ bool YMSessionClientStop(YMSessionRef session_)
         session->browser = NULL;
     }
     
-    bool anotherOkay = __YMSessionInterrupt(session);
-    if ( ! anotherOkay )
-        okay = false;
-    
     return okay;
 }
 
-bool YMSessionClientResolvePeer(YMSessionRef session_, YMPeerRef peer)
+bool YMSessionCloseAllConnections(YMSessionRef session_)
+{
+    __YMSessionRef session = (__YMSessionRef)session_;
+    bool okay = __YMSessionInterrupt(session);
+    return okay;
+}
+
+bool YMSessionResolvePeer(YMSessionRef session_, YMPeerRef peer)
 {
     __YMSessionRef session = (__YMSessionRef)session_;
     
@@ -280,7 +267,7 @@ typedef struct __ym_session_connect_async_context_def
 } ___ym_session_connect_async_context_def;
 typedef struct __ym_session_connect_async_context_def *__ym_session_connect_async_context;
 
-bool YMSessionClientConnectToPeer(YMSessionRef session_, YMPeerRef peer, bool sync)
+bool YMSessionConnectToPeer(YMSessionRef session_, YMPeerRef peer, bool sync)
 {
     __YMSessionRef session = (__YMSessionRef)session_;
     
@@ -406,12 +393,14 @@ typedef struct __ym_session_accept_thread_context_def
 } _ym_session_accept_thread_context_def;
 typedef struct __ym_session_accept_thread_context_def *__ym_session_accept_thread_context;
 
-bool YMSessionServerStart(YMSessionRef session_)
+bool YMSessionStartAdvertising(YMSessionRef session_, YMStringRef name)
 {
     __YMSessionRef session = (__YMSessionRef)session_;
     
     if ( session->service )
         return false;
+    
+    session->name = YMRetain(name);
     
     bool mDNSOK = false;
     int socket = -1;
@@ -439,12 +428,12 @@ bool YMSessionServerStart(YMSessionRef session_)
     else
         session->ipv6ListenSocket = socket;
     
-    YMStringRef name = YMStringCreateWithFormat("session-accept-%s",YMSTR(session->type),NULL);
+    YMStringRef memberName = YMStringCreateWithFormat("session-accept-%s",YMSTR(session->type),NULL);
     __ym_session_accept_thread_context ctx = YMALLOC(sizeof(struct __ym_session_accept_thread_context_def));
     ctx->session = session;
     ctx->ipv4 = ipv4;
-    session->acceptThread = YMThreadCreate(name, __ym_session_accept_proc, ctx);
-    YMRelease(name);
+    session->acceptThread = YMThreadCreate(memberName, __ym_session_accept_proc, ctx);
+    YMRelease(memberName);
     if ( ! session->acceptThread )
     {
         ymerr("session[%s]: error: failed to create accept thread",YMSTR(session->logDescription));
@@ -458,9 +447,9 @@ bool YMSessionServerStart(YMSessionRef session_)
         goto rewind_fail;
     }
     
-    name = YMStringCreateWithFormat("session-init-%s",YMSTR(session->type),NULL);
-    session->initConnectionDispatchThread = YMThreadDispatchCreate(name);
-    YMRelease(name);
+    memberName = YMStringCreateWithFormat("session-init-%s",YMSTR(session->type),NULL);
+    session->initConnectionDispatchThread = YMThreadDispatchCreate(memberName);
+    YMRelease(memberName);
     if ( ! session->initConnectionDispatchThread )
     {
         ymerr("session[%s]: error: failed to create connection init thread",YMSTR(session->logDescription));
@@ -509,7 +498,7 @@ rewind_fail:
     return false;
 }
 
-bool YMSessionServerStop(YMSessionRef session_)
+bool YMSessionStopAdvertising(YMSessionRef session_)
 {
     __YMSessionRef session = (__YMSessionRef)session_;
     session->acceptThreadExitFlag = true;
@@ -535,15 +524,14 @@ bool YMSessionServerStop(YMSessionRef session_)
         session->ipv6ListenSocket = -1;
     }
     
-    bool mdnsOK = YMmDNSServiceStop(session->service, false);
-    YMRelease(session->service);
-    session->service = NULL;    
-    if ( ! mdnsOK )
-        okay = false;
-    
-    bool connectionsOK = __YMSessionInterrupt(session);
-    if ( ! connectionsOK )
-        okay = false;
+    if ( session->service )
+    {
+        bool mdnsOK = YMmDNSServiceStop(session->service, false);
+        YMRelease(session->service);
+        session->service = NULL;    
+        if ( ! mdnsOK )
+            okay = false;
+    }
     
     return okay;
 }
