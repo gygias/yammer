@@ -7,7 +7,9 @@
 //
 
 #include "YMTLSProvider.h"
+#include "YMOpenssl.h"
 #include "YMSecurityProviderInternal.h"
+#include "YMX509CertificatePriv.h"
 
 #include "YMUtilities.h"
 #include "YMThread.h"
@@ -26,15 +28,37 @@
 #define ymlog(x,...) ;
 #endif
 
+static pthread_once_t gYMInitSSLOnce = PTHREAD_ONCE_INIT;
+static void __YMSSLInit();
+
+static YMLockRef *gYMTLSLocks = NULL;
+void __ym_tls_lock_callback(int mode, int type, __unused char *file, __unused int line);
+
+#define YMTLSProviderVerifyDepth 0
+
+// this shouldn't be a global (or at least a single value per role), but the get_ex_new_index
+// functions seem to return a globally unique idx for all objects (or at least all objects
+// within a particular namespace like SSL_ or RSA_. there's no way to unbox "this" without
+// knowing the idx, so we can't store it in our object. technically need some kind of global
+// list-of-objects to their ex_data idx? :/
+static int gYMTLSProviderServerExDataIdxLast = -1;
+static int gYMTLSProviderClientExDataIdxLast = -1;
+
 typedef struct __ym_tls_provider
 {
     struct __ym_security_provider _common;
     
     bool isServer;
     bool isWrappingSocket;
-    SSL *ssl;
+    bool usingSelfSigned; // todo client-supplied
+    bool preverified;
     SSL_CTX *sslCtx;
+    //int sslCtxExDataIdx; // if only!
+    SSL *ssl;
     BIO *bio;
+    
+    YMX509CertificateRef localCertificate;
+    YMX509CertificateRef peerCertificate;
     
     ym_tls_provider_get_certs localCertsFunc;
     void *localCertsContext;
@@ -53,43 +77,6 @@ unsigned long ym_tls_thread_id_callback()
 {
     //ymlog("ym_tls_thread_id_callback");
     return (unsigned long)pthread_self();
-}
-
-static YMLockRef *gYMTLSLocks = NULL;
-
-void ym_tls_lock_callback(int mode, int type, __unused char *file, __unused int line)
-{
-    bool lock = mode & CRYPTO_LOCK;
-    //ymlog("ym_tls_lock_callback: %04x %s:%d #%d (%s)",mode,file,line,type,lock?"lock":"unlock");
-    
-    YMLockRef theLock = gYMTLSLocks[type];
-    if ( ! theLock )
-    {
-        YMStringRef name = YMStringCreateWithFormat("ym_tls_lock_callback-%d",type, NULL);
-        theLock = YMLockCreateWithOptionsAndName(YMLockNone, name);
-        YMRelease(name);
-    }
-    
-    // locking_function() must be able to handle up to CRYPTO_num_locks() different mutex locks. It sets the n-th lock if mode
-    // & CRYPTO_LOCK, and releases it otherwise.
-    if (lock)
-        YMLockLock(theLock);
-    else
-        YMLockUnlock(theLock);
-}
-
-static pthread_once_t gYMInitSSLOnce = PTHREAD_ONCE_INIT;
-void __YMSSLInit()
-{
-    SSL_load_error_strings();
-    // ``SSL_library_init() always returns "1", so it is safe to discard the return value.''
-    SSL_library_init();
-    OpenSSL_add_all_algorithms();
-    
-    gYMTLSLocks = calloc(CRYPTO_num_locks(),sizeof(YMLockRef));
-    
-    CRYPTO_set_id_callback((unsigned long (*)())ym_tls_thread_id_callback);
-    CRYPTO_set_locking_callback((void (*)())ym_tls_lock_callback);
 }
 
 // designated initializer
@@ -119,6 +106,11 @@ YMTLSProviderRef __YMTLSProviderCreateWithFullDuplexFile(int file, bool isWrappi
     tls->_common.writeFile = file;
     tls->isWrappingSocket = isWrappingSocket;
     tls->isServer = isServer;
+    tls->usingSelfSigned = false;
+    tls->preverified = false;
+    
+    tls->localCertificate = NULL;
+    tls->peerCertificate = NULL;
     
     tls->_common.initFunc = __YMTLSProviderInit;
     tls->_common.readFunc = __YMTLSProviderRead;
@@ -130,8 +122,9 @@ YMTLSProviderRef __YMTLSProviderCreateWithFullDuplexFile(int file, bool isWrappi
     tls->peerCertsFunc = NULL;
     tls->peerCertsContext = NULL;
     
-    tls->ssl = NULL;
     tls->sslCtx = NULL;
+    //tls->sslCtxExDataIdx = -1;
+    tls->ssl = NULL;
     tls->bio = NULL;
     
     return tls;
@@ -164,14 +157,159 @@ void _YMTLSProviderFree(YMTypeRef object)
         SSL_CTX_free(tls->sslCtx);
 }
 
-bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
+void __YMSSLInit()
 {
-    __YMTLSProviderRef tls = (__YMTLSProviderRef)provider;
+    SSL_load_error_strings();
+    // ``SSL_library_init() always returns "1", so it is safe to discard the return value.''
+    SSL_library_init();
+    OpenSSL_add_all_algorithms();
+    
+    gYMTLSLocks = calloc(CRYPTO_num_locks(),sizeof(YMLockRef));
+    
+    CRYPTO_set_id_callback((unsigned long (*)())ym_tls_thread_id_callback);
+    CRYPTO_set_locking_callback((void (*)())__ym_tls_lock_callback);
+}
+
+void __ym_tls_lock_callback(int mode, int type, __unused char *file, __unused int line)
+{
+    bool lock = mode & CRYPTO_LOCK;
+    //ymlog("__ym_tls_lock_callback: %04x %s:%d #%d (%s)",mode,file,line,type,lock?"lock":"unlock");
+    
+    YMLockRef theLock = gYMTLSLocks[type];
+    if ( ! theLock )
+    {
+        YMStringRef name = YMStringCreateWithFormat("ym_tls_lock_callback-%d",type, NULL);
+        theLock = YMLockCreateWithOptionsAndName(YMLockNone, name);
+        YMRelease(name);
+    }
+    
+    // locking_function() must be able to handle up to CRYPTO_num_locks() different mutex locks. It sets the n-th lock if mode
+    // & CRYPTO_LOCK, and releases it otherwise.
+    if (lock)
+        YMLockLock(theLock);
+    else
+        YMLockUnlock(theLock);
+}
+
+static inline void __ym_tls_info_callback(const char *role, const SSL *ssl, int type, int val)
+{
+    const char *desc = "";
+    
+    switch(type)
+    {
+        case SSL_CB_HANDSHAKE_START:
+            desc = "start handshake";
+            break;
+        case SSL_CB_HANDSHAKE_DONE:
+            desc = "end handshake";
+            break;
+        case SSL_CB_READ:
+            desc = "read";
+        case SSL_CB_READ_ALERT:
+            desc = "read alert";
+            break;
+        case SSL_CB_WRITE:
+            desc = "write";
+        case SSL_CB_WRITE_ALERT:
+            desc = "write alert";
+            break;
+        case SSL_CB_ALERT:
+            desc = "alert";
+            break;
+        case SSL_CB_ACCEPT_LOOP:
+            desc = "accept loop";
+            break;
+        case SSL_CB_CONNECT_LOOP:
+            desc = "connect loop";
+            break;
+        case SSL_CB_ACCEPT_EXIT:
+            desc = "accept exit";
+            break;
+        case SSL_CB_CONNECT_EXIT:
+            desc = "connect exit";
+            break;
+        default:
+            desc = "*";
+            break;
+    }
+    ymlog("__ym_tls_lock_callback: %s: %p: %s %d",role,ssl,desc,val);
+}
+
+void __ym_tls_info_server_callback(const SSL *ssl, int type, int val)
+{
+    __ym_tls_info_callback("server", ssl, type, val);
+}
+void __ym_tls_info_client_callback(const SSL *ssl, int type, int val)
+{
+    __ym_tls_info_callback("client", ssl, type, val);
+}
+
+int __ym_tls_certificate_verify_callback(int preverify_ok, X509_STORE_CTX *x509_store_ctx)
+{
+    __YMTLSProviderRef tls;
+    YMX509CertificateRef ymCert = NULL;
+    SSL *ssl = X509_STORE_CTX_get_ex_data(x509_store_ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
+    __unused int state = SSL_get_state(ssl);
+    bool isServer = ( SSL_in_accept_init(ssl) );
+    int myIdx = isServer ? gYMTLSProviderServerExDataIdxLast : gYMTLSProviderClientExDataIdxLast;
+    tls = SSL_get_ex_data(ssl, myIdx);
+    ymlog("tls[%d]: __ym_tls_certificate_verify_callback: %d",tls->isServer,preverify_ok);
+    
+    X509 *err_cert = X509_STORE_CTX_get_current_cert(x509_store_ctx);
+    int err = X509_STORE_CTX_get_error(x509_store_ctx);
+    int depth = X509_STORE_CTX_get_error_depth(x509_store_ctx);
+    
+    if ( tls->preverified )
+    {
+        int cmp = memcmp(_YMX509CertificateGetX509(tls->peerCertificate), err_cert, sizeof(X509));
+        if ( cmp == 0 )
+            return 1;
+    }
+    
+    if ( depth > YMTLSProviderVerifyDepth )
+    {
+        ymlog("tls[%d]: verify error: depth > %d",tls->isServer,YMTLSProviderVerifyDepth);
+        return 0;
+    }
+    else if ( ! preverify_ok )
+    {
+        if ( ! tls->isServer && tls->usingSelfSigned && ( err != X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT ) )
+        {
+            ymerr("tls[%d]: verify error: preverify: %d (%s)",tls->isServer,err,X509_verify_cert_error_string(err));
+            return 0;
+        }
+    }
+    
+    ymCert = _YMX509CertificateCreateWithX509(err_cert, true);
+    
+    if ( tls->peerCertsFunc )
+    {
+        bool okay = tls->peerCertsFunc(tls, &ymCert, 1, tls->peerCertsContext);
+        
+        if ( ! okay )
+        {
+            ymerr("tls[%d]: verify error: client rejected peer cert",tls->isServer);
+            YMRelease(ymCert);
+            return 0;
+        }
+    }
+    else
+        ymlog("tls[%d]: user does not do validation, accepting self-signed certificate",tls->isServer);
+    
+    tls->peerCertificate = ymCert;
+    
+    return 1;
+}
+
+void __YMTLSProviderInitSslCtx(__YMTLSProviderRef tls)
+{
+    int result;
     unsigned long sslError = SSL_ERROR_NONE;
-    bool initOkay = false;
+    YMRSAKeyPairRef rsa = NULL;
+    YMX509CertificateRef cert = NULL;
     
     tls->sslCtx = SSL_CTX_new(tls->isServer ? SSLv23_server_method() : SSLv23_client_method ());    // `` Negotiate highest available
-                                                                                                    //      SSL/TLS version ''
+    //      SSL/TLS version ''
     if ( ! tls->sslCtx )
     {
         sslError = ERR_get_error(); // todo "latest" or "earliest"? i'd have thought "latest", but X509_/RSA_ man pages say to get_error, while SSL_ merely "check the stack structure"
@@ -181,6 +319,93 @@ bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
     
     SSL_CTX_set_options(tls->sslCtx, SSL_OP_SINGLE_DH_USE);
     
+    int verifyMask = SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE|SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
+    SSL_CTX_set_verify(tls->sslCtx, verifyMask, __ym_tls_certificate_verify_callback);
+    SSL_CTX_set_verify_depth(tls->sslCtx, YMTLSProviderVerifyDepth + 1); // allow callback to know what's going on
+    
+    result = SSL_CTX_set_cipher_list(tls->sslCtx, "AES256-SHA"); // todo
+    if ( result != openssl_success )
+    {
+        sslError = ERR_get_error();
+        ymerr("tls[%d]: SSL_CTX_set_cipher_list failed: %d: ssl err: %lu (%s)",tls->isServer , result, sslError, ERR_error_string(sslError,NULL));
+        goto catch_return;
+    }
+    
+    YMX509CertificateRef *certList = NULL;
+    if ( tls->localCertsFunc )
+    {
+        int nCerts = 0;
+        certList = tls->localCertsFunc(tls, &nCerts, tls->localCertsContext);
+        if ( ! certList || nCerts <= 0 )
+        {
+            ymerr("tls[%d]: user provided no local certs",tls->isServer);
+            goto catch_return;
+        }
+        else if ( nCerts > 1 )
+            ymerr("tls[%d]: warning: yammer uses the first certificate specified",tls->isServer);
+        // todo, are we really going to do anything with a list here?
+        cert = certList[0];
+        free(certList);
+    }
+    else
+    {
+        ymerr("tls[%d]: user doesn't provide certificates, creating self-signed",tls->usingSelfSigned);
+        tls->usingSelfSigned = true;
+        rsa = YMRSAKeyPairCreate();
+        YMRSAKeyPairGenerate(rsa);
+        cert = YMX509CertificateCreate(rsa);
+    }
+    
+    tls->localCertificate = YMRetain(cert);
+    
+    result = SSL_CTX_use_certificate(tls->sslCtx, _YMX509CertificateGetX509(cert));
+    if ( result != openssl_success )
+    {
+        sslError = ERR_get_error(); // todo*n "latest" or "earliest"? i'd have thought "latest", but X509_/RSA_ man pages say to get_error, while SSL_ merely "check the stack structure"
+        ymerr("tls[%d]: SSL_CTX_use_certificate failed: %d: ssl err: %lu (%s)",tls->isServer , result, sslError, ERR_error_string(sslError,NULL));
+        goto catch_return;
+    }
+    result = SSL_CTX_use_RSAPrivateKey(tls->sslCtx, YMRSAKeyPairGetRSA(rsa));
+    if ( result != openssl_success )
+    {
+        sslError = ERR_get_error();
+        ymerr("tls[%d]: SSL_CTX_use_RSAPrivateKey failed: %d: ssl err: %lu (%s)",tls->isServer , result, sslError, ERR_error_string(sslError,NULL));
+        goto catch_return;
+    }
+    
+    goto success_return;
+    
+catch_return:
+    if ( tls->sslCtx )
+    {
+        SSL_CTX_free(tls->sslCtx);
+        tls->sslCtx = NULL;
+    }
+success_return:
+    if ( rsa )
+    {
+        YMRelease(rsa);
+        YMRelease(cert);
+    }
+}
+
+bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
+{
+    __YMTLSProviderRef tls = (__YMTLSProviderRef)provider;
+    unsigned long sslError = SSL_ERROR_NONE;
+    bool initOkay = false;
+    int result;
+    
+    if ( ! tls->sslCtx )
+        __YMTLSProviderInitSslCtx(tls);
+    if ( ! tls->sslCtx )
+    {
+        ymerr("tls[%d]: failed to init ssl ctx object",tls->isServer);
+        return false;
+    }
+    
+    // SSL_CTX* seems like a 'prototype' you can define once and create n 'instances', inheriting
+    // settings, which are SSL*.
     tls->ssl = SSL_new(tls->sslCtx);
     if ( ! tls->ssl )
     {
@@ -189,6 +414,39 @@ bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
         ymerr("tls[%d]: failed to allocate ssl object: ssl err: %lu (%s)",tls->isServer , sslError, ERR_error_string(sslError,NULL));
         goto catch_return;
     }
+    
+    int exDataIdxLast = tls->isServer ? gYMTLSProviderServerExDataIdxLast : gYMTLSProviderClientExDataIdxLast;
+    int theIdx;
+    if ( tls->isServer )
+    {
+        gYMTLSProviderServerExDataIdxLast = SSL_get_ex_new_index(0, NULL, NULL, NULL, NULL);
+        theIdx = gYMTLSProviderServerExDataIdxLast;
+    }
+    else
+    {
+        gYMTLSProviderClientExDataIdxLast = SSL_get_ex_new_index(0, NULL, NULL, NULL, NULL);
+        theIdx = gYMTLSProviderClientExDataIdxLast;
+    }
+    if ( theIdx == -1 )
+    {
+        ymerr("tls[%d]: failed to allocate ex_data idx",tls->isServer);
+        goto catch_return;
+    }
+    
+    // aborts when this faulty scheme isn't going to work!
+    if ( ( exDataIdxLast != -1 ) && ( theIdx == exDataIdxLast ) )
+        abort();
+    
+    // and there's no CTX version of SSL_get_ex_data_X509_STORE_CTX_idx that i can see,
+    // so this needs to be set at the 'object' level.
+    result = SSL_set_ex_data(tls->ssl, theIdx, tls);
+    if ( result != openssl_success )
+    {
+        sslError = ERR_get_error();
+        ymerr("tls[%d]: failed to set user info on ssl ctx: ssl err: %lu (%s)",tls->isServer, sslError, ERR_error_string(sslError, NULL));
+        goto catch_return;
+    }
+    // assuming whatever memory was allocated here gets free'd in SSL_CTX_free
     
     //tls->bio = BIO_new(&ym_bio_methods);
     tls->bio = BIO_new_socket(tls->_common.readFile, 0);
@@ -204,52 +462,16 @@ bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
     
     SSL_set_debug(tls->ssl, 1);
     
-    YMRSAKeyPairRef rsa = YMRSAKeyPairCreate();
-    YMRSAKeyPairGenerate(rsa);
-    YMX509CertificateRef cert = YMX509CertificateCreate(rsa);
-    
-    int result = SSL_CTX_use_certificate(tls->sslCtx, YMX509CertificateGetX509(cert));
-    if ( result != 1 )
-    {
-        sslError = ERR_get_error(); // todo*n "latest" or "earliest"? i'd have thought "latest", but X509_/RSA_ man pages say to get_error, while SSL_ merely "check the stack structure"
-        ymerr("tls[%d]: SSL_CTX_use_certificate failed: %d: ssl err: %lu (%s)",tls->isServer , result, sslError, ERR_error_string(sslError,NULL));
-        goto catch_return;
-    }
-    result = SSL_CTX_use_RSAPrivateKey(tls->sslCtx, YMRSAKeyPairGetRSA(rsa));
-    if ( result != 1 )
-    {
-        sslError = ERR_get_error();
-        ymerr("tls[%d]: SSL_CTX_use_RSAPrivateKey failed: %d: ssl err: %lu (%s)",tls->isServer , result, sslError, ERR_error_string(sslError,NULL));
-        goto catch_return;
-    }
-    
-    result = SSL_use_certificate(tls->ssl, YMX509CertificateGetX509(cert));
-    if ( result != 1 )
-    {
-        sslError = ERR_get_error();
-        ymerr("tls[%d]: SSL_use_certificate failed: %d: ssl err: %lu (%s)",tls->isServer , result, sslError, ERR_error_string(sslError,NULL));
-        goto catch_return;
-    }
-    result = SSL_use_RSAPrivateKey(tls->ssl, YMRSAKeyPairGetRSA(rsa));
-    if ( result != 1 )
-    {
-        sslError = ERR_get_error();
-        ymerr("tls[%d]: SSL_CTX_use_RSAPrivateKey failed: %d: ssl err: %lu (%s)",tls->isServer , result, sslError, ERR_error_string(sslError,NULL));
-        goto catch_return;
-    }
-    
-    result = SSL_set_cipher_list(tls->ssl, "AES256-SHA"); // todo
-    if ( result != 1 )
-    {
-        sslError = ERR_get_error();
-        ymerr("tls[%d]: SSL_set_cipher_list failed: %d: ssl err: %lu (%s)",tls->isServer , result, sslError, ERR_error_string(sslError,NULL));
-        goto catch_return;
-    }
-    
     if ( tls->isServer )
+    {
+        //SSL_set_info_callback(tls->ssl, __ym_tls_info_server_callback);
         SSL_set_accept_state(tls->ssl);
+    }
     else
+    {
+        //SSL_set_info_callback(tls->ssl, __ym_tls_info_client_callback);
         SSL_set_connect_state(tls->ssl);
+    }
     
     // todo: judging by higher level TLS libraries, there's probably a way to get called out to mid-accept
     // to do things like specify local certs and validate remote ones, but i'll be damned if i can find it in the ocean that is ssl.h.
@@ -266,7 +488,7 @@ bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
     
     ymlog("tls[%d]: handshake returned %d: %ld (%s)",tls->isServer, result, sslError, ERR_error_string(sslError, NULL));
     
-    if ( 1 != result )
+    if ( result != openssl_success )
     {
         sslError = SSL_get_error(tls->ssl, result);
         ymerr("tls[%d]: SSL_do_handshake failed: %d: ssl err: %lu (%s)",tls->isServer , result, sslError, ERR_error_string(sslError,NULL));

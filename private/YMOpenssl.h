@@ -9,6 +9,8 @@
 #ifndef YMOpenssl_h
 #define YMOpenssl_h
 
+// defining these might be more confusing than it's worth
+// meanings of 1/0/-1 are sporadic
 #define openssl_success 1
 #define openssl_fail 0
 

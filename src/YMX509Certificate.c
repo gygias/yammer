@@ -7,6 +7,7 @@
 //
 
 #include "YMX509Certificate.h"
+#include "YMX509CertificatePriv.h"
 
 #include "YMOpenssl.h"
 
@@ -31,7 +32,7 @@ typedef struct __ym_x509_certificate
 typedef struct __ym_x509_certificate __YMX509Certificate;
 typedef __YMX509Certificate *__YMX509CertificateRef;
 
-X509* __YMX509CertificateGetX509(YMRSAKeyPairRef keyPair)
+X509* __YMX509CertificateCreateX509(YMRSAKeyPairRef keyPair)
 {
     unsigned long opensslErr = ERR_LIB_NONE;
     const char *opensslFunc = NULL;
@@ -213,13 +214,18 @@ catch_return:
 
 YMX509CertificateRef YMX509CertificateCreate(YMRSAKeyPairRef keyPair)
 {
-    X509 *x509 = __YMX509CertificateGetX509(keyPair);
+    X509 *x509 = __YMX509CertificateCreateX509(keyPair);
     if ( ! x509 )
         return NULL;
     
+    return _YMX509CertificateCreateWithX509(x509, false);
+}
+
+YMX509CertificateRef _YMX509CertificateCreateWithX509(X509 *x509, bool copy)
+{
     __YMX509CertificateRef certificate = (__YMX509CertificateRef)_YMAlloc(_YMX509CertificateTypeID,sizeof(__YMX509Certificate));
     
-    certificate->x509 = x509;
+    certificate->x509 = copy ? X509_dup(x509) : x509;
     
     return certificate;
 }
@@ -230,7 +236,13 @@ void _YMX509CertificateFree(YMTypeRef object)
     X509_free(cert->x509);
 }
 
-void *YMX509CertificateGetX509(YMX509CertificateRef cert_)
+size_t YMX509CertificateGetPublicKeyData(void *buffer)
+{
+    buffer = NULL;
+    return 0;
+}
+
+X509 *_YMX509CertificateGetX509(YMX509CertificateRef cert_)
 {
     __YMX509CertificateRef cert = (__YMX509CertificateRef)cert_;
     return cert->x509;

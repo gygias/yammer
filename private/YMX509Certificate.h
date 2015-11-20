@@ -15,6 +15,6 @@ typedef YMTypeRef YMX509CertificateRef;
 
 YMX509CertificateRef YMX509CertificateCreate(YMRSAKeyPairRef);
 
-void *YMX509CertificateGetX509(YMX509CertificateRef);
+size_t YMX509CertificateGetPublicKeyData(void *buffer);
 
 #endif /* YMX509Certificate_h */
