@@ -19,3 +19,4 @@ FOUNDATION_EXPORT const unsigned char YammerVersionString[];
 #import <Yammer/YMSession.h>
 #import <Yammer/YMConnection.h>
 #import <Yammer/YMStream.h>
+#import <Yammer/YMPeer.h>

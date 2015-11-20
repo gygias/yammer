@@ -32,6 +32,8 @@
 		631916431BFCFFB4001475FC /* YMStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 631916411BFCFFB4001475FC /* YMStream.h */; };
 		631916441BFCFFB4001475FC /* YMStream.m in Sources */ = {isa = PBXBuildFile; fileRef = 631916421BFCFFB4001475FC /* YMStream.m */; };
 		631916471BFD1CA3001475FC /* libyammer.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63225D421BE9026200C28F05 /* libyammer.dylib */; };
+		6319164D1BFE94AF001475FC /* YMPeer.h in Headers */ = {isa = PBXBuildFile; fileRef = 6319164B1BFE94AF001475FC /* YMPeer.h */; };
+		6319164E1BFE94AF001475FC /* YMPeer.m in Sources */ = {isa = PBXBuildFile; fileRef = 6319164C1BFE94AF001475FC /* YMPeer.m */; };
 		63225D541BE9074700C28F05 /* YMPipe.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D521BE9074700C28F05 /* YMPipe.c */; };
 		63225D551BE9074700C28F05 /* YMPipe.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D531BE9074700C28F05 /* YMPipe.h */; };
 		63225D5C1BE9092500C28F05 /* YMStream.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D5A1BE9092500C28F05 /* YMStream.c */; };
@@ -135,6 +137,10 @@
 		631916451BFD02A1001475FC /* Yammer-pch.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Yammer-pch.h"; sourceTree = "<group>"; };
 		631916481BFD3062001475FC /* YMConnectionPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = YMConnectionPriv.h; sourceTree = "<group>"; };
 		631916491BFD34A3001475FC /* YMStreamPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = YMStreamPriv.h; sourceTree = "<group>"; };
+		6319164A1BFE438A001475FC /* YMX509CertificatePriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMX509CertificatePriv.h; path = private/YMX509CertificatePriv.h; sourceTree = "<group>"; };
+		6319164B1BFE94AF001475FC /* YMPeer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = YMPeer.h; sourceTree = "<group>"; };
+		6319164C1BFE94AF001475FC /* YMPeer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = YMPeer.m; sourceTree = "<group>"; };
+		6319164F1BFE94F4001475FC /* YMPeerPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = YMPeerPriv.h; sourceTree = "<group>"; };
 		63225D421BE9026200C28F05 /* libyammer.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libyammer.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		63225D521BE9074700C28F05 /* YMPipe.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMPipe.c; path = src/YMPipe.c; sourceTree = "<group>"; };
 		63225D531BE9074700C28F05 /* YMPipe.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMPipe.h; path = private/YMPipe.h; sourceTree = "<group>"; };
@@ -244,9 +250,9 @@
 				63476A401BEAEFC500D10081 /* PlexerTests.m */,
 				633CAC101BFBBF4800304DCD /* SessionTests.m */,
 				630A5D021BE96CE9003292EE /* YammerTests.m */,
+				633165FE1BFC29DF0094F801 /* LocalSocketPairTests.m */,
 				630A5D041BE96CE9003292EE /* Info.plist */,
 				6332A4BA1BF12C12004BB764 /* lldb_source.sh */,
-				633165FE1BFC29DF0094F801 /* LocalSocketPairTests.m */,
 			);
 			path = YammerTests;
 			sourceTree = "<group>";
@@ -265,6 +271,9 @@
 				631916411BFCFFB4001475FC /* YMStream.h */,
 				631916491BFD34A3001475FC /* YMStreamPriv.h */,
 				631916421BFCFFB4001475FC /* YMStream.m */,
+				6319164B1BFE94AF001475FC /* YMPeer.h */,
+				6319164F1BFE94F4001475FC /* YMPeerPriv.h */,
+				6319164C1BFE94AF001475FC /* YMPeer.m */,
 			);
 			path = Yammer;
 			sourceTree = "<group>";
@@ -374,6 +383,7 @@
 				63FD5B591BF1899800174824 /* YMRSAKeyPair.h */,
 				63FD5B581BF1899800174824 /* YMRSAKeyPair.c */,
 				637E3D5C1BF262EE00D702ED /* YMX509Certificate.h */,
+				6319164A1BFE438A001475FC /* YMX509CertificatePriv.h */,
 				637E3D5B1BF262EE00D702ED /* YMX509Certificate.c */,
 				6335CAC71BF4813A00412CC9 /* YMPeerPriv.h */,
 				630A5CF91BE95E36003292EE /* YMThread.h */,
@@ -409,6 +419,7 @@
 				631916341BFCFF13001475FC /* Yammer.h in Headers */,
 				631916431BFCFFB4001475FC /* YMStream.h in Headers */,
 				6319163B1BFCFF93001475FC /* YMSession.h in Headers */,
+				6319164D1BFE94AF001475FC /* YMPeer.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -599,6 +610,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6319163C1BFCFF93001475FC /* YMSession.m in Sources */,
+				6319164E1BFE94AF001475FC /* YMPeer.m in Sources */,
 				631916401BFCFFAA001475FC /* YMConnection.m in Sources */,
 				631916441BFCFFB4001475FC /* YMStream.m in Sources */,
 			);

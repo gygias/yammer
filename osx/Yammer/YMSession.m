@@ -9,20 +9,25 @@
 #import "YMSession.h"
 
 #import "YMConnectionPriv.h"
+#import "YMPeerPriv.h"
 
 @interface YMSession ()
 
 @property (nonatomic,copy) NSString *type;
 @property (nonatomic,copy) NSString *name;
 
+@property (nonatomic,copy) YMSessionPeerDiscoveredHandler discoveredHandler;
+@property (nonatomic,copy) YMSessionPeerDisappearedHandler disappearedHandler;
 @property (nonatomic,copy) YMSessionNewConnectionHandler connectionHandler;
-@property (nonatomic,copy) YMSessionNewPeerHandler peerHandler;
+@property (nonatomic,copy) YMSessionConnectionFailedHandler failedHandler;
+@property (nonatomic,copy) YMSessionShouldAcceptConnectionHandler shouldAcceptHandler;
 @property (nonatomic,copy) YMSessionNewStreamHandler streamHandler;
 @property (nonatomic,copy) YMSessionStreamClosingHandler streamClosingHandler;
 @property (nonatomic,copy) YMSessionInterruptedHandler interruptHandler;
 
 @property (nonatomic) YMSessionRef ymsession;
 @property (nonatomic,retain) NSMutableArray *connections;
+@property (nonatomic,retain) YMPeer *connectingPeer;
 
 @end
 
@@ -59,30 +64,38 @@
 }
 
 - (BOOL)startAdvertisingWithName:(NSString *)name
+                   acceptHandler:(YMSessionShouldAcceptConnectionHandler)acceptHandler
+               connectionHandler:(YMSessionNewConnectionHandler)connectionHandler
 {
+    self.shouldAcceptHandler = acceptHandler;
+    self.connectionHandler = connectionHandler;
     return YMSessionStartAdvertising(self.ymsession, YMSTRC([name UTF8String]));
 }
 
-- (BOOL)browsePeersWithHandler:(YMSessionNewPeerHandler)handler
+- (BOOL)browsePeersWithHandler:(YMSessionPeerDiscoveredHandler)discoveredHandler
+          disappearanceHandler:(YMSessionPeerDisappearedHandler)disappearanceHandler
 {
     if ( ! self.ymsession )
         return NO;
     
-    self.peerHandler = handler;
+    self.discoveredHandler = discoveredHandler;
+    self.disappearedHandler = disappearanceHandler;
     return YMSessionStartBrowsing(self.ymsession);
 }
 
-- (BOOL)connectToPeerNamed:(NSString *)name handler:(YMSessionNewConnectionHandler)handler
+- (BOOL)connectToPeer:(YMPeer *)peer
+    connectionHandler:(YMSessionNewConnectionHandler)connectedHandler
+       failureHandler:(YMSessionConnectionFailedHandler)failedHandler
 {
     if ( ! self.ymsession )
         return NO;
-    
-    YMPeerRef peer = YMSessionGetPeerNamed(self.ymsession, YMSTRC([name UTF8String]));
     if ( ! peer )
         return NO;
     
-    self.connectionHandler = handler;
-    return YMSessionConnectToPeer(self.ymsession, peer, false);
+    self.connectionHandler = connectedHandler;
+    self.failedHandler = failedHandler;
+    self.connectingPeer = peer;
+    return YMSessionConnectToPeer(self.ymsession, [peer _peerRef], false);
 }
 
 - (YMConnection *)_connectionForRef:(YMConnectionRef)connectionRef
@@ -100,43 +113,73 @@
     return theConnection;
 }
 
-void _ym_session_added_peer_func(__unused YMSessionRef session, YMPeerRef peer, void* context)
+void _ym_session_added_peer_func(__unused YMSessionRef session, YMPeerRef peerRef, void* context)
 {
     YMSession *SELF = (__bridge YMSession *)context;
     NSLog(@"%s: %@",__FUNCTION__,SELF);
-    if ( SELF.peerHandler )
-        SELF.peerHandler(SELF, [NSString stringWithUTF8String:YMSTR(YMPeerGetName(peer))]);
+    if ( SELF.discoveredHandler )
+    {
+        YMPeer *peer = [[YMPeer alloc] _initWithPeerRef:peerRef];
+        SELF.discoveredHandler(SELF, peer);
+    }
 }
 
-void _ym_session_removed_peer_func(__unused YMSessionRef session, YMPeerRef peer, void* context)
+void _ym_session_removed_peer_func(__unused YMSessionRef session, YMPeerRef peerRef, void* context)
 {
     YMSession *SELF = (__bridge YMSession *)context;
     NSLog(@"%s: %@",__FUNCTION__,SELF);
+    if ( SELF.disappearedHandler )
+    {
+        YMPeer *peer = [[YMPeer alloc] _initWithPeerRef:peerRef];
+        SELF.disappearedHandler(SELF, peer);
+    }
 }
 
-void _ym_session_resolve_failed_func(__unused YMSessionRef session, YMPeerRef peer, void* context)
+void _ym_session_resolve_failed_func(__unused YMSessionRef session, YMPeerRef peerRef, void* context)
 {
     YMSession *SELF = (__bridge YMSession *)context;
     NSLog(@"%s: %@",__FUNCTION__,SELF);
+    
+    if ( SELF.connectingPeer && SELF.failedHandler )
+    {
+        BOOL same = YMStringEquals(YMPeerGetName(peerRef), YMPeerGetName([SELF.connectingPeer _peerRef]));
+        if ( same )
+            SELF.failedHandler(SELF, SELF.connectingPeer);
+    }
 }
 
-void _ym_session_resolved_peer_func(__unused YMSessionRef session, YMPeerRef peer, void* context)
+void _ym_session_resolved_peer_func(__unused YMSessionRef session, YMPeerRef peerRef, void* context)
 {
     YMSession *SELF = (__bridge YMSession *)context;
     NSLog(@"%s: %@",__FUNCTION__,SELF);
+    
+    if ( SELF.connectingPeer && SELF.failedHandler )
+    {
+        BOOL same = YMStringEquals(YMPeerGetName(peerRef), YMPeerGetName([SELF.connectingPeer _peerRef]));
+        if ( same )
+            SELF.failedHandler(SELF, SELF.connectingPeer);
+    }
 }
 
-void _ym_session_connect_failed_func(__unused YMSessionRef session, YMPeerRef peer, void* context)
+void _ym_session_connect_failed_func(__unused YMSessionRef session, YMPeerRef peerRef, void* context)
 {
     YMSession *SELF = (__bridge YMSession *)context;
     NSLog(@"%s: %@",__FUNCTION__,SELF);
+    
+    if ( SELF.connectingPeer && SELF.failedHandler )
+    {
+        BOOL same = YMStringEquals(YMPeerGetName(peerRef), YMPeerGetName([SELF.connectingPeer _peerRef]));
+        if ( same )
+            SELF.failedHandler(SELF, SELF.connectingPeer);
+    }
 }
 
-bool _ym_session_should_accept_func(__unused YMSessionRef session, YMPeerRef peer, void* context)
+bool _ym_session_should_accept_func(__unused YMSessionRef session, YMPeerRef peerRef, void* context)
 {
     YMSession *SELF = (__bridge YMSession *)context;
     NSLog(@"%s: %@",__FUNCTION__,SELF);
-    return YES;
+    YMPeer *peer = [[YMPeer alloc] _initWithPeerRef:peerRef];
+    return SELF.shouldAcceptHandler(SELF, peer);
 }
 
 void _ym_session_connected_func(__unused YMSessionRef session,YMConnectionRef connectionRef, void* context)
