@@ -298,7 +298,7 @@ typedef struct ManPageThanks
     dispatch_semaphore_signal(threadExitSemaphore);
 }
 
-- (void)_eatManPage:(YMStreamRef)stream
+- (void)_eatManPage:(YMConnectionRef)connection :(YMStreamRef)stream
 {
     dispatch_sync(serialQueue, ^{
         if ( ! tempDir )
@@ -342,9 +342,14 @@ typedef struct ManPageThanks
     if ( stopping )
         return;
 #endif
+    
+    // todo randomize whether we close here, during streamClosing, after streamClosing, dispatch_after?
+    // it's also worth noting that if you [forcibly] interrupt the session and immediately
+    // dealloc the session, async clients working on incoming streams might fault doing this
+    YMConnectionCloseStream(connection,stream);
 }
 
-- (void)_eatRandom:(YMStreamRef)stream
+- (void)_eatRandom:(YMConnectionRef)connection :(YMStreamRef)stream
 {
     char temp[256] = "/tmp/ymsessiontest-rand-XXXXXXXXX";
     int result = mkstemp(temp);
@@ -360,6 +365,11 @@ typedef struct ManPageThanks
 catch_return:
     result = close(result);
     XCTAssert(result==0,@"close rand temp failed %d %s",errno,strerror(errno));
+    
+    // todo randomize whether we close here, during streamClosing, after streamClosing, dispatch_after?
+    // it's also worth noting that if you [forcibly] interrupt the session and immediately
+    // dealloc the session, async clients working on incoming streams might fault doing this
+    YMConnectionCloseStream(connection,stream);
 }
 
 void _server_async_forward_callback(void * ctx, uint64_t bytesWritten)
@@ -460,9 +470,11 @@ void _ym_session_resolved_peer_func(YMSessionRef session, YMPeerRef peer, void *
     if ( stopping )
         return;
     
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(arc4random_uniform(FAKE_DELAY_MAX) * NSEC_PER_SEC)), dispatch_get_global_queue(0, 0), ^{
+    uint32_t fakeDelay = arc4random_uniform(FAKE_DELAY_MAX);
+    int64_t fakeDelayNsec = (int64_t)fakeDelay * NSEC_PER_SEC;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, fakeDelay), dispatch_get_global_queue(0, 0), ^{
         BOOL testSync = arc4random_uniform(2);
-        NSLog(@"connecting to %s (%ssync)...",YMSTR(YMPeerGetName(peer)),testSync?"":"a");
+        NSLog(@"connecting to %s after %lld delay (%ssync)...",YMSTR(YMPeerGetName(peer)),fakeDelayNsec,testSync?"":"a");
         bool okay = YMSessionConnectToPeer(session,peer,testSync);
         XCTAssert(okay,@"client connect to peer");
         
@@ -554,12 +566,9 @@ void _ym_session_new_stream_func(YMSessionRef session, YMConnectionRef connectio
     
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         if ( isServer )
-            [self _eatManPage:stream];
+            [self _eatManPage:connection :stream];
         else
-            [self _eatRandom:stream];
-        
-        // todo randomize whether we close here, during streamClosing, after streamClosing, dispatch_after?
-        YMConnectionCloseStream(connection,stream);
+            [self _eatRandom:connection :stream];
     });
 }
 

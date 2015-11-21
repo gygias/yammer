@@ -13,6 +13,7 @@
 
 #include "YMUtilities.h"
 #include "YMThread.h"
+#include "YMDictionary.h"
 #include "YMLock.h"
 
 #include <sys/stat.h>
@@ -41,8 +42,10 @@ void __ym_tls_lock_callback(int mode, int type, __unused char *file, __unused in
 // within a particular namespace like SSL_ or RSA_. there's no way to unbox "this" without
 // knowing the idx, so we can't store it in our object. technically need some kind of global
 // list-of-objects to their ex_data idx? :/
-static int gYMTLSProviderServerExDataIdxLast = -1;
-static int gYMTLSProviderClientExDataIdxLast = -1;
+//static int gYMTLSProviderServerExDataIdxLast = -1;
+//static int gYMTLSProviderClientExDataIdxLast = -1;
+static YMDictionaryRef gYMTLSExDataList; // maps ssl, which we can get without knowing the 'index', to its index...
+static YMLockRef gYMTLSExDataLock;
 
 typedef struct __ym_tls_provider
 {
@@ -168,6 +171,9 @@ void __YMSSLInit()
     
     CRYPTO_set_id_callback((unsigned long (*)())ym_tls_thread_id_callback);
     CRYPTO_set_locking_callback((void (*)())__ym_tls_lock_callback);
+    
+    gYMTLSExDataList = YMDictionaryCreate();
+    gYMTLSExDataLock = YMLockCreate(YMInternalLockType);
 }
 
 void __ym_tls_lock_callback(int mode, int type, __unused char *file, __unused int line)
@@ -250,10 +256,14 @@ int __ym_tls_certificate_verify_callback(int preverify_ok, X509_STORE_CTX *x509_
     YMX509CertificateRef ymCert = NULL;
     SSL *ssl = X509_STORE_CTX_get_ex_data(x509_store_ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
     __unused int state = SSL_get_state(ssl);
-    bool isServer = ( SSL_in_accept_init(ssl) );
-    int myIdx = isServer ? gYMTLSProviderServerExDataIdxLast : gYMTLSProviderClientExDataIdxLast;
+    //bool isServer = ( SSL_in_accept_init(ssl) );
+    
+    YMLockLock(gYMTLSExDataLock);
+        int myIdx = (int)YMDictionaryGetItem(gYMTLSExDataList, (YMDictionaryKey)ssl);
+    YMLockUnlock(gYMTLSExDataLock);
+    
     tls = SSL_get_ex_data(ssl, myIdx);
-    ymlog("tls[%d]: __ym_tls_certificate_verify_callback: %d",tls->isServer,preverify_ok);
+    ymlog("tls[%d]: __ym_tls_certificate_verify_callback[%d]: %d",tls->isServer,myIdx,preverify_ok);
     
     X509 *err_cert = X509_STORE_CTX_get_current_cert(x509_store_ctx);
     int err = X509_STORE_CTX_get_error(x509_store_ctx);
@@ -268,7 +278,7 @@ int __ym_tls_certificate_verify_callback(int preverify_ok, X509_STORE_CTX *x509_
     
     if ( depth > YMTLSProviderVerifyDepth )
     {
-        ymlog("tls[%d]: verify error: depth > %d",tls->isServer,YMTLSProviderVerifyDepth);
+        ymerr("tls[%d]: verify error: depth > %d",tls->isServer,YMTLSProviderVerifyDepth);
         return 0;
     }
     else if ( ! preverify_ok )
@@ -415,31 +425,20 @@ bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
         goto catch_return;
     }
     
-    int exDataIdxLast = tls->isServer ? gYMTLSProviderServerExDataIdxLast : gYMTLSProviderClientExDataIdxLast;
-    int theIdx;
-    if ( tls->isServer )
-    {
-        gYMTLSProviderServerExDataIdxLast = SSL_get_ex_new_index(0, NULL, NULL, NULL, NULL);
-        theIdx = gYMTLSProviderServerExDataIdxLast;
-    }
-    else
-    {
-        gYMTLSProviderClientExDataIdxLast = SSL_get_ex_new_index(0, NULL, NULL, NULL, NULL);
-        theIdx = gYMTLSProviderClientExDataIdxLast;
-    }
-    if ( theIdx == -1 )
+    int myIdx = SSL_get_ex_new_index(0, NULL, NULL, NULL, NULL);
+    if ( myIdx == -1 )
     {
         ymerr("tls[%d]: failed to allocate ex_data idx",tls->isServer);
         goto catch_return;
     }
     
-    // aborts when this faulty scheme isn't going to work!
-    if ( ( exDataIdxLast != -1 ) && ( theIdx == exDataIdxLast ) )
-        abort();
+    YMLockLock(gYMTLSExDataLock);
+    YMDictionaryAdd(gYMTLSExDataList, (YMDictionaryKey)tls->ssl, (YMDictionaryValue)(uint64_t)myIdx);
+    YMLockUnlock(gYMTLSExDataLock);
     
     // and there's no CTX version of SSL_get_ex_data_X509_STORE_CTX_idx that i can see,
     // so this needs to be set at the 'object' level.
-    result = SSL_set_ex_data(tls->ssl, theIdx, tls);
+    result = SSL_set_ex_data(tls->ssl, myIdx, tls);
     if ( result != openssl_success )
     {
         sslError = ERR_get_error();
