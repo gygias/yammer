@@ -134,11 +134,11 @@ YMThreadRef _YMThreadCreate(YMStringRef name, bool isDispatchThread, ym_thread_e
         YMRelease(memberName);
         
         thread->dispatchesByID = YMDictionaryCreate();
-        memberName = YMSTRCF("%s-dispatch",YMSTR(name),NULL);
+        memberName = YMSTRCF("%s-dispatch",YMSTR(name));
         thread->dispatchSemaphore = YMSemaphoreCreate(memberName,0);
         YMRelease(memberName);
         
-        memberName = YMSTRCF("%s-dispatch-exit",YMSTR(name),NULL);
+        memberName = YMSTRCF("%s-dispatch-exit",YMSTR(name));
         thread->dispatchExitSemaphore = YMSemaphoreCreate(memberName, 0);
         YMRelease(memberName);
         
@@ -379,7 +379,7 @@ bool __YMThreadDispatchForward(YMStreamRef stream, int file, bool toStream, bool
     YMStringRef name = NULL;
     
     __ym_thread_dispatch_forward_file_async_context_ref context = YMALLOC(sizeof(__ym_thread_dispatch_forward_file_async_context));
-    context->threadOrNull = forwardingThread;
+    context->threadOrNull = NULL;
     context->file = file;
     context->stream = YMRetain(stream);
     context->toStream = toStream;
@@ -400,7 +400,7 @@ bool __YMThreadDispatchForward(YMStreamRef stream, int file, bool toStream, bool
     // but, if we wanted to feel good about ourselves, these threads could hang around for a certain amount of time to handle
     // subsequent forwarding requests, to recycle the thread creation overhead.
     YMPlexerStreamID streamID = YM_STREAM_INFO(stream)->streamID;
-    name = YMStringCreateWithFormat("dispatch-forward-%d%ss%u",file,toStream?"->":"<-",streamID, NULL);
+    name = YMSTRCF("dispatch-forward-%d%ss%u",file,toStream?"->":"<-",streamID);
     forwardingThread = (__YMThreadRef)YMThreadCreate(name, (void (*)(void *))__ym_thread_dispatch_forward_file_proc, context);
     YMRelease(name);
     if ( ! forwardingThread )
@@ -408,6 +408,7 @@ bool __YMThreadDispatchForward(YMStreamRef stream, int file, bool toStream, bool
         ymerr("thread[%s]: error: failed to create",YMSTR(name));
         goto rewind_fail;
     }
+    context->threadOrNull = forwardingThread;
     YMThreadSetContext(forwardingThread, context);
     bool okay = YMThreadStart(forwardingThread);
     if ( ! okay )
@@ -451,9 +452,6 @@ void *__ym_thread_dispatch_forward_file_proc(__ym_thread_dispatch_forward_file_a
         result = YMStreamWriteToFile(stream, file, limited ? &forwardBytes : NULL, &outBytes);
     ymlog("thread[%s]: forward: %s %llu bytes from %d%ss%u",YMSTR(threadName), (result == YMIOError)?"error at offset":"finished",outBytes,file,toStream?"->":"<-",streamID);
     
-    if ( threadOrNull )
-        YMRelease(threadOrNull);
-    
     YMIOResult *ret = NULL;
     if ( sync )
     {
@@ -470,5 +468,7 @@ void *__ym_thread_dispatch_forward_file_proc(__ym_thread_dispatch_forward_file_a
     
     YMRelease(threadName);
     YMRelease(stream);
+    if ( threadOrNull )
+        YMRelease(threadOrNull);
     return ret;
 }

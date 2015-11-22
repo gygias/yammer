@@ -249,7 +249,9 @@ typedef struct ManPageThanks
         }
         NoisyTestLog(@"client sending %@",fullPath);
         
-        YMStreamRef stream = YMConnectionCreateStream(connection, YMStringCreateWithFormat("test-client-write-%s",[fullPath UTF8String], NULL));
+        YMStringRef name = YMSTRCF("test-client-write-%s",[fullPath UTF8String]);
+        YMStreamRef stream = YMConnectionCreateStream(connection, name);
+        YMRelease(name);
         XCTAssert(stream,@"client stream %@",fullPath);
         NSFileHandle *handle = [NSFileHandle fileHandleForReadingAtPath:fullPath];
         XCTAssert(handle,@"client file handle %@",fullPath);
@@ -382,6 +384,7 @@ void _server_async_forward_callback(void * ctx, uint64_t bytesWritten)
     struct asyncCallbackInfo *info = (struct asyncCallbackInfo *)ctx;
     SessionTests *SELF = (__bridge SessionTests *)info->theTest;
     [SELF _asyncForwardCallback:YES :ctx :bytesWritten];
+    free(info);
 }
 
 void _client_async_forward_callback(void * ctx, uint64_t bytesWritten)
@@ -390,6 +393,7 @@ void _client_async_forward_callback(void * ctx, uint64_t bytesWritten)
     struct asyncCallbackInfo *info = (struct asyncCallbackInfo *)ctx;
     SessionTests *SELF = (__bridge SessionTests *)info->theTest;
     [SELF _asyncForwardCallback:NO :ctx :bytesWritten];
+    free(info);
 }
 
 - (void)_asyncForwardCallback:(BOOL)isServer :(void *)ctx :(uint64_t)written

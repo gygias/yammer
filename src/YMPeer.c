@@ -48,10 +48,29 @@ YMPeerRef __YMPeerCreate(YMStringRef name, YMDictionaryRef addresses, YMDictiona
 void _YMPeerFree(YMTypeRef object)
 {
     __YMPeerRef peer = (__YMPeerRef)object;
+    
     if ( peer->addresses )
+    {
+        YMDictionaryEnumRef aEnum = YMDictionaryEnumeratorBegin(peer->addresses);
+        while ( aEnum )
+        {
+            YMRelease(aEnum->value);
+            aEnum = YMDictionaryEnumeratorGetNext(aEnum);
+        }
+        if ( aEnum ) YMDictionaryEnumeratorEnd(aEnum);
         YMRelease(peer->addresses);
+    }
     if ( peer->certificates )
+    {
+        YMDictionaryEnumRef aEnum = YMDictionaryEnumeratorBegin(peer->certificates);
+        while ( aEnum )
+        {
+            YMRelease(aEnum->value);
+            aEnum = YMDictionaryEnumeratorGetNext(aEnum);
+        }
+        if ( aEnum ) YMDictionaryEnumeratorEnd(aEnum);
         YMRelease(peer->certificates);
+    }
     
     YMRelease(peer->name);
 }
@@ -89,7 +108,7 @@ void _YMPeerSetName(YMPeerRef peer_, YMStringRef name)
 void _YMPeerSetAddresses(YMPeerRef peer_, YMDictionaryRef addresses)
 {
     __YMPeerRef peer = (__YMPeerRef)peer_;
-    peer->addresses = addresses;
+    peer->addresses = YMRetain(addresses);
 }
 
 void _YMPeerSetPort(YMPeerRef peer_, uint16_t port)
@@ -101,5 +120,5 @@ void _YMPeerSetPort(YMPeerRef peer_, uint16_t port)
 void _YMPeerSetCertificates(YMPeerRef peer_, YMDictionaryRef certificates)
 {
     __YMPeerRef peer = (__YMPeerRef)peer_;
-    peer->certificates = certificates;
+    peer->certificates = YMRetain(certificates);
 }

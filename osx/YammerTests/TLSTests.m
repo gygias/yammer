@@ -135,6 +135,9 @@ typedef struct
         XCTAssert(okay,@"server close failed");
     });
     
+    YMRelease(clientFirst?theClient:theServer);
+    YMRelease(clientFirst?theServer:theClient);
+    
     NSLog(@"tls test finished (%llu in, %llu out)",bytesIn,bytesOut);
 }
 

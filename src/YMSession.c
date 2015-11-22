@@ -191,6 +191,16 @@ void _YMSessionFree(YMTypeRef object)
         YMmDNSBrowserStop(session->browser);
         YMRelease(session->browser);
     }
+    
+    YMDictionaryEnumRef aEnum = YMDictionaryEnumeratorBegin(session->knownPeers);
+    while ( aEnum )
+    {
+        YMPeerRef aPeer = aEnum->value;
+        YMRelease(aPeer);
+        aEnum = YMDictionaryEnumeratorGetNext(aEnum);
+    }
+    if ( aEnum ) YMDictionaryEnumeratorEnd(aEnum);
+    
     YMRelease(session->knownPeers);
     YMRelease(session->knownPeersLock);
     YMRelease(session->interruptionLock);
@@ -602,7 +612,7 @@ void __ym_session_accept_proc(void * ctx)
     
     while ( ! session->acceptThreadExitFlag )
     {
-        ymlog("session[%s]: accepting...",YMSTR(session->logDescription));
+        ymerr("session[%s]: accepting...",YMSTR(session->logDescription));
         int socket = ipv4 ? session->ipv4ListenSocket : session->ipv6ListenSocket;
         
         struct sockaddr_in6 *bigEnoughAddr = calloc(1,sizeof(struct sockaddr_in6));
@@ -918,6 +928,8 @@ void __ym_mdns_service_resolved_func(__unused YMmDNSBrowserRef browser, bool suc
         _YMPeerSetAddresses(peer, addresses);
         _YMPeerSetPort(peer, service->port);
     }
+    
+    YMRelease(addresses);
     
     YMLockUnlock(session->knownPeersLock);
     

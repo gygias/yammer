@@ -312,9 +312,7 @@ int __ym_tls_certificate_verify_callback(int preverify_ok, X509_STORE_CTX *x509_
     
     if ( tls->preverified && preverify_ok )
     {
-        int cmp = memcmp(_YMX509CertificateGetX509(tls->peerCertificate), err_cert, sizeof(X509));
-        if ( cmp == 0 )
-            return 1;
+        return 1;
     }
     
     if ( depth > YMTLSProviderVerifyDepth )
@@ -348,6 +346,7 @@ int __ym_tls_certificate_verify_callback(int preverify_ok, X509_STORE_CTX *x509_
         ymlog("tls[%d]: user does not do validation, accepting self-signed certificate",tls->isServer);
     
     tls->peerCertificate = ymCert;
+    tls->preverified = true;
     
     return 1;
 }

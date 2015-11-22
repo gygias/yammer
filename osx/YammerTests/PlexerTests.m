@@ -68,7 +68,9 @@ PlexerTests *gRunningPlexerTest; // xctest seems to make a new object for each -
     [super setUp];
     
     plexerTest1Running = YES;
-    plexerTest1Lock = YMLockCreateWithOptionsAndName(YMInternalLockType, YMSTRCF("%s",[[self className] UTF8String],NULL));
+    YMStringRef name = YMSTRCF("%s",[[self className] UTF8String],NULL);
+    plexerTest1Lock = YMLockCreateWithOptionsAndName(YMInternalLockType, name);
+    YMRelease(name);
     awaitingClosures = PlexerTest1StreamClosuresToObserve;
     awaitingInterrupt = NO;
     timeBasedTimeOver = NO;
@@ -210,6 +212,10 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
     long wait = dispatch_semaphore_wait(interruptNotificationSem, dispatch_time(DISPATCH_TIME_NOW, 5*NSEC_PER_SEC));
     XCTAssert(wait==0,@"no interrupt notification");
     // join on time based fallout, check fds we know about are closed
+    
+    YMRelease(localPlexer);
+    YMRelease(fakeRemotePlexer);
+    
     NSLog(@"plexer test finished %zu incoming round-trips on %d threads (%d round-trips per %s)",incomingStreamRoundTrips,
           PlexerTest1Threads,
           PlexerTest1RoundTripsPerThread,
@@ -236,7 +242,9 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
         YMPlexerStreamID streamID;
         if ( ! aStream || PlexerTest1NewStreamPerRoundTrip )
         {
-            aStream = YMPlexerCreateStream(plexer,YMSTRC(__FUNCTION__));
+            YMStringRef name = YMSTRC(__FUNCTION__);
+            aStream = YMPlexerCreateStream(plexer,name);
+            YMRelease(name);
             streamID = ((ym_plexer_stream_user_info_ref)_YMStreamGetUserInfo(aStream))->streamID;
         }
         

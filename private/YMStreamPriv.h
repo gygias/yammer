@@ -29,8 +29,9 @@ typedef struct _ym_stream_user_info_def
 } __ym_stream_user_info_def;
 typedef struct _ym_stream_user_info_def ym_stream_user_info;
 typedef struct ym_stream_user_info *ym_stream_user_info_ref;
+typedef void (*_ym_stream_free_user_info_func)(YMStreamRef);
 
-YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_ref userInfo);
+YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_ref userInfo, _ym_stream_free_user_info_func callback);
 typedef void (*_ym_stream_data_available_func)(YMStreamRef,uint32_t,void *);
 void _YMStreamSetDataAvailableCallback(YMStreamRef stream, _ym_stream_data_available_func, void *ctx);
 

@@ -52,7 +52,7 @@
                                                                         ( ( _theStream = YMDictionaryRemove(_list,streamID) ) != NULL ) : \
                                                                           YMDictionaryContains(_list,streamID) ); \
                                                         if ( ! _okay ) { ymerr("plexer consistenty check failed"); abort(); } \
-                                                        if ( remove ) { __YMPlexerFreeStreamUserInfo(_theStream); YMRelease(_theStream); } \
+                                                        if ( remove ) { YMRelease(_theStream); } \
                                                     YMLockUnlock(_lock); } \
                                                 }
 
@@ -172,9 +172,9 @@ void __ym_plexer_service_upstream_proc(void *);
 bool __YMPlexerServiceADownstream(__YMPlexerRef plexer, YMStreamRef servicingStream);
 YMStreamRef __YMPlexerGetOrCreateRemoteStreamWithID(__YMPlexerRef plexer, YMPlexerStreamID streamID);
 YMStreamRef __YMPlexerCreateStreamWithID(__YMPlexerRef plexer, YMPlexerStreamID streamID, bool isLocal, YMStringRef userNameToRelease);
-void __YMPlexerFreeStreamUserInfo(YMStreamRef stream);
 bool __YMPlexerInterrupt(__YMPlexerRef plexer, bool requested);
 void __ym_plexer_stream_data_available_proc(YMStreamRef stream, uint32_t bytes, void *ctx);
+void __ym_plexer_free_stream_info(YMStreamRef stream);
 
 #define YMPlexerDefaultBufferSize (1e+6)
 
@@ -980,7 +980,7 @@ YMStreamRef __YMPlexerCreateStreamWithID(__YMPlexerRef plexer, YMPlexerStreamID 
     userInfo->lock = YMLockCreateWithOptionsAndName(YMInternalLockType, memberName);
     userInfo->bytesAvailable = 0;
     userInfo->userClosed = false;
-    YMStreamRef theStream = _YMStreamCreate(memberName, (ym_stream_user_info_ref)userInfo);
+    YMStreamRef theStream = _YMStreamCreate(memberName, (ym_stream_user_info_ref)userInfo, __ym_plexer_free_stream_info);
     YMRelease(memberName);
     _YMStreamSetDataAvailableCallback(theStream, __ym_plexer_stream_data_available_proc, plexer);
     
@@ -989,9 +989,10 @@ YMStreamRef __YMPlexerCreateStreamWithID(__YMPlexerRef plexer, YMPlexerStreamID 
     return theStream;
 }
 
-void __YMPlexerFreeStreamUserInfo(YMStreamRef stream)
+void __ym_plexer_free_stream_info(YMStreamRef stream)
 {
     __ym_plexer_stream_user_info_ref userInfo = YM_STREAM_INFO(stream);
+    //ymlog("%s: %u",__FUNCTION__,userInfo->streamID);
     YMRelease(userInfo->lock);
     free(userInfo->lastServiceTime);
     free(userInfo);
@@ -1071,7 +1072,6 @@ bool __YMPlexerInterrupt(__YMPlexerRef plexer, bool requested)
                 YMDictionaryRemove(aList, aRandomKey);
                 ymerr("plexer[%s]: hanging up stream %u",YMSTR(plexer->name),aStreamID);
                 _YMStreamCloseReadUpFile(aStream); // "readup" :/ todo still a free race here
-                __YMPlexerFreeStreamUserInfo(aStream);
                 YMRelease(aStream);
             }
         }

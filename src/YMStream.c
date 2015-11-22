@@ -59,6 +59,7 @@ typedef struct __ym_stream
     
     _ym_stream_data_available_func dataAvailableFunc;
     void *dataAvailableContext;
+    _ym_stream_free_user_info_func freeUserInfoFunc; // made necessary because clients can hold stream objs longer than we do
     
     bool direct;
     
@@ -70,7 +71,7 @@ typedef __YMStream *__YMStreamRef;
 void __YMStreamCloseFiles(__YMStreamRef stream);
 YMIOResult __YMStreamForward(__YMStreamRef stream, int file, bool toStream, uint64_t *inBytes, uint64_t *outBytes);
 
-YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_ref userInfo)
+YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_ref userInfo, _ym_stream_free_user_info_func callback)
 {
     __YMStreamRef stream = (__YMStreamRef)_YMAlloc(_YMStreamTypeID,sizeof(__YMStream));
     
@@ -92,6 +93,7 @@ YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_ref userInfo)
     stream->dataAvailableContext = NULL;
     
     stream->userInfo = userInfo;
+    stream->freeUserInfoFunc = callback;
     
     LOG_STREAM_LIFECYCLE(true);
     
@@ -110,6 +112,9 @@ void _YMStreamFree(YMTypeRef object)
     __YMStreamRef stream = (__YMStreamRef)object;
     
     LOG_STREAM_LIFECYCLE(false);
+    
+    if ( stream->freeUserInfoFunc )
+        stream->freeUserInfoFunc(stream);
     
     YMRelease(stream->downstreamPipe);
     YMRelease(stream->upstreamPipe);

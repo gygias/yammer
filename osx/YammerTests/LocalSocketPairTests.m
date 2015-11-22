@@ -45,7 +45,7 @@
     NSMutableArray *pairs = [NSMutableArray array];
     for ( int i = 0; i < nPairs; i++ )
     {
-        YMStringRef name = YMSTRCF("test-socket-%d",i,NULL);
+        YMStringRef name = YMSTRCF("test-socket-%d",i);
         YMLocalSocketPairRef aPair = YMLocalSocketPairCreate(name, ( i < nPairs - 1 ));
         YMRelease(name);
         

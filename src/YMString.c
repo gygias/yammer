@@ -25,7 +25,7 @@ typedef struct __ym_string __YMString;
 typedef __YMString *__YMStringRef;
 
 // this torturous thing is so that we have one implementation, as far as i know you can't 'forward' vargs to another function call
-#define __YMStringFormatLocal \
+#define __YMStringCreateFormat \
                         va_list formatArgs2,formatArgs; \
                         va_start(formatArgs2,format); \
                         va_copy(formatArgs,formatArgs2); \
@@ -45,6 +45,8 @@ typedef __YMString *__YMStringRef;
                          \
                         va_end(formatArgs2); \
 
+YMStringRef __YMStringCreate(const char *allocdString, size_t length);
+
 YMStringRef YMStringCreate()
 {
     return YMStringCreateWithCString("");
@@ -53,19 +55,40 @@ YMStringRef YMStringCreate()
 YMStringRef YMStringCreateWithCString(const char *cString)
 {
     size_t length = strlen(cString);
+    char *copy = YMALLOC(length + 1);
+    strncpy(copy, cString, length + 1);
+    
+    return __YMStringCreate(copy, length);
+}
+
+YMStringRef __YMStringCreate(const char *allocdString, size_t length)
+{
     __YMStringRef string = (__YMStringRef)_YMAlloc(_YMStringTypeID,sizeof(__YMString));
-    
-    string->cString = YMALLOC(length + 1);
-    strncpy((char *)string->cString, cString, length + 1);
+    string->cString = allocdString;
     string->length = length;
-    
     return string;
+}
+
+YMStringRef YMStringCreateByAppendingString(YMStringRef base, YMStringRef append)
+{
+    const char* cBase = YMStringGetCString(base);
+    const char *cAppend = YMStringGetCString(append);
+    
+    size_t baseLen = strlen(cBase);
+    size_t appendLen = strlen(cAppend);
+    size_t newStringLen = baseLen + appendLen + 1;
+    char *newString = (char *)YMALLOC(newStringLen);
+    memcpy(newString, cBase, baseLen);
+    memcpy(newString + baseLen, cAppend, appendLen);
+    newString[newStringLen - 1] = '\0';
+    
+    return __YMStringCreate(newString, baseLen + appendLen);
 }
 
 YMStringRef YMStringCreateWithFormat(const char *format,...)
 {
-    __YMStringFormatLocal;
-    return YMStringCreateWithCString(newStr);
+    __YMStringCreateFormat;
+    return __YMStringCreate(newStr, length - 1);
 }
 
 #ifdef internal_function
@@ -232,22 +255,6 @@ catch_fail:
 #endif
 }
 #endif
-
-YMStringRef YMStringCreateByAppendingString(YMStringRef base, YMStringRef append)
-{
-    const char* cBase = YMStringGetCString(base);
-    const char *cAppend = YMStringGetCString(append);
-    
-    size_t baseLen = strlen(cBase);
-    size_t appendLen = strlen(cAppend);
-    size_t newStringLen = baseLen + appendLen + 1;
-    char *newString = (char *)YMALLOC(newStringLen);
-    memcpy(newString, cBase, baseLen);
-    memcpy(newString + baseLen, cAppend, appendLen);
-    newString[newStringLen - 1] = '\0';
-    
-    return YMStringCreateWithCString(newString);
-}
 
 void _YMStringFree(YMTypeRef object)
 {

@@ -81,7 +81,9 @@ void _YMPipeFree(YMTypeRef object)
     __YMPipeCloseInputFile(pipe);
     __YMPipeCloseOutputFile(pipe);
     
-    YMRelease(pipe->name);
+    bool deallocd = YMRelease(pipe->name);
+    if ( ! deallocd )
+        abort();
 }
 
 int YMPipeGetInputFile(YMPipeRef pipe_)

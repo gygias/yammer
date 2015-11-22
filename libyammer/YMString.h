@@ -33,7 +33,7 @@ bool YMStringEquals(YMStringRef stringA, YMStringRef stringB);
 #define YMSTRC(x) YMStringCreateWithCString(x)
 // Token pasting of ',' and __VA_ARGS__ is a GNU extension
 YM_WPPUSH
-#define YMSTRCF(x,...) YMStringCreateWithFormat((x),##__VA_ARGS__)
+#define YMSTRCF(x,...) YMStringCreateWithFormat((x),##__VA_ARGS__,NULL)
 YM_WPOP
 #define YMLEN(x) YMStringGetLength(x)
 

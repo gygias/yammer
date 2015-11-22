@@ -142,38 +142,6 @@
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "YammerTests/SessionTests.m"
-            timestampString = "469843334.776897"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "177"
-            endingLineNumber = "177"
-            landmarkName = "-testSessionWritingDevRandomAndReadingManPages"
-            landmarkType = "5">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "YammerTests/DictionaryTests.m"
-            timestampString = "469809711.29478"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "59"
-            endingLineNumber = "59"
-            landmarkName = "-testSerializedAddEnumRemoveAndPop"
-            landmarkType = "5">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
             filePath = "YammerTests/CryptoTests.m"
             timestampString = "469809723.326578"
             startingColumnNumber = "9223372036854775807"
@@ -191,7 +159,7 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "469844118.305918"
+                  timestampString = "469860500.849306"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
                   startingLineNumber = "49"
@@ -206,7 +174,7 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "469844118.306434"
+                  timestampString = "469860500.850101"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
                   startingLineNumber = "49"
@@ -221,7 +189,7 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "469844118.307207"
+                  timestampString = "469860500.850943"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
                   startingLineNumber = "49"
@@ -236,7 +204,7 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "469844118.307713"
+                  timestampString = "469860500.851609"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
                   startingLineNumber = "49"
@@ -251,7 +219,7 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "469844118.308509"
+                  timestampString = "469860500.852252"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
                   startingLineNumber = "49"
@@ -266,7 +234,7 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "469844118.308818"
+                  timestampString = "469860500.852931"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
                   startingLineNumber = "49"
@@ -281,7 +249,7 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "469844118.309132"
+                  timestampString = "469860500.853597"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
                   startingLineNumber = "49"
@@ -296,7 +264,7 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "469844118.309421"
+                  timestampString = "469860500.854244"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
                   startingLineNumber = "49"
@@ -311,7 +279,7 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "469844118.311177"
+                  timestampString = "469860500.854824"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
                   startingLineNumber = "49"
@@ -326,7 +294,7 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "469844118.311744"
+                  timestampString = "469860500.855539"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
                   startingLineNumber = "49"
@@ -341,7 +309,7 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "469844118.31226"
+                  timestampString = "469860500.857103"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
                   startingLineNumber = "49"
@@ -356,7 +324,7 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "469844118.312831"
+                  timestampString = "469860500.85772"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
                   startingLineNumber = "49"
@@ -371,7 +339,7 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "469844118.313557"
+                  timestampString = "469860500.858257"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
                   startingLineNumber = "49"
@@ -388,11 +356,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "YammerTests/mDNSTests.m"
-            timestampString = "469809747.11142"
+            timestampString = "469850764.157349"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "130"
-            endingLineNumber = "130"
+            startingLineNumber = "131"
+            endingLineNumber = "131"
             landmarkName = "-testmDNSCreateDiscoverResolve"
             landmarkType = "5">
             <Locations>
@@ -404,11 +372,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/mDNSTests.m"
-                  timestampString = "469844118.322922"
+                  timestampString = "469860500.864687"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "130"
-                  endingLineNumber = "130"
+                  startingLineNumber = "131"
+                  endingLineNumber = "131"
                   offsetFromSymbolStart = "724">
                </Location>
                <Location
@@ -419,11 +387,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/mDNSTests.m"
-                  timestampString = "469844118.323568"
+                  timestampString = "469860500.865862"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "130"
-                  endingLineNumber = "130"
+                  startingLineNumber = "131"
+                  endingLineNumber = "131"
                   offsetFromSymbolStart = "1279">
                </Location>
                <Location
@@ -434,11 +402,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/mDNSTests.m"
-                  timestampString = "469844118.324382"
+                  timestampString = "469860500.866434"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "130"
-                  endingLineNumber = "130"
+                  startingLineNumber = "131"
+                  endingLineNumber = "131"
                   offsetFromSymbolStart = "1767">
                </Location>
                <Location
@@ -449,11 +417,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/mDNSTests.m"
-                  timestampString = "469844118.325154"
+                  timestampString = "469860500.867494"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "130"
-                  endingLineNumber = "130"
+                  startingLineNumber = "131"
+                  endingLineNumber = "131"
                   offsetFromSymbolStart = "2135">
                </Location>
                <Location
@@ -464,11 +432,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/mDNSTests.m"
-                  timestampString = "469844118.32573"
+                  timestampString = "469860500.868024"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "130"
-                  endingLineNumber = "130"
+                  startingLineNumber = "131"
+                  endingLineNumber = "131"
                   offsetFromSymbolStart = "2162">
                </Location>
                <Location
@@ -479,11 +447,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/mDNSTests.m"
-                  timestampString = "469844118.326407"
+                  timestampString = "469860500.869276"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "130"
-                  endingLineNumber = "130"
+                  startingLineNumber = "131"
+                  endingLineNumber = "131"
                   offsetFromSymbolStart = "2834">
                </Location>
                <Location
@@ -494,11 +462,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/mDNSTests.m"
-                  timestampString = "469844118.327"
+                  timestampString = "469860500.870621"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "130"
-                  endingLineNumber = "130"
+                  startingLineNumber = "131"
+                  endingLineNumber = "131"
                   offsetFromSymbolStart = "3322">
                </Location>
                <Location
@@ -509,11 +477,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/mDNSTests.m"
-                  timestampString = "469844118.327675"
+                  timestampString = "469860500.871601"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "130"
-                  endingLineNumber = "130"
+                  startingLineNumber = "131"
+                  endingLineNumber = "131"
                   offsetFromSymbolStart = "3717">
                </Location>
                <Location
@@ -524,11 +492,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/mDNSTests.m"
-                  timestampString = "469844118.328338"
+                  timestampString = "469860500.872378"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "130"
-                  endingLineNumber = "130"
+                  startingLineNumber = "131"
+                  endingLineNumber = "131"
                   offsetFromSymbolStart = "4740">
                </Location>
                <Location
@@ -539,11 +507,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/mDNSTests.m"
-                  timestampString = "469844118.328875"
+                  timestampString = "469860500.873124"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "130"
-                  endingLineNumber = "130"
+                  startingLineNumber = "131"
+                  endingLineNumber = "131"
                   offsetFromSymbolStart = "5228">
                </Location>
             </Locations>
@@ -556,11 +524,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "YammerTests/TLSTests.m"
-            timestampString = "469809758.552964"
+            timestampString = "469854286.06503"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "139"
-            endingLineNumber = "139"
+            startingLineNumber = "142"
+            endingLineNumber = "142"
             landmarkName = "-testTLS1"
             landmarkType = "5">
             <Locations>
@@ -572,11 +540,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.329652"
+                  timestampString = "469860500.880888"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "669">
                </Location>
                <Location
@@ -587,11 +555,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.330253"
+                  timestampString = "469860500.881529"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "1216">
                </Location>
                <Location
@@ -602,11 +570,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.330899"
+                  timestampString = "469860500.882248"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "1727">
                </Location>
                <Location
@@ -617,11 +585,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.33144"
+                  timestampString = "469860500.882971"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "2130">
                </Location>
                <Location
@@ -632,11 +600,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.332263"
+                  timestampString = "469860500.883582"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "2154">
                </Location>
                <Location
@@ -647,11 +615,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.332879"
+                  timestampString = "469860500.884342"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "2723">
                </Location>
                <Location
@@ -662,11 +630,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.333566"
+                  timestampString = "469860500.884951"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "3208">
                </Location>
                <Location
@@ -677,11 +645,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.333876"
+                  timestampString = "469860500.885551"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "3597">
                </Location>
                <Location
@@ -692,11 +660,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.334228"
+                  timestampString = "469860500.886124"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "4127">
                </Location>
                <Location
@@ -707,11 +675,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.334528"
+                  timestampString = "469860500.88664"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "4612">
                </Location>
                <Location
@@ -722,11 +690,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.334824"
+                  timestampString = "469860500.887212"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "5001">
                </Location>
                <Location
@@ -737,11 +705,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.335589"
+                  timestampString = "469860500.887761"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "5779">
                </Location>
                <Location
@@ -752,11 +720,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.336206"
+                  timestampString = "469860500.888532"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "6264">
                </Location>
                <Location
@@ -767,11 +735,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.336906"
+                  timestampString = "469860500.889123"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "6653">
                </Location>
                <Location
@@ -782,11 +750,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.337572"
+                  timestampString = "469860500.889743"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "7415">
                </Location>
                <Location
@@ -797,11 +765,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.338203"
+                  timestampString = "469860500.890696"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "8001">
                </Location>
                <Location
@@ -812,11 +780,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.338845"
+                  timestampString = "469860500.891382"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "8491">
                </Location>
                <Location
@@ -827,11 +795,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.339378"
+                  timestampString = "469860500.892084"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "9055">
                </Location>
                <Location
@@ -842,11 +810,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.33991"
+                  timestampString = "469860500.892897"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "9641">
                </Location>
                <Location
@@ -857,11 +825,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.340468"
+                  timestampString = "469860500.893653"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "10131">
                </Location>
                <Location
@@ -872,11 +840,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.341216"
+                  timestampString = "469860500.894321"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "10744">
                </Location>
                <Location
@@ -887,11 +855,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.341727"
+                  timestampString = "469860500.89503"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "11229">
                </Location>
                <Location
@@ -902,11 +870,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.342356"
+                  timestampString = "469860500.895638"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "11618">
                </Location>
                <Location
@@ -917,11 +885,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.342866"
+                  timestampString = "469860500.896261"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "12234">
                </Location>
                <Location
@@ -932,11 +900,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.343531"
+                  timestampString = "469860500.896967"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "12719">
                </Location>
                <Location
@@ -947,11 +915,11 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.344064"
+                  timestampString = "469860500.89749"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
                   offsetFromSymbolStart = "13108">
                </Location>
                <Location
@@ -962,12 +930,12 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.344428"
+                  timestampString = "469860500.898028"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
-                  offsetFromSymbolStart = "14823">
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
+                  offsetFromSymbolStart = "14978">
                </Location>
                <Location
                   shouldBeEnabled = "Yes"
@@ -977,186 +945,14 @@
                   moduleName = "YammerTests"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/TLSTests.m"
-                  timestampString = "469844118.34472"
+                  timestampString = "469860500.898761"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "139"
-                  endingLineNumber = "139"
-                  offsetFromSymbolStart = "15308">
+                  startingLineNumber = "142"
+                  endingLineNumber = "142"
+                  offsetFromSymbolStart = "15463">
                </Location>
             </Locations>
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "YammerTests/PlexerTests.m"
-            timestampString = "469809765.203051"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "223"
-            endingLineNumber = "223"
-            landmarkName = "-testManyPlexerRoundTrips"
-            landmarkType = "5">
-            <Locations>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[G_PlexerTests testManyPlexerRoundTrips]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/PlexerTests.m"
-                  timestampString = "469844118.345161"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "223"
-                  endingLineNumber = "223"
-                  offsetFromSymbolStart = "2189">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[G_PlexerTests testManyPlexerRoundTrips]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/PlexerTests.m"
-                  timestampString = "469844118.345451"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "223"
-                  endingLineNumber = "223"
-                  offsetFromSymbolStart = "2308">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[G_PlexerTests testManyPlexerRoundTrips]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/PlexerTests.m"
-                  timestampString = "469844118.345746"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "223"
-                  endingLineNumber = "223"
-                  offsetFromSymbolStart = "2460">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[G_PlexerTests testManyPlexerRoundTrips]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/PlexerTests.m"
-                  timestampString = "469844118.346037"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "223"
-                  endingLineNumber = "223"
-                  offsetFromSymbolStart = "2954">
-               </Location>
-            </Locations>
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "YammerTests/LocalSocketPairTests.m"
-            timestampString = "469809779.219863"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "88"
-            endingLineNumber = "88"
-            landmarkName = "-testSpawnOneMore"
-            landmarkType = "5">
-            <Locations>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[C_LocalSocketPairTests testSpawnOneMore]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/LocalSocketPairTests.m"
-                  timestampString = "469844118.346364"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "88"
-                  endingLineNumber = "88"
-                  offsetFromSymbolStart = "463">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[C_LocalSocketPairTests testSpawnOneMore]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/LocalSocketPairTests.m"
-                  timestampString = "469844118.346655"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "88"
-                  endingLineNumber = "88"
-                  offsetFromSymbolStart = "532">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[C_LocalSocketPairTests testSpawnOneMore]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/LocalSocketPairTests.m"
-                  timestampString = "469844118.346944"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "88"
-                  endingLineNumber = "88"
-                  offsetFromSymbolStart = "651">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[C_LocalSocketPairTests testSpawnOneMore]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/LocalSocketPairTests.m"
-                  timestampString = "469844118.347234"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "88"
-                  endingLineNumber = "88"
-                  offsetFromSymbolStart = "1124">
-               </Location>
-            </Locations>
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "../src/YMTLSProvider.c"
-            timestampString = "469843334.776897"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "315"
-            endingLineNumber = "315"
-            landmarkName = "__ym_tls_certificate_verify_callback()"
-            landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -1166,11 +962,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "../src/YMSession.c"
-            timestampString = "469840245.797181"
+            timestampString = "469845687.903977"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "362"
-            endingLineNumber = "362"
+            startingLineNumber = "372"
+            endingLineNumber = "372"
             landmarkName = "YMSessionConnectToPeer()"
             landmarkType = "7">
          </BreakpointContent>
@@ -1182,11 +978,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "YammerTests/FreeGlobalsTest.m"
-            timestampString = "469843252.987546"
+            timestampString = "469854949.090524"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "29"
-            endingLineNumber = "29"
+            startingLineNumber = "30"
+            endingLineNumber = "30"
             landmarkName = "-testFreeGlobals"
             landmarkType = "5">
          </BreakpointContent>

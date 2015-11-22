@@ -89,11 +89,12 @@ YMAddressRef YMAddressCreate(void* addressData, socklen_t length)
         char *ipString = inet_ntoa( inAddr->sin_addr );
         if ( ! ipString ) // i can't imagine how this would fail short of segfaulting, man isn't specific
         {
-            uint8_t *ipPtr = (uint8_t *)&(inAddr->sin_addr.s_addr);
+            //uint32_t ip = ntohl(inAddr->sin_addr.s_addr);
+            uint8_t *ipPtr = (uint8_t *)&inAddr->sin_addr.s_addr;
             ymerr("address: error: inet_ntoa failed for %u.%u.%u.%u: %d (%s)",ipPtr[0],ipPtr[1],ipPtr[2],ipPtr[4],errno,strerror(errno));
             goto rewind_fail;
         }
-        uint16_t port = inAddr->sin_port;
+        uint16_t port = ntohs(inAddr->sin_port);
         address->description = YMStringCreateWithFormat("%s:%u",ipString,port,NULL);
     }
     else if ( isIP )
@@ -108,9 +109,9 @@ YMAddressRef YMAddressCreate(void* addressData, socklen_t length)
         }
         uint16_t port;
         if ( isIPV4 )
-            port = ((struct sockaddr_in *)addr)->sin_port;
+            port = ntohs(((struct sockaddr_in *)addr)->sin_port);
         else
-            port = ((struct sockaddr_in6 *)addr)->sin6_port;
+            port = ntohs(((struct sockaddr_in6 *)addr)->sin6_port);
         address->description = YMStringCreateWithFormat("%s:%u",ipString,port,NULL);
     }
     
@@ -124,12 +125,12 @@ rewind_fail:
 
 YMAddressRef YMAddressCreateLocalHostIPV4(uint16_t port)
 {
-    uint8_t ip[4] = { 127, 0, 0, 1 };
+    uint32_t localhost = INADDR_LOOPBACK;
     
     uint8_t length = sizeof(struct sockaddr_in);
     struct sockaddr_in *newAddr = YMALLOC(length);
     newAddr->sin_family = AF_INET;
-    memcpy(&newAddr->sin_addr.s_addr,ip,sizeof(ip));
+    newAddr->sin_addr.s_addr = localhost;
     newAddr->sin_port = port;
     newAddr->sin_len = length;
     

@@ -26,6 +26,7 @@
 
 - (void)testFreeGlobals {
     YMFreeGlobalResources();
+    CFRunLoopRunInMode(kCFRunLoopDefaultMode, 2, false);
 }
 
 - (void)testPerformanceExample {

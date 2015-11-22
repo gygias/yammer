@@ -78,6 +78,7 @@ mDNSTests *gGlobalSelf;
         
         _YMmDNSTxtKeyPairsFree(keyPairList, desiredAndActualSize);
         _YMmDNSTxtKeyPairsFree(outKeyPairList, outListLen);
+        free((void *)listBlob);
     }
 }
 
