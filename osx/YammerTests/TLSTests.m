@@ -91,8 +91,10 @@ typedef struct
     YMTLSProviderRef remoteProvider = YMTLSProviderCreateWithFullDuplexFile(localIsServer ? clientSocket : serverSocket, !localIsServer);
     XCTAssert(remoteProvider,@"remote provider didn't initialize");
     
-    stateLock = YMLockCreateWithOptionsAndName(YMInternalLockType, YMSTRC([[self className] UTF8String]));
-    threadExitSemaphore = YMSemaphoreCreate(YMSTRC([[self className] UTF8String]), 0);
+    YMStringRef name = YMSTRC([[self className] UTF8String]);
+    stateLock = YMLockCreateWithOptionsAndName(YMInternalLockType, name);
+    threadExitSemaphore = YMSemaphoreCreate(name, 0);
+    YMRelease(name);
     bytesIn = 0;
     bytesOut = 0;
     isTimeBased = TLSTestTimeBased;

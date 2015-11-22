@@ -64,6 +64,8 @@ void YMLocalSocketPairStop()
         gYMLocalSocketSemaphore = NULL;
         YMRelease(gYMLocalSocketPairAcceptThread);
         gYMLocalSocketPairAcceptThread = NULL;
+        YMRelease(gYMLocalSocketPairName);
+        gYMLocalSocketPairName = NULL;
     }
 }
 
@@ -219,6 +221,7 @@ void __ym_local_socket_accept_proc(__unused void *ctx)
     
     if ( socketName )
         YMRelease(socketName);
+    
     socketName = YMStringCreateWithFormat("%s:%u",__YMLocalSocketPairNameBase,nameSuffixIter,NULL);
     
     listenSocket = socket(PF_LOCAL, SOCK_STREAM, PF_UNSPEC /* /etc/sockets man 5 protocols*/);

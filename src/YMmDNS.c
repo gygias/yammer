@@ -113,6 +113,7 @@ void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record)
     //    free( (char *)record->hostNames );
     if ( record->txtRecordKeyPairs )
         _YMmDNSTxtKeyPairsFree( (YMmDNSTxtRecordKeyPair **)record->txtRecordKeyPairs, record->txtRecordKeyPairsSize );
+    free(record);
 }
 
 YMmDNSTxtRecordKeyPair **_YMmDNSTxtKeyPairsCreate(const unsigned char *txtRecord, uint16_t txtLength, size_t *outSize)
