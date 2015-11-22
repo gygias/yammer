@@ -74,7 +74,7 @@ YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_ref userInfo)
 {
     __YMStreamRef stream = (__YMStreamRef)_YMAlloc(_YMStreamTypeID,sizeof(__YMStream));
     
-    stream->name = name ? YMRetain(name) : YMSTRC("unnamed");
+    stream->name = name ? YMRetain(name) : YMSTRC("*");
     
     YMStringRef streamName = YMStringCreateWithFormat("%s-up",YMSTR(name),NULL);
     stream->upstreamPipe = YMPipeCreate(streamName);

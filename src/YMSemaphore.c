@@ -51,7 +51,9 @@ static pthread_once_t gYMSemaphoreIndexInit = PTHREAD_ONCE_INIT;
 
 void _YMSemaphoreInit()
 {
-    gYMSemaphoreIndexLock = YMLockCreateWithOptionsAndName(YMInternalLockType, YMSTRC(YM_TOKEN_STR(gYMSemaphoreIndex)));
+    YMStringRef name = YMSTRC(YM_TOKEN_STR(gYMSemaphoreIndex));
+    gYMSemaphoreIndexLock = YMLockCreateWithOptionsAndName(YMInternalLockType, name);
+    YMRelease(name);
 }
 
 YMSemaphoreRef YMSemaphoreCreate(YMStringRef name, int initialValue)
@@ -76,14 +78,16 @@ YMSemaphoreRef YMSemaphoreCreate(YMStringRef name, int initialValue)
     
     __YMSemaphoreRef semaphore = (__YMSemaphoreRef)_YMAlloc(_YMSemaphoreTypeID,sizeof(__YMSemaphore));
     
-    semaphore->userName = YMStringCreateWithFormat("%s-%p",name?YMSTR(name):"unnamed",semaphore, NULL);
-    semaphore->lock = YMLockCreateWithOptionsAndName(YMInternalLockType, YMSTRC("__ymsemaphore_mutex"));
+    semaphore->userName = YMStringCreateWithFormat("%s-%p",name?YMSTR(name):"*",semaphore, NULL);
+    YMStringRef memberName = YMSTRC("__ymsemaphore_mutex");
+    semaphore->lock = YMLockCreateWithOptionsAndName(YMInternalLockType, memberName);
+    YMRelease(memberName);
     
     YMLockLock(gYMSemaphoreIndexLock);
     uint16_t thisIndex = gYMSemaphoreIndex++;
+    semaphore->semName = YMStringCreateWithFormat("ym-%u",thisIndex,NULL);
     if ( gYMSemaphoreIndex == 0 )
         ymerr("semaphore[%s,%s]: warning: semaphore name index reset",YMSTR(semaphore->semName),YMSTR(semaphore->userName),NULL);
-    semaphore->semName = YMStringCreateWithFormat("ym-%u",thisIndex,NULL);
     ymlog("semaphore[%s,%s]: created",YMSTR(semaphore->semName),YMSTR(semaphore->userName));
     YMLockUnlock(gYMSemaphoreIndexLock);
     
@@ -91,17 +95,13 @@ YMSemaphoreRef YMSemaphoreCreate(YMStringRef name, int initialValue)
     semaphore->cond = cond;
     semaphore->value = initialValue;
 #else
-    bool triedUnlink = false;
     
 try_again:;
-    int open_error;
     semaphore->sem = sem_open(YMSTR(semaphore->semName), O_CREAT|O_EXCL, S_IRUSR|S_IWUSR, initialValue); // todo mode?
     if ( semaphore->sem == SEM_FAILED )
     {
-        open_error = errno;
         if ( errno == EEXIST )
         {
-            triedUnlink = true;
             if ( sem_unlink(YMSTR(semaphore->semName)) == 0 )
             {
                 ymerr("sem_unlink[%s]",YMSTR(semaphore->semName));
@@ -113,7 +113,8 @@ try_again:;
                 abort();
             }
         }
-        ymlog("semaphore[%s,%s]: fatal: sem_open failed: %d (%s)",YMSTR(semaphore->semName),YMSTR(semaphore->userName),open_error,strerror(open_error));
+        else
+            ymlog("semaphore[%s,%s]: fatal: sem_open failed: %d (%s)",YMSTR(semaphore->semName),YMSTR(semaphore->userName),errno,strerror(errno));
         abort(); // since we handle names internally
     }
 #endif

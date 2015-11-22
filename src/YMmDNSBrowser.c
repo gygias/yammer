@@ -386,10 +386,14 @@ static void DNSSD_API __ym_mdns_browse_callback(__unused DNSServiceRef serviceRe
     bool remove = (flags & kDNSServiceFlagsAdd) == 0;
     
     if ( remove )
-        __YMmDNSBrowserRemoveServiceNamed(browser, YMSTRC(name));
+    {
+        YMStringRef ymName = YMSTRC(name);
+        __YMmDNSBrowserRemoveServiceNamed(browser, ymName);
+        YMRelease(ymName);
+    }
     else
     {
-        YMmDNSServiceRecord *record = _YMmDNSCreateServiceRecord(name, type, domain, false, NULL, 0, NULL, 0);
+        YMmDNSServiceRecord *record = _YMmDNSServiceRecordCreate(name, type, domain, false, NULL, 0, NULL, 0);
         __YMmDNSBrowserAddOrUpdateService(browser, record);
     }    
 }
@@ -424,7 +428,7 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
         }
         firstDotPtr[0] = '\0';
         
-        record = _YMmDNSCreateServiceRecord(fullname, YMSTR(browser->type),
+        record = _YMmDNSServiceRecordCreate(fullname, YMSTR(browser->type),
 #ifdef YMmDNS_ENUMERATION
 #error fixme
 #else

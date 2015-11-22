@@ -43,31 +43,19 @@
 
 void _YMmDNSServiceListFree(YMmDNSServiceList *serviceList)
 {
-    YMmDNSServiceList *aListItem = serviceList;
-    while ( aListItem )
+    YMmDNSServiceList *listIter = serviceList;
+    while ( listIter )
     {
+        YMmDNSServiceList *aListItem = listIter;
         struct _YMmDNSServiceRecord *service = (struct _YMmDNSServiceRecord *)aListItem->service;
         if ( service )
             _YMmDNSServiceRecordFree(service);
-        aListItem = aListItem->next;
+        listIter = listIter->next;
+        free(aListItem);
     }
 }
 
-void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record)
-{
-    if ( record->name )
-        YMRelease(record->name);
-    if ( record->type )
-        YMRelease(record->type);
-    if ( record->domain )
-        YMRelease(record->domain);
-    //if ( record->hostNames )  // todo: i can't find any mention of ownership of this struct
-    //    free( (char *)record->hostNames );
-    if ( record->txtRecordKeyPairs )
-        _YMmDNSTxtRecordKeyPairsFree( (YMmDNSTxtRecordKeyPair **)record->txtRecordKeyPairs, record->txtRecordKeyPairsSize );
-}
-
-YMmDNSServiceRecord *_YMmDNSCreateServiceRecord(const char *name, const char*type, const char *domain, bool resolved, const char *hostname,
+YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*type, const char *domain, bool resolved, const char *hostname,
                                                 uint16_t port, const unsigned char *txtRecord, uint16_t txtLength)
 {
     YMmDNSServiceRecord *record = (YMmDNSServiceRecord *)YMALLOC(sizeof(struct _YMmDNSServiceRecord));
@@ -101,7 +89,7 @@ YMmDNSServiceRecord *_YMmDNSCreateServiceRecord(const char *name, const char*typ
     if ( txtRecord )
     {
         size_t txtSize = 0;
-        record->txtRecordKeyPairs = _YMmDNSCreateTxtKeyPairs(txtRecord, txtLength, &txtSize);
+        record->txtRecordKeyPairs = _YMmDNSTxtKeyPairsCreate(txtRecord, txtLength, &txtSize);
         record->txtRecordKeyPairsSize = txtSize;
     }
     else
@@ -113,7 +101,21 @@ YMmDNSServiceRecord *_YMmDNSCreateServiceRecord(const char *name, const char*typ
     return record;
 }
 
-YMmDNSTxtRecordKeyPair **_YMmDNSCreateTxtKeyPairs(const unsigned char *txtRecord, uint16_t txtLength, size_t *outSize)
+void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record)
+{
+    if ( record->name )
+        YMRelease(record->name);
+    if ( record->type )
+        YMRelease(record->type);
+    if ( record->domain )
+        YMRelease(record->domain);
+    //if ( record->hostNames )  // todo: i can't find any mention of ownership of this struct
+    //    free( (char *)record->hostNames );
+    if ( record->txtRecordKeyPairs )
+        _YMmDNSTxtKeyPairsFree( (YMmDNSTxtRecordKeyPair **)record->txtRecordKeyPairs, record->txtRecordKeyPairsSize );
+}
+
+YMmDNSTxtRecordKeyPair **_YMmDNSTxtKeyPairsCreate(const unsigned char *txtRecord, uint16_t txtLength, size_t *outSize)
 {
     if ( txtLength <= 1 )
         return NULL;
@@ -139,7 +141,7 @@ YMmDNSTxtRecordKeyPair **_YMmDNSCreateTxtKeyPairs(const unsigned char *txtRecord
         if ( equalsPtr == NULL )
         {
             ymlog("mdns: warning: failed to parse %ub txt record",txtLength);
-            _YMmDNSTxtRecordKeyPairsFree(keyPairList, listSize);
+            _YMmDNSTxtKeyPairsFree(keyPairList, listSize);
             return NULL;
         }
         
@@ -178,7 +180,25 @@ YMmDNSTxtRecordKeyPair **_YMmDNSCreateTxtKeyPairs(const unsigned char *txtRecord
     return keyPairList;
 }
 
-const unsigned char  *_YMmDNSCreateTxtBlobFromKeyPairs(YMmDNSTxtRecordKeyPair **keyPairList, uint16_t *inSizeOutLength)
+void _YMmDNSTxtKeyPairsFree(YMmDNSTxtRecordKeyPair **keyPairList, size_t size)
+{
+    size_t idx;
+    for ( idx = 0; idx < size; idx++ )
+    {
+        YMmDNSTxtRecordKeyPair *aPair = keyPairList[idx];
+        if ( aPair )
+        {
+            if ( aPair->key )
+                YMRelease(aPair->key);
+            if ( aPair->value )
+                free((void*)aPair->value);
+            free(aPair);
+        }
+    }
+    free(keyPairList);
+}
+
+const unsigned char  *_YMmDNSTxtBlobCreate(YMmDNSTxtRecordKeyPair **keyPairList, uint16_t *inSizeOutLength)
 {
     size_t listSize = *inSizeOutLength;
     size_t blobSize = 0;
@@ -226,22 +246,4 @@ const unsigned char  *_YMmDNSCreateTxtBlobFromKeyPairs(YMmDNSTxtRecordKeyPair **
     }
     
     return txtBlob;
-}
-
-void _YMmDNSTxtRecordKeyPairsFree(YMmDNSTxtRecordKeyPair **keyPairList, size_t size)
-{
-    size_t idx;
-    for ( idx = 0; idx < size; idx++ )
-    {
-        YMmDNSTxtRecordKeyPair *aPair = keyPairList[idx];
-        if ( aPair )
-        {
-            if ( aPair->key )
-                YMRelease(aPair->key);
-            if ( aPair->value )
-                free((void*)aPair->value);
-            free(aPair);
-        }
-    }
-    free(keyPairList);
 }

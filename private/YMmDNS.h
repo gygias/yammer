@@ -39,12 +39,14 @@ typedef struct _YMmDNSServiceList
     struct _YMmDNSServiceList *next;
 } YMmDNSServiceList;
 
-YMmDNSServiceRecord *_YMmDNSCreateServiceRecord(const char *name, const char*type, const char *domain, bool resolved, const char *hostname,
+YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*type, const char *domain, bool resolved, const char *hostname,
                                                 uint16_t port, const unsigned char *txtRecord, uint16_t txtLength);
-YMmDNSTxtRecordKeyPair **_YMmDNSCreateTxtKeyPairs(const unsigned char *txtRecord, uint16_t txtLength, size_t *outSize);
-const unsigned char  *_YMmDNSCreateTxtBlobFromKeyPairs(YMmDNSTxtRecordKeyPair **keyPairList, uint16_t *inSizeOutLength);
-void _YMmDNSServiceListFree(YMmDNSServiceList *serviceList); // xxx
 void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *service);
-void _YMmDNSTxtRecordKeyPairsFree(YMmDNSTxtRecordKeyPair **keyPairList, size_t size);
+
+YMmDNSTxtRecordKeyPair **_YMmDNSTxtKeyPairsCreate(const unsigned char *txtRecord, uint16_t txtLength, size_t *outSize);
+void _YMmDNSTxtKeyPairsFree(YMmDNSTxtRecordKeyPair **keyPairList, size_t size);
+
+const unsigned char  *_YMmDNSTxtBlobCreate(YMmDNSTxtRecordKeyPair **keyPairList, uint16_t *inSizeOutLength);
+void _YMmDNSServiceListFree(YMmDNSServiceList *serviceList); // xxx
 
 #endif /* YMmDNS_h */

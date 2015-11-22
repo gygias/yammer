@@ -52,8 +52,8 @@ void _YMPeerFree(YMTypeRef object)
         YMRelease(peer->addresses);
     if ( peer->certificates )
         YMRelease(peer->certificates);
-    if ( peer->name )
-        YMRelease(peer->name);
+    
+    YMRelease(peer->name);
 }
 
 YMStringRef YMPeerGetName(YMPeerRef peer_)

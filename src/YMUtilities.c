@@ -132,11 +132,23 @@ YMIOResult YMWriteFull(int fd, const uint8_t *buffer, size_t bytes, size_t *outW
 
 int32_t YMPortReserve(bool ipv4, int *outSocket)
 {
+    bool okay = false;
     uint16_t aPort = IPPORT_RESERVED;
+    uint16_t thePort = aPort;
+    int aSocket = -1;
+    
+    uint8_t length = ipv4 ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6);
+    struct sockaddr *addr = YMALLOC(length);
+    addr->sa_family = ipv4 ? AF_INET : AF_INET6;
+    addr->sa_len = length;
+    if ( ipv4 )
+        ((struct sockaddr_in *)addr)->sin_addr.s_addr = INADDR_ANY;
+    else
+        ((struct sockaddr_in6 *)addr)->sin6_addr = in6addr_any;
+    
     while (aPort < IPPORT_HILASTAUTO)
     {
-        uint16_t tryPort = aPort++;
-        int aSocket = -1;
+        thePort = aPort++;
         
         int domain = ipv4 ? PF_INET : PF_INET6;
         int aResult = socket(domain, SOCK_STREAM, 6);
@@ -150,34 +162,27 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
         if ( aResult != 0 )
             goto catch_continue;
         
-        uint8_t length = ipv4 ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6);
-        struct sockaddr *addr = YMALLOC(length);
-        addr->sa_family = ipv4 ? AF_INET : AF_INET6;
-        addr->sa_len = length;
         if ( ipv4 )
-        {
-            ((struct sockaddr_in *)addr)->sin_addr.s_addr = INADDR_ANY;
-            ((struct sockaddr_in *)addr)->sin_port = tryPort;
-        }
+            ((struct sockaddr_in *)addr)->sin_port = thePort;
+        
         else
-        {
-            ((struct sockaddr_in6 *)addr)->sin6_addr = in6addr_any;
-            ((struct sockaddr_in6 *)addr)->sin6_port = tryPort;
-        }
+            ((struct sockaddr_in6 *)addr)->sin6_port = thePort;
         
         aResult = bind(aSocket, addr, length);
         if ( aResult != 0 )
             goto catch_continue;
         
         *outSocket = aSocket;
-        return tryPort;
+        okay = true;
+        break;
         
     catch_continue:
         if ( aSocket > 0 )
             close(aSocket);
     }
     
-    return -1;
+    free(addr);
+    return okay ? (uint32_t)thePort : -1;
 }
 
 pthread_mutex_t *YMCreateMutexWithOptions(YMLockOptions options)
@@ -280,5 +285,6 @@ bool YMUnlockMutex(pthread_mutex_t *mutex)
 bool YMDestroyMutex(pthread_mutex_t *mutex)
 {
     int result = pthread_mutex_destroy(mutex);
+    free(mutex);
     return ( result == 0 );
 }

@@ -38,7 +38,9 @@
     if ( ( self = [super init] ) )
     {
         // todo: since we're the 'friendly objc' wrapper, should probably check args rather than crash in the c lib
-        self.ymsession = YMSessionCreate(YMSTRC([type UTF8String]));
+        YMStringRef ymName = YMSTRC([type UTF8String]);
+        self.ymsession = YMSessionCreate(ymName);
+        YMRelease(ymName);
         if ( ! self.ymsession )
             return nil;
         
@@ -69,7 +71,10 @@
 {
     self.shouldAcceptHandler = acceptHandler;
     self.connectionHandler = connectionHandler;
-    return YMSessionStartAdvertising(self.ymsession, YMSTRC([name UTF8String]));
+    YMStringRef sessionName = YMSTRC([name UTF8String]);
+    BOOL okay = YMSessionStartAdvertising(self.ymsession, sessionName);
+    YMRelease(sessionName);
+    return okay;
 }
 
 - (BOOL)browsePeersWithHandler:(YMSessionPeerDiscoveredHandler)discoveredHandler

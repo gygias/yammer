@@ -60,15 +60,19 @@ SessionTests *gTheSessionTest = nil;
     
     testType = "_ymtest._tcp";
     testName = "twitter-cliche";
-    serverSession = YMSessionCreate(YMSTRC(testType));
+    YMStringRef type = YMSTRC(testType);
+    serverSession = YMSessionCreate(type);
     XCTAssert(serverSession,@"server alloc");
     YMSessionSetCommonCallbacks(serverSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
     YMSessionSetAdvertisingCallbacks(serverSession, _ym_session_should_accept_func, (__bridge void *)self);
     
-    BOOL started = YMSessionStartAdvertising(serverSession, YMSTRC(testName));
+    YMStringRef name = YMSTRC(testName);
+    BOOL started = YMSessionStartAdvertising(serverSession, name);
+    YMRelease(name);
     XCTAssert(started,@"server start");
     
-    clientSession = YMSessionCreate(YMSTRC(testType));
+    clientSession = YMSessionCreate(type);
+    YMRelease(type);
     XCTAssert(clientSession,@"client alloc");
     YMSessionSetCommonCallbacks(clientSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
     YMSessionSetBrowsingCallbacks(clientSession, _ym_session_added_peer_func, _ym_session_removed_peer_func, _ym_session_resolve_failed_func, _ym_session_resolved_peer_func, _ym_session_connect_failed_func, (__bridge void *)self);
@@ -135,10 +139,10 @@ SessionTests *gTheSessionTest = nil;
             if ( [(NSString *)line length] == 0 )
                 return;
             __block BOOL lineOK = NO;
-            [nonRegularFileNames enumerateObjectsUsingBlock:^(id  _Nonnull name, __unused NSUInteger idx2, BOOL * _Nonnull stop2) {
-                if ( [(NSString *)line containsString:(NSString *)name] )
+            [nonRegularFileNames enumerateObjectsUsingBlock:^(id  _Nonnull fileName, __unused NSUInteger idx2, BOOL * _Nonnull stop2) {
+                if ( [(NSString *)line containsString:(NSString *)fileName] )
                 {
-                    NSLog(@"making exception for %@ based on '%@'",name,line);
+                    NSLog(@"making exception for %@ based on '%@'",fileName,line);
                     lineOK = YES;
                     *stop2 = YES;
                 }
@@ -163,13 +167,13 @@ SessionTests *gTheSessionTest = nil;
     okay = [[NSFileManager defaultManager] removeItemAtPath:tempDir error:NULL];
     XCTAssert(okay,@"tempDir");
     
-    
 #define CHECK_THREADS
 #ifdef CHECK_THREADS
     CFRunLoopRunInMode(kCFRunLoopDefaultMode, 2, false);
     [[NSTask launchedTaskWithLaunchPath:@"/usr/bin/sample" arguments:@[@"-file",@"/dev/stdout",@"xctest",@"1",@"1000"]] waitUntilExit];
 #endif
     
+    YMFreeGlobalResources();
     NSLog(@"session test finished");
 }
 

@@ -7,6 +7,8 @@
 //
 
 #include "YMTLSProvider.h"
+#include "YMTLSProviderPriv.h"
+
 #include "YMOpenssl.h"
 #include "YMSecurityProviderInternal.h"
 #include "YMX509CertificatePriv.h"
@@ -33,6 +35,7 @@ static pthread_once_t gYMInitSSLOnce = PTHREAD_ONCE_INIT;
 static void __YMSSLInit();
 
 static YMLockRef *gYMTLSLocks = NULL;
+//static YMLockRef gYMTLSLocks[CRYPTO_NUM_LOCKS*sizeof(YMLockRef)];
 void __ym_tls_lock_callback(int mode, int type, __unused char *file, __unused int line);
 
 #define YMTLSProviderVerifyDepth 0
@@ -152,8 +155,12 @@ void _YMTLSProviderFree(YMTypeRef object)
     __YMTLSProviderRef tls = (__YMTLSProviderRef)object;
     //if ( tls->isWrappingSocket ) // when YMConnection is involved, it 'owns' the socket
     //    close(tls->socket);
+    if ( tls->localCertificate )
+        YMRelease(tls->localCertificate);
+    if ( tls->peerCertificate )
+        YMRelease(tls->peerCertificate);
     //if ( tls->bio )
-    //    BIO_free(tls->bio); // todo
+    //    BIO_free(tls->bio); // seems to be included with SSL*
     if ( tls->ssl )
         SSL_free(tls->ssl);
     if ( tls->sslCtx )
@@ -168,12 +175,42 @@ void __YMSSLInit()
     OpenSSL_add_all_algorithms();
     
     gYMTLSLocks = calloc(CRYPTO_num_locks(),sizeof(YMLockRef));
+    //bzero(gYMTLSLocks,CRYPTO_NUM_LOCKS*sizeof(YMLockRef));
     
     CRYPTO_set_id_callback((unsigned long (*)())ym_tls_thread_id_callback);
     CRYPTO_set_locking_callback((void (*)())__ym_tls_lock_callback);
     
     gYMTLSExDataList = YMDictionaryCreate();
     gYMTLSExDataLock = YMLockCreate(YMInternalLockType);
+}
+
+void _YMTLSProviderFreeGlobals()
+{
+    if ( gYMTLSExDataList )
+    {
+        YMRelease(gYMTLSExDataList);
+        gYMTLSExDataList = NULL;
+    }
+    if ( gYMTLSExDataLock )
+    {
+        YMRelease(gYMTLSExDataLock);
+        gYMTLSExDataLock = NULL;
+    }
+    
+    if ( gYMTLSLocks )
+    {
+        for( int i = 0; i < CRYPTO_num_locks(); i++ )
+        {
+            YMLockRef aLock = gYMTLSLocks[i];
+            if ( aLock )
+                YMRelease(aLock);
+        }
+        free(gYMTLSLocks);
+        gYMTLSLocks = NULL;
+    }
+    
+    pthread_once_t onceAgain = PTHREAD_ONCE_INIT;
+    memcpy(&gYMInitSSLOnce,&onceAgain,sizeof(gYMInitSSLOnce));
 }
 
 void __ym_tls_lock_callback(int mode, int type, __unused char *file, __unused int line)
@@ -187,6 +224,8 @@ void __ym_tls_lock_callback(int mode, int type, __unused char *file, __unused in
         YMStringRef name = YMStringCreateWithFormat("ym_tls_lock_callback-%d",type, NULL);
         theLock = YMLockCreateWithOptionsAndName(YMLockNone, name);
         YMRelease(name);
+        
+        gYMTLSLocks[type] = theLock;
     }
     
     // locking_function() must be able to handle up to CRYPTO_num_locks() different mutex locks. It sets the n-th lock if mode
@@ -211,11 +250,13 @@ static inline void __ym_tls_info_callback(const char *role, const SSL *ssl, int 
             break;
         case SSL_CB_READ:
             desc = "read";
+            break;
         case SSL_CB_READ_ALERT:
             desc = "read alert";
             break;
         case SSL_CB_WRITE:
             desc = "write";
+            break;
         case SSL_CB_WRITE_ALERT:
             desc = "write alert";
             break;
@@ -269,7 +310,7 @@ int __ym_tls_certificate_verify_callback(int preverify_ok, X509_STORE_CTX *x509_
     int err = X509_STORE_CTX_get_error(x509_store_ctx);
     int depth = X509_STORE_CTX_get_error_depth(x509_store_ctx);
     
-    if ( tls->preverified )
+    if ( tls->preverified && preverify_ok )
     {
         int cmp = memcmp(_YMX509CertificateGetX509(tls->peerCertificate), err_cert, sizeof(X509));
         if ( cmp == 0 )
@@ -475,14 +516,13 @@ bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
     // todo: judging by higher level TLS libraries, there's probably a way to get called out to mid-accept
     // to do things like specify local certs and validate remote ones, but i'll be damned if i can find it in the ocean that is ssl.h.
     // it doesn't really matter if we do it within SSL_accept() or afterwards, though.
-    bool wantsMoreIO = false;
     ymlog("tls[%d]: entering handshake",tls->isServer);
     do
     {
         result = SSL_do_handshake(tls->ssl);
         //ymlog("tls[%d]: handshake...",tls->isServer);
         sslError = SSL_get_error(tls->ssl,result);
-        wantsMoreIO = ( sslError == SSL_ERROR_WANT_READ || sslError == SSL_ERROR_WANT_WRITE );
+        //bool wantsMoreIO = ( sslError == SSL_ERROR_WANT_READ || sslError == SSL_ERROR_WANT_WRITE );
     } while ( false /*wantsMoreIO this shouldn't happen for us, we're avoiding non-blocking i/o*/ );
     
     ymlog("tls[%d]: handshake returned %d: %ld (%s)",tls->isServer, result, sslError, ERR_error_string(sslError, NULL));

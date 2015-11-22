@@ -36,7 +36,12 @@ typedef char YMTypeID;
 
 YMTypeRef YMRetain(YMTypeRef object);
 YMTypeRef YMAutorelease(YMTypeRef object);
-void YMRelease(YMTypeRef object);
+#ifdef DEBUG
+#define YM_RELEASE_RETURN_TYPE bool
+#else
+#define YM_RELEASE_RETURN_TYPE void
+#endif
+YM_RELEASE_RETURN_TYPE YMRelease(YMTypeRef object);
 
 typedef enum
 {
@@ -44,5 +49,7 @@ typedef enum
     YMIOEOF = 0,
     YMIOError = -1
 } YMIOResult;
+
+void YMFreeGlobalResources();
 
 #endif /* YMBase_h */

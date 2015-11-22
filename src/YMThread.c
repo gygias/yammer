@@ -100,7 +100,7 @@ YMThreadRef _YMThreadCreate(YMStringRef name, bool isDispatchThread, ym_thread_e
     
     pthread_once(&gDispatchInitOnce, __YMThreadDispatchInit);
     
-    thread->name = name ? YMRetain(name) : YMSTRC("unnamed");
+    thread->name = name ? YMRetain(name) : YMSTRC("*");
     thread->entryPoint = isDispatchThread ? (void (*)(void *))__ym_thread_dispatch_dispatch_thread_proc : entryPoint;
     thread->context = context;
     thread->pthread = NULL;
@@ -129,10 +129,19 @@ YMThreadRef _YMThreadCreate(YMStringRef name, bool isDispatchThread, ym_thread_e
         }
         YMLockUnlock(gDispatchThreadListLock);
         
-        thread->dispatchListLock = YMLockCreateWithOptionsAndName(YMInternalLockType,YMSTRC("dispatch-list"));
+        YMStringRef memberName = YMSTRC("dispatch-list");
+        thread->dispatchListLock = YMLockCreateWithOptionsAndName(YMInternalLockType,memberName);
+        YMRelease(memberName);
+        
         thread->dispatchesByID = YMDictionaryCreate();
-        thread->dispatchSemaphore = YMSemaphoreCreate(YMSTRCF("%s-dispatch",YMSTR(name),NULL),0);
-        thread->dispatchExitSemaphore = YMSemaphoreCreate(YMSTRCF("%s-dispatch-exit",YMSTR(name),NULL), 0);
+        memberName = YMSTRCF("%s-dispatch",YMSTR(name),NULL);
+        thread->dispatchSemaphore = YMSemaphoreCreate(memberName,0);
+        YMRelease(memberName);
+        
+        memberName = YMSTRCF("%s-dispatch-exit",YMSTR(name),NULL);
+        thread->dispatchExitSemaphore = YMSemaphoreCreate(memberName, 0);
+        YMRelease(memberName);
+        
         thread->dispatchIDNext = 0;
     }
     
@@ -260,22 +269,12 @@ void YMThreadDispatchDispatch(YMThreadRef thread_, ym_thread_dispatch dispatch)
     YMSemaphoreSignal(thread->dispatchSemaphore);
 }
 
-ym_thread_dispatch_ref __YMThreadDispatchCopy(ym_thread_dispatch_ref userDispatchRef)
-{
-    ym_thread_dispatch_ref copy = YMALLOC(sizeof(ym_thread_dispatch));
-    copy->dispatchProc = userDispatchRef->dispatchProc;
-    copy->context = userDispatchRef->context;
-    copy->freeContextWhenDone = userDispatchRef->freeContextWhenDone;
-    copy->deallocProc = userDispatchRef->deallocProc;
-    copy->description = userDispatchRef->description ? YMRetain(userDispatchRef->description) : YMSTRC("unnamed");
-    
-    return copy;
-}
-
 void __YMThreadDispatchInit()
 {
     gDispatchThreadDefsByID = YMDictionaryCreate();
-    gDispatchThreadListLock = YMLockCreateWithOptionsAndName(YMInternalLockType,YMSTRC("g-dispatch-list"));
+    YMStringRef name = YMSTRC("g-dispatch-list");
+    gDispatchThreadListLock = YMLockCreateWithOptionsAndName(YMInternalLockType,name);
+    YMRelease(name);
 }
 
 void __ym_thread_dispatch_dispatch_thread_proc(void * ctx)
@@ -328,6 +327,18 @@ void __ym_thread_dispatch_dispatch_thread_proc(void * ctx)
     YMSemaphoreSignal(thread->dispatchExitSemaphore);
 }
 
+ym_thread_dispatch_ref __YMThreadDispatchCopy(ym_thread_dispatch_ref userDispatchRef)
+{
+    ym_thread_dispatch_ref copy = YMALLOC(sizeof(ym_thread_dispatch));
+    copy->dispatchProc = userDispatchRef->dispatchProc;
+    copy->context = userDispatchRef->context;
+    copy->freeContextWhenDone = userDispatchRef->freeContextWhenDone;
+    copy->deallocProc = userDispatchRef->deallocProc;
+    copy->description = userDispatchRef->description ? YMRetain(userDispatchRef->description) : YMSTRC("*");
+    
+    return copy;
+}
+
 void __YMThreadFreeDispatchContext(__ym_thread_dispatch_context dispatchContext)
 {
     if ( dispatchContext->dispatch->freeContextWhenDone )
@@ -336,8 +347,9 @@ void __YMThreadFreeDispatchContext(__ym_thread_dispatch_context dispatchContext)
     {
         dispatchContext->dispatch->deallocProc(dispatchContext->dispatch->context);
     }
-    
+   
     YMRelease(dispatchContext->dispatch->description);
+    
     free(dispatchContext->dispatch);
     free(dispatchContext);
 }
@@ -417,7 +429,7 @@ void *__ym_thread_dispatch_forward_file_proc(__ym_thread_dispatch_forward_file_a
 {
     // todo: tired of defining semi-redundant structs for various tasks in here, should go back and take a look
     __YMThreadRef threadOrNull = ctx->threadOrNull;
-    YMStringRef threadName = threadOrNull ? threadOrNull->name : YMSTRC("*");
+    YMStringRef threadName = threadOrNull ? YMRetain(threadOrNull->name) : YMSTRC("*");
     int file = ctx->file;
     YMStreamRef stream = ctx->stream;
     bool toStream = ctx->toStream;
@@ -442,7 +454,7 @@ void *__ym_thread_dispatch_forward_file_proc(__ym_thread_dispatch_forward_file_a
     if ( threadOrNull )
         YMRelease(threadOrNull);
     
-    bool *ret = NULL;
+    YMIOResult *ret = NULL;
     if ( sync )
     {
         ret = YMALLOC(sizeof(YMIOResult));
@@ -456,6 +468,7 @@ void *__ym_thread_dispatch_forward_file_proc(__ym_thread_dispatch_forward_file_a
     if ( callbackInfo.callback )
         callbackInfo.callback(callbackInfo.context,outBytes);
     
+    YMRelease(threadName);
     YMRelease(stream);
     return ret;
 }

@@ -30,10 +30,10 @@ const char *YMStringGetCString(YMStringRef string);
 bool YMStringEquals(YMStringRef stringA, YMStringRef stringB);
 
 #define YMSTR(x) YMStringGetCString(x)
-#define YMSTRC(x) YMAutorelease(YMStringCreateWithCString(x))
+#define YMSTRC(x) YMStringCreateWithCString(x)
 // Token pasting of ',' and __VA_ARGS__ is a GNU extension
 YM_WPPUSH
-#define YMSTRCF(x,...) YMAutorelease(YMStringCreateWithFormat((x),##__VA_ARGS__))
+#define YMSTRCF(x,...) YMStringCreateWithFormat((x),##__VA_ARGS__)
 YM_WPOP
 #define YMLEN(x) YMStringGetLength(x)
 

@@ -61,23 +61,23 @@ mDNSTests *gGlobalSelf;
     [super tearDown];
     
     if ( testKeyPairs )
-        _YMmDNSTxtRecordKeyPairsFree(testKeyPairs, nTestKeyPairs);
+        _YMmDNSTxtKeyPairsFree(testKeyPairs, nTestKeyPairs);
 }
 
-- (void)dont_test_mDNSTxtRecordParsing
+- (void)testmDNSTxtRecordParsing
 {
     for(int i = 0; i < 1000; i++)
     {
         uint16_t desiredAndActualSize = (size_t)arc4random_uniform(3);
         YMmDNSTxtRecordKeyPair **keyPairList = [self makeTxtRecordKeyPairs:&desiredAndActualSize];
         uint16_t inSizeOutBlobLen = desiredAndActualSize;
-        const unsigned char *listBlob = _YMmDNSCreateTxtBlobFromKeyPairs(keyPairList, &inSizeOutBlobLen);
+        const unsigned char *listBlob = _YMmDNSTxtBlobCreate(keyPairList, &inSizeOutBlobLen);
         size_t outListLen = 0;
-        YMmDNSTxtRecordKeyPair **outKeyPairList = _YMmDNSCreateTxtKeyPairs(listBlob, inSizeOutBlobLen, &outListLen);
+        YMmDNSTxtRecordKeyPair **outKeyPairList = _YMmDNSTxtKeyPairsCreate(listBlob, inSizeOutBlobLen, &outListLen);
         [self compareList:keyPairList size:desiredAndActualSize toList:outKeyPairList size:outListLen];
         
-        _YMmDNSTxtRecordKeyPairsFree(keyPairList, desiredAndActualSize);
-        _YMmDNSTxtRecordKeyPairsFree(outKeyPairList, outListLen);
+        _YMmDNSTxtKeyPairsFree(keyPairList, desiredAndActualSize);
+        _YMmDNSTxtKeyPairsFree(outKeyPairList, outListLen);
     }
 }
 

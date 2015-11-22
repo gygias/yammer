@@ -105,7 +105,7 @@ YMLocalSocketPairRef YMLocalSocketPairCreate(YMStringRef name, bool moreComing)
     // now that thread is going to accept [once more], flag this
     gYMLocalSocketPairAcceptKeepListening = moreComing;
     
-    int clientSocket = __YMLocalSocketPairCreateClient(name);
+    int clientSocket = __YMLocalSocketPairCreateClient();
     if ( clientSocket < 0 )
     {
         ymerr("local-socket[%s]: error: failed to create client socket",YMSTR(name));

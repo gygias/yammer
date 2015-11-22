@@ -113,7 +113,7 @@ YMTypeRef YMAutorelease(YMTypeRef object)
     return object; // todo, lol
 }
 
-void YMRelease(YMTypeRef object_)
+YM_RELEASE_RETURN_TYPE YMRelease(YMTypeRef object_)
 {
     __YMTypeRef object = (__YMTypeRef)object_;
     YMLockMutex(object->__retainMutex);
@@ -136,6 +136,9 @@ void YMRelease(YMTypeRef object_)
         YMDestroyMutex(object->__retainMutex);
         free(object);
     }
+#ifdef DEBUG
+    return dealloc;
+#endif
 }
 
 void __YMFree(__YMTypeRef object)
@@ -186,4 +189,11 @@ void __YMFree(__YMTypeRef object)
         ymlog("YMFree unknown type %c",type);
         abort();
     }
+}
+
+#include "YMTLSProviderPriv.h"
+
+void YMFreeGlobalResources()
+{
+    _YMTLSProviderFreeGlobals();
 }

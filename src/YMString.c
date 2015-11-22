@@ -19,7 +19,6 @@ typedef struct __ym_string
     _YMType _type;
     
     const char *cString;
-    // lazy
     size_t length;
 } ___ym_string;
 typedef struct __ym_string __YMString;
@@ -67,15 +66,6 @@ YMStringRef YMStringCreateWithFormat(const char *format,...)
 {
     __YMStringFormatLocal;
     return YMStringCreateWithCString(newStr);
-}
-
-YMStringRef _YMStringCreateForYMAlloc(const char *format,...)
-{
-    __YMStringFormatLocal
-    __YMStringRef string = (__YMStringRef)YMALLOC(sizeof(__YMString));
-    string->_type.__type = _YMStringTypeID;
-    string->cString = newStr;
-    return string;
 }
 
 #ifdef internal_function
@@ -263,7 +253,6 @@ void _YMStringFree(YMTypeRef object)
 {
     __YMStringRef string = (__YMStringRef)object;
     free((void *)string->cString);
-    return;
 }
 
 size_t YMStringGetLength(YMStringRef string_)

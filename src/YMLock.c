@@ -49,7 +49,7 @@ YMLockRef YMLockCreateWithOptionsAndName(YMLockOptions options, YMStringRef name
     __YMLockRef lock = (__YMLockRef)_YMAlloc(_YMLockTypeID,sizeof(__YMLock));
     
     lock->mutex = mutex;
-    lock->name = name ? YMRetain(name) : YMSTRC("unnamed");
+    lock->name = name ? YMRetain(name) : YMSTRC("*");
     
     return (YMLockRef)lock;
 }

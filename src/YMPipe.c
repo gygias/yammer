@@ -37,7 +37,7 @@ YMPipeRef YMPipeCreate(YMStringRef name)
 {
     __YMPipeRef aPipe = (__YMPipeRef)_YMAlloc(_YMPipeTypeID,sizeof(__YMPipe));
     
-    aPipe->name = name ? YMRetain(name) : YMSTRC("unnamed");
+    aPipe->name = name ? YMRetain(name) : YMSTRC("*");
     aPipe->inFd = CLOSED_FILE;
     aPipe->outFd = CLOSED_FILE;
     

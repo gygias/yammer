@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		63028B0F1C013D120075B6AC /* FreeGlobalsTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 63028B0E1C013D120075B6AC /* FreeGlobalsTest.m */; };
 		6307F77E1BECA44A009C64CD /* YMStreamPriv.h in Headers */ = {isa = PBXBuildFile; fileRef = 6307F77D1BECA44A009C64CD /* YMStreamPriv.h */; };
 		630A5CE91BE93BEF003292EE /* YMTLSProvider.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CE71BE93BEF003292EE /* YMTLSProvider.c */; };
 		630A5CEA1BE93BEF003292EE /* YMTLSProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5CE81BE93BEF003292EE /* YMTLSProvider.h */; };
@@ -104,6 +105,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		63028B0D1C013C9E0075B6AC /* YMTLSProviderPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMTLSProviderPriv.h; path = private/YMTLSProviderPriv.h; sourceTree = "<group>"; };
+		63028B0E1C013D120075B6AC /* FreeGlobalsTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FreeGlobalsTest.m; sourceTree = "<group>"; };
 		6307F77D1BECA44A009C64CD /* YMStreamPriv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMStreamPriv.h; path = private/YMStreamPriv.h; sourceTree = "<group>"; };
 		630A5CE71BE93BEF003292EE /* YMTLSProvider.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMTLSProvider.c; path = src/YMTLSProvider.c; sourceTree = "<group>"; };
 		630A5CE81BE93BEF003292EE /* YMTLSProvider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMTLSProvider.h; path = private/YMTLSProvider.h; sourceTree = "<group>"; };
@@ -245,12 +248,13 @@
 				6332A4B91BEFCDCF004BB764 /* YammerTests.h */,
 				631683931BEEF1FB00F6AB99 /* DictionaryTests.m */,
 				63FD5B5E1BF1B94A00174824 /* CryptoTests.m */,
+				633165FE1BFC29DF0094F801 /* LocalSocketPairTests.m */,
 				63476A3E1BEAE54100D10081 /* mDNSTests.m */,
 				637E3D601BF2CD7300D702ED /* TLSTests.m */,
 				63476A401BEAEFC500D10081 /* PlexerTests.m */,
 				633CAC101BFBBF4800304DCD /* SessionTests.m */,
 				630A5D021BE96CE9003292EE /* YammerTests.m */,
-				633165FE1BFC29DF0094F801 /* LocalSocketPairTests.m */,
+				63028B0E1C013D120075B6AC /* FreeGlobalsTest.m */,
 				630A5D041BE96CE9003292EE /* Info.plist */,
 				6332A4BA1BF12C12004BB764 /* lldb_source.sh */,
 			);
@@ -365,6 +369,7 @@
 				63344DDD1BF935730049712F /* YMConnectionPriv.h */,
 				63225D621BE90A6400C28F05 /* YMSecurityProvider.c */,
 				630A5CE81BE93BEF003292EE /* YMTLSProvider.h */,
+				63028B0D1C013C9E0075B6AC /* YMTLSProviderPriv.h */,
 				630A5CE71BE93BEF003292EE /* YMTLSProvider.c */,
 				63225D991BE92CBA00C28F05 /* YMDebug.h */,
 				637816C31BF680A700BF79E2 /* YMInternal.h */,
@@ -602,6 +607,7 @@
 				63476A411BEAEFC500D10081 /* PlexerTests.m in Sources */,
 				63FD5B5F1BF1B94A00174824 /* CryptoTests.m in Sources */,
 				63476A3F1BEAE54100D10081 /* mDNSTests.m in Sources */,
+				63028B0F1C013D120075B6AC /* FreeGlobalsTest.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -958,6 +964,7 @@
 				631916371BFCFF13001475FC /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		63225D3D1BE9026200C28F05 /* Build configuration list for PBXProject "yammer" */ = {
 			isa = XCConfigurationList;

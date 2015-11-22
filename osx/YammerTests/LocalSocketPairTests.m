@@ -28,7 +28,9 @@
 
 - (void)testSpawnFirst
 {
-    YMLocalSocketPairRef oneMorePair = YMLocalSocketPairCreate(YMSTRC("first"), false);
+    YMStringRef name = YMSTRC("first");
+    YMLocalSocketPairRef oneMorePair = YMLocalSocketPairCreate(name, false);
+    YMRelease(name);
     
     int socketA = YMLocalSocketPairGetA(oneMorePair);
     int socketB = YMLocalSocketPairGetB(oneMorePair);
@@ -74,7 +76,9 @@
 
 - (void)testSpawnOneMore
 {
-    YMLocalSocketPairRef oneMorePair = YMLocalSocketPairCreate(YMSTRC("whatever"), false);
+    YMStringRef name = YMSTRC("whatever");
+    YMLocalSocketPairRef oneMorePair = YMLocalSocketPairCreate(name, false);
+    YMRelease(name);
     
     int socketA = YMLocalSocketPairGetA(oneMorePair);
     int socketB = YMLocalSocketPairGetB(oneMorePair);
