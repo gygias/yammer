@@ -304,6 +304,8 @@ void YMPlexerSetSecurityProvider(YMPlexerRef plexer_, YMTypeRef provider)
     __YMPlexerRef plexer = (__YMPlexerRef)plexer_;
     if ( ((_YMTypeRef)provider)->__type != _YMSecurityProviderTypeID )
         ymlog(" plexer[%s]: warning: %s: provider is type '%c'",YMSTR(plexer->name),__FUNCTION__,((_YMTypeRef)provider)->__type);
+    if ( plexer->provider )
+        YMRelease(plexer->provider);
     plexer->provider = (YMSecurityProviderRef)YMRetain(provider);
 }
 
@@ -1071,7 +1073,7 @@ bool __YMPlexerInterrupt(__YMPlexerRef plexer, bool requested)
                 YMPlexerStreamID aStreamID = YM_STREAM_INFO(aStream)->streamID;
                 YMDictionaryRemove(aList, aRandomKey);
                 ymerr("plexer[%s]: hanging up stream %u",YMSTR(plexer->name),aStreamID);
-                _YMStreamCloseReadUpFile(aStream); // "readup" :/ todo still a free race here
+                _YMStreamCloseReadUpFile(aStream); // "readup" :/
                 YMRelease(aStream);
             }
         }

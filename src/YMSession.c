@@ -683,6 +683,8 @@ void __ym_session_init_incoming_connection_proc(ym_thread_dispatch_ref dispatch)
     
     if ( address )
         YMRelease(address);
+    if ( peer )
+        YMRelease(peer);
     free(addr);
     return;
     
@@ -799,13 +801,16 @@ void __ym_session_connection_interrupted_proc(YMConnectionRef connection, void *
 {
     __YMSessionRef session = context;
     
+    bool first = __YMSessionInterrupt(session); // connection probably getting deallocated here
+    if ( ! first )
+        return;
+    
     YMAddressRef address = (YMAddressRef)YMRetain(YMConnectionGetAddress(connection));
     
     bool isDefault = ( connection == session->defaultConnection );
-    bool first = __YMSessionInterrupt(session); // connection probably getting deallocated here
     
     
-    if ( first && isDefault )
+    if ( isDefault )
     {
         if ( session->interruptedFunc )
             session->interruptedFunc(session,session->callbackContext);

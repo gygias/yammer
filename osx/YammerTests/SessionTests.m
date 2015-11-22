@@ -206,7 +206,9 @@ typedef struct ManPageThanks
     NSLog(@"server chose %@",file);
     NSFileHandle *handle = [NSFileHandle fileHandleForReadingAtPath:file];
     XCTAssert(handle,@"server file handle");
-    YMStreamRef stream = YMConnectionCreateStream(connection, YMStringCreateWithFormat("test-server-write-%s",[file UTF8String], NULL));
+    YMStringRef name = YMSTRCF("test-server-write-%s",[file UTF8String]);
+    YMStreamRef stream = YMConnectionCreateStream(connection, name);
+    YMRelease(name);
     XCTAssert(stream,@"server create stream");
     
     bool testAsync = arc4random_uniform(2);

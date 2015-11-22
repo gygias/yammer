@@ -43,6 +43,9 @@ YMTypeRef YMAutorelease(YMTypeRef object);
 #endif
 YM_RELEASE_RETURN_TYPE YMRelease(YMTypeRef object);
 
+void YMSelfLock(YMTypeRef object);
+void YMSelfUnlock(YMTypeRef object);
+
 typedef enum
 {
     YMIOSuccess = 1,

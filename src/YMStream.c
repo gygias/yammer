@@ -77,15 +77,15 @@ YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_ref userInfo, 
     
     stream->name = name ? YMRetain(name) : YMSTRC("*");
     
-    YMStringRef streamName = YMStringCreateWithFormat("%s-up",YMSTR(name),NULL);
-    stream->upstreamPipe = YMPipeCreate(streamName);
-    YMRelease(streamName);
+    YMStringRef pipeName = YMStringCreateWithFormat("%s-up",YMSTR(name),NULL);
+    stream->upstreamPipe = YMPipeCreate(pipeName);
+    YMRelease(pipeName);
     stream->upstreamWriteClosed = false;
     stream->upstreamReadClosed = false;
     
-    streamName = YMStringCreateWithFormat("%s-down",YMSTR(name),NULL);
-    stream->downstreamPipe = YMPipeCreate(streamName);
-    YMRelease(streamName);
+    pipeName = YMStringCreateWithFormat("%s-down",YMSTR(name),NULL);
+    stream->downstreamPipe = YMPipeCreate(pipeName);
+    YMRelease(pipeName);
     stream->downstreamWriteClosed = false;
     stream->downstreamReadClosed = false;
     

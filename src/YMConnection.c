@@ -101,7 +101,7 @@ __YMConnectionRef __YMConnectionCreate(bool isIncoming, int socket, YMAddressRef
     
     connection->socket = socket;
     connection->isIncoming = isIncoming;
-    connection->address = (YMAddressRef)YMRetain(address); // ugh
+    connection->address = (YMAddressRef)YMRetain(address);
     connection->type = type;
     connection->securityType = securityType;
     

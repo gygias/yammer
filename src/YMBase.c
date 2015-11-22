@@ -56,7 +56,7 @@ typedef struct __ym_type
 {
     YMTypeID __type;
     int __retainCount; // todo find a better way to preallocate this
-    pthread_mutex_t *__retainMutex;
+    pthread_mutex_t *__mutex;
 } ___ym_type;
 typedef struct __ym_type __YMType;
 typedef __YMType *__YMTypeRef;
@@ -78,8 +78,8 @@ YMTypeRef _YMAlloc(YMTypeID type, size_t size)
     object->__type = type;
     object->__retainCount = 1;
     
-    object->__retainMutex = YMCreateMutexWithOptions(YMInternalLockType);
-    if ( ! object->__retainMutex )
+    object->__mutex = YMCreateMutexWithOptions(YMLockRecursive);
+    if ( ! object->__mutex )
     {
         fprintf(stderr,"base: fatal: create mutex failed");
         abort();
@@ -96,14 +96,14 @@ YMTypeRef _YMAlloc(YMTypeID type, size_t size)
 YMTypeRef YMRetain(YMTypeRef object_)
 {
     __YMTypeRef object = (__YMTypeRef)object_;
-    YMLockMutex(object->__retainMutex);
+    YMLockMutex(object->__mutex);
     if ( object->__retainCount < 1 )
     {
         ymerr("base: fatal: retain count inconsistent");
         abort();
     }
     object->__retainCount++;
-    YMUnlockMutex(object->__retainMutex);
+    YMUnlockMutex(object->__mutex);
     
     return object;
 }
@@ -116,7 +116,7 @@ YMTypeRef YMAutorelease(YMTypeRef object)
 YM_RELEASE_RETURN_TYPE YMRelease(YMTypeRef object_)
 {
     __YMTypeRef object = (__YMTypeRef)object_;
-    YMLockMutex(object->__retainMutex);
+    YMLockMutex(object->__mutex);
     bool dealloc = false;
     if ( object->__retainCount < 1 )
     {
@@ -129,11 +129,11 @@ YM_RELEASE_RETURN_TYPE YMRelease(YMTypeRef object_)
         dealloc = true;
         __YMFree(object);
     }
-    YMUnlockMutex(object->__retainMutex);
+    YMUnlockMutex(object->__mutex);
     
     if ( dealloc )
     {
-        YMDestroyMutex(object->__retainMutex);
+        YMDestroyMutex(object->__mutex);
         free(object);
     }
 #ifdef DEBUG
@@ -189,6 +189,16 @@ void __YMFree(__YMTypeRef object)
         ymlog("YMFree unknown type %c",type);
         abort();
     }
+}
+
+void YMSelfLock(YMTypeRef object)
+{
+    YMLockMutex(((__YMTypeRef)object)->__mutex);
+}
+
+void YMSelfUnlock(YMTypeRef object)
+{
+    YMUnlockMutex(((__YMTypeRef)object)->__mutex);
 }
 
 #include "YMTLSProviderPriv.h"

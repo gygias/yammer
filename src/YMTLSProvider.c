@@ -604,7 +604,7 @@ bool __YMTLSProviderClose(__YMSecurityProviderRef provider)
 {
     __YMTLSProviderRef tls = (__YMTLSProviderRef)provider;
     
-    int result = SSL_shutdown(tls->ssl);
+    int result = SSL_shutdown(tls->ssl); // TODO
     if ( result )
     {
         unsigned long sslError = SSL_get_error(tls->ssl, result);

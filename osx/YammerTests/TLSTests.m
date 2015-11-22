@@ -65,10 +65,11 @@ typedef struct
     NSString *template = @"ym-tls-test-%u";
     uint32_t suffix = arc4random();
     NSString *nsSockName = [NSString stringWithFormat:template,suffix];
-    YMStringRef sockName = YMStringCreateWithFormat("ym-tls-test-%u",suffix, NULL);
+    YMStringRef sockName = YMSTRCF("ym-tls-test-%u",suffix);
     XCTAssert(strcmp([nsSockName UTF8String],YMSTR(sockName))==0,@"ymstring: %s",YMSTR(sockName));
     
     YMLocalSocketPairRef localSocketPair = YMLocalSocketPairCreate(sockName, false);
+    YMRelease(sockName);
     XCTAssert(localSocketPair,@"socket pair didn't initialize");
     int serverSocket = YMLocalSocketPairGetA(localSocketPair);
     int clientSocket = YMLocalSocketPairGetB(localSocketPair);
@@ -128,7 +129,7 @@ typedef struct
     YMSemaphoreWait(threadExitSemaphore);
     
     BOOL clientFirst = arc4random_uniform(2);
-    dispatch_async(dispatch_get_global_queue(0,0), ^{
+    dispatch_sync(dispatch_get_global_queue(0,0), ^{
         bool okay = YMSecurityProviderClose((YMSecurityProviderRef)(clientFirst?theClient:theServer));
         XCTAssert(okay,@"client close failed");
     });
@@ -139,6 +140,7 @@ typedef struct
     
     YMRelease(clientFirst?theClient:theServer);
     YMRelease(clientFirst?theServer:theClient);
+    YMRelease(localSocketPair);
     
     NSLog(@"tls test finished (%llu in, %llu out)",bytesIn,bytesOut);
 }

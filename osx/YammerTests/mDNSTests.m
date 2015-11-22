@@ -86,7 +86,10 @@ mDNSTests *gGlobalSelf;
 {
     BOOL okay;
     testServiceName = YMRandomASCIIStringWithMaxLength(mDNS_SERVICE_NAME_LENGTH_MAX - 1, YES);
-    service = YMmDNSServiceCreate(YMSTRC(testServiceType), YMSTRC([testServiceName UTF8String]), 5050);
+    YMStringRef type = YMSTRC(testServiceType);
+    YMStringRef name = YMSTRC([testServiceName UTF8String]);
+    service = YMmDNSServiceCreate(type, name, 5050);
+    YMRelease(name);
     
     nTestKeyPairs = arc4random_uniform(10);
     testKeyPairs = [self makeTxtRecordKeyPairs:&nTestKeyPairs];
@@ -97,7 +100,8 @@ mDNSTests *gGlobalSelf;
     XCTAssert(okay,@"YMmDNSServiceStart failed");
     
     // i had these as separate functions, but apparently "self" is a new object for each -test* method, which isn't what we need here
-    browser = YMmDNSBrowserCreateWithCallbacks(YMSTRC(testServiceType), test_service_appeared, test_service_updated, test_service_resolved, test_service_removed, (__bridge void *)(self));
+    browser = YMmDNSBrowserCreateWithCallbacks(type, test_service_appeared, test_service_updated, test_service_resolved, test_service_removed, (__bridge void *)(self));
+    YMRelease(type);
     _YMmDNSBrowserDebugSetExpectedTxtKeyPairs(browser,nTestKeyPairs);
     okay = YMmDNSBrowserStart(browser);
     XCTAssert(okay,@"YMmDNSBrowserStartBrowsing failed");

@@ -443,9 +443,9 @@ catch_callback_and_release:
     if ( browser->serviceResolved )
         browser->serviceResolved((YMmDNSBrowserRef)browser, okay, record, browser->callbackContext);
     
-    //DNSServiceRefDeallocate( *(browser->resolveServiceRef) );
-    //free( browser->resolveServiceRef );
-    //browser->resolveServiceRef = NULL;
+    DNSServiceRefDeallocate( *(browser->resolveServiceRef) );
+    free( browser->resolveServiceRef );
+    browser->resolveServiceRef = NULL;
 }
 
 // this function was mostly lifted from "Zero Configuration Networking: The Definitive Guide" -o'reilly

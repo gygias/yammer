@@ -81,9 +81,7 @@ void _YMPipeFree(YMTypeRef object)
     __YMPipeCloseInputFile(pipe);
     __YMPipeCloseOutputFile(pipe);
     
-    bool deallocd = YMRelease(pipe->name);
-    if ( ! deallocd )
-        abort();
+    YMRelease(pipe->name);
 }
 
 int YMPipeGetInputFile(YMPipeRef pipe_)
@@ -103,40 +101,38 @@ void _YMPipeCloseInputFile(YMPipeRef pipe)
     __YMPipeCloseInputFile(pipe);
 }
 
+void __YMPipeCloseFile(__YMPipeRef pipe, int *fdPtr)
+{
+    int fd = *fdPtr;
+    *fdPtr = CLOSED_FILE;
+    if ( fd >= OPEN_FILE_MIN )
+    {
+        ymlog("   pipe[%s]: closing %d",YMSTR(pipe->name),fd);
+        int aClose = close(fd);
+        if ( aClose != 0 )
+        {
+            ymerr("   pipe[%s,i%d]: close failed: %d (%s)",YMSTR(pipe->name), fd, aClose, ( aClose == -2 ) ? "already closed" : strerror(errno));
+            //abort(); plexer
+        }
+    }
+    
+}
+
 void __YMPipeCloseInputFile(YMPipeRef pipe_)
 {
     __YMPipeRef pipe = (__YMPipeRef)pipe_;
     
-    int aClose = -2;
-    int inFd = pipe->inFd; // don't think we need to be defensive here, but ok
-    pipe->inFd = CLOSED_FILE;
-    if ( inFd >= OPEN_FILE_MIN )
-    {
-        ymlog("   pipe[%s]: closing %d",YMSTR(pipe->name),inFd);
-        aClose = close(inFd);
-        if ( aClose != 0 )
-        {
-            ymerr("   pipe[%s,i%d] fatal: close failed: %d (%s)",YMSTR(pipe->name), inFd, aClose, ( aClose == -2 ) ? "already closed" : strerror(errno));
-            abort();
-        }
-    }
+    // todo: not sure we need to be guarding here, but erring on the side of not inadvertently closing newly recycled fds due to a race
+    YMSelfLock(pipe);
+    __YMPipeCloseFile(pipe, &pipe->inFd);
+    YMSelfUnlock(pipe);
 }
 
 void __YMPipeCloseOutputFile(YMPipeRef pipe_)
 {
     __YMPipeRef pipe = (__YMPipeRef)pipe_;
     
-    int aClose = -2;
-    int outFd = pipe->outFd; // don't think we need to be defensive here, but ok
-    pipe->outFd = CLOSED_FILE;
-    if ( outFd >= OPEN_FILE_MIN )
-    {
-        ymlog("   pipe[%s]: closing %d",YMSTR(pipe->name),outFd);
-        aClose = close(outFd);
-        if ( aClose != 0 )
-        {
-            ymerr("   pipe[%s,o%d] fatal: close failed: %d (%s)",YMSTR(pipe->name), outFd, aClose, ( aClose == -2 ) ? "already closed" : strerror(errno));
-            abort();
-        }
-    }
+    YMSelfLock(pipe);
+    __YMPipeCloseFile(pipe, &pipe->outFd);
+    YMSelfUnlock(pipe);
 }

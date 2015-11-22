@@ -1,3 +1,4 @@
+- @synchronized(self) equivalent to cut down on locks? mutexes aren't small and a lock exists
 - do a ntoh/hton pass, test with a big endian
 - peer lookup in ymsession should be consolidated, and should be keyed off strings not pointers
 - connection ownership not clear like stream

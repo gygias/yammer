@@ -68,7 +68,7 @@ PlexerTests *gRunningPlexerTest; // xctest seems to make a new object for each -
     [super setUp];
     
     plexerTest1Running = YES;
-    YMStringRef name = YMSTRCF("%s",[[self className] UTF8String],NULL);
+    YMStringRef name = YMSTRCF("%s",[[self className] UTF8String]);
     plexerTest1Lock = YMLockCreateWithOptionsAndName(YMInternalLockType, name);
     YMRelease(name);
     awaitingClosures = PlexerTest1StreamClosuresToObserve;
@@ -153,15 +153,17 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
     NSLog(@"plexer test using pipes: L(%s)-i%d-o%d <-> i%d-o%d R(%s)",localIsMaster?"M":"S",readFromRemote,writeToRemote,readFromLocal,writeToLocal,localIsMaster?"S":"M");
     NSLog(@"plexer test using %u threads, %u trips per thread, %@ streams per thread, %@ messages",PlexerTest1Threads,PlexerTest1RoundTripsPerThread,PlexerTest1NewStreamPerRoundTrip?@"new":@"one",PlexerTest1RandomMessages?@"random":@"fixed");
     
-    localPlexer = YMPlexerCreate(YMSTRC("L"),readFromRemote,writeToRemote,localIsMaster);
-    YMPlexerSetSecurityProvider(localPlexer, YMSecurityProviderCreate(readFromRemote,writeToRemote));
+    YMStringRef name = YMSTRC("L");
+    localPlexer = YMPlexerCreate(name,readFromRemote,writeToRemote,localIsMaster);
+    YMRelease(name);
     YMPlexerSetInterruptedFunc(localPlexer, local_plexer_interrupted);
     YMPlexerSetNewIncomingStreamFunc(localPlexer, local_plexer_new_stream);
     YMPlexerSetStreamClosingFunc(localPlexer, local_plexer_stream_closing);
     YMPlexerSetCallbackContext(localPlexer, (__bridge void *)(self));
     
-    fakeRemotePlexer = YMPlexerCreate(YMSTRC("R"),readFromLocal,writeToLocal,!localIsMaster);
-    YMPlexerSetSecurityProvider(fakeRemotePlexer, YMSecurityProviderCreate(readFromLocal,writeToLocal));
+    name = YMSTRC("R");
+    fakeRemotePlexer = YMPlexerCreate(name,readFromLocal,writeToLocal,!localIsMaster);
+    YMRelease(name);
     YMPlexerSetInterruptedFunc(fakeRemotePlexer, remote_plexer_interrupted);
     YMPlexerSetNewIncomingStreamFunc(fakeRemotePlexer, remote_plexer_new_stream);
     YMPlexerSetStreamClosingFunc(fakeRemotePlexer, remote_plexer_stream_closing);
@@ -215,6 +217,9 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
     
     YMRelease(localPlexer);
     YMRelease(fakeRemotePlexer);
+    YMRelease(networkSimPipeIn);
+    YMRelease(networkSimPipeOut);
+    YMRelease(plexerTest1Lock);
     
     NSLog(@"plexer test finished %zu incoming round-trips on %d threads (%d round-trips per %s)",incomingStreamRoundTrips,
           PlexerTest1Threads,
@@ -264,7 +269,10 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
         
         NSData *incomingMessage = [self receiveMessage:aStream];
         if ( timeBasedTimeOver )
+        {
+            YMPlexerCloseStream(plexer, aStream);
             return;
+        }
         if ( protectTheList )
             YMLockLock(plexerTest1Lock);
         NSData *lastMessageWritten = [lastMessageWrittenByStreamID objectForKey:@(streamID)];

@@ -26,7 +26,10 @@ YMPeerRef _YMPeerCreateWithAddress(YMAddressRef address)
 {
     YMDictionaryRef dictionary = YMDictionaryCreate();
     YMDictionaryAdd(dictionary, (YMDictionaryKey)address, address);
-    return __YMPeerCreate(NULL,dictionary,NULL);
+    YMRetain(address);
+    YMPeerRef peer = __YMPeerCreate(NULL,dictionary,NULL);
+    YMRelease(dictionary);
+    return peer;
 }
 
 YMPeerRef _YMPeerCreate(YMStringRef name, YMDictionaryRef addresses, YMDictionaryRef certificates)
@@ -39,8 +42,8 @@ YMPeerRef __YMPeerCreate(YMStringRef name, YMDictionaryRef addresses, YMDictiona
     __YMPeerRef peer = (__YMPeerRef)_YMAlloc(_YMPeerTypeID,sizeof(__YMPeer));
     
     peer->name = name ? YMRetain(name) : YMSTRC("unnamed-peer");
-    peer->addresses = addresses;
-    peer->certificates = certificates;
+    peer->addresses = addresses ? YMRetain(addresses) : NULL;
+    peer->certificates = certificates ? YMRetain(certificates) : NULL;
     
     return peer;
 }
