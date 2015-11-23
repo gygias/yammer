@@ -56,6 +56,7 @@ typedef struct __ym_session
     YMmDNSBrowserRef browser;
     YMDictionaryRef knownPeers;
     YMLockRef knownPeersLock;
+    YMThreadRef connectDispatchThread;
     
     ym_session_added_peer_func addedFunc;
     ym_session_removed_peer_func removedFunc;
@@ -168,6 +169,8 @@ void _YMSessionFree(YMTypeRef object)
         YMRelease(session->acceptThread);
     if ( session->initConnectionDispatchThread )
         YMRelease(session->initConnectionDispatchThread);
+    if ( session->connectDispatchThread )
+        YMRelease(session->connectDispatchThread);
     
     // shared
     YMRelease(session->type);
@@ -345,23 +348,25 @@ bool YMSessionConnectToPeer(YMSessionRef session_, YMPeerRef peer, bool sync)
     YMStringRef name = YMStringCreateWithFormat("session-async-connect-%s",YMSTR(YMAddressGetDescription(address)),NULL);
     ym_thread_dispatch connectDispatch = {__ym_session_connect_async_proc, 0, 0, context, name};
     
-    YMThreadRef dispatchThread = NULL;
     if ( ! sync )
     {
-        dispatchThread = YMThreadDispatchCreate(name);
-        if ( ! dispatchThread )
+        if ( ! session->connectDispatchThread )
         {
-            ymerr("session[%s]: error: failed to create async connect thread",YMSTR(session->logDescription));
-            goto catch_fail;
-        }
-        bool okay = YMThreadStart(dispatchThread);
-        if ( ! okay )
-        {
-            ymerr("session[%s]: error: failed to start async connect thread",YMSTR(session->logDescription));
-            goto catch_fail;
+            session->connectDispatchThread = YMThreadDispatchCreate(name);
+            if ( ! session->connectDispatchThread )
+            {
+                ymerr("session[%s]: error: failed to create async connect thread",YMSTR(session->logDescription));
+                goto catch_fail;
+            }
+            bool okay = YMThreadStart(session->connectDispatchThread);
+            if ( ! okay )
+            {
+                ymerr("session[%s]: error: failed to start async connect thread",YMSTR(session->logDescription));
+                goto catch_fail;
+            }
         }
         
-        YMThreadDispatchDispatch(dispatchThread, connectDispatch);
+        YMThreadDispatchDispatch(session->connectDispatchThread, connectDispatch);
     }
     else
     {
@@ -393,6 +398,7 @@ void __ym_session_connect_async_proc(ym_thread_dispatch_ref dispatch)
     if ( okay )
     {
         __YMSessionAddConnection(session,connection);
+        YMRetain(connection); // user
         session->connectedFunc(session,connection,session->callbackContext);
     }
     else
@@ -679,6 +685,7 @@ void __ym_session_init_incoming_connection_proc(ym_thread_dispatch_ref dispatch)
     __YMSessionAddConnection(session, newConnection);
     if ( session->defaultConnection == NULL )
         abort();
+    YMRetain(newConnection); // user
     session->connectedFunc(session,newConnection,session->callbackContext);
     
     if ( address )
@@ -725,12 +732,13 @@ bool __YMSessionInterrupt(__YMSessionRef session)
             session->interrupted = true;
         }
     }
+    
+    __YMSessionCloseAllConnections(session);
+    
     YMLockUnlock(session->interruptionLock);
     
     if ( ! firstInterrupt )
         return false;
-    
-    __YMSessionCloseAllConnections(session);
     
     return true;
 }

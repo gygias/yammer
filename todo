@@ -1,3 +1,14 @@
+- myabort, so aborts can be switched on and off, or at least not require a compound block, soft and hard for debugging vs internal error
+- need test case for forward-file "opaque" (unbounded), e.g. bom stream close case
+
+opaque_thing_that_closes_input_file
+            |
+            V
+        YMPipe:input -> YMPipe:output -> ForwardFile(output,stream)
+                                                    |
+                                                    V
+                                            Plexer:StreamReadDown -> medium
+
 - @synchronized(self) equivalent to cut down on locks? mutexes aren't small and a lock exists
 - do a ntoh/hton pass, test with a big endian
 - peer lookup in ymsession should be consolidated, and should be keyed off strings not pointers

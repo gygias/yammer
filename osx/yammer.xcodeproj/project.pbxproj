@@ -167,6 +167,7 @@
 		6332A4BA1BF12C12004BB764 /* lldb_source.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = lldb_source.sh; sourceTree = "<group>"; };
 		6332A4BB1BF134DD004BB764 /* yammer.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = yammer.pch; path = private/yammer.pch; sourceTree = "<group>"; };
 		63344DDD1BF935730049712F /* YMConnectionPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMConnectionPriv.h; path = private/YMConnectionPriv.h; sourceTree = "<group>"; };
+		6334656B1C029A84007343B1 /* todo */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = todo; path = ../todo; sourceTree = "<group>"; };
 		6335CABD1BF453A800412CC9 /* YMAddress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMAddress.c; path = src/YMAddress.c; sourceTree = "<group>"; };
 		6335CABE1BF453A800412CC9 /* YMAddress.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMAddress.h; path = libyammer/YMAddress.h; sourceTree = "<group>"; };
 		6335CAC31BF480DC00412CC9 /* YMPeer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMPeer.c; path = src/YMPeer.c; sourceTree = "<group>"; };
@@ -294,6 +295,7 @@
 		63225D391BE9026200C28F05 = {
 			isa = PBXGroup;
 			children = (
+				6334656B1C029A84007343B1 /* todo */,
 				631916461BFD069A001475FC /* libyammer */,
 				631916321BFCFF13001475FC /* Yammer */,
 				63225D9C1BE9314100C28F05 /* Dependencies */,

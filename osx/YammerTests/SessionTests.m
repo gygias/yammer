@@ -22,6 +22,8 @@
     YMConnectionRef serverConnection;
     YMConnectionRef clientConnection;
     uint64_t lastClientFileSize;
+    uint64_t nManPagesToRead;
+    uint64_t nManPagesRead;
     
     NSMutableArray *nonRegularFileNames;
     NSString *tempFile;
@@ -60,6 +62,8 @@ SessionTests *gTheSessionTest = nil;
     
     testType = "_ymtest._tcp";
     testName = "twitter-cliche";
+    nManPagesToRead = UINT64_MAX;
+    nManPagesRead = 0;
     YMStringRef type = YMSTRC(testType);
     serverSession = YMSessionCreate(type);
     XCTAssert(serverSession,@"server alloc");
@@ -90,17 +94,31 @@ SessionTests *gTheSessionTest = nil;
     // wait for 2 connects
     dispatch_semaphore_wait(connectSemaphore, DISPATCH_TIME_FOREVER);
     dispatch_semaphore_wait(connectSemaphore, DISPATCH_TIME_FOREVER);
-    
+ 
+#define RUN_SERVER
+#ifdef RUN_SERVER
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         [self _runServer:serverSession];
     });
+#endif
+#define CLIENT_TOO // debugging forward-file hang-up
+#ifdef CLIENT_TOO
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         [self _runClient:clientSession];
     });
+#endif
     
-    // wait for 2 thread exits
-    dispatch_semaphore_wait(threadExitSemaphore, DISPATCH_TIME_FOREVER);
-    dispatch_semaphore_wait(threadExitSemaphore, DISPATCH_TIME_FOREVER);
+    // wait for 4 thread exits
+#ifdef RUN_SERVER
+    dispatch_semaphore_wait(threadExitSemaphore, DISPATCH_TIME_FOREVER); // write random
+    dispatch_semaphore_wait(threadExitSemaphore, DISPATCH_TIME_FOREVER); // read random
+#endif
+#ifdef CLIENT_TOO
+    dispatch_semaphore_wait(threadExitSemaphore, DISPATCH_TIME_FOREVER); // write man pages
+    //dispatch_semaphore_wait(threadExitSemaphore, DISPATCH_TIME_FOREVER); // read man pages done differently
+    while ( nManPagesRead < nManPagesToRead )
+        CFRunLoopRunInMode(kCFRunLoopDefaultMode, 1.0, false);
+#endif
     
     YMConnectionRef sC = YMSessionGetDefaultConnection(serverSession);
     XCTAssert(sC,@"server connection");
@@ -120,9 +138,12 @@ SessionTests *gTheSessionTest = nil;
     // but we can randomize which we close first to find real bugs.
     //XCTAssert(okay,@"second (%@) session close",stopServerFirst?@"client":@"server");
     
+    //YMRelease(serverConnection);
     YMRelease(serverSession);
+    //YMRelease(clientConnection);
     YMRelease(clientSession);
     
+#ifdef CLIENT_TOO
     NSLog(@"diffing %@",tempDir);
     NSPipe *outputPipe = [NSPipe pipe];
     NSTask *diff = [NSTask new];
@@ -162,10 +183,11 @@ SessionTests *gTheSessionTest = nil;
     dispatch_semaphore_wait(threadExitSemaphore, DISPATCH_TIME_FOREVER);
     XCTAssert([diff terminationStatus]==0||checkOK,@"diff");
     NSLog(@"cleaning up");
-    okay = [[NSFileManager defaultManager] removeItemAtPath:tempFile error:NULL];
-    XCTAssert(okay,@"tempFile");
     okay = [[NSFileManager defaultManager] removeItemAtPath:tempDir error:NULL];
     XCTAssert(okay,@"tempDir");
+#endif
+    okay = [[NSFileManager defaultManager] removeItemAtPath:tempFile error:NULL];
+    XCTAssert(okay,@"tempFile");
     
 #define CHECK_THREADS
 #ifdef CHECK_THREADS
@@ -221,7 +243,7 @@ typedef struct ManPageThanks
         info->semaphore = (__bridge void *)(serverAsyncForwardSemaphore);
         ctx.context = info;
     }
-    BOOL okay = YMThreadDispatchForwardFile([handle fileDescriptor], stream, true, gSomeLength, !testAsync, ctx);
+    BOOL okay = YMThreadDispatchForwardFile([handle fileDescriptor], stream, &gSomeLength, !testAsync, ctx);
     XCTAssert(okay,@"server forward file");
     
     if ( testAsync )
@@ -238,6 +260,7 @@ typedef struct ManPageThanks
     YMConnectionRef connection = YMSessionGetDefaultConnection(client);
     NSString *basePath = @"/usr/share/man/man2";
     
+    uint64_t actuallyWritten = 0;
     NSFileManager *fm = [NSFileManager defaultManager];
     for ( NSString *aFile in [fm contentsOfDirectoryAtPath:basePath error:NULL] )
     {
@@ -278,7 +301,7 @@ typedef struct ManPageThanks
             ctx.context = info;
         }
         
-        YMThreadDispatchForwardFile([handle fileDescriptor], stream, false, 0, !testAsync, ctx);
+        YMThreadDispatchForwardFile([handle fileDescriptor], stream, NULL, !testAsync, ctx);
         
         if (testAsync)
             dispatch_semaphore_wait(clientAsyncForwardSemaphore, DISPATCH_TIME_FOREVER);
@@ -300,8 +323,10 @@ typedef struct ManPageThanks
 #endif
         
         YMConnectionCloseStream(connection, stream);
+        actuallyWritten++;
     }
     
+    nManPagesToRead = actuallyWritten;
     NSLog(@"client thread exiting");
     dispatch_semaphore_signal(threadExitSemaphore);
 }
@@ -322,7 +347,10 @@ typedef struct ManPageThanks
     uint16_t outLength = 0, length = sizeof(header);
     YMIOResult ymResult = YMStreamReadUp(stream, &header, length, &outLength);
     if ( stopping )
+    {
+        YMConnectionCloseStream(connection, stream);
         return;
+    }
     XCTAssert(ymResult==YMIOSuccess,@"read man header");
     XCTAssert(outLength==length,@"outLength!=length");
     XCTAssert(strlen(header.name)>0&&strlen(header.name)<=NAME_MAX, @"??? %s",header.name);
@@ -336,7 +364,7 @@ typedef struct ManPageThanks
     
     uint64_t len64 = header.len;
     ymResult = YMStreamWriteToFile(stream, [outHandle fileDescriptor], &len64, &outBytes);
-    XCTAssert(ymResult==YMIOSuccess,@"eat man result");
+    XCTAssert(ymResult==YMIOEOF,@"eat man result");
     XCTAssert(outBytes>0,@"eat man outBytes");
     NoisyTestLog(@"_eatManPages: finished: %llu bytes: %@ : %s",outBytes,tempDir,header.name);
     [outHandle closeFile];
@@ -348,13 +376,18 @@ typedef struct ManPageThanks
     strncpy(thx.thx4Man,[thxString cStringUsingEncoding:NSASCIIStringEncoding],sizeof(thx.thx4Man));
     YMStreamWriteDown(stream, &thx, sizeof(thx));
     if ( stopping )
+    {
+        YMConnectionCloseStream(connection, stream);
         return;
+    }
 #endif
     
     // todo randomize whether we close here, during streamClosing, after streamClosing, dispatch_after?
     // it's also worth noting that if you [forcibly] interrupt the session and immediately
     // dealloc the session, async clients working on incoming streams might fault doing this
     YMConnectionCloseStream(connection,stream);
+    
+    nManPagesRead++;
 }
 
 - (void)_eatRandom:(YMConnectionRef)connection :(YMStreamRef)stream
@@ -365,12 +398,9 @@ typedef struct ManPageThanks
     XCTAssert(result>=0,@"eat random out handle %d %s",errno,strerror(errno));
     uint64_t outBytes = 0;
     YMIOResult ymResult = YMStreamWriteToFile(stream, result, NULL, &outBytes);
-    if ( stopping )
-        goto catch_return;
-    XCTAssert(ymResult==YMIOSuccess,@"eat random result");
+    XCTAssert(ymResult!=YMIOError,@"eat random result");
     XCTAssert(outBytes==gSomeLength,@"eat random outBytes");
     NoisyTestLog(@"_eatManPages: finished: %llu bytes",outBytes);
-catch_return:
     result = close(result);
     XCTAssert(result==0,@"close rand temp failed %d %s",errno,strerror(errno));
     
@@ -578,7 +608,10 @@ void _ym_session_new_stream_func(YMSessionRef session, YMConnectionRef connectio
         if ( isServer )
             [self _eatManPage:connection :stream];
         else
+        {
             [self _eatRandom:connection :stream];
+            dispatch_semaphore_signal(threadExitSemaphore);
+        }
     });
 }
 

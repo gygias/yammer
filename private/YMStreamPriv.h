@@ -11,17 +11,29 @@
 
 #include "YMStream.h"
 
-typedef int32_t YMStreamCommand;
+typedef int32_t _YMStreamCommandType;
+typedef uint64_t _YMStreamBoundType;
 
-typedef enum
+typedef enum _YMStreamCommandType
 {
-    YMStreamClose = -1
-} YMStreamCommands;
+    YMStreamClose = -1,
+    YMStreamForwardFileBounded = -2,
+    YMStreamForwardFileUnbounded = -3,
+    YMStreamForwardFileEnd = -4
+} _YMStreamCommands;
 
-typedef struct _YMStreamHeader
+typedef struct _ym_stream_command_t
 {
-    YMStreamCommand command;
-} YMStreamHeader;
+    _YMStreamCommandType command;
+} __ym_stream_command_t;
+typedef struct _ym_stream_command_t _YMStreamCommand;
+
+//typedef struct _ym_stream_bounded_command_t
+//{
+//    _YMStreamCommand command;
+//    _YMStreamBoundType length; // if zero, the file size is unbounded (not known), a forward-file-end command will follow
+//} __ym_stream_bounded_command_t;
+//typedef struct _ym_stream_bounded_command_t _YMStreamBoundedCommand;
 
 typedef struct _ym_stream_user_info_def
 {

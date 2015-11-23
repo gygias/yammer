@@ -209,8 +209,12 @@ void _YMTLSProviderFreeGlobals()
         gYMTLSLocks = NULL;
     }
     
+    
+    CRYPTO_set_id_callback(NULL);
+    CRYPTO_set_locking_callback(NULL);
+    
     pthread_once_t onceAgain = PTHREAD_ONCE_INIT;
-    memcpy(&gYMInitSSLOnce,&onceAgain,sizeof(gYMInitSSLOnce));
+    memcpy(&gYMInitSSLOnce,&onceAgain,sizeof(pthread_once_t)); // this does not work
 }
 
 void __ym_tls_lock_callback(int mode, int type, __unused char *file, __unused int line)
