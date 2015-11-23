@@ -10,7 +10,7 @@
 #define ymlog_type YMLogDefault
 #endif
 #ifndef ymlog_target
-#define ymlog_target ( YMLogError | YMLogThread | YMLogStream )
+#define ymlog_target ( YMLogError )
 // Token pasting of ',' and __VA_ARGS__ is a GNU extension
 YM_WPPUSH
 #define ymlog(x,...) if ( ymlog_type & ymlog_target ) __YMLogType((x),##__VA_ARGS__)
