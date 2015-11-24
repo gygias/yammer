@@ -16,13 +16,6 @@
 #include "YMUtilities.h"
 #include "YMSemaphore.h"
 
-#ifdef USE_FTIME
-#include <sys/timeb.h>
-#error todo
-#else
-#include <sys/time.h>
-#endif
-
 #include "YMLog.h"
 #undef ymlog_type
 #define ymlog_type YMLogStream
