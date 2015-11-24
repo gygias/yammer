@@ -11,11 +11,12 @@
 #include "YMUtilities.h"
 
 #include <stdarg.h>
+#ifndef _WINDOWS
 #include <pthread.h>
+#endif
 
 void YMLog( char* format, ... ) __printflike(1, 2);
 
-static pthread_once_t gYMLogLockOnce = PTHREAD_ONCE_INIT;
 static YMLockRef gYMLogLock = NULL;
 static char *gTimeFormatBuf = NULL;
 #define gTimeFormatBufLen 128
@@ -30,13 +31,20 @@ void __YMLogInit()
 
 void __YMLogType( char* format, ... )
 {
-    pthread_once(&gYMLogLockOnce, __YMLogInit);
+
+#ifndef _WINDOWS
+	static pthread_once_t gYMLogLockOnce = PTHREAD_ONCE_INIT;
+	pthread_once(&gYMLogLockOnce, __YMLogInit);
+#else
+	static INIT_ONCE gDispatchInitOnce = INIT_ONCE_STATIC_INIT;
+	InitOnceExecuteOnce(&gDispatchInitOnce, __YMLogInit, NULL, NULL);
+#endif
     
     YMLockLock(gYMLogLock);
     {
         const char *timeStr = YMGetCurrentTimeString(gTimeFormatBuf, gTimeFormatBufLen);
-        uint64_t threadID = UINT64_MAX;
-        pthread_threadid_np(pthread_self(), &threadID);
+		uint64_t threadID = _YMThreadGetCurrentThreadNumber();
+
         if ( timeStr )
             fprintf(stdout,"%s yammer[%llu]: ",timeStr,threadID);
         

@@ -130,6 +130,7 @@ YMmDNSTxtRecordKeyPair **_YMmDNSTxtKeyPairsCreate(const unsigned char *txtRecord
             listSize = 0;
     YMmDNSTxtRecordKeyPair **keyPairList = (YMmDNSTxtRecordKeyPair **)YMALLOC(allocatedListSize * sizeof(YMmDNSTxtRecordKeyPair*));
     
+	char keyBuf[256];
     size_t currentPairOffset = 0;
     uint8_t aPairLength = txtRecord[currentPairOffset];
     while ( currentPairOffset < txtLength )
@@ -152,9 +153,8 @@ YMmDNSTxtRecordKeyPair **_YMmDNSTxtKeyPairsCreate(const unsigned char *txtRecord
         }
         
         size_t keyLength = (size_t)(equalsPtr - (char *)aPairWalker);
-        char keyStr[keyLength + 1];
-        memcpy(keyStr,aPairWalker,keyLength);
-        keyStr[keyLength] = '\0';
+        memcpy(keyBuf,aPairWalker,keyLength);
+		keyBuf[keyLength] = '\0';
         aPairWalker += keyLength + 1; // skip past '='
         
         size_t valueLength = aPairLength - keyLength - 1;
@@ -162,12 +162,12 @@ YMmDNSTxtRecordKeyPair **_YMmDNSTxtKeyPairsCreate(const unsigned char *txtRecord
         memcpy(valueBuf, aPairWalker, valueLength);
         
         YMmDNSTxtRecordKeyPair *aKeyPair = (YMmDNSTxtRecordKeyPair *)YMALLOC(sizeof(YMmDNSTxtRecordKeyPair));
-        aKeyPair->key = YMSTRC(keyStr);
+        aKeyPair->key = YMSTRC(keyBuf);
         aKeyPair->value = valueBuf;
         aKeyPair->valueLen = (uint8_t)valueLength;
         keyPairList[listSize] = aKeyPair;
         
-        ymlog("mdns: parsed [%zd][%zu] <- [%zu]'%s'",listSize,valueLength,keyLength,keyStr);
+        ymlog("mdns: parsed [%zd][%zu] <- [%zu]'%s'",listSize,valueLength,keyLength,keyBuf);
         
         listSize++;
         

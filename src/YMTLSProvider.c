@@ -17,11 +17,14 @@
 #include "YMThread.h"
 #include "YMDictionary.h"
 #include "YMLock.h"
+#include "YMUtilities.h"
 
 #include <sys/stat.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#ifndef _WINDOWS
 #include <pthread.h>
+#endif
 
 #include "YMLog.h"
 #undef ymlog_type
@@ -31,8 +34,7 @@
 #define ymlog(x,...) ;
 #endif
 
-static pthread_once_t gYMInitSSLOnce = PTHREAD_ONCE_INIT;
-static void __YMSSLInit();
+static void __YMTLSInit();
 
 static YMLockRef *gYMTLSLocks = NULL;
 //static YMLockRef gYMTLSLocks[CRYPTO_NUM_LOCKS*sizeof(YMLockRef)];
@@ -82,7 +84,7 @@ bool __YMTLSProviderClose(__YMSecurityProviderRef provider);
 unsigned long ym_tls_thread_id_callback()
 {
     //ymlog("ym_tls_thread_id_callback");
-    return (unsigned long)pthread_self();
+	return (unsigned long)_YMThreadGetCurrentThreadId();
 }
 
 // designated initializer
@@ -94,9 +96,19 @@ YMTLSProviderRef YMTLSProviderCreateWithFullDuplexFile(int file, bool isServer)
     return __YMTLSProviderCreateWithFullDuplexFile(file, false, isServer);
 }
 
+#ifndef _WINDOWS
+static pthread_once_t gYMInitTLSOnce = PTHREAD_ONCE_INIT;
+#else
+static INIT_ONCE gYMInitTLSOnce = INIT_ONCE_STATIC_INIT;
+#endif
+
 YMTLSProviderRef __YMTLSProviderCreateWithFullDuplexFile(int file, bool isWrappingSocket, bool isServer)
 {
-    pthread_once(&gYMInitSSLOnce, __YMSSLInit);
+#ifndef _WINDOWS
+	pthread_once(&gYMInitTLSOnce, __YMTLSInit);
+#else
+	InitOnceExecuteOnce(&gYMInitTLSOnce, __YMTLSInit, NULL, NULL);
+#endif
     
     struct stat statbuf;
     fstat(file, &statbuf);
@@ -167,7 +179,7 @@ void _YMTLSProviderFree(YMTypeRef object)
         SSL_CTX_free(tls->sslCtx);
 }
 
-void __YMSSLInit()
+void __YMTLSInit()
 {
     SSL_load_error_strings();
     // ``SSL_library_init() always returns "1", so it is safe to discard the return value.''
@@ -213,8 +225,12 @@ void _YMTLSProviderFreeGlobals()
     CRYPTO_set_id_callback(NULL);
     CRYPTO_set_locking_callback(NULL);
     
+#ifndef _WINDOWS
     pthread_once_t onceAgain = PTHREAD_ONCE_INIT;
-    memcpy(&gYMInitSSLOnce,&onceAgain,sizeof(pthread_once_t)); // this does not work
+#else
+	INIT_ONCE onceAgain = INIT_ONCE_STATIC_INIT;
+#endif
+	memcpy(&gYMInitTLSOnce, &onceAgain, sizeof(onceAgain));
 }
 
 void __ym_tls_lock_callback(int mode, int type, __unused char *file, __unused int line)

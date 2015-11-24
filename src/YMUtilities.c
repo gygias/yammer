@@ -18,8 +18,19 @@
 #define ymlog(x,...) ;
 #endif
 
+#ifndef _WINDOWS
+#define YM_PORT_MAX IPPORT_HILASTAUTO
 #include <netinet/in.h>
 #include <sys/time.h>
+#else
+#define YM_PORT_MAX IPPORT_DYNAMIC_MAX
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 const char *YMGetCurrentTimeString(char *buf, size_t bufLen)
 {
@@ -39,20 +50,18 @@ const char *YMGetCurrentTimeString(char *buf, size_t bufLen)
 void YMGetTheBeginningOfPosixTimeForCurrentPlatform(struct timeval *time)
 {
     // todo i'm not sure what 'extension used' or have any idea how this macro works
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpedantic"
-    time->tv_sec = MIN_OF(typeof(time->tv_sec));
-    time->tv_usec = MIN_OF(typeof(time->tv_usec));
-#pragma GCC diagnostic pop
+	YM_WPPUSH
+	time->tv_sec = 0;
+    time->tv_usec = 0;
+	YM_WPOP
 }
 
 void YMGetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time)
 {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpedantic"
-    time->tv_sec = MAX_OF(typeof(time->tv_sec));
-    time->tv_usec = MAX_OF(typeof(time->tv_usec));
-#pragma GCC diagnostic pop
+	YM_WPPUSH
+    time->tv_sec = LONG_MAX;
+	time->tv_usec = LONG_MAX;
+	YM_WPOP
 }
 
 ComparisonResult YMTimevalCompare(struct timeval *a, struct timeval *b)
@@ -140,13 +149,15 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
     uint8_t length = ipv4 ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6);
     struct sockaddr *addr = YMALLOC(length);
     addr->sa_family = ipv4 ? AF_INET : AF_INET6;
+#if defined(_DARWIN_C_SOURCE)
     addr->sa_len = length;
+#endif
     if ( ipv4 )
         ((struct sockaddr_in *)addr)->sin_addr.s_addr = INADDR_ANY;
     else
         ((struct sockaddr_in6 *)addr)->sin6_addr = in6addr_any;
     
-    while (aPort < IPPORT_HILASTAUTO)
+    while (aPort < YM_PORT_MAX)
     {
         thePort = aPort++;
         
@@ -185,6 +196,7 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
     return okay ? (uint32_t)thePort : -1;
 }
 
+#ifndef _WINDOWS
 pthread_mutex_t *YMCreateMutexWithOptions(YMLockOptions options)
 {
     pthread_mutex_t *outMutex = NULL;
@@ -288,3 +300,30 @@ bool YMDestroyMutex(pthread_mutex_t *mutex)
     free(mutex);
     return ( result == 0 );
 }
+
+#else
+bool YMLockMutex(HANDLE mutex)
+{
+	abort();
+	return false;
+}
+bool YMUnlockMutex(HANDLE mutex)
+{
+	abort();
+	return false;
+}
+bool YMDestroyMutex(HANDLE mutex)
+{
+	abort();
+	return false;
+}
+HANDLE YMCreateMutexWithOptions(YMLockOptions options)
+{
+	abort();
+	return NULL;
+}
+#endif
+
+#ifdef __cplusplus
+}
+#endif

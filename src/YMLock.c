@@ -24,7 +24,7 @@ typedef struct __ym_lock
 {
     _YMType _type;
     
-    pthread_mutex_t *mutex;
+	MUTEX_PTR_TYPE mutex;
     YMStringRef name;
 } ___ym_lock;
 typedef struct __ym_lock __YMLock;
@@ -42,7 +42,7 @@ YMLockRef YMLockCreateWithOptions(YMLockOptions options)
 
 YMLockRef YMLockCreateWithOptionsAndName(YMLockOptions options, YMStringRef name)
 {
-    pthread_mutex_t *mutex = YMCreateMutexWithOptions(options);
+	MUTEX_PTR_TYPE mutex = YMCreateMutexWithOptions(options);
     if ( ! mutex )
         return NULL;
     
@@ -87,7 +87,7 @@ void _YMLockFree(YMTypeRef object)
     YMRelease(lock->name);
 }
 
-pthread_mutex_t *_YMLockGetMutex(YMLockRef lock_)
+MUTEX_PTR_TYPE _YMLockGetMutex(YMLockRef lock_)
 {
     __YMLockRef lock = (__YMLockRef)lock_;    
     return lock->mutex;

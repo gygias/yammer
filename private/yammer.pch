@@ -28,6 +28,9 @@
 
 #ifndef _WINDOWS
 #include <unistd.h>
+#else
+#define _WINSOCKAPI_
+#include <windows.h>
 #endif
 
 #define YM_VERSION 1
@@ -48,6 +51,7 @@ typedef unsigned __int32 uint32_t;
 typedef unsigned __int16 uint16_t;
 typedef unsigned __int8 uint8_t;
 typedef unsigned int size_t;*/
+#define ssize_t SSIZE_T
 #define YM_VARGS_SENTINEL_REQUIRED
 #define __printflike(x,y)
 #define YM_WPPUSH

@@ -13,6 +13,11 @@
 
 #include <errno.h>
 
+#ifdef _WINDOWS
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
+
 #include "YMLog.h"
 #undef ymlog_type
 #define ymlog_type YMLogmDNS

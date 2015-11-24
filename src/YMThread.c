@@ -15,7 +15,12 @@
 #include "YMStreamPriv.h"
 #include "YMPlexerPriv.h"
 
+#ifndef _WINDOWS
 #include <pthread.h>
+#define YM_THREAD_TYPE pthread_t
+#else
+#define YM_THREAD_TYPE HANDLE
+#endif
 
 #include "YMLog.h"
 #undef ymlog_type
@@ -35,7 +40,7 @@ typedef struct __ym_thread
     YMStringRef name;
     ym_thread_entry entryPoint;
     const void *context;
-    pthread_t pthread;
+    YM_THREAD_TYPE pthread;
     
     // thread state
     bool didStart;
@@ -67,7 +72,6 @@ typedef struct __ym_thread_dispatch_context_t
 } ___ym_thread_dispatch_context_t;
 typedef struct __ym_thread_dispatch_context_t *__ym_thread_dispatch_context_ref;
 
-static pthread_once_t gDispatchInitOnce = PTHREAD_ONCE_INIT;
 YMThreadDispatchThreadID gDispatchThreadIDNext = 0; // todo only for keying dictionary, implement linked list?
 YMDictionaryRef gDispatchThreadDefsByID = NULL;
 YMLockRef gDispatchThreadListLock = NULL;
@@ -100,8 +104,14 @@ bool __YMThreadDispatchForward(YMStreamRef stream, int file, bool toStream, cons
 __YMThreadRef __YMThreadInitCommon(YMStringRef name, const void *context)
 {
     __YMThreadRef thread = (__YMThreadRef)_YMAlloc(_YMThreadTypeID,sizeof(__YMThread));
-    
+
+#ifndef _WINDOWS
+	static pthread_once_t gDispatchInitOnce = PTHREAD_ONCE_INIT;
     pthread_once(&gDispatchInitOnce, __YMThreadDispatchInit);
+#else
+	static INIT_ONCE gDispatchInitOnce = INIT_ONCE_STATIC_INIT;
+	InitOnceExecuteOnce(&gDispatchInitOnce, __YMThreadDispatchInit, NULL, NULL);
+#endif
     
     thread->name = name ? YMRetain(name) : YMSTRC("*");
     thread->context = context;
@@ -227,14 +237,24 @@ bool YMThreadStart(YMThreadRef thread_)
 {
     __YMThreadRef thread = (__YMThreadRef)thread_;
     
-    pthread_t pthread;
+    YM_THREAD_TYPE pthread;
     int result;
     
+#ifndef _WINDOWS
     if ( ( result = pthread_create(&pthread, NULL, (void *(*)(void *))thread->entryPoint, (void *)thread->context) ) )
     {
         ymerr("thread[%s,%s]: error: pthread_create %d %s", YMSTR(thread->name), thread->isDispatchThread?"dispatch":"user", result, strerror(result));
         return false;
     }
+#else
+	DWORD threadId;
+	pthread = CreateThread(NULL, 0, thread->entryPoint, thread->context, 0, &threadId);
+	if ( pthread == NULL )
+	{
+		ymerr("thread[%s,%s]: error: CreateThread failed: %x", YMSTR(thread->name), thread->isDispatchThread ? "dispatch" : "user", GetLastError());
+		return false;
+	}
+#endif
     
     ymlog("thread[%s,%s]: created", YMSTR(thread->name), thread->isDispatchThread ? "dispatch" : "user");
     thread->pthread = pthread;
@@ -375,10 +395,13 @@ void __YMThreadFreeDispatchContext(__ym_thread_dispatch_context_ref dispatchCont
 // xxx i wonder if this is actually going to be portable
 uint64_t _YMThreadGetCurrentThreadNumber()
 {
-    pthread_t pthread = pthread_self();
+#ifndef _WINDOWS
     uint64_t threadId = 0;
-    memcpy(&threadId, &pthread, YMMIN(sizeof(threadId), sizeof(pthread)));
+	pthread_threadid_np(pthread_self(), &threadId);
     return threadId;
+#else
+	return GetCurrentThreadId();
+#endif
 }
 
 bool YMThreadDispatchForwardFile(int fromFile, YMStreamRef toStream, const uint64_t *nBytesPtr, bool sync, ym_thread_dispatch_forward_file_context callbackInfo)

@@ -12,9 +12,10 @@
 #ifndef _WINDOWS
 #include <pthread.h>
 #define MUTEX_TYPE pthread_mutex_t
+#define MUTEX_PTR_TYPE MUTEX_TYPE *
 #else
-#include <windows.h>
 #define MUTEX_TYPE HANDLE
+#define MUTEX_PTR_TYPE MUTEX_TYPE
 #endif
 
 typedef enum
@@ -42,10 +43,6 @@ void YMLockLock(YMLockRef lock);
 void YMLockUnlock(YMLockRef lock);
 
 // for YMSemaphore
-#ifndef WIN32
-pthread_mutex_t *_YMLockGetMutex(YMLockRef lock);
-#else
-HANDLE _YMLockGetMutex(YMLockRef lock);
-#endif
+MUTEX_PTR_TYPE _YMLockGetMutex(YMLockRef lock);
 
 #endif /* YMLock_h */
