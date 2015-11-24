@@ -83,14 +83,20 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBYAMMER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\david-7vm\sandbox\yammer\win;C:\Users\david-7vm\sandbox\yammer\libyammer;C:\Users\david-7vm\sandbox\openssl\include;C:\Program Files\Bonjour SDK\Include;C:\Users\david-7vm\sandbox\yammer\private;C:\Users\david-7vm\sandbox\yammer;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>yammer.pch;%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\Program Files\Bonjour SDK\Lib\Win32;C:\Program Files %28x86%29\GnuWin32\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>dnssd.lib;ws2_32.lib;libssl.a;libssl32.dll.a;libcrypto.a;libeay32.dll.a;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>
+      </AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -106,6 +112,8 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>libssl.a;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files %28x86%29\GnuWin32\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -183,6 +191,7 @@
     <ClInclude Include="..\private\YMUtilities.h" />
     <ClInclude Include="..\private\YMX509Certificate.h" />
     <ClInclude Include="..\private\YMX509CertificatePriv.h" />
+    <ClInclude Include="arc4random.h" />
     <ClInclude Include="libyammer.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -227,6 +236,7 @@
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="libyammer.cpp" />
+    <ClCompile Include="arc4random.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

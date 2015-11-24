@@ -38,7 +38,7 @@ void __YMLogType( char* format, ... )
 	pthread_once(&gYMLogLockOnce, __YMLogInit);
 #else
 	static INIT_ONCE gDispatchInitOnce = INIT_ONCE_STATIC_INIT;
-	InitOnceExecuteOnce(&gDispatchInitOnce, __YMLogInit, NULL, NULL);
+	InitOnceExecuteOnce(&gDispatchInitOnce, (PINIT_ONCE_FN)__YMLogInit, NULL, NULL);
 #endif
     
     YMLockLock(gYMLogLock);

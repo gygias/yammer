@@ -197,7 +197,7 @@ YMPlexerRef YMPlexerCreate(YMStringRef name, int inputFile, int outputFile, bool
     pthread_once(&gYMRegisterSigpipeOnce, __YMRegisterSigpipe);
 #else
 	static INIT_ONCE gYMRegisterSigpipeOnce = INIT_ONCE_STATIC_INIT;
-	InitOnceExecuteOnce(&gYMRegisterSigpipeOnce, __YMRegisterSigpipe, NULL, NULL);
+	InitOnceExecuteOnce(&gYMRegisterSigpipeOnce, (PINIT_ONCE_FN)__YMRegisterSigpipe, NULL, NULL);
 #endif
     
     __YMPlexerRef plexer = (__YMPlexerRef)_YMAlloc(_YMPlexerTypeID,sizeof(__YMPlexer));

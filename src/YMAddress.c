@@ -27,6 +27,7 @@
 #include <netinet/in.h> // protocols
 #include <arpa/inet.h>
 #else
+#define _WINSOCK_DEPRECATED_NO_WARNINGS // todo, inet_ntoa
 #include <winsock2.h>
 #include <ws2tcpip.h>
 //typedef unsigned __int32 socklen_t;
@@ -91,7 +92,11 @@ YMAddressRef YMAddressCreate(void* addressData, socklen_t length)
     if ( type == YMAddressIPV4 || type == YMAddressIPV6 )
     {
         struct sockaddr_in *inAddr = (struct sockaddr_in *)address->address;
+//#ifndef _WINDOWS
         char *ipString = inet_ntoa( inAddr->sin_addr );
+//#else
+//		char *ipString = inet_ntop( AF_INET, inAddr->sin_addr, &lol);
+//#endif
         if ( ! ipString ) // i can't imagine how this would fail short of segfaulting, man isn't specific
         {
             //uint32_t ip = ntohl(inAddr->sin_addr.s_addr);
@@ -149,7 +154,11 @@ YMAddressRef YMAddressCreateLocalHostIPV4(uint16_t port)
 YMAddressRef YMAddressCreateWithIPStringAndPort(YMStringRef ipString, uint16_t port)
 {
     struct in_addr inAddr = {0};
+#ifndef _WINDOWS
     int result = inet_aton(YMSTR(ipString), &inAddr);
+#else
+	int result = inet_pton(AF_INET, YMSTR(ipString), &inAddr);
+#endif
     if ( result != 1 )
     {
         ymlog("address: failed to parse '%s' (%u)",YMSTR(ipString),port);

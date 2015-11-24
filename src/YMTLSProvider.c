@@ -108,9 +108,10 @@ YMTLSProviderRef __YMTLSProviderCreateWithFullDuplexFile(int file, bool isWrappi
 #ifndef _WINDOWS
 	pthread_once(&gYMInitTLSOnce, __YMTLSInit);
 #else
-	InitOnceExecuteOnce(&gYMInitTLSOnce, __YMTLSInit, NULL, NULL);
+	InitOnceExecuteOnce(&gYMInitTLSOnce, (PINIT_ONCE_FN)__YMTLSInit, NULL, NULL);
 #endif
     
+#ifndef _WINDOWS
     struct stat statbuf;
     fstat(file, &statbuf);
     if ( ! S_ISSOCK(statbuf.st_mode) )
@@ -118,6 +119,7 @@ YMTLSProviderRef __YMTLSProviderCreateWithFullDuplexFile(int file, bool isWrappi
         ymerr("tls[%d]: error: file %d is not a socket",isServer,file);
         return NULL;
     }
+#endif
     
     __YMTLSProviderRef tls = (__YMTLSProviderRef)_YMAlloc(_YMTLSProviderTypeID,sizeof(__YMTLSProvider));
     
@@ -317,7 +319,7 @@ int __ym_tls_certificate_verify_callback(int preverify_ok, X509_STORE_CTX *x509_
     __YMTLSProviderRef tls;
     YMX509CertificateRef ymCert = NULL;
     SSL *ssl = X509_STORE_CTX_get_ex_data(x509_store_ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
-    __unused int state = SSL_get_state(ssl);
+    //int state = SSL_get_state(ssl);
     //bool isServer = ( SSL_in_accept_init(ssl) );
     
     YMLockLock(gYMTLSExDataLock);
@@ -379,6 +381,10 @@ void __YMTLSProviderInitSslCtx(__YMTLSProviderRef tls)
     YMRSAKeyPairRef rsa = NULL;
     YMX509CertificateRef cert = NULL;
     
+#ifdef _WINDOWS // yuck
+#undef SSLv23_server_method
+#undef SSLv23_client_method
+#endif
     tls->sslCtx = SSL_CTX_new(tls->isServer ? SSLv23_server_method() : SSLv23_client_method ());    // `` Negotiate highest available
     //      SSL/TLS version ''
     if ( ! tls->sslCtx )
@@ -520,7 +526,9 @@ bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
     SSL_set_bio(tls->ssl, tls->bio, tls->bio);
     tls->bio->ptr = tls; // this is the elusive context pointer
     
+#ifndef _WINDOWS
     SSL_set_debug(tls->ssl, 1);
+#endif
     
     if ( tls->isServer )
     {

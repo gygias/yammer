@@ -304,4 +304,6 @@ void __ym_local_socket_accept_proc(__unused void *ctx)
     ymlog("__ym_local_socket_accept_proc exiting");
 }
 
-#endif // not _WINDOWS
+#else // not _WINDOWS
+void _YMLocalSocketPairFree(YMTypeRef object) {}
+#endif

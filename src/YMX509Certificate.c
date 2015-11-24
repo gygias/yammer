@@ -77,19 +77,23 @@ X509* __YMX509CertificateCreateX509(YMRSAKeyPairRef keyPair)
         goto catch_return;
     }
     
-    serial = M_ASN1_INTEGER_new();
+    serial = ASN1_INTEGER_new();
     if ( ! serial )
     {
         opensslFunc = YM_TOKEN_STR(M_ASN1_INTEGER_new);
+		opensslErr = ERR_get_error();
+		goto catch_return;
     }
     
     result = X509_set_serialNumber(x509, serial);
     if ( ERR_LIB_NONE != result )
     {
+		ASN1_INTEGER_free(serial);
         opensslFunc = YM_TOKEN_STR(X509_set_serialNumber);
         opensslErr = ERR_get_error();
         goto catch_return;
     }
+	ASN1_INTEGER_free(serial);
     
     subject = X509_get_subject_name(x509); // why get and not new?
     if ( ERR_LIB_NONE != result )
@@ -137,24 +141,29 @@ X509* __YMX509CertificateCreateX509(YMRSAKeyPairRef keyPair)
         goto catch_return;
     }
     
-    ASN1_TIME * timeResult = X509_gmtime_adj(X509_get_notBefore(x509), 0);
+	ASN1_TIME *asn1Now = ASN1_TIME_new();
+	ASN1_TIME_set(asn1Now, time(NULL));
+    ASN1_TIME * timeResult = X509_gmtime_adj(asn1Now, INT32_MIN);
     if ( ! timeResult ) // no man page or header comment, this is a guess
     {
+		ASN1_TIME_free(asn1Now);
         opensslFunc = YM_TOKEN_STR(X509_gmtime_adj);
         opensslErr = ERR_get_error();
         goto catch_return;
     }
     
     int maxOffset = INT32_MAX;
-    timeResult = X509_gmtime_adj(X509_get_notAfter(x509), maxOffset);
+    timeResult = X509_gmtime_adj(asn1Now, maxOffset);
     if ( ! timeResult ) // no man page or header comment, this is a guess
     {
+		ASN1_TIME_free(asn1Now);
         opensslFunc = YM_TOKEN_STR(X509_gmtime_adj);
         opensslErr = ERR_get_error();
         goto catch_return;
     }
+	ASN1_TIME_free(asn1Now);
     
-    key = EVP_PKEY_new();
+    key = EVP_PKEY_new(); // todo leaks in happy case?
     if ( ! key )
     {
         opensslFunc = YM_TOKEN_STR(EVP_PKEY_new);
@@ -204,8 +213,6 @@ catch_return:
         }
     }
     
-    if ( serial )
-        M_ASN1_INTEGER_free(serial);
     if ( key )
         EVP_PKEY_free(key);
     

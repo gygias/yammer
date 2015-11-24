@@ -110,7 +110,7 @@ __YMThreadRef __YMThreadInitCommon(YMStringRef name, const void *context)
     pthread_once(&gDispatchInitOnce, __YMThreadDispatchInit);
 #else
 	static INIT_ONCE gDispatchInitOnce = INIT_ONCE_STATIC_INIT;
-	InitOnceExecuteOnce(&gDispatchInitOnce, __YMThreadDispatchInit, NULL, NULL);
+	InitOnceExecuteOnce(&gDispatchInitOnce, (PINIT_ONCE_FN)__YMThreadDispatchInit, NULL, NULL);
 #endif
     
     thread->name = name ? YMRetain(name) : YMSTRC("*");
@@ -248,7 +248,7 @@ bool YMThreadStart(YMThreadRef thread_)
     }
 #else
 	DWORD threadId;
-	pthread = CreateThread(NULL, 0, thread->entryPoint, thread->context, 0, &threadId);
+	pthread = CreateThread(NULL, 0, (PINIT_ONCE_FN)thread->entryPoint, thread->context, 0, &threadId);
 	if ( pthread == NULL )
 	{
 		ymerr("thread[%s,%s]: error: CreateThread failed: %x", YMSTR(thread->name), thread->isDispatchThread ? "dispatch" : "user", GetLastError());
