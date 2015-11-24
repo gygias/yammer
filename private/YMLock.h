@@ -9,7 +9,7 @@
 #ifndef YMLock_h
 #define YMLock_h
 
-#ifndef WIN32
+#ifndef _WINDOWS
 #include <pthread.h>
 #define MUTEX_TYPE pthread_mutex_t
 #else

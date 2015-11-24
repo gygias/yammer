@@ -1,0 +1,242 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="template">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="libyammer">
+      <UniqueIdentifier>{f3890a80-9bf3-4fed-a35d-da000a2a729a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="private">
+      <UniqueIdentifier>{d5341fa3-7627-458f-a607-0b92a3a71c87}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>template</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>template</Filter>
+    </ClInclude>
+    <ClInclude Include="libyammer.h">
+      <Filter>template</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libyammer\Yammer.h">
+      <Filter>libyammer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libyammer\YMAddress.h">
+      <Filter>libyammer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libyammer\YMBase.h">
+      <Filter>libyammer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libyammer\YMConnection.h">
+      <Filter>libyammer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libyammer\YMDictionary.h">
+      <Filter>libyammer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libyammer\YMPeer.h">
+      <Filter>libyammer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libyammer\YMSession.h">
+      <Filter>libyammer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libyammer\YMStream.h">
+      <Filter>libyammer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libyammer\YMString.h">
+      <Filter>libyammer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMConnectionPriv.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMDebug.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMInternal.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMLinkedList.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMLocalSocketPair.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMLock.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMLockPriv.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMLog.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMmDNS.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMmDNSBrowser.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMmDNSService.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMOpenssl.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMPeerPriv.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMPipe.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMPipePriv.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMPlexer.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMPlexerPriv.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMRSAKeyPair.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMSecurityProvider.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMSecurityProviderInternal.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMSemaphore.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMStreamPriv.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMStringPriv.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMThread.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMThreadPriv.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMTLSProvider.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMTLSProviderPriv.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMUtilities.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMX509Certificate.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMX509CertificatePriv.h">
+      <Filter>private</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>template</Filter>
+    </ClCompile>
+    <ClCompile Include="libyammer.cpp">
+      <Filter>template</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>template</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMAddress.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMBase.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMConnection.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMDictionary.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMLinkedList.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMLocalSocketPair.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMLock.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMLog.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMmDNS.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMmDNSBrowser.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMmDNSService.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMPeer.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMPipe.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMPlexer.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMRSAKeyPair.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMSecurityProvider.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMSemaphore.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMSession.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMStream.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMString.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMThread.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMTLSProvider.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMUtilities.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMX509Certificate.c">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\private\yammer.pch">
+      <Filter>private</Filter>
+    </None>
+  </ItemGroup>
+</Project>

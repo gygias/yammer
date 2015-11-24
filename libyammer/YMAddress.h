@@ -11,10 +11,10 @@
 #ifndef YMAddress_h
 #define YMAddress_h
 
-#ifdef WIN32
-#include <yammer/YMBase.h>
-#include <yammer/YMString.h>
-#endif
+//#ifdef WIN32
+//#include <libyammer/YMBase.h>
+//#include <libyammer/YMString.h>
+//#endif
 
 typedef struct __YMAddressRef *YMAddressRef;
 

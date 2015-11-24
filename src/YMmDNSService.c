@@ -11,7 +11,13 @@
 #include "YMUtilities.h"
 #include "YMThread.h"
 
+#ifndef _WINDOWS
 #include <sys/socket.h>
+#else
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
+
 #include <dns_sd.h>
 
 #include "YMLog.h"
