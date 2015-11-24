@@ -9,74 +9,18 @@ opaque_thing_that_closes_input_file
                                                     V
                                             Plexer:StreamReadDown -> medium
 
-- @synchronized(self) equivalent to cut down on locks? mutexes aren't small and a lock exists
-- do a ntoh/hton pass, test with a big endian
-- peer lookup in ymsession should be consolidated, and should be keyed off strings not pointers
-- connection ownership not clear like stream
-- one-shot 'connect with type and name' function on ymsession
-
-- does ymstringcreatewithformat need null termination? compiler would probably be confused by our invented 'ymtyperef' token
-- ymlocalsocketpair's server thread probably shouldn't be persistent, would fix name reuse
-- autorelease? stringcreate, classcreate, stringrelease is cumbersome, put pools around [dispatch]threads
-- add isequal and compare, get rid of strcmps on ymstrings
-- test huge single i/o (plex buf)
-- DICTIONARY KEYS
-- retain/release?
-- struct defs once and for all. (empty) should be typedef'd as static, _ref for pointers, _def for (unintended to be used) struct def, like was done for ym_thread_dispatch
-- ymthread should free ym_thread_dispatch_forward_file_context/ym_thread_dispatch_user_context automatically
-   would need to wrap user's entry point in our own "manage memory" wrapper entry, at least for generic dispatches
-- clean up hard aborts used for development (like streamwritedown)
-- ssl i/o func 'call again' stuff is only for nonblocking underlying files, yeah?
-- each openssl "hive" seems to have its own error code defines, go back through and make sure int (return) isn't confused with ERR
-- DispatchForwardFile leaks YMThreadRef because there's no way to set context out of band with initializer
-- way to wrap object->_typeID = myTypeID?
-- does init and generate keypair really need to be separated? if so x509 signing probably should be too
-- consolidate DEBUG_INFO and ifdef out relevant logs (based on target log level?)
-- nice way to consolidate indentations
-- make constructor copies/assumes ownership consistent
-- eliminate if (thing) free(thing) in _Free's
-- dispatch _notify_ names are leaking (so is one other opaque pointer)
-- inlines (logs, string creation, timeval) __YMLogInit
-- stream isLocal redundant? or lookup of stream on removal
-- log levels, macro per .c so there aren't "type" functions
-- collection mod while enumerating guards
+- adopt 'synchronized self'?
+- connection ownership/lifetime not clear
+- automatic log indentation by level
+- inlines
+- per-.c log level boilerplate
 - linked list
-- remove dictionary remote 'last' param
-- if __APPLE__ syslog?
-- vet ownership (!)
-- freeing _YMThreadDispatchThreadDef at the end of DispatchProc ok?
-- generic dispatch 'n pointer params' convenience definition in YMThreadDispatch
-- convenience for "take this fd and flush it to the plexer as user data" (the solution to "direct mode"!)
-- convenience for "i use length prefixes too, box this data with this integer type" from YMStream(Session)Read/Write"
-- plexers have one event delivery thread, yet that has the same starvation problem if client blocks in callout
-- null free()s in Free()s, be hard on user error, c library and shit
-- do a error/perror/fatal pass
-- mDNS should filter local services
+- if apple syslog
+- convenience for "my user data is length-prefixed with x width, too"
+- mDNS filter local services
 - typedef struct __X {} _X; and Ref pass
-- unions for variable length stream/plexer/dispatch structs?
-- dict enum start should check a previous enum was ended
-- dict protects its list during enumeration, but why bother reallocating the returned item?
-- dict list traversal review
-- clean up private function/struct/global definitions smattered at the top of .c's
-- try to renegotiate protocol on muxer init mismatch?
-- if client can pass more than [uint16] bytes in a single user data call, plexer should split it instead of that being the ceiling for internal buffer? or even don't realloc at all and sub-chunk
-- service all detected 'ready' streams on a single servicedown iteration, consuming sem each time? lock optimization
-- where does userinfo of free'd streams, get free'd?
-- {h,n}to{n,h} (is arm big endian?)
-- does order of remote stream close and note matter? (on ym_notify_stream_closing)
-- !!! fds are just leaking
-- consolidate mostly redundant dispatch procs, passing function ptr and log string in user info? notify_new and notify_closing are almost identical
-- get a better story for alloc some param->Create->copy->free ownership all over the place
-- plexer interrupt needs to be synchronized between service up/down (first one to get a bad i/o from underlying)
-- fcntl direct? hopefully not
-- a way to prevent enum vs. literal/bool would be swell, cursory reading says can't do it in c
-- upstream read should expose EOF not return void, user data might be opaque, and error (implying disconnect, or via session note?)
-- lock around stream/pipe/fd accessors? streams are the api and pipes/fds aren't public (barring direct mode), so that should be a bug not user error
-- test recursive lock
-- _PrivateMethod __InternalMethod
-- dispatch should wrap thread, reverse-naming getting a bit cumbersome
-- up/down -> user/medium, up/plex -> user/plex, or something
-- give plex/stream a 'debug log name' so formatting doesn't cross my eyes
-- helper function at some level for the 6 or so lines per dispatch
-- do all those entry points really need to be void*?
-- standardize per-class log prefixes and indents
+- muxer protocol renegotiate?
+- plexer chunk-chunk instead of realloc (and test large single user i/o vs plex buf)
+- service all ready downstreams in single loop, lock optimization
+- {h,n}to{n,h}
+- convenience to consolidate dispatch boilerplate for clients
