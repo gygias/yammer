@@ -408,6 +408,8 @@ typedef struct ManPageThanks
     // it's also worth noting that if you [forcibly] interrupt the session and immediately
     // dealloc the session, async clients working on incoming streams might fault doing this
     YMConnectionCloseStream(connection,stream);
+    
+    NSLog(@"eat random exiting");
 }
 
 void _server_async_forward_callback(void * ctx, uint64_t bytesWritten)

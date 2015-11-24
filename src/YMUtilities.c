@@ -55,12 +55,19 @@ void YMGetTheBeginningOfPosixTimeForCurrentPlatform(struct timeval *time)
     time->tv_usec = 0;
 	YM_WPOP
 }
-
+    
 void YMGetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time)
 {
 	YM_WPPUSH
+    
+#ifndef _WINDOWS
+    time->tv_sec = MAX_OF(typeof(time->tv_sec));
+	time->tv_usec = MAX_OF(typeof(time->tv_usec));
+#else
     time->tv_sec = LONG_MAX;
-	time->tv_usec = LONG_MAX;
+    time->tv_usec = LONG_MAX;
+#endif
+    
 	YM_WPOP
 }
 

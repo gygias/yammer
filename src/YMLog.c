@@ -9,6 +9,7 @@
 #include "YMLog.h"
 #include "YMLock.h"
 #include "YMUtilities.h"
+#include "YMThreadPriv.h"
 
 #include <stdarg.h>
 #ifndef _WINDOWS

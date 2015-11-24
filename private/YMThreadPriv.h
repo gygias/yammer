@@ -11,6 +11,6 @@
 
 #include "YMThread.h"
 
-uint64_t _YMThreadGetCurrentThreadNumber(pthread_t pthread);
+uint64_t _YMThreadGetCurrentThreadNumber();
 
 #endif /* YMThreadPriv_h */

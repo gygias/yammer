@@ -15,6 +15,7 @@
 
 #include "YMUtilities.h"
 #include "YMThread.h"
+#include "YMThreadPriv.h"
 #include "YMDictionary.h"
 #include "YMLock.h"
 #include "YMUtilities.h"
@@ -84,7 +85,7 @@ bool __YMTLSProviderClose(__YMSecurityProviderRef provider);
 unsigned long ym_tls_thread_id_callback()
 {
     //ymlog("ym_tls_thread_id_callback");
-	return (unsigned long)_YMThreadGetCurrentThreadId();
+	return (unsigned long)_YMThreadGetCurrentThreadNumber();
 }
 
 // designated initializer

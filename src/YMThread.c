@@ -6,9 +6,10 @@
 //  Copyright © 2015 combobulated. All rights reserved.
 //
 
-#include "YMUtilities.h"
-
 #include "YMThread.h"
+#include "YMThreadPriv.h"
+
+#include "YMUtilities.h"
 #include "YMDictionary.h"
 #include "YMSemaphore.h"
 #include "YMLock.h"
@@ -95,7 +96,6 @@ typedef __ym_thread_dispatch_forward_file_async_context *__ym_thread_dispatch_fo
 
 __YMThreadRef __YMThreadInitCommon(YMStringRef name, const void *context);
 void *__ym_thread_dispatch_forward_file_proc(__ym_thread_dispatch_forward_file_async_context_ref);
-uint64_t _YMThreadGetCurrentThreadNumber();
 ym_thread_dispatch_ref __YMThreadDispatchCopy(ym_thread_dispatch_ref userDispatchRef);
 __ym_thread_dispatch_thread_context_ref __YMThreadDispatchJoin(__YMThreadRef thread);
 void __YMThreadFreeDispatchContext(__ym_thread_dispatch_context_ref);
