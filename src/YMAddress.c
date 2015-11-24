@@ -27,8 +27,9 @@
 #include <netinet/in.h> // protocols
 #include <arpa/inet.h>
 #else
-#include <winsock.h>
-typedef unsigned __int32 socklen_t;
+#include <winsock2.h>
+#include <ws2tcpip.h>
+//typedef unsigned __int32 socklen_t;
 #endif
 
 #ifdef __cplusplus
@@ -105,7 +106,7 @@ YMAddressRef YMAddressCreate(void* addressData, socklen_t length)
     {
         int family = ( isIPV4 ) ? AF_INET : AF_INET6;
         socklen_t ipLength = isIPV4 ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN;
-        char ipString[ipLength];
+        char ipString[INET6_ADDRSTRLEN];
         if ( ! inet_ntop(family, address->address, ipString, ipLength) )
         {
             ymerr("address: error: inet_ntop failed for address length %d",ipLength);
@@ -136,7 +137,9 @@ YMAddressRef YMAddressCreateLocalHostIPV4(uint16_t port)
     newAddr->sin_family = AF_INET;
     newAddr->sin_addr.s_addr = localhost;
     newAddr->sin_port = port;
+#ifdef _DARWIN_C_SOURCE
     newAddr->sin_len = length;
+#endif
     
     YMAddressRef address = YMAddressCreate(newAddr, length); // todo could be optimized
     free(newAddr);
@@ -154,12 +157,15 @@ YMAddressRef YMAddressCreateWithIPStringAndPort(YMStringRef ipString, uint16_t p
     }
     
     struct sockaddr_in sinAddr = {0,0,0,{0},{0}};
-    sinAddr.sin_len = sizeof(struct sockaddr_in);
+	socklen_t addrLen = sizeof(struct sockaddr_in);
+#ifdef _DARWIN_C_SOURCE
+    sinAddr.sin_len = addrLen;
+#endif
     sinAddr.sin_family = AF_INET;
     sinAddr.sin_port = port;
     sinAddr.sin_addr.s_addr = inAddr.s_addr;
     
-    return YMAddressCreate(&sinAddr, sinAddr.sin_len);
+    return YMAddressCreate(&sinAddr, addrLen);
 }
 
 void _YMAddressFree(YMTypeRef object)

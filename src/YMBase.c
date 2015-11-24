@@ -56,7 +56,7 @@ typedef struct __ym_type
 {
     YMTypeID __type;
     int __retainCount; // todo find a better way to preallocate this
-    pthread_mutex_t *__mutex;
+    MUTEX_PTR_TYPE __mutex;
 } ___ym_type;
 typedef struct __ym_type __YMType;
 typedef __YMType *__YMTypeRef;

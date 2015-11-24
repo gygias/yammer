@@ -23,7 +23,7 @@
 //#define PTHREAD_SEMAPHORE
 #ifdef PTHREAD_SEMAPHORE
 #include <pthread.h>
-#else
+#elif !defined(_WINDOWS)
 #include <semaphore.h>
 #endif
 
@@ -35,11 +35,17 @@ typedef struct __ym_semaphore
     YMStringRef semName;
     YMLockRef lock;
     
+#ifndef _WINDOWS
+#define YM_SEMAPHORE_TYPE sem_t
+#else
+#define YM_SEMAPHORE_TYPE HANDLE
+#endif
+
 #ifdef PTHREAD_SEMAPHORE
     pthread_cond_t cond;
     int value;
 #else
-    sem_t *sem;
+    YM_SEMAPHORE_TYPE *sem;
 #endif
 } ___ym_semaphore;
 typedef struct __ym_semaphore __YMSemaphore;
@@ -47,7 +53,6 @@ typedef __YMSemaphore *__YMSemaphoreRef;
 
 uint16_t gYMSemaphoreIndex = 40;
 YMLockRef gYMSemaphoreIndexLock = NULL;
-static pthread_once_t gYMSemaphoreIndexInit = PTHREAD_ONCE_INIT;
 
 void _YMSemaphoreInit()
 {
@@ -73,8 +78,14 @@ YMSemaphoreRef YMSemaphoreCreate(YMStringRef name, int initialValue)
         return NULL;
     }
 #endif
-    
-    pthread_once(&gYMSemaphoreIndexInit, &_YMSemaphoreInit);
+
+#ifndef _WINDOWS
+	static pthread_once_t gYMSemaphoreIndexInit = PTHREAD_ONCE_INIT;
+	pthread_once(&gYMSemaphoreIndexInit, _YMSemaphoreInit);
+#else
+	static INIT_ONCE gYMSemaphoreIndexInit = INIT_ONCE_STATIC_INIT;
+	InitOnceExecuteOnce(&gYMSemaphoreIndexInit, _YMSemaphoreInit, NULL, NULL);
+#endif
     
     __YMSemaphoreRef semaphore = (__YMSemaphoreRef)_YMAlloc(_YMSemaphoreTypeID,sizeof(__YMSemaphore));
     
@@ -94,7 +105,7 @@ YMSemaphoreRef YMSemaphoreCreate(YMStringRef name, int initialValue)
 #ifdef PTHREAD_SEMAPHORE
     semaphore->cond = cond;
     semaphore->value = initialValue;
-#else
+#elif !defined(_WINDOWS)
     
 try_again:;
     semaphore->sem = sem_open(YMSTR(semaphore->semName), O_CREAT|O_EXCL, S_IRUSR|S_IWUSR, initialValue); // todo mode?
@@ -114,9 +125,16 @@ try_again:;
             }
         }
         else
-            ymlog("semaphore[%s,%s]: fatal: sem_open failed: %d (%s)",YMSTR(semaphore->semName),YMSTR(semaphore->userName),errno,strerror(errno));
+            ymerr("semaphore[%s,%s]: fatal: sem_open failed: %d (%s)",YMSTR(semaphore->semName),YMSTR(semaphore->userName),errno,strerror(errno));
         abort(); // since we handle names internally
     }
+#else
+	semaphore->sem = CreateSemaphore(NULL, 0, LONG_MAX, NULL);
+	if ( semaphore->sem == NULL )
+	{
+		ymerr("semaphore[%s,%s]: fatal: CreateSemaphore failed: %x", YMSTR(semaphore->semName), YMSTR(semaphore->userName), GetLastError());
+		abort();
+	}
 #endif
     
     return (YMSemaphoreRef)semaphore;
@@ -134,10 +152,14 @@ void _YMSemaphoreFree(YMTypeRef object)
         ymerr("semaphore[%s,%s]: fatal: pthread_cond_destroy failed: %d (%s)",YMSTR(semaphore->semName),YMSTR(semaphore->userName),result,strerror(result));
         abort();
     }
-#else
+#elif !defined(_WINDOWS)
     int result = sem_unlink(YMSTR(semaphore->semName));
     if ( result == -1 )
         ymerr("semaphore[%s,%s]: warning: sem_unlink failed: %d (%s)",YMSTR(semaphore->semName),YMSTR(semaphore->userName),errno,strerror(errno));
+#else
+	BOOL okay = CloseHandle(semaphore->sem);
+	if ( ! okay )
+		ymerr("semaphore[%s,%s]: warning: CloseHandle failed: %x", YMSTR(semaphore->semName), YMSTR(semaphore->userName), GetLastError());
 #endif
     
     YMRelease(semaphore->lock);
