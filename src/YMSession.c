@@ -27,8 +27,13 @@
 #define ymlog(x,...) ;
 #endif
 
+#ifndef _WINDOWS
 #include <netinet/in.h>
 #include <netdb.h> // struct hostent
+#else
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
 
 typedef struct __ym_session
 {
@@ -480,6 +485,9 @@ bool YMSessionStartAdvertising(YMSessionRef session_, YMStringRef name)
     if ( aResult != 0 )
     {
         ymerr("session[%s]: error: failed to listen for server start",YMSTR(session->logDescription));
+#ifdef _WINDOWS
+#define close _close
+#endif
         close(socket);
         goto rewind_fail;
     }

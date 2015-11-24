@@ -25,16 +25,16 @@
 #define ymlog(x,...) ;
 #endif
 
-#include <sys/select.h>
-
 #ifdef USE_FTIME
 #include <sys/timeb.h>
 #error todo
-#else
+#elif !defined(_WINDOWS)
+#include <sys/select.h>
 #include <sys/time.h>
-#endif
-
 #include <pthread.h> // explicit for sigpipe
+#else
+#include <winsock2.h> // gettimeofday
+#endif
 
 #define YMPlexerBuiltInVersion ((uint32_t)1)
 
@@ -158,7 +158,6 @@ typedef struct __ym_dispatch_plexer_stream_def
 typedef struct __ym_dispatch_plexer_stream_def __ym_dispatch_plexer_and_stream;
 typedef __ym_dispatch_plexer_and_stream *__ym_dispatch_plexer_and_stream_ref;
 
-static pthread_once_t gYMRegisterSigpipeOnce = PTHREAD_ONCE_INIT;
 void __YMRegisterSigpipe();
 void __ym_sigpipe_handler (int signum);
 YMStreamRef __YMPlexerChooseReadyStream(__YMPlexerRef plexer, YMTypeRef **list, int *outReadyStreamsByIdx, int *outStreamListIdx, int *outStreamIdx);
@@ -193,7 +192,13 @@ YMPlexerRef YMPlexerCreateWithFullDuplexFile(YMStringRef name, int file, bool ma
 
 YMPlexerRef YMPlexerCreate(YMStringRef name, int inputFile, int outputFile, bool master)
 {
+#ifndef _WINDOWS
+	static pthread_once_t gYMRegisterSigpipeOnce = PTHREAD_ONCE_INIT;
     pthread_once(&gYMRegisterSigpipeOnce, __YMRegisterSigpipe);
+#else
+	static INIT_ONCE gYMRegisterSigpipeOnce = INIT_ONCE_STATIC_INIT;
+	InitOnceExecuteOnce(&gYMRegisterSigpipeOnce, __YMRegisterSigpipe, NULL, NULL);
+#endif
     
     __YMPlexerRef plexer = (__YMPlexerRef)_YMAlloc(_YMPlexerTypeID,sizeof(__YMPlexer));
     
@@ -440,7 +445,11 @@ bool YMPlexerStop(YMPlexerRef plexer_)
 
 void __YMRegisterSigpipe()
 {
+#ifndef _WINDOWS
     signal(SIGPIPE,__ym_sigpipe_handler);
+#else
+	// ???
+#endif
 }
 
 void __ym_sigpipe_handler (__unused int signum)
@@ -448,8 +457,8 @@ void __ym_sigpipe_handler (__unused int signum)
     fprintf(stderr,"sigpipe happened\n");
 }
 
-const char *YMPlexerMasterHello = "オス、王様でおるべし";
-const char *YMPlexerSlaveHello = "よろしくお願いいたします";
+const char YMPlexerMasterHello[] = "オス、王様でおるべし";
+const char YMPlexerSlaveHello[] = "よろしくお願いいたします";
 
 bool __YMPlexerInitAsMaster(__YMPlexerRef plexer_)
 {
@@ -464,7 +473,7 @@ bool __YMPlexerInitAsMaster(__YMPlexerRef plexer_)
     }
     
     unsigned long inHelloLen = strlen(YMPlexerSlaveHello);
-    char inHello[inHelloLen];
+    char inHello[64];
     okay = YMSecurityProviderRead(plexer->provider, (void *)inHello, inHelloLen);
     if ( ! okay || memcmp(YMPlexerSlaveHello,inHello,inHelloLen) )
     {
@@ -506,7 +515,7 @@ bool __YMPlexerInitAsSlave(__YMPlexerRef plexer)
 {
     char *errorTemplate = " plexer[s]: error: plexer init failed: %s";
     unsigned long inHelloLen = strlen(YMPlexerMasterHello);
-    char inHello[inHelloLen];
+    char inHello[64];
     bool okay = YMSecurityProviderRead(plexer->provider, (void *)inHello, inHelloLen);
     
     if ( ! okay || memcmp(YMPlexerMasterHello,inHello,inHelloLen) )

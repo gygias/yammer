@@ -21,8 +21,13 @@
 #include <openssl/rsa.h>
 #include <openssl/rand.h> // let's hope this is what the man page means by "the" pseudo-random number generator, despite the reference to "bad" rand(3)
 #include <openssl/err.h>
+
+#ifndef _WINDOWS
 #include <pthread.h>
 #include <sys/time.h>
+#else
+#include <winsock2.h> // yes, winsock for gettimeofday()!
+#endif
 
 // it's been a while since crypto 101
 // public key (N,e), N:modulo e:public exponent

@@ -10,8 +10,6 @@
 
 #include "YMUtilities.h"
 
-#include <pthread.h>
-
 #include "YMLog.h"
 #undef ymlog_type
 #define ymlog_type YMLogThreadSync

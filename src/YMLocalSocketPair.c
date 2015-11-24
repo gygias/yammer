@@ -19,10 +19,18 @@
 #define ymlog(x,...) ;
 #endif
 
+#ifndef _WINDOWS
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <stddef.h> // offsetof
 #include <pthread.h>
+#else
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#define PF_LOCAL PF_UNIX
+#endif
+#include <stddef.h> // offsetof
+
+#ifndef _WINDOWS // todo? this is only used by the os x unit tests atm
 
 typedef struct __ym_local_socket_pair
 {
@@ -295,3 +303,7 @@ void __ym_local_socket_accept_proc(__unused void *ctx)
     
     ymlog("__ym_local_socket_accept_proc exiting");
 }
+
+#else // not _WINDOWS
+void _YMLocalSocketPairFree(YMTypeRef object) {}
+#endif
