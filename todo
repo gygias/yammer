@@ -1,3 +1,4 @@
+- eliminate redundant framing between forward file and plexer
 - myabort, so aborts can be switched on and off, or at least not require a compound block, soft and hard for debugging vs internal error
 - need test case for forward-file "opaque" (unbounded), e.g. bom stream close case
 
