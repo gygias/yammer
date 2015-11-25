@@ -34,6 +34,10 @@ typedef enum
 
 typedef const struct __ym_lock *YMLockRef;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 YMLockRef YMLockCreate();
 YMLockRef YMLockCreateWithOptions(YMLockOptions options);
 YMLockRef YMLockCreateWithOptionsAndName(YMLockOptions options, YMStringRef name);
@@ -44,5 +48,9 @@ void YMLockUnlock(YMLockRef lock);
 
 // for YMSemaphore
 MUTEX_PTR_TYPE _YMLockGetMutex(YMLockRef lock);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* YMLock_h */

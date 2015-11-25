@@ -193,7 +193,7 @@ bool YMmDNSServiceStart( YMmDNSServiceRef service_ )
                                                     txtLength,
                                                     txt,
 #endif
-                                                    __YMmDNSRegisterCallback, // DNSServiceRegisterReply
+                                                    (DNSServiceRegisterReply)__YMmDNSRegisterCallback, // DNSServiceRegisterReply
                                                     service); // context
     
     if( result != kDNSServiceErr_NoError )

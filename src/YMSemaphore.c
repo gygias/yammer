@@ -84,7 +84,7 @@ YMSemaphoreRef YMSemaphoreCreate(YMStringRef name, int initialValue)
 	pthread_once(&gYMSemaphoreIndexInit, _YMSemaphoreInit);
 #else
 	static INIT_ONCE gYMSemaphoreIndexInit = INIT_ONCE_STATIC_INIT;
-	InitOnceExecuteOnce(&gYMSemaphoreIndexInit, _YMSemaphoreInit, NULL, NULL);
+	InitOnceExecuteOnce(&gYMSemaphoreIndexInit, (PINIT_ONCE_FN)_YMSemaphoreInit, NULL, NULL);
 #endif
     
     __YMSemaphoreRef semaphore = (__YMSemaphoreRef)_YMAlloc(_YMSemaphoreTypeID,sizeof(__YMSemaphore));
@@ -189,7 +189,7 @@ void YMSemaphoreWait(YMSemaphoreRef semaphore_)
     }
     
     YMLockUnlock(semaphore->lock);
-#else
+#elif !defined(_WINDOWS)
 sem_retry:
     ymlog("semaphore[%s,%s]: waiting",YMSTR(semaphore->semName),YMSTR(semaphore->userName));
     int result = sem_wait(semaphore->sem);
@@ -202,6 +202,13 @@ sem_retry:
         abort();
     }
     ymlog("semaphore[%s,%s]: waited!->",YMSTR(semaphore->semName),YMSTR(semaphore->userName));
+#else
+	DWORD result = WaitForSingleObject(semaphore->sem, INFINITE);
+	if ( result != WAIT_OBJECT_0 )
+	{
+		ymerr("semaphore[%s,%s]: sem_wait failed: %x", YMSTR(semaphore->semName), YMSTR(semaphore->userName), result);
+		abort();
+	}
 #endif
 }
 
@@ -226,7 +233,7 @@ void YMSemaphoreSignal(YMSemaphoreRef semaphore_)
     }
     
     YMLockUnlock(semaphore->lock);
-#else
+#elif !defined(_WINDOWS)
     ymlog("semaphore[%s,%s]: posting",YMSTR(semaphore->semName),YMSTR(semaphore->userName));
     int result = sem_post(semaphore->sem);
     if ( result != 0 )
@@ -235,5 +242,12 @@ void YMSemaphoreSignal(YMSemaphoreRef semaphore_)
         abort();
     }
     ymlog("semaphore[%s,%s]: posted",YMSTR(semaphore->semName),YMSTR(semaphore->userName));
+#else
+	BOOL okay = ReleaseSemaphore(semaphore->sem, 1, NULL);
+	if ( ! okay )
+	{
+		ymerr("semaphore[%s,%s]: fatal: ReleaseSemaphore failed: %x", YMSTR(semaphore->semName), YMSTR(semaphore->userName), GetLastError());
+		abort();
+	}
 #endif
 }

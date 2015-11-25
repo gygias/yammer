@@ -306,4 +306,8 @@ void __ym_local_socket_accept_proc(__unused void *ctx)
 
 #else // not _WINDOWS
 void _YMLocalSocketPairFree(YMTypeRef object) {}
+<<<<<<< HEAD
 #endif
+=======
+#endif
+>>>>>>> 928095af085191a8aec42929a7a747d45dc0f37f

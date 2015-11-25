@@ -28,6 +28,10 @@ typedef struct __ym_lock
 typedef struct __ym_lock __YMLock;
 typedef __YMLock *__YMLockRef;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 YMLockRef YMLockCreate()
 {
     return YMLockCreateWithOptionsAndName(YMLockNone, NULL);
@@ -90,3 +94,7 @@ MUTEX_PTR_TYPE _YMLockGetMutex(YMLockRef lock_)
     __YMLockRef lock = (__YMLockRef)lock_;    
     return lock->mutex;
 }
+
+#ifdef __cplusplus
+}
+#endif
