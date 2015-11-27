@@ -82,10 +82,10 @@ bool __YMTLSProviderRead(__YMSecurityProviderRef provider, uint8_t *buffer, size
 bool __YMTLSProviderWrite(__YMSecurityProviderRef provider, const uint8_t *buffer, size_t bytes);
 bool __YMTLSProviderClose(__YMSecurityProviderRef provider);
 
-unsigned long ym_tls_thread_id_callback()
+void ym_tls_thread_id_callback(CRYPTO_THREADID *threadId)
 {
     //ymlog("ym_tls_thread_id_callback");
-	return (unsigned long)_YMThreadGetCurrentThreadNumber();
+    CRYPTO_THREADID_set_numeric(threadId, _YMThreadGetCurrentThreadNumber());
 }
 
 // designated initializer
@@ -192,7 +192,7 @@ void __YMTLSInit()
     gYMTLSLocks = calloc(CRYPTO_num_locks(),sizeof(YMLockRef));
     //bzero(gYMTLSLocks,CRYPTO_NUM_LOCKS*sizeof(YMLockRef));
     
-	CRYPTO_THREADID_set_callback((unsigned long (*)())ym_tls_thread_id_callback);
+	CRYPTO_THREADID_set_callback(ym_tls_thread_id_callback);
     CRYPTO_set_locking_callback((void (*)())__ym_tls_lock_callback);
     
     gYMTLSExDataList = YMDictionaryCreate();

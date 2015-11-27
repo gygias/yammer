@@ -37,6 +37,8 @@
 
 #ifdef WIN32
 #define YMAPI __declspec( dllexport ) 
+#else
+#define YMAPI
 #endif
 
 #define YM_VERSION 1
