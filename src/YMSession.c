@@ -27,7 +27,7 @@
 #define ymlog(x,...) ;
 #endif
 
-#ifndef _WINDOWS
+#ifndef WIN32
 #include <netinet/in.h>
 #include <netdb.h> // struct hostent
 #else
@@ -485,7 +485,7 @@ bool YMSessionStartAdvertising(YMSessionRef session_, YMStringRef name)
     if ( aResult != 0 )
     {
         ymerr("session[%s]: error: failed to listen for server start",YMSTR(session->logDescription));
-#ifdef _WINDOWS
+#ifdef WIN32
 #define close _close
 #endif
         close(socket);

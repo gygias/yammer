@@ -16,7 +16,7 @@
 #include "YMStreamPriv.h"
 #include "YMPlexerPriv.h"
 
-#ifndef _WINDOWS
+#ifndef WIN32
 #include <pthread.h>
 #define YM_THREAD_TYPE pthread_t
 #else
@@ -105,7 +105,7 @@ __YMThreadRef __YMThreadInitCommon(YMStringRef name, const void *context)
 {
     __YMThreadRef thread = (__YMThreadRef)_YMAlloc(_YMThreadTypeID,sizeof(__YMThread));
 
-#ifndef _WINDOWS
+#ifndef WIN32
 	static pthread_once_t gDispatchInitOnce = PTHREAD_ONCE_INIT;
     pthread_once(&gDispatchInitOnce, __YMThreadDispatchInit);
 #else
@@ -240,7 +240,7 @@ bool YMThreadStart(YMThreadRef thread_)
     YM_THREAD_TYPE pthread;
     int result;
     
-#ifndef _WINDOWS
+#ifndef WIN32
     if ( ( result = pthread_create(&pthread, NULL, (void *(*)(void *))thread->entryPoint, (void *)thread->context) ) )
     {
         ymerr("thread[%s,%s]: error: pthread_create %d %s", YMSTR(thread->name), thread->isDispatchThread?"dispatch":"user", result, strerror(result));
@@ -264,7 +264,7 @@ bool YMThreadStart(YMThreadRef thread_)
 bool YMThreadJoin(YMThreadRef thread_)
 {
     __YMThreadRef thread = (__YMThreadRef)thread_;
-#ifndef _WINDOWS
+#ifndef WIN32
     int result = pthread_join(thread->pthread, NULL);
     if ( result != 0 )
     {
@@ -404,7 +404,7 @@ void __YMThreadFreeDispatchContext(__ym_thread_dispatch_context_ref dispatchCont
 // xxx i wonder if this is actually going to be portable
 uint64_t _YMThreadGetCurrentThreadNumber()
 {
-#ifndef _WINDOWS
+#ifndef WIN32
     uint64_t threadId = 0;
 	pthread_threadid_np(pthread_self(), &threadId);
     return threadId;

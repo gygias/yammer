@@ -16,6 +16,10 @@
 #include <libyammer/YMPeer.h>
 #include <libyammer/YMConnection.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef YMTypeRef YMSessionRef;
 
 // browsing, discover & connection
@@ -34,27 +38,31 @@ typedef void(*ym_session_interrupted_func)(YMSessionRef,void*);
 typedef void(*ym_session_new_stream_func)(YMSessionRef,YMConnectionRef,YMStreamRef,void*);
 typedef void(*ym_session_stream_closing_func)(YMSessionRef,YMConnectionRef,YMStreamRef,void*);
 
-YMSessionRef YMSessionCreate(YMStringRef type);
+YMAPI YMSessionRef YMSessionCreate(YMStringRef type);
 
-void YMSessionSetBrowsingCallbacks(YMSessionRef session, ym_session_added_peer_func added, ym_session_removed_peer_func removed,
+YMAPI void YMSessionSetBrowsingCallbacks(YMSessionRef session, ym_session_added_peer_func added, ym_session_removed_peer_func removed,
                                  ym_session_resolve_failed_func rFailed, ym_session_resolved_peer_func resolved,
                                  ym_session_connect_failed_func cFailed, void *context);
-void YMSessionSetAdvertisingCallbacks(YMSessionRef session,ym_session_should_accept_func should, void* context);
-void YMSessionSetCommonCallbacks(YMSessionRef session, ym_session_connected_func connected, ym_session_interrupted_func interrupted,
+YMAPI void YMSessionSetAdvertisingCallbacks(YMSessionRef session,ym_session_should_accept_func should, void* context);
+YMAPI void YMSessionSetCommonCallbacks(YMSessionRef session, ym_session_connected_func connected, ym_session_interrupted_func interrupted,
                                  ym_session_new_stream_func new_, ym_session_stream_closing_func closing);
 
-bool YMSessionStartAdvertising(YMSessionRef session, YMStringRef name);
-bool YMSessionStopAdvertising(YMSessionRef session);
+YMAPI bool YMSessionStartAdvertising(YMSessionRef session, YMStringRef name);
+YMAPI bool YMSessionStopAdvertising(YMSessionRef session);
 
-bool YMSessionStartBrowsing(YMSessionRef session);
-YMPeerRef YMSessionGetPeerNamed(YMSessionRef session, YMStringRef peerName);
-bool YMSessionResolvePeer(YMSessionRef session, YMPeerRef peer);
-bool YMSessionConnectToPeer(YMSessionRef session, YMPeerRef peer, bool sync);
-bool YMSessionStopBrowsing(YMSessionRef session);
+YMAPI bool YMSessionStartBrowsing(YMSessionRef session);
+YMAPI YMPeerRef YMSessionGetPeerNamed(YMSessionRef session, YMStringRef peerName);
+YMAPI bool YMSessionResolvePeer(YMSessionRef session, YMPeerRef peer);
+YMAPI bool YMSessionConnectToPeer(YMSessionRef session, YMPeerRef peer, bool sync);
+YMAPI bool YMSessionStopBrowsing(YMSessionRef session);
 
-bool YMSessionCloseAllConnections(YMSessionRef session);
+YMAPI bool YMSessionCloseAllConnections(YMSessionRef session);
 
-YMConnectionRef YMSessionGetDefaultConnection(YMSessionRef session);
-YMDictionaryRef YMSessionGetConnections(YMSessionRef session);
+YMAPI YMConnectionRef YMSessionGetDefaultConnection(YMSessionRef session);
+YMAPI YMDictionaryRef YMSessionGetConnections(YMSessionRef session);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* YMSession_h */

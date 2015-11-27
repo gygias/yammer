@@ -9,6 +9,10 @@
 #ifndef YMConnection_h
 #define YMConnection_h
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <libyammer/YMBase.h>
 
 #include <libyammer/YMConnection.h>
@@ -32,18 +36,22 @@ typedef void (*ym_connection_new_stream_func)(YMConnectionRef,YMStreamRef,void*)
 typedef void (*ym_connection_stream_closing_func)(YMConnectionRef,YMStreamRef,void*);
 typedef void (*ym_connection_interrupted_func)(YMConnectionRef,void*);
 
-YMConnectionRef YMConnectionCreate(YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType);
-YMConnectionRef YMConnectionCreateIncoming(int socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType);
-void YMConnectionSetCallbacks(YMConnectionRef connection,
+YMAPI YMConnectionRef YMConnectionCreate(YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType);
+YMAPI YMConnectionRef YMConnectionCreateIncoming(int socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType);
+YMAPI void YMConnectionSetCallbacks(YMConnectionRef connection,
                               ym_connection_new_stream_func newFunc, void *newFuncContext,
                               ym_connection_stream_closing_func closingFunc, void *closingFuncContext,
                               ym_connection_interrupted_func interruptedFunc, void *interruptedFuncContext);
-bool YMConnectionConnect(YMConnectionRef connection);
+YMAPI bool YMConnectionConnect(YMConnectionRef connection);
 
-uint64_t YMConnectionDoSample(YMConnectionRef connection);
-YMAddressRef YMConnectionGetAddress(YMConnectionRef connection);
+YMAPI uint64_t YMConnectionDoSample(YMConnectionRef connection);
+YMAPI YMAddressRef YMConnectionGetAddress(YMConnectionRef connection);
 
-YMStreamRef YMConnectionCreateStream(YMConnectionRef connection, YMStringRef name);
-void YMConnectionCloseStream(YMConnectionRef connection, YMStreamRef stream);
+YMAPI YMStreamRef YMConnectionCreateStream(YMConnectionRef connection, YMStringRef name);
+YMAPI void YMConnectionCloseStream(YMConnectionRef connection, YMStreamRef stream);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* YMConnection_h */

@@ -13,17 +13,25 @@
 #include <unistd.h>
 #include <pthread.h>
 #else
-#define __unused
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #endif
 
-#import <libyammer/Yammer.h>
-#import "defs.h"
+#include <libyammer/Yammer.h>
+#include "defs.h"
 
 YMSessionRef gYMSession = NULL;
 bool gIsServer;
 
+#ifndef WIN32
 void __sigint_handler (__unused int signum)
 {
+#else
+void __CtrlHandler(DWORD cType)
+{
+	if ( cType != CTRL_C_EVENT )
+		return;
+#endif
     printf("caught sigint\n");
     exit(1);
 }
@@ -34,10 +42,15 @@ int main(int argc, const char * argv[]) {
     {
         printf("usage: testprompt <mdns type> [<mdns name>]\n");
         printf(" if name is not specified, the tool will act as a client.\n");
+		exit(1);
     }
         
+#ifndef WIN32
     signal(SIGINT, __sigint_handler);
-        
+#else
+	SetConsoleCtrlHandler((PHANDLER_ROUTINE)__CtrlHandler, TRUE);
+#endif
+
     if ( argc == 3 )
     {
         gIsServer = true;
@@ -58,15 +71,23 @@ int main(int argc, const char * argv[]) {
     }
         
     int longTime = 999999999;
+#ifndef WIN32
     sleep(longTime);
+#else
+	Sleep(longTime*1000);
+#endif
     
     return 0;
 }
 
 void thread(void (*func)(YMStreamRef), YMStreamRef context)
 {
+#ifndef WIN32
     pthread_t pthread;
     pthread_create(&pthread, NULL, (void *(*)(void *))func, (void *)context);
+#else
+	HANDLE thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)func, context, 0, NULL);
+#endif
 }
 
 typedef struct message_header

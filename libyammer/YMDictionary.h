@@ -9,20 +9,24 @@
 #ifndef YMDictionary_h
 #define YMDictionary_h
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef YMTypeRef YMDictionaryRef;
 
 typedef uint64_t YMDictionaryKey;
 typedef const void *YMDictionaryValue;
 
-YMDictionaryRef YMDictionaryCreate();
+YMAPI YMDictionaryRef YMDictionaryCreate();
 
-void YMDictionaryAdd(YMDictionaryRef, YMDictionaryKey key, YMDictionaryValue item);
-bool YMDictionaryContains(YMDictionaryRef, YMDictionaryKey key);
-YMDictionaryKey YMDictionaryGetRandomKey(YMDictionaryRef dict);
-YMDictionaryValue YMDictionaryGetItem(YMDictionaryRef, YMDictionaryKey key);
-YMDictionaryValue YMDictionaryRemove(YMDictionaryRef, YMDictionaryKey key);
+YMAPI void YMDictionaryAdd(YMDictionaryRef, YMDictionaryKey key, YMDictionaryValue item);
+YMAPI bool YMDictionaryContains(YMDictionaryRef, YMDictionaryKey key);
+YMAPI YMDictionaryKey YMDictionaryGetRandomKey(YMDictionaryRef);
+YMAPI YMDictionaryValue YMDictionaryGetItem(YMDictionaryRef, YMDictionaryKey key);
+YMAPI YMDictionaryValue YMDictionaryRemove(YMDictionaryRef, YMDictionaryKey key);
 
-size_t YMDictionaryGetCount(YMDictionaryRef);
+YMAPI size_t YMDictionaryGetCount(YMDictionaryRef);
 
 typedef struct __YMDictionaryEnum
 {
@@ -32,10 +36,14 @@ typedef struct __YMDictionaryEnum
 typedef struct __YMDictionaryEnum *YMDictionaryEnumRef;
 
 // returns NULL if dictionary is empty
-YMDictionaryEnumRef YMDictionaryEnumeratorBegin(YMDictionaryRef);
+YMAPI YMDictionaryEnumRef YMDictionaryEnumeratorBegin(YMDictionaryRef);
 // returns NULL if enumeration is complete
-YMDictionaryEnumRef YMDictionaryEnumeratorGetNext(YMDictionaryEnumRef aEnum);
+YMAPI YMDictionaryEnumRef YMDictionaryEnumeratorGetNext(YMDictionaryEnumRef aEnum);
 // call only if cancelling incomplete enumeration, if GetNext returns NULL there is nothing more for the caller to do.
-void YMDictionaryEnumeratorEnd(YMDictionaryEnumRef aEnum);
+YMAPI void YMDictionaryEnumeratorEnd(YMDictionaryEnumRef aEnum);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* YMDictionary_h */

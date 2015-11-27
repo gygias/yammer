@@ -9,20 +9,24 @@
 #ifndef YMBase_h
 #define YMBase_h
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef const void *YMTypeRef;
 typedef char YMTypeID;
 
-YMTypeRef YMRetain(YMTypeRef object);
-YMTypeRef YMAutorelease(YMTypeRef object);
+YMAPI YMTypeRef YMRetain(YMTypeRef object);
+YMAPI YMTypeRef YMAutorelease(YMTypeRef object);
 #ifdef DEBUG
 #define YM_RELEASE_RETURN_TYPE bool
 #else
 #define YM_RELEASE_RETURN_TYPE void
 #endif
-YM_RELEASE_RETURN_TYPE YMRelease(YMTypeRef object);
+YMAPI YM_RELEASE_RETURN_TYPE YMRelease(YMTypeRef object);
 
-void YMSelfLock(YMTypeRef object);
-void YMSelfUnlock(YMTypeRef object);
+YMAPI void YMSelfLock(YMTypeRef object);
+YMAPI void YMSelfUnlock(YMTypeRef object);
 
 typedef enum
 {
@@ -31,9 +35,9 @@ typedef enum
     YMIOError = -1
 } YMIOResult;
 
-void YMFreeGlobalResources();
+YMAPI void YMFreeGlobalResources();
 
-#ifndef _WINDOWS
+#ifndef WIN32
 #define YM_VARGS_SENTINEL_REQUIRED __attribute__((sentinel(0,1)))
 #define YM_WPPUSH \
 _Pragma("GCC diagnostic push") \
@@ -56,6 +60,10 @@ _Pragma("GCC diagnostic pop")
 #define YM_WPOP
 #define __unused
 #define typeof decltype
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* YMBase_h */

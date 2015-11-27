@@ -1,0 +1,1 @@
+xcopy lib\*.dll Debug\

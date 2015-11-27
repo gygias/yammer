@@ -87,19 +87,25 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBYAMMER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>%USERPROFILE%\sandbox\yammer;%USERPROFILE%\sandbox\yammer\private;%USERPROFILE%\sandbox\yammer\win;%USERPROFILE%\sandbox\yammer\libyammer;%USERPROFILE%\sandbox\openssl\include;C:\Program Files\Bonjour SDK\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%USERPROFILE%\sandbox\yammer;%USERPROFILE%\sandbox\yammer\private;%USERPROFILE%\sandbox\yammer\win;%USERPROFILE%\sandbox\yammer\libyammer;%USERPROFILE%\sandbox\openssl\include;\Program Files\Bonjour SDK\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>yammer.pch;%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Program Files\Bonjour SDK\Lib\Win32;lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>\Program Files\Bonjour SDK\Lib\Win32;lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>dnssd.lib;ws2_32.lib;ssleay32.lib;libeay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>
       </AdditionalOptions>
       <IgnoreAllDefaultLibraries>
       </IgnoreAllDefaultLibraries>
     </Link>
+    <PostBuildEvent>
+      <Command>postbuild_event.bat</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>run postbuild script</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>

@@ -26,13 +26,17 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#ifndef _WINDOWS
+#ifndef WIN32
 #include <unistd.h>
 #else
 #define _WINSOCKAPI_
 #include <windows.h>
 #include "arc4random.h"
 #define inline
+#endif
+
+#ifdef WIN32
+#define YMAPI __declspec( dllexport ) 
 #endif
 
 #define YM_VERSION 1

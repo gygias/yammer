@@ -18,7 +18,7 @@
 #define ymlog(x,...) ;
 #endif
 
-#ifndef _WINDOWS
+#ifndef WIN32
 #define YM_PORT_MAX IPPORT_HILASTAUTO
 #include <netinet/in.h>
 #include <sys/time.h>
@@ -60,7 +60,7 @@ void YMGetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time)
 {
 	YM_WPPUSH
     
-#ifndef _WINDOWS
+#ifndef WIN32
     time->tv_sec = MAX_OF(typeof(time->tv_sec));
 	time->tv_usec = MAX_OF(typeof(time->tv_usec));
 #else
@@ -203,7 +203,7 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
     return okay ? (uint32_t)thePort : -1;
 }
 
-#ifndef _WINDOWS
+#ifndef WIN32
 pthread_mutex_t *YMCreateMutexWithOptions(YMLockOptions options)
 {
     pthread_mutex_t *outMutex = NULL;
@@ -331,7 +331,7 @@ HANDLE YMCreateMutexWithOptions(YMLockOptions options)
 }
 #endif
 
-#if defined(_WINDOWS) || defined(_YOLO_DONT_TELL_PROFESSOR)
+#if defined(WIN32) || defined(_YOLO_DONT_TELL_PROFESSOR)
 int gettimeofday(struct timeval * tp, struct timezone * tzp)
 {
 	// Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's

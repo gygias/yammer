@@ -11,10 +11,9 @@
 #ifndef YMAddress_h
 #define YMAddress_h
 
-//#ifdef WIN32
-//#include <libyammer/YMBase.h>
-//#include <libyammer/YMString.h>
-//#endif
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct __YMAddressRef *YMAddressRef;
 
@@ -24,16 +23,20 @@ typedef enum
     YMAddressIPV6
 } YMAddressType;
 
-YMAddressRef YMAddressCreate(void* addressData, uint32_t length);
-YMAddressRef YMAddressCreateLocalHostIPV4(uint16_t port);
-YMAddressRef YMAddressCreateWithIPStringAndPort(YMStringRef ipString, uint16_t port);
+YMAPI YMAddressRef YMAddressCreate(void* addressData, uint32_t length);
+YMAPI YMAddressRef YMAddressCreateLocalHostIPV4(uint16_t port);
+YMAPI YMAddressRef YMAddressCreateWithIPStringAndPort(YMStringRef ipString, uint16_t port);
 
-const void *YMAddressGetAddressData(YMAddressRef address);
-int YMAddressGetLength(YMAddressRef address);
-YMStringRef YMAddressGetDescription(YMAddressRef address);
+YMAPI const void *YMAddressGetAddressData(YMAddressRef address);
+YMAPI int YMAddressGetLength(YMAddressRef address);
+YMAPI YMStringRef YMAddressGetDescription(YMAddressRef address);
 
-int YMAddressGetDomain(YMAddressRef address);
-int YMAddressGetAddressFamily(YMAddressRef address);
-int YMAddressGetDefaultProtocolForAddressFamily(int addressFamily);
+YMAPI int YMAddressGetDomain(YMAddressRef address);
+YMAPI int YMAddressGetAddressFamily(YMAddressRef address);
+YMAPI int YMAddressGetDefaultProtocolForAddressFamily(int addressFamily);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* YMAddress_h */

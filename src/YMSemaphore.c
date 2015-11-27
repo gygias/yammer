@@ -23,7 +23,7 @@
 //#define PTHREAD_SEMAPHORE
 #ifdef PTHREAD_SEMAPHORE
 #include <pthread.h>
-#elif !defined(_WINDOWS)
+#elif !defined(WIN32)
 #include <semaphore.h>
 #endif
 
@@ -35,7 +35,7 @@ typedef struct __ym_semaphore
     YMStringRef semName;
     YMLockRef lock;
     
-#ifndef _WINDOWS
+#ifndef WIN32
 #define YM_SEMAPHORE_TYPE sem_t
 #else
 #define YM_SEMAPHORE_TYPE HANDLE
@@ -79,7 +79,7 @@ YMSemaphoreRef YMSemaphoreCreate(YMStringRef name, int initialValue)
     }
 #endif
 
-#ifndef _WINDOWS
+#ifndef WIN32
 	static pthread_once_t gYMSemaphoreIndexInit = PTHREAD_ONCE_INIT;
 	pthread_once(&gYMSemaphoreIndexInit, _YMSemaphoreInit);
 #else
@@ -105,7 +105,7 @@ YMSemaphoreRef YMSemaphoreCreate(YMStringRef name, int initialValue)
 #ifdef PTHREAD_SEMAPHORE
     semaphore->cond = cond;
     semaphore->value = initialValue;
-#elif !defined(_WINDOWS)
+#elif !defined(WIN32)
     
 try_again:;
     semaphore->sem = sem_open(YMSTR(semaphore->semName), O_CREAT|O_EXCL, S_IRUSR|S_IWUSR, initialValue); // todo mode?
@@ -152,7 +152,7 @@ void _YMSemaphoreFree(YMTypeRef object)
         ymerr("semaphore[%s,%s]: fatal: pthread_cond_destroy failed: %d (%s)",YMSTR(semaphore->semName),YMSTR(semaphore->userName),result,strerror(result));
         abort();
     }
-#elif !defined(_WINDOWS)
+#elif !defined(WIN32)
     int result = sem_unlink(YMSTR(semaphore->semName));
     if ( result == -1 )
         ymerr("semaphore[%s,%s]: warning: sem_unlink failed: %d (%s)",YMSTR(semaphore->semName),YMSTR(semaphore->userName),errno,strerror(errno));
@@ -189,7 +189,7 @@ void YMSemaphoreWait(YMSemaphoreRef semaphore_)
     }
     
     YMLockUnlock(semaphore->lock);
-#elif !defined(_WINDOWS)
+#elif !defined(WIN32)
 sem_retry:
     ymlog("semaphore[%s,%s]: waiting",YMSTR(semaphore->semName),YMSTR(semaphore->userName));
     int result = sem_wait(semaphore->sem);
@@ -233,7 +233,7 @@ void YMSemaphoreSignal(YMSemaphoreRef semaphore_)
     }
     
     YMLockUnlock(semaphore->lock);
-#elif !defined(_WINDOWS)
+#elif !defined(WIN32)
     ymlog("semaphore[%s,%s]: posting",YMSTR(semaphore->semName),YMSTR(semaphore->userName));
     int result = sem_post(semaphore->sem);
     if ( result != 0 )

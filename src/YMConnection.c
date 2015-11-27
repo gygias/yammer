@@ -22,7 +22,7 @@
 
 #define YM_CON_DESC (connection->address ? YMSTR(YMAddressGetDescription(connection->address)) : "*")
 
-#ifndef _WINDOWS
+#ifndef WIN32
 #include <sys/socket.h>
 #else
 #include <winsock2.h>

@@ -23,7 +23,7 @@
 #include <sys/stat.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-#ifndef _WINDOWS
+#ifndef WIN32
 #include <pthread.h>
 #endif
 
@@ -97,7 +97,7 @@ YMTLSProviderRef YMTLSProviderCreateWithFullDuplexFile(int file, bool isServer)
     return __YMTLSProviderCreateWithFullDuplexFile(file, false, isServer);
 }
 
-#ifndef _WINDOWS
+#ifndef WIN32
 static pthread_once_t gYMInitTLSOnce = PTHREAD_ONCE_INIT;
 #else
 static INIT_ONCE gYMInitTLSOnce = INIT_ONCE_STATIC_INIT;
@@ -105,13 +105,13 @@ static INIT_ONCE gYMInitTLSOnce = INIT_ONCE_STATIC_INIT;
 
 YMTLSProviderRef __YMTLSProviderCreateWithFullDuplexFile(int file, bool isWrappingSocket, bool isServer)
 {
-#ifndef _WINDOWS
+#ifndef WIN32
 	pthread_once(&gYMInitTLSOnce, __YMTLSInit);
 #else
 	InitOnceExecuteOnce(&gYMInitTLSOnce, (PINIT_ONCE_FN)__YMTLSInit, NULL, NULL);
 #endif
     
-#ifndef _WINDOWS
+#ifndef WIN32
     struct stat statbuf;
     fstat(file, &statbuf);
     if ( ! S_ISSOCK(statbuf.st_mode) )
@@ -228,7 +228,7 @@ void _YMTLSProviderFreeGlobals()
 	CRYPTO_THREADID_set_callback(NULL);
     CRYPTO_set_locking_callback(NULL);
     
-#ifndef _WINDOWS
+#ifndef WIN32
     pthread_once_t onceAgain = PTHREAD_ONCE_INIT;
 #else
 	INIT_ONCE onceAgain = INIT_ONCE_STATIC_INIT;
@@ -381,7 +381,7 @@ void __YMTLSProviderInitSslCtx(__YMTLSProviderRef tls)
     YMRSAKeyPairRef rsa = NULL;
     YMX509CertificateRef cert = NULL;
     
-//#ifdef _WINDOWS // yuck
+//#ifdef WIN32 // yuck
 //#undef SSLv23_server_method
 //#undef SSLv23_client_method
 //#endif
@@ -526,7 +526,7 @@ bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
     SSL_set_bio(tls->ssl, tls->bio, tls->bio);
     tls->bio->ptr = tls; // this is the elusive context pointer
     
-#ifndef _WINDOWS
+#ifndef WIN32
     SSL_set_debug(tls->ssl, 1);
 #endif
     

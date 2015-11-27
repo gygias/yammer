@@ -9,15 +9,23 @@
 #ifndef YMPeer_h
 #define YMPeer_h
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <libyammer/YMDictionary.h>
 #include <libyammer/YMPeer.h>
 #include <libyammer/YMAddress.h>
 
 typedef YMTypeRef YMPeerRef;
 
-YMStringRef YMPeerGetName(YMPeerRef peer);
-YMDictionaryRef YMPeerGetAddresses(YMPeerRef peer);
-uint16_t YMPeerGetPort(YMPeerRef peer);
-YMDictionaryRef YMPeerGetCertificates(YMPeerRef peer);
+YMAPI YMStringRef YMPeerGetName(YMPeerRef peer);
+YMAPI YMDictionaryRef YMPeerGetAddresses(YMPeerRef peer);
+YMAPI uint16_t YMPeerGetPort(YMPeerRef peer);
+YMAPI YMDictionaryRef YMPeerGetCertificates(YMPeerRef peer);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* YMPeer_h */

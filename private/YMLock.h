@@ -9,7 +9,11 @@
 #ifndef YMLock_h
 #define YMLock_h
 
-#ifndef _WINDOWS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifndef WIN32
 #include <pthread.h>
 #define MUTEX_TYPE pthread_mutex_t
 #define MUTEX_PTR_TYPE MUTEX_TYPE *
@@ -33,10 +37,6 @@ typedef enum
 #endif
 
 typedef const struct __ym_lock *YMLockRef;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 YMLockRef YMLockCreate();
 YMLockRef YMLockCreateWithOptions(YMLockOptions options);

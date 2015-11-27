@@ -28,7 +28,7 @@
 #ifdef USE_FTIME
 #include <sys/timeb.h>
 #error todo
-#elif !defined(_WINDOWS)
+#elif !defined(WIN32)
 #include <sys/select.h>
 #include <sys/time.h>
 #include <pthread.h> // explicit for sigpipe
@@ -192,7 +192,7 @@ YMPlexerRef YMPlexerCreateWithFullDuplexFile(YMStringRef name, int file, bool ma
 
 YMPlexerRef YMPlexerCreate(YMStringRef name, int inputFile, int outputFile, bool master)
 {
-#ifndef _WINDOWS
+#ifndef WIN32
 	static pthread_once_t gYMRegisterSigpipeOnce = PTHREAD_ONCE_INIT;
     pthread_once(&gYMRegisterSigpipeOnce, __YMRegisterSigpipe);
 #else
@@ -445,7 +445,7 @@ bool YMPlexerStop(YMPlexerRef plexer_)
 
 void __YMRegisterSigpipe()
 {
-#ifndef _WINDOWS
+#ifndef WIN32
     signal(SIGPIPE,__ym_sigpipe_handler);
 #else
 	// ???

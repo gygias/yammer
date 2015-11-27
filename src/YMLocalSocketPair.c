@@ -19,7 +19,7 @@
 #define ymlog(x,...) ;
 #endif
 
-#ifndef _WINDOWS
+#ifndef WIN32
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <pthread.h>
@@ -30,7 +30,7 @@
 #endif
 #include <stddef.h> // offsetof
 
-#ifndef _WINDOWS // todo? this is only used by the os x unit tests atm
+#ifndef WIN32 // todo? this is only used by the os x unit tests atm
 
 typedef struct __ym_local_socket_pair
 {
@@ -304,6 +304,6 @@ void __ym_local_socket_accept_proc(__unused void *ctx)
     ymlog("__ym_local_socket_accept_proc exiting");
 }
 
-#else // not _WINDOWS
+#else // not WIN32
 void _YMLocalSocketPairFree(YMTypeRef object) {}
 #endif

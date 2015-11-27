@@ -8,7 +8,7 @@
 
 #include "YMmDNS.h"
 
-#ifndef _WINDOWS
+#ifndef WIN32
 #include <netdb.h>
 #else
 #include <winsock2.h>

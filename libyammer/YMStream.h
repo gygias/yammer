@@ -11,11 +11,19 @@
 
 #include <libyammer/YMBase.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef YMTypeRef YMStreamRef;
 
-YMIOResult YMStreamWriteDown(YMStreamRef stream, const void *buffer, uint16_t length);
-YMIOResult YMStreamReadUp(YMStreamRef stream_, void *buffer, uint16_t length, uint16_t *outLength);
-YMIOResult YMStreamReadFromFile(YMStreamRef stream, int file, uint64_t *inBytes, uint64_t *outBytes);
-YMIOResult YMStreamWriteToFile(YMStreamRef stream, int file, uint64_t *inBytes, uint64_t *outBytes);
+YMAPI YMIOResult YMStreamWriteDown(YMStreamRef stream, const void *buffer, uint16_t length);
+YMAPI YMIOResult YMStreamReadUp(YMStreamRef stream_, void *buffer, uint16_t length, uint16_t *outLength);
+YMAPI YMIOResult YMStreamReadFromFile(YMStreamRef stream, int file, uint64_t *inBytes, uint64_t *outBytes);
+YMAPI YMIOResult YMStreamWriteToFile(YMStreamRef stream, int file, uint64_t *inBytes, uint64_t *outBytes);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* YMStream_h */

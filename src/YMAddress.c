@@ -92,7 +92,7 @@ YMAddressRef YMAddressCreate(void* addressData, socklen_t length)
     if ( type == YMAddressIPV4 || type == YMAddressIPV6 )
     {
         struct sockaddr_in *inAddr = (struct sockaddr_in *)address->address;
-//#ifndef _WINDOWS
+//#ifndef WIN32
         char *ipString = inet_ntoa( inAddr->sin_addr );
 //#else
 //		char *ipString = inet_ntop( AF_INET, inAddr->sin_addr, &lol);
@@ -154,7 +154,7 @@ YMAddressRef YMAddressCreateLocalHostIPV4(uint16_t port)
 YMAddressRef YMAddressCreateWithIPStringAndPort(YMStringRef ipString, uint16_t port)
 {
     struct in_addr inAddr = {0};
-#ifndef _WINDOWS
+#ifndef WIN32
     int result = inet_aton(YMSTR(ipString), &inAddr);
 #else
 	int result = inet_pton(AF_INET, YMSTR(ipString), &inAddr);

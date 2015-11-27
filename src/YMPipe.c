@@ -16,7 +16,7 @@
 #define ymlog(x,...) ;
 #endif
 
-#ifndef _WINDOWS
+#ifndef WIN32
 #define YMPIPEFILE int
 #define CLOSED_FILE -1
 #else
@@ -48,7 +48,7 @@ YMPipeRef YMPipeCreate(YMStringRef name)
     
     uint64_t iter = 1;
 	YMPIPEFILE fds[2];
-#ifndef _WINDOWS
+#ifndef WIN32
     while ( pipe(fds) == -1 )
     {
         if ( errno == EFAULT )

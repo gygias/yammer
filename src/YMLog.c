@@ -12,7 +12,7 @@
 #include "YMThreadPriv.h"
 
 #include <stdarg.h>
-#ifndef _WINDOWS
+#ifndef WIN32
 #include <pthread.h>
 #endif
 
@@ -33,7 +33,7 @@ void __YMLogInit()
 void __YMLogType( char* format, ... )
 {
 
-#ifndef _WINDOWS
+#ifndef WIN32
 	static pthread_once_t gYMLogLockOnce = PTHREAD_ONCE_INIT;
 	pthread_once(&gYMLogLockOnce, __YMLogInit);
 #else
