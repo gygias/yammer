@@ -8,9 +8,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <stdbool.h>
+#ifndef WIN32
+#include <unistd.h>
 #include <pthread.h>
+#else
+#define __unused
+#endif
 
 #import <libyammer/Yammer.h>
 #import "defs.h"
@@ -25,38 +29,37 @@ void __sigint_handler (__unused int signum)
 }
 
 int main(int argc, const char * argv[]) {
-    @autoreleasepool {
         
-        if ( argc < 2 || argc > 3 )
-        {
-            printf("usage: testprompt <mdns type> [<mdns name>]\n");
-            printf(" if name is not specified, the tool will act as a client.\n");
-        }
-        
-        signal(SIGINT, __sigint_handler);
-        
-        if ( argc == 3 )
-        {
-            gIsServer = true;
-            gYMSession = YMSessionCreate(YMSTRC(argv[1]));
-            YMSessionSetCommonCallbacks(gYMSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
-            YMSessionSetAdvertisingCallbacks(gYMSession, _ym_session_should_accept_func, NULL);
-            if ( ! YMSessionStartAdvertising(gYMSession, YMSTRC(argv[2])) )
-                exit(1);
-        }
-        else
-        {
-            gIsServer = false;
-            gYMSession = YMSessionCreate(YMSTRC(argv[1]));
-            YMSessionSetCommonCallbacks(gYMSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
-            YMSessionSetBrowsingCallbacks(gYMSession, _ym_session_added_peer_func, _ym_session_removed_peer_func, _ym_session_resolve_failed_func, _ym_session_resolved_peer_func, _ym_session_connect_failed_func, NULL);
-            if ( ! YMSessionStartBrowsing(gYMSession) )
-                exit(1);
-        }
-        
-        int longTime = 999999999;
-        sleep(longTime);
+    if ( argc < 2 || argc > 3 )
+    {
+        printf("usage: testprompt <mdns type> [<mdns name>]\n");
+        printf(" if name is not specified, the tool will act as a client.\n");
     }
+        
+    signal(SIGINT, __sigint_handler);
+        
+    if ( argc == 3 )
+    {
+        gIsServer = true;
+        gYMSession = YMSessionCreate(YMSTRC(argv[1]));
+        YMSessionSetCommonCallbacks(gYMSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
+        YMSessionSetAdvertisingCallbacks(gYMSession, _ym_session_should_accept_func, NULL);
+        if ( ! YMSessionStartAdvertising(gYMSession, YMSTRC(argv[2])) )
+            exit(1);
+    }
+    else
+    {
+        gIsServer = false;
+        gYMSession = YMSessionCreate(YMSTRC(argv[1]));
+        YMSessionSetCommonCallbacks(gYMSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
+        YMSessionSetBrowsingCallbacks(gYMSession, _ym_session_added_peer_func, _ym_session_removed_peer_func, _ym_session_resolve_failed_func, _ym_session_resolved_peer_func, _ym_session_connect_failed_func, NULL);
+        if ( ! YMSessionStartBrowsing(gYMSession) )
+            exit(1);
+    }
+        
+    int longTime = 999999999;
+    sleep(longTime);
+    
     return 0;
 }
 
