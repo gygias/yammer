@@ -264,12 +264,21 @@ bool YMThreadStart(YMThreadRef thread_)
 bool YMThreadJoin(YMThreadRef thread_)
 {
     __YMThreadRef thread = (__YMThreadRef)thread_;
-    int result;
-    if ( ( result = pthread_join(thread->pthread, NULL) ) )
+#ifndef _WINDOWS
+    int result = pthread_join(thread->pthread, NULL);
+    if ( result != 0 )
     {
         ymerr("thread[%s,%s]: error: pthread_join %d %s", YMSTR(thread->name), thread->isDispatchThread ? "dispatch" : "user", result, strerror(result));
         return false;
     }
+#else
+	DWORD result = WaitForSingleObject(thread->pthread, INFINITE);
+	if ( result != WAIT_OBJECT_0 )
+	{
+		ymerr("thread[%s,%s]: error: WaitForSingleObject %x", YMSTR(thread->name), thread->isDispatchThread ? "dispatch" : "user", result);
+		return false;
+	}
+#endif
     
     return true;
 }

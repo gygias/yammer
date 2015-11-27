@@ -192,7 +192,7 @@ void __YMTLSInit()
     gYMTLSLocks = calloc(CRYPTO_num_locks(),sizeof(YMLockRef));
     //bzero(gYMTLSLocks,CRYPTO_NUM_LOCKS*sizeof(YMLockRef));
     
-    CRYPTO_set_id_callback((unsigned long (*)())ym_tls_thread_id_callback);
+	CRYPTO_THREADID_set_callback((unsigned long (*)())ym_tls_thread_id_callback);
     CRYPTO_set_locking_callback((void (*)())__ym_tls_lock_callback);
     
     gYMTLSExDataList = YMDictionaryCreate();
@@ -225,7 +225,7 @@ void _YMTLSProviderFreeGlobals()
     }
     
     
-    CRYPTO_set_id_callback(NULL);
+	CRYPTO_THREADID_set_callback(NULL);
     CRYPTO_set_locking_callback(NULL);
     
 #ifndef _WINDOWS
@@ -381,10 +381,10 @@ void __YMTLSProviderInitSslCtx(__YMTLSProviderRef tls)
     YMRSAKeyPairRef rsa = NULL;
     YMX509CertificateRef cert = NULL;
     
-#ifdef _WINDOWS // yuck
-#undef SSLv23_server_method
-#undef SSLv23_client_method
-#endif
+//#ifdef _WINDOWS // yuck
+//#undef SSLv23_server_method
+//#undef SSLv23_client_method
+//#endif
     tls->sslCtx = SSL_CTX_new(tls->isServer ? SSLv23_server_method() : SSLv23_client_method ());    // `` Negotiate highest available
     //      SSL/TLS version ''
     if ( ! tls->sslCtx )

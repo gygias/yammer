@@ -32,6 +32,7 @@
 #define _WINSOCKAPI_
 #include <windows.h>
 #include "arc4random.h"
+#define inline
 #endif
 
 #define YM_VERSION 1
