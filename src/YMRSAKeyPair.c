@@ -27,7 +27,8 @@
 #include <pthread.h>
 #include <sys/time.h>
 #else
-#include <winsock2.h> // yes, winsock for gettimeofday()!
+#include <winsock2.h> // time structures
+#include "YMUtilities.h" // gettimeofday copy
 #endif
 
 // it's been a while since crypto 101

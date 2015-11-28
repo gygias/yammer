@@ -89,18 +89,18 @@ void ym_tls_thread_id_callback(CRYPTO_THREADID *threadId)
 YM_ONCE_FUNC(__YMTLSInit,
 {
 	SSL_load_error_strings();
-// ``SSL_library_init() always returns "1", so it is safe to discard the return value.''
-SSL_library_init();
-OpenSSL_add_all_algorithms();
+	// ``SSL_library_init() always returns "1", so it is safe to discard the return value.''
+	SSL_library_init();
+	OpenSSL_add_all_algorithms();
 
-gYMTLSLocks = calloc(CRYPTO_num_locks(),sizeof(YMLockRef));
-//bzero(gYMTLSLocks,CRYPTO_NUM_LOCKS*sizeof(YMLockRef));
+	gYMTLSLocks = calloc(CRYPTO_num_locks(),sizeof(YMLockRef));
+	//bzero(gYMTLSLocks,CRYPTO_NUM_LOCKS*sizeof(YMLockRef));
 
-CRYPTO_THREADID_set_callback(ym_tls_thread_id_callback);
-CRYPTO_set_locking_callback((void(*)())__ym_tls_lock_callback);
+	CRYPTO_THREADID_set_callback(ym_tls_thread_id_callback);
+	CRYPTO_set_locking_callback((void(*)())__ym_tls_lock_callback);
 
-gYMTLSExDataList = YMDictionaryCreate();
-gYMTLSExDataLock = YMLockCreate(YMInternalLockType);
+	gYMTLSExDataList = YMDictionaryCreate();
+	gYMTLSExDataLock = YMLockCreate(YMInternalLockType);
 })
 
 // designated initializer

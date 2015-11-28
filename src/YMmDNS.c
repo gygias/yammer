@@ -11,6 +11,7 @@
 #ifndef WIN32
 #include <netdb.h>
 #else
+#define _WINSOCK_DEPRECATED_NO_WARNINGS // todo, gethostbyname
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #endif
