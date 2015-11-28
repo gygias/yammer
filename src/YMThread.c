@@ -78,8 +78,8 @@ YMDictionaryRef gDispatchThreadDefsByID = NULL;
 YMLockRef gDispatchThreadListLock = NULL;
 
 // private
-void __YMThreadDispatchInit();
-void __ym_thread_dispatch_dispatch_thread_proc(void *);
+YM_ONCE_DEF(__YMThreadDispatchInit);
+YM_CALLBACK_DEF(__ym_thread_dispatch_dispatch_thread_proc);
 typedef struct __ym_thread_dispatch_forward_file_async_context_def
 {
     __YMThreadRef threadOrNull;
@@ -95,23 +95,25 @@ typedef struct __ym_thread_dispatch_forward_file_async_context_def __ym_thread_d
 typedef __ym_thread_dispatch_forward_file_async_context *__ym_thread_dispatch_forward_file_async_context_ref;
 
 __YMThreadRef __YMThreadInitCommon(YMStringRef name, const void *context);
-void *__ym_thread_dispatch_forward_file_proc(__ym_thread_dispatch_forward_file_async_context_ref);
+void *__ym_thread_dispatch_forward_file_proc(void *);
 ym_thread_dispatch_ref __YMThreadDispatchCopy(ym_thread_dispatch_ref userDispatchRef);
 __ym_thread_dispatch_thread_context_ref __YMThreadDispatchJoin(__YMThreadRef thread);
 void __YMThreadFreeDispatchContext(__ym_thread_dispatch_context_ref);
 bool __YMThreadDispatchForward(YMStreamRef stream, int file, bool toStream, const uint64_t *nBytesPtr, bool sync, ym_thread_dispatch_forward_file_context callbackInfo);
 
+YM_ONCE_FUNC(__YMThreadDispatchInit,
+{
+	gDispatchThreadDefsByID = YMDictionaryCreate();
+	YMStringRef name = YMSTRC("g-dispatch-list");
+	gDispatchThreadListLock = YMLockCreateWithOptionsAndName(YMInternalLockType, name);
+	YMRelease(name);
+})
+
 __YMThreadRef __YMThreadInitCommon(YMStringRef name, const void *context)
 {
     __YMThreadRef thread = (__YMThreadRef)_YMAlloc(_YMThreadTypeID,sizeof(__YMThread));
 
-#ifndef WIN32
-	static pthread_once_t gDispatchInitOnce = PTHREAD_ONCE_INIT;
-    pthread_once(&gDispatchInitOnce, __YMThreadDispatchInit);
-#else
-	static INIT_ONCE gDispatchInitOnce = INIT_ONCE_STATIC_INIT;
-	InitOnceExecuteOnce(&gDispatchInitOnce, (PINIT_ONCE_FN)__YMThreadDispatchInit, NULL, NULL);
-#endif
+	YM_ONCE_DO_LOCAL(__YMThreadDispatchInit);
     
     thread->name = name ? YMRetain(name) : YMSTRC("*");
     thread->context = context;
@@ -134,7 +136,7 @@ YMThreadRef YMThreadCreate(YMStringRef name, ym_thread_entry entryPoint, const v
 YMThreadRef YMThreadDispatchCreate(YMStringRef name)
 {
     __YMThreadRef thread = __YMThreadInitCommon(name, NULL);
-    thread->entryPoint = (void (*)(void *))__ym_thread_dispatch_dispatch_thread_proc;
+    thread->entryPoint = __ym_thread_dispatch_dispatch_thread_proc;
     thread->isDispatchThread = true;
     
     YMLockLock(gDispatchThreadListLock);
@@ -248,7 +250,7 @@ bool YMThreadStart(YMThreadRef thread_)
     }
 #else
 	DWORD threadId;
-	pthread = CreateThread(NULL, 0, (PINIT_ONCE_FN)thread->entryPoint, thread->context, 0, &threadId);
+	pthread = CreateThread(NULL, 0, thread->entryPoint, thread->context, 0, &threadId);
 	if ( pthread == NULL )
 	{
 		ymerr("thread[%s,%s]: error: CreateThread failed: %x", YMSTR(thread->name), thread->isDispatchThread ? "dispatch" : "user", GetLastError());
@@ -316,15 +318,11 @@ void YMThreadDispatchDispatch(YMThreadRef thread_, ym_thread_dispatch dispatch)
     YMSemaphoreSignal(thread->dispatchSemaphore);
 }
 
-void __YMThreadDispatchInit()
-{
-    gDispatchThreadDefsByID = YMDictionaryCreate();
-    YMStringRef name = YMSTRC("g-dispatch-list");
-    gDispatchThreadListLock = YMLockCreateWithOptionsAndName(YMInternalLockType,name);
-    YMRelease(name);
-}
-
-void __ym_thread_dispatch_dispatch_thread_proc(void * ctx)
+#ifndef WIN32
+void __ym_thread_dispatch_dispatch_thread_proc(void *ctx)
+#else
+DWORD WINAPI __ym_thread_dispatch_dispatch_thread_proc(LPVOID ctx)
+#endif
 {
     __ym_thread_dispatch_thread_context_ref context = (__ym_thread_dispatch_thread_context_ref)ctx;
     __YMThreadRef thread = context->ymThread;
@@ -451,7 +449,7 @@ bool __YMThreadDispatchForward(YMStreamRef stream, int file, bool toStream, cons
     // subsequent forwarding requests, to recycle the thread creation overhead.
     YMPlexerStreamID streamID = YM_STREAM_INFO(stream)->streamID;
     name = YMSTRCF("dispatch-forward-%d%ss%u",file,toStream?"->":"<-",streamID);
-    forwardingThread = (__YMThreadRef)YMThreadCreate(name, (void (*)(void *))__ym_thread_dispatch_forward_file_proc, context);
+    forwardingThread = (__YMThreadRef)YMThreadCreate(name, (ym_thread_entry)__ym_thread_dispatch_forward_file_proc, context);
     YMRelease(name);
     if ( ! forwardingThread )
     {
@@ -476,8 +474,9 @@ rewind_fail:
     return false;
 }
 
-void *__ym_thread_dispatch_forward_file_proc(__ym_thread_dispatch_forward_file_async_context_ref ctx)
+void *__ym_thread_dispatch_forward_file_proc(void *ctx_)
 {
+	__ym_thread_dispatch_forward_file_async_context_ref ctx = (__ym_thread_dispatch_forward_file_async_context_ref)ctx_;
     // todo: tired of defining semi-redundant structs for various tasks in here, should go back and take a look
     __YMThreadRef threadOrNull = ctx->threadOrNull;
     YMStringRef threadName = threadOrNull ? YMRetain(threadOrNull->name) : YMSTRC("*");

@@ -66,7 +66,7 @@ static void DNSSD_API __ym_mdns_browse_callback(DNSServiceRef sdRef, DNSServiceF
 void DNSSD_API __ym_mdns_resolve_callback(DNSServiceRef serviceRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *name,
                                       const char *host, uint16_t port, uint16_t txtLen, const unsigned char *txtRecord, void *context );
 
-void __ym_mdns_browser_event_proc(void *);
+YM_CALLBACK_DEF(__ym_mdns_browser_event_proc);
 void __YMmDNSBrowserAddOrUpdateService(__YMmDNSBrowserRef browser, YMmDNSServiceRecord *record);
 void __YMmDNSBrowserRemoveServiceNamed(__YMmDNSBrowserRef browser, YMStringRef name);
 
@@ -454,16 +454,14 @@ catch_callback_and_release:
 }
 
 // this function was mostly lifted from "Zero Configuration Networking: The Definitive Guide" -o'reilly
-void __ym_mdns_browser_event_proc( void *ctx )
+#ifndef WIN32
+void __ym_mdns_browser_event_proc(void *ctx)
+#else
+DWORD WINAPI __ym_mdns_browser_event_proc(LPVOID ctx)
+#endif
 {
     __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)ctx;
-    int fd  = DNSServiceRefSockFD(
-#ifdef YMmDNS_ENUMERATION
-#error fixme
-#else
-                                  *(browser->browseServiceRef)
-#endif
-                                  );
+    int fd  = DNSServiceRefSockFD(*(browser->browseServiceRef));
     
     ymlog("mDNS event thread %d entered",fd);
     
@@ -493,13 +491,7 @@ void __ym_mdns_browser_event_proc( void *ctx )
             DNSServiceErrorType err = kDNSServiceErr_NoError;
             if (FD_ISSET(fd , &readfds))
             {
-                err = DNSServiceProcessResult(
-#ifdef YMmDNS_ENUMERATION
-#error fixme
-#else
-                                              *(browser->browseServiceRef)
-#endif
-                                              );
+                err = DNSServiceProcessResult(*(browser->browseServiceRef));
             }
             if (err != kDNSServiceErr_NoError)
             {

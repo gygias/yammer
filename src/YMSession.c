@@ -84,7 +84,7 @@ __YMSessionRef __YMSessionCreateShared(YMStringRef type, bool isServer);
 bool __YMSessionInterrupt(__YMSessionRef session);
 bool __YMSessionCloseAllConnections(__YMSessionRef session);
 void __YMSessionAddConnection(YMSessionRef session, YMConnectionRef connection);
-void __ym_session_accept_proc(void *);
+YM_CALLBACK_DEF(__ym_session_accept_proc);
 void __ym_session_init_incoming_connection_proc(ym_thread_dispatch_ref);
 void __ym_session_connect_async_proc(ym_thread_dispatch_ref);
 
@@ -617,7 +617,11 @@ typedef struct __ym_connection_init_context_def
 } ___ym_connection_init_context_def;
 typedef struct __ym_connection_init_context_def *__ym_connection_init_context;
 
-void __ym_session_accept_proc(void * ctx)
+#ifndef WIN32
+void __ym_session_accept_proc(void *ctx)
+#else
+DWORD WINAPI __ym_session_accept_proc(LPVOID ctx)
+#endif
 {
     __ym_session_accept_thread_context context = (__ym_session_accept_thread_context)ctx;
     __YMSessionRef session = context->session;

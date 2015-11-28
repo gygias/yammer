@@ -22,24 +22,17 @@ static YMLockRef gYMLogLock = NULL;
 static char *gTimeFormatBuf = NULL;
 #define gTimeFormatBufLen 128
 
-void __YMLogInit()
+YM_ONCE_FUNC(__YMLogInit,
 {
     YMStringRef name = YMSTRC("ymlog");
     gYMLogLock = YMLockCreateWithOptionsAndName(YMLockRecursive,name);
     YMRelease(name);
     gTimeFormatBuf = YMALLOC(gTimeFormatBufLen);
-}
+})
 
 void __YMLogType( char* format, ... )
 {
-
-#ifndef WIN32
-	static pthread_once_t gYMLogLockOnce = PTHREAD_ONCE_INIT;
-	pthread_once(&gYMLogLockOnce, __YMLogInit);
-#else
-	static INIT_ONCE gDispatchInitOnce = INIT_ONCE_STATIC_INIT;
-	InitOnceExecuteOnce(&gDispatchInitOnce, (PINIT_ONCE_FN)__YMLogInit, NULL, NULL);
-#endif
+	YM_ONCE_DO_LOCAL(__YMLogInit);
     
     YMLockLock(gYMLogLock);
     {

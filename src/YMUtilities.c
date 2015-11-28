@@ -311,23 +311,19 @@ bool YMDestroyMutex(pthread_mutex_t *mutex)
 #else
 bool YMLockMutex(HANDLE mutex)
 {
-	abort();
-	return false;
+	return ( WaitForSingleObject(mutex,INFINITE) == WAIT_OBJECT_0 );
 }
 bool YMUnlockMutex(HANDLE mutex)
 {
-	abort();
-	return false;
+	return ReleaseMutex(mutex);
 }
 bool YMDestroyMutex(HANDLE mutex)
 {
-	abort();
-	return false;
+	return CloseHandle(mutex);
 }
 HANDLE YMCreateMutexWithOptions(YMLockOptions options)
 {
-	abort();
-	return NULL;
+	return CreateMutex(NULL, false, NULL);
 }
 #endif
 

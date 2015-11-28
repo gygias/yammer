@@ -158,7 +158,7 @@ typedef struct __ym_dispatch_plexer_stream_def
 typedef struct __ym_dispatch_plexer_stream_def __ym_dispatch_plexer_and_stream;
 typedef __ym_dispatch_plexer_and_stream *__ym_dispatch_plexer_and_stream_ref;
 
-void __YMRegisterSigpipe();
+YM_ONCE_DEF(__YMRegisterSigpipe);
 void __ym_sigpipe_handler (int signum);
 YMStreamRef __YMPlexerChooseReadyStream(__YMPlexerRef plexer, YMTypeRef **list, int *outReadyStreamsByIdx, int *outStreamListIdx, int *outStreamIdx);
 void __YMPlexerDispatchFunctionWithName(__YMPlexerRef plexer, YMStreamRef stream, YMThreadRef targetThread, ym_thread_dispatch_func function, YMStringRef nameToRelease);
@@ -166,8 +166,8 @@ bool __YMPlexerStartServiceThreads(__YMPlexerRef plexer);
 bool __YMPlexerDoInitialization(__YMPlexerRef plexer, bool master);
 bool __YMPlexerInitAsMaster(__YMPlexerRef plexer);
 bool __YMPlexerInitAsSlave(__YMPlexerRef plexer);
-void __ym_plexer_service_downstream_proc(void *);
-void __ym_plexer_service_upstream_proc(void *);
+YM_CALLBACK_DEF(__ym_plexer_service_downstream_proc);
+YM_CALLBACK_DEF(__ym_plexer_service_upstream_proc);
 bool __YMPlexerServiceADownstream(__YMPlexerRef plexer, YMStreamRef servicingStream);
 YMStreamRef __YMPlexerGetOrCreateRemoteStreamWithID(__YMPlexerRef plexer, YMPlexerStreamID streamID);
 YMStreamRef __YMPlexerCreateStreamWithID(__YMPlexerRef plexer, YMPlexerStreamID streamID, bool isLocal, YMStringRef userNameToRelease);
@@ -175,15 +175,13 @@ bool __YMPlexerInterrupt(__YMPlexerRef plexer, bool requested);
 void __ym_plexer_stream_data_available_proc(YMStreamRef stream, uint32_t bytes, void *ctx);
 void __ym_plexer_free_stream_info(YMStreamRef stream);
 
-#define YMPlexerDefaultBufferSize (1e+6)
+#define YMPlexerDefaultBufferSize (uint32_t)(1e+6)
 
 #define __YMOutgoingListIdx 0
 #define __YMIncomingListIdx 1
 #define __YMListMax 2
 #define __YMLockListIdx 0
 #define __YMListListIdx 1
-#define GET_STACK_LIST YMTypeRef *listOfLocksAndLists[] = { (YMTypeRef[]) { plexer->localAccessLock, plexer->localStreamsByID }, \
-                                                            (YMTypeRef[]) { plexer->remoteAccessLock, plexer->remoteStreamsByID } };
 
 YMPlexerRef YMPlexerCreateWithFullDuplexFile(YMStringRef name, int file, bool master)
 {
@@ -192,13 +190,7 @@ YMPlexerRef YMPlexerCreateWithFullDuplexFile(YMStringRef name, int file, bool ma
 
 YMPlexerRef YMPlexerCreate(YMStringRef name, int inputFile, int outputFile, bool master)
 {
-#ifndef WIN32
-	static pthread_once_t gYMRegisterSigpipeOnce = PTHREAD_ONCE_INIT;
-    pthread_once(&gYMRegisterSigpipeOnce, __YMRegisterSigpipe);
-#else
-	static INIT_ONCE gYMRegisterSigpipeOnce = INIT_ONCE_STATIC_INIT;
-	InitOnceExecuteOnce(&gYMRegisterSigpipeOnce, (PINIT_ONCE_FN)__YMRegisterSigpipe, NULL, NULL);
-#endif
+	YM_ONCE_DO_LOCAL(__YMRegisterSigpipe);
     
     __YMPlexerRef plexer = (__YMPlexerRef)_YMAlloc(_YMPlexerTypeID,sizeof(__YMPlexer));
     
@@ -443,14 +435,17 @@ bool YMPlexerStop(YMPlexerRef plexer_)
 
 #pragma mark internal
 
-void __YMRegisterSigpipe()
-{
 #ifndef WIN32
+YM_ONCE_FUNC(__YMRegisterSigpipe,
+{
     signal(SIGPIPE,__ym_sigpipe_handler);
+})
 #else
-	// ???
+YM_ONCE_FUNC(__YMRegisterSigpipe,
+{
+	ymerr("*** sigpipe win32 ***");
+})
 #endif
-}
 
 void __ym_sigpipe_handler (__unused int signum)
 {
@@ -564,14 +559,19 @@ bool __YMPlexerInitAsSlave(__YMPlexerRef plexer)
     return true;
 }
 
-void __ym_plexer_service_downstream_proc(void * ctx)
+#ifndef WIN32
+void __ym_plexer_service_downstream_proc(void *ctx)
+#else
+DWORD WINAPI __ym_plexer_service_downstream_proc(LPVOID ctx)
+#endif
 {
     __YMPlexerRef plexer = (__YMPlexerRef)ctx;
     //YMRetain(plexer); // retained on thread creation, matched at the end of this function
     
     ymlog(" plexer[%s]: downstream service thread entered",YMSTR(plexer->name));
-    
-    GET_STACK_LIST
+
+	YMTypeRef *listOfLocksAndLists[] = { (YMTypeRef[]) { plexer->localAccessLock, plexer->localStreamsByID },
+		(YMTypeRef[]) { plexer->remoteAccessLock, plexer->remoteStreamsByID } };
     
     while( plexer->active )
     {
@@ -833,7 +833,11 @@ bool __YMPlexerServiceADownstream(__YMPlexerRef plexer, YMStreamRef stream)
     return true;
 }
 
-void __ym_plexer_service_upstream_proc(void * ctx)
+#ifndef WIN32
+void __ym_plexer_service_upstream_proc(void *ctx)
+#else
+DWORD WINAPI __ym_plexer_service_upstream_proc(LPVOID ctx)
+#endif
 {
     __YMPlexerRef plexer = (__YMPlexerRef)ctx;
     //YMRetain(plexer); // retained on thread creation, matched at the end of this function
@@ -1067,8 +1071,10 @@ bool __YMPlexerInterrupt(__YMPlexerRef plexer, bool requested)
         plexer->inputFile = -1;
         plexer->outputFile = -1;
     }
-    
-    GET_STACK_LIST
+
+	YMTypeRef *listOfLocksAndLists[] = { (YMTypeRef[]) { plexer->localAccessLock, plexer->localStreamsByID },
+		(YMTypeRef[]) { plexer->remoteAccessLock, plexer->remoteStreamsByID } };
+
     for ( int i = 0; i < __YMListMax; i++ )
     {
         YMLockRef aLock = listOfLocksAndLists[i][__YMLockListIdx];

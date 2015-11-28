@@ -54,12 +54,12 @@ typedef __YMSemaphore *__YMSemaphoreRef;
 uint16_t gYMSemaphoreIndex = 40;
 YMLockRef gYMSemaphoreIndexLock = NULL;
 
-void _YMSemaphoreInit()
+YM_ONCE_FUNC(__YMSemaphoreInit,
 {
     YMStringRef name = YMSTRC(YM_TOKEN_STR(gYMSemaphoreIndex));
     gYMSemaphoreIndexLock = YMLockCreateWithOptionsAndName(YMInternalLockType, name);
     YMRelease(name);
-}
+})
 
 YMSemaphoreRef YMSemaphoreCreate(YMStringRef name, int initialValue)
 {
@@ -79,13 +79,7 @@ YMSemaphoreRef YMSemaphoreCreate(YMStringRef name, int initialValue)
     }
 #endif
 
-#ifndef WIN32
-	static pthread_once_t gYMSemaphoreIndexInit = PTHREAD_ONCE_INIT;
-	pthread_once(&gYMSemaphoreIndexInit, _YMSemaphoreInit);
-#else
-	static INIT_ONCE gYMSemaphoreIndexInit = INIT_ONCE_STATIC_INIT;
-	InitOnceExecuteOnce(&gYMSemaphoreIndexInit, (PINIT_ONCE_FN)_YMSemaphoreInit, NULL, NULL);
-#endif
+	YM_ONCE_DO_LOCAL(__YMSemaphoreInit);
     
     __YMSemaphoreRef semaphore = (__YMSemaphoreRef)_YMAlloc(_YMSemaphoreTypeID,sizeof(__YMSemaphore));
     

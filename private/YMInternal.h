@@ -20,6 +20,19 @@
 #define YMALLOC(x) malloc(x)
 #endif
 
+#ifndef WIN32
+#define YM_ONCE_DEF(x) void x()
+#define YM_ONCE_FUNC(x,y) void x() { y; }
+#define YM_ONCE_DO(o,f) pthread_once(&o,f);
+#define YM_ONCE_DO_LOCAL(f) { static pthread_once_t gLocalInitOnce = PTHREAD_ONCE_INIT; YM_ONCE_DO(gLocalInitOnce,f); }
+#else
+#define YM_ONCE_DEF(x) BOOL CALLBACK x(PINIT_ONCE InitOnce, PVOID Parameter, PVOID *Context)
+#define YM_ONCE_FUNC(x,y) BOOL CALLBACK x(PINIT_ONCE InitOnce, PVOID Parameter, PVOID *Context) { y; return true; }
+#define YM_ONCE_DO(o,f,p,c) InitOnceExecuteOnce(&o, f, p, c);
+#define YM_ONCE_DO_LOCAL(f) { static INIT_ONCE gLocalInitOnce = INIT_ONCE_STATIC_INIT; YM_ONCE_DO(gLocalInitOnce,f,NULL,NULL); }
+#define YM_ONCE_DO_LOCAL2(f,p,c) { static INIT_ONCE gLocalInitOnce = INIT_ONCE_STATIC_INIT; YM_ONCE_DO(gLocalInitOnce,f,p,c); }
+#endif
+
 #define YM_DEBUG_INFO // consolidate extra-curricular stuff under here so it doesn't get forgotten
 
 #define YM_TYPE_RESERVED (128 - sizeof(YMTypeID))

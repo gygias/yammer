@@ -218,7 +218,10 @@
     <ClCompile Include="..\src\YMmDNSService.c" />
     <ClCompile Include="..\src\YMPeer.c" />
     <ClCompile Include="..\src\YMPipe.c" />
-    <ClCompile Include="..\src\YMPlexer.c" />
+    <ClCompile Include="..\src\YMPlexer.c">
+      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </PreprocessToFile>
+    </ClCompile>
     <ClCompile Include="..\src\YMRSAKeyPair.c" />
     <ClCompile Include="..\src\YMSecurityProvider.c" />
     <ClCompile Include="..\src\YMSemaphore.c" />

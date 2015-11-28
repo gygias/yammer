@@ -22,7 +22,19 @@ typedef void (*ym_thread_dispatch_func)(ym_thread_dispatch_ref);
 
 // entry point definition for standard threads
 
+#ifndef WIN32
 typedef ym_void_voidp_func ym_thread_entry;
+#define YM_CALLBACK_DEF(x) void x(void)
+//#define YM_CALLBACK_FUNC(x,y) void x(void) { y; }
+#else
+//typedef DWORD(WINAPI *PTHREAD_START_ROUTINE)(
+//	LPVOID lpThreadParameter
+//	);
+typedef DWORD (WINAPI *ym_dword_lpvoid_func)(LPVOID);
+typedef ym_dword_lpvoid_func ym_thread_entry;
+#define YM_CALLBACK_DEF(x) DWORD WINAPI x(LPVOID)
+//#define YM_CALLBACK_FUNC(x,y) DWORD WINAPI x(LPVOID ctx) { { y }; return 0; }
+#endif
 
 // function pointers for YMThreadDispatchUserInfo
 typedef ym_thread_dispatch_func ym_thread_dispatch_dealloc;
