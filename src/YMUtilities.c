@@ -26,6 +26,7 @@
 #define YM_PORT_MAX IPPORT_DYNAMIC_MAX
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <time.h>
 #endif
 
 #ifdef __cplusplus
@@ -36,7 +37,7 @@ const char *YMGetCurrentTimeString(char *buf, size_t bufLen)
 {
     struct timeval epoch = {0,0};
     gettimeofday(&epoch, NULL);
-    struct tm *now = localtime(&epoch.tv_sec);
+    struct tm *now = localtime((const time_t *)&epoch.tv_sec);
     if ( ! now )
         return NULL;
     size_t result = strftime(buf, bufLen, "%Y-%m-%d %H:%M:%S", now);
