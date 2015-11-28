@@ -24,8 +24,6 @@ typedef struct ym_thread_dispatch_def *ym_thread_dispatch_ref;
 #define YM_CALLING_CONVENTION
 #define YM_THREAD_PARAM void *
 #define YM_THREAD_END
-#define YM_CALLBACK_DEF(x) void x(void *)
-//#define YM_CALLBACK_FUNC(x,y) void x(void) { y; }
 #else
 //typedef DWORD(WINAPI *PTHREAD_START_ROUTINE)(
 //	LPVOID lpThreadParameter
