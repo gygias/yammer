@@ -86,9 +86,12 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBYAMMER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;LIBYAMMER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%USERPROFILE%\sandbox\yammer;%USERPROFILE%\sandbox\yammer\private;%USERPROFILE%\sandbox\yammer\win;%USERPROFILE%\sandbox\yammer\libyammer;%USERPROFILE%\sandbox\openssl\include;c:\Program Files\Bonjour SDK\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>yammer.pch;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <AdditionalOptions>
+      </AdditionalOptions>
+      <DisableSpecificWarnings>4068</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

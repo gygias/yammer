@@ -16,12 +16,6 @@
 #define ymlog(x,...) ;
 #endif
 
-#ifndef WIN32
-#define CLOSED_FILE -1
-#else
-#define CLOSED_FILE NULL
-#endif
-
 typedef struct __ym_pipe
 {
     _YMType _type;
@@ -41,8 +35,8 @@ YMPipeRef YMPipeCreate(YMStringRef name)
     __YMPipeRef aPipe = (__YMPipeRef)_YMAlloc(_YMPipeTypeID,sizeof(__YMPipe));
     
     aPipe->name = name ? YMRetain(name) : YMSTRC("*");
-    aPipe->inFd = CLOSED_FILE;
-    aPipe->outFd = CLOSED_FILE;
+    aPipe->inFd = NULL_FILE;
+    aPipe->outFd = NULL_FILE;
     
     uint64_t iter = 1;
 	YMFILE fds[2];
@@ -113,22 +107,18 @@ void _YMPipeCloseInputFile(YMPipeRef pipe)
 void __YMPipeCloseFile(__YMPipeRef pipe, YMFILE *fdPtr)
 {
     YMFILE fd = *fdPtr;
-    *fdPtr = CLOSED_FILE;
-    if ( fd != CLOSED_FILE )
+    *fdPtr = NULL_FILE;
+    if ( fd != NULL_FILE)
     {
+        int result, error = 0;
+        char *errorStr = NULL;
+        
         ymlog("   pipe[%s]: closing %d",YMSTR(pipe->name),fd);
-		int aClose = 0;
-#ifndef WIN32
-        aClose = close(fd);
-#else
-		BOOL okay = CloseHandle(fd);
-		if ( ! okay )
-			aClose = -1;
-#endif
+		YM_CLOSE_FILE(fd);
 
-        if ( aClose != 0 )
+        if ( result != 0 )
         {
-            ymerr("   pipe[%s,i%d]: close failed: %d (%s)",YMSTR(pipe->name), fd, aClose, ( aClose == -2 ) ? "already closed" : strerror(errno));
+            ymerr("   pipe[%s,i%d]: close failed: %d (%s)",YMSTR(pipe->name), fd, result, errorStr);
             //abort(); plexer
         }
     }

@@ -87,7 +87,7 @@ void thread(void (*func)(YMStreamRef), YMStreamRef context)
     pthread_t pthread;
     pthread_create(&pthread, NULL, (void *(*)(void *))func, (void *)context);
 #else
-	HANDLE thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)func, context, 0, NULL);
+	HANDLE thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)func, (LPVOID)context, 0, NULL);
 #endif
 }
 

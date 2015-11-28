@@ -23,7 +23,7 @@ typedef enum
     YMAddressIPV6
 } YMAddressType;
 
-YMAPI YMAddressRef YMAddressCreate(void* addressData, uint32_t length);
+YMAPI YMAddressRef YMAddressCreate(const void *addressData, uint32_t length);
 YMAPI YMAddressRef YMAddressCreateLocalHostIPV4(uint16_t port);
 YMAPI YMAddressRef YMAddressCreateWithIPStringAndPort(YMStringRef ipString, uint16_t port);
 

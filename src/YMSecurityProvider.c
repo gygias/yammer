@@ -24,12 +24,12 @@ bool YMNoSecurityRead(__YMSecurityProviderRef provider,uint8_t*,size_t);
 bool YMNoSecurityWrite(__YMSecurityProviderRef provider,const uint8_t*,size_t);
 bool YMNoSecurityClose(__YMSecurityProviderRef provider);
 
-YMSecurityProviderRef YMSecurityProviderCreateWithFullDuplexFile(int fd)
+YMSecurityProviderRef YMSecurityProviderCreateWithSocket(YMSOCKET fd)
 {
-    return YMSecurityProviderCreate(fd, fd);
+    return YMSecurityProviderCreate((YMFILE)fd, (YMFILE)fd);
 }
 
-YMSecurityProviderRef YMSecurityProviderCreate(int readFile, int writeFile)
+YMSecurityProviderRef YMSecurityProviderCreate(YMFILE readFile, YMFILE writeFile)
 {    
     __YMSecurityProviderRef provider = (__YMSecurityProviderRef)_YMAlloc(_YMSecurityProviderTypeID,sizeof(__YMSecurityProvider));
     provider->initFunc = YMNoSecurityInit;
@@ -96,9 +96,11 @@ bool YMNoSecurityWrite(__YMSecurityProviderRef provider, const uint8_t *buffer, 
 bool YMNoSecurityClose(__unused __YMSecurityProviderRef provider_)
 {
     __YMSecurityProviderRef provider = (__YMSecurityProviderRef)provider_;
-    if ( provider->readFile >= 0 )
-        close(provider->readFile);
-    if ( provider->writeFile != provider->readFile && provider->writeFile >= 0 )
-        close(provider->writeFile);
-    return true;
+    int result = 0, error = 0;
+    char *errorStr = NULL;
+    if ( provider->readFile != NULL_FILE )
+        YM_CLOSE_FILE(provider->readFile);
+    if ( provider->writeFile != NULL_FILE && provider->writeFile != provider->readFile )
+		YM_CLOSE_FILE(provider->writeFile);
+    return ( result == 0 );
 }

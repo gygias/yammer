@@ -208,7 +208,7 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
         aSocket = aResult;
         
         int yes = 1;
-        aResult = setsockopt(aSocket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+        aResult = setsockopt(aSocket, SOL_SOCKET, SO_REUSEADDR, (const void *)&yes, sizeof(yes));
         if ( aResult != 0 )
             goto catch_continue;
         
@@ -228,7 +228,10 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
         
     catch_continue:
         if ( aSocket > 0 )
-            close(aSocket);
+		{
+			int result, error; char *errorStr;
+            YM_CLOSE_SOCKET(aSocket);
+		}
     }
     
     free(addr);

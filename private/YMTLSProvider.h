@@ -12,12 +12,16 @@
 #include "YMSecurityProvider.h"
 #include "YMX509Certificate.h"
 
+#ifdef WIN32
+#include <winsock2.h>
+#endif
+
 #endif /* YMTLSProvider_h */
 
 typedef YMTypeRef YMTLSProviderRef;
 
-//YMTLSProviderRef YMTLSProviderCreate(int inFile, int outFile, bool isServer);
-YMTLSProviderRef YMTLSProviderCreateWithFullDuplexFile(int file, bool isServer);
+//YMTLSProviderRef YMTLSProviderCreate(YMFILE inFile, YMFILE outFile, bool isServer);
+YMTLSProviderRef YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isServer);
 
 // callbacks
 // returns a malloc'd list of local certificates to be used for identification.

@@ -9,10 +9,14 @@
 #ifndef YMSecurityProvider_h
 #define YMSecurityProvider_h
 
+#ifdef WIN32
+#include <winsock2.h>
+#endif
+
 typedef YMTypeRef YMSecurityProviderRef;
 
-YMSecurityProviderRef YMSecurityProviderCreateWithFullDuplexFile(int fd);
-YMSecurityProviderRef YMSecurityProviderCreate(int inFd, int outFd);
+YMSecurityProviderRef YMSecurityProviderCreateWithSocket(YMSOCKET fd);
+YMSecurityProviderRef YMSecurityProviderCreate(YMFILE inFd, YMFILE outFd);
 
 bool YMSecurityProviderInit(YMSecurityProviderRef provider);
 bool YMSecurityProviderRead(YMSecurityProviderRef provider, uint8_t *buffer, size_t bytes);

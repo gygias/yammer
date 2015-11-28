@@ -30,14 +30,13 @@
 #include <ws2tcpip.h>
 #endif
 
-#define NULL_SOCKET (-1)
 #define NOT_CONNECTED ( ( connection->socket == NULL_SOCKET ) && ! connection->isConnected )
 
 typedef struct __ym_connection
 {
     _YMType _type;
     
-    int socket;
+	YMSOCKET socket;
     bool isIncoming;
     YMAddressRef address;
     YMConnectionType type;
@@ -70,20 +69,20 @@ enum
     __YMConnectionSecurityTypeMax = YMTLS
 };
 
-void ym_connection_new_stream_proc(YMPlexerRef plexer,YMStreamRef stream, void *context);
+void ym_connection_new_stream_proc(YMPlexerRef plexer, YMStreamRef stream, void *context);
 void ym_connection_stream_closing_proc(YMPlexerRef plexer, YMStreamRef stream, void *context);
 void ym_connection_interrupted_proc(YMPlexerRef plexer, void *context);
 
-__YMConnectionRef __YMConnectionCreate(bool isIncoming, int socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType);
+__YMConnectionRef __YMConnectionCreate(bool isIncoming, YMSOCKET socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType);
 bool __YMConnectionDestroy(__YMConnectionRef connection);
-bool __YMConnectionInitCommon(__YMConnectionRef connection, int newSocket, bool asServer);
+bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, bool asServer);
 
 YMConnectionRef YMConnectionCreate(YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType)
 {
     return __YMConnectionCreate(false, NULL_SOCKET, address, type, securityType);
 }
 
-YMConnectionRef YMConnectionCreateIncoming(int socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType)
+YMConnectionRef YMConnectionCreateIncoming(YMSOCKET socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType)
 {
     __YMConnectionRef connection = __YMConnectionCreate(true, socket, address, type, securityType);
     bool commonInitOK = __YMConnectionInitCommon(connection, socket, true);
@@ -96,7 +95,7 @@ YMConnectionRef YMConnectionCreateIncoming(int socket, YMAddressRef address, YMC
     return connection;
 }
 
-__YMConnectionRef __YMConnectionCreate(bool isIncoming, int socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType)
+__YMConnectionRef __YMConnectionCreate(bool isIncoming, YMSOCKET socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType)
 {
     if ( type < __YMConnectionTypeMin || type > __YMConnectionTypeMax )
         return NULL;
@@ -174,7 +173,7 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     int protocol = YMAddressGetDefaultProtocolForAddressFamily(addressFamily);
     //struct protoent *ppe = getprotobyname("tcp");
     
-    int newSocket = socket(domain, type, protocol); // xxx
+	YMSOCKET newSocket = socket(domain, type, protocol);
     if ( newSocket < 0 )
     {
         ymerr("connection: socket(%s) failed: %d (%s)",YM_CON_DESC,errno,strerror(errno));
@@ -182,7 +181,7 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     }
     
     int yes = 1;
-    int aResult = setsockopt(newSocket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+    int aResult = setsockopt(newSocket, SOL_SOCKET, SO_REUSEADDR, (const void *)&yes, sizeof(yes));
     if ( aResult != 0 )
         ymerr("connection: warning: setsockopt failed on %d: %d: %d (%s)",newSocket,aResult,errno,strerror(errno));
     
@@ -197,7 +196,8 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     if ( result != 0 )
     {
         ymerr("connection: error: connect(%s): %d (%s)",YMSTR(YMAddressGetDescription(connection->address)),errno,strerror(errno));
-        close(newSocket);
+		int error; char *errorStr;
+        YM_CLOSE_SOCKET(newSocket);
         return false;
     }
     
@@ -215,7 +215,7 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     return true;
 }
 
-bool __YMConnectionInitCommon(__YMConnectionRef connection, int newSocket, bool asServer)
+bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, bool asServer)
 {
     YMSecurityProviderRef security = NULL;
     YMPlexerRef plexer = NULL;
@@ -223,10 +223,10 @@ bool __YMConnectionInitCommon(__YMConnectionRef connection, int newSocket, bool 
     switch( connection->securityType )
     {
         case YMInsecure:
-            security = YMSecurityProviderCreateWithFullDuplexFile(newSocket);
+            security = YMSecurityProviderCreateWithSocket(newSocket);
             break;
         case YMTLS:
-            security = (YMSecurityProviderRef)YMTLSProviderCreateWithFullDuplexFile(newSocket, asServer);
+            security = (YMSecurityProviderRef)YMTLSProviderCreateWithSocket(newSocket, asServer);
             break;
         default:
             ymerr("connection[%s]: unknown security type",YM_CON_DESC);

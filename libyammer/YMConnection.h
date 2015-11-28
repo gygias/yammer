@@ -19,6 +19,10 @@ extern "C" {
 #include <libyammer/YMStream.h>
 #include <libyammer/YMAddress.h>
 
+#ifdef WIN32
+#include <winsock2.h>
+#endif
+
 typedef const struct __ym_connection *YMConnectionRef;
 
 typedef enum
@@ -37,7 +41,7 @@ typedef void (*ym_connection_stream_closing_func)(YMConnectionRef,YMStreamRef,vo
 typedef void (*ym_connection_interrupted_func)(YMConnectionRef,void*);
 
 YMAPI YMConnectionRef YMConnectionCreate(YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType);
-YMAPI YMConnectionRef YMConnectionCreateIncoming(int socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType);
+YMAPI YMConnectionRef YMConnectionCreateIncoming(YMSOCKET socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType);
 YMAPI void YMConnectionSetCallbacks(YMConnectionRef connection,
                               ym_connection_new_stream_func newFunc, void *newFuncContext,
                               ym_connection_stream_closing_func closingFunc, void *closingFuncContext,

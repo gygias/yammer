@@ -35,8 +35,6 @@
 #define ymlog(x,...) ;
 #endif
 
-YM_ONCE_DEF(__YMTLSInit);
-
 static YMLockRef *gYMTLSLocks = NULL;
 //static YMLockRef gYMTLSLocks[CRYPTO_NUM_LOCKS*sizeof(YMLockRef)];
 void __ym_tls_lock_callback(int mode, int type, __unused char *file, __unused int line);
@@ -85,38 +83,54 @@ bool __YMTLSProviderClose(__YMSecurityProviderRef provider);
 void ym_tls_thread_id_callback(CRYPTO_THREADID *threadId)
 {
     //ymlog("ym_tls_thread_id_callback");
-    CRYPTO_THREADID_set_numeric(threadId, _YMThreadGetCurrentThreadNumber());
+    CRYPTO_THREADID_set_numeric(threadId, (unsigned long)_YMThreadGetCurrentThreadNumber());
 }
 
-// designated initializer
-YMTLSProviderRef __YMTLSProviderCreateWithFullDuplexFile(int file, bool isWrappingSocket, bool isServer);
-
-// designated initializer with shorter arguments list! am i doing it wrong?
-YMTLSProviderRef YMTLSProviderCreateWithFullDuplexFile(int file, bool isServer)
+YM_ONCE_FUNC(__YMTLSInit,
 {
-    return __YMTLSProviderCreateWithFullDuplexFile(file, false, isServer);
+	SSL_load_error_strings();
+// ``SSL_library_init() always returns "1", so it is safe to discard the return value.''
+SSL_library_init();
+OpenSSL_add_all_algorithms();
+
+gYMTLSLocks = calloc(CRYPTO_num_locks(),sizeof(YMLockRef));
+//bzero(gYMTLSLocks,CRYPTO_NUM_LOCKS*sizeof(YMLockRef));
+
+CRYPTO_THREADID_set_callback(ym_tls_thread_id_callback);
+CRYPTO_set_locking_callback((void(*)())__ym_tls_lock_callback);
+
+gYMTLSExDataList = YMDictionaryCreate();
+gYMTLSExDataLock = YMLockCreate(YMInternalLockType);
+})
+
+// designated initializer
+YMTLSProviderRef __YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isWrappingSocket, bool isServer);
+
+YMTLSProviderRef YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isServer)
+{
+    return __YMTLSProviderCreateWithSocket(socket, false, isServer);
 }
 
 YM_ONCE_OBJ gYMInitTLSOnce = YM_ONCE_INIT;
 
-YMTLSProviderRef __YMTLSProviderCreateWithFullDuplexFile(int file, bool isWrappingSocket, bool isServer)
+YMTLSProviderRef __YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isWrappingSocket, bool isServer)
 {
 	YM_ONCE_DO(gYMInitTLSOnce,__YMTLSInit);
     
 #ifndef WIN32
     struct stat statbuf;
-    fstat(file, &statbuf);
+    fstat(socket, &statbuf);
     if ( ! S_ISSOCK(statbuf.st_mode) )
     {
-        ymerr("tls[%d]: error: file %d is not a socket",isServer,file);
+        ymerr("tls[%d]: error: file %d is not a socket",isServer,socket);
         return NULL;
     }
 #endif
     
     __YMTLSProviderRef tls = (__YMTLSProviderRef)_YMAlloc(_YMTLSProviderTypeID,sizeof(__YMTLSProvider));
     
-    tls->_common.readFile = file;
-    tls->_common.writeFile = file;
+    tls->_common.readFile = (YMFILE)socket;
+    tls->_common.writeFile = (YMFILE)socket;
     tls->isWrappingSocket = isWrappingSocket;
     tls->isServer = isServer;
     tls->usingSelfSigned = false;
@@ -174,23 +188,6 @@ void _YMTLSProviderFree(YMTypeRef object)
         SSL_CTX_free(tls->sslCtx);
 }
 
-YM_ONCE_FUNC(__YMTLSInit,
-{
-    SSL_load_error_strings();
-    // ``SSL_library_init() always returns "1", so it is safe to discard the return value.''
-    SSL_library_init();
-    OpenSSL_add_all_algorithms();
-    
-    gYMTLSLocks = calloc(CRYPTO_num_locks(),sizeof(YMLockRef));
-    //bzero(gYMTLSLocks,CRYPTO_NUM_LOCKS*sizeof(YMLockRef));
-    
-	CRYPTO_THREADID_set_callback(ym_tls_thread_id_callback);
-    CRYPTO_set_locking_callback((void (*)())__ym_tls_lock_callback);
-    
-    gYMTLSExDataList = YMDictionaryCreate();
-    gYMTLSExDataLock = YMLockCreate(YMInternalLockType);
-})
-
 void _YMTLSProviderFreeGlobals()
 {
     if ( gYMTLSExDataList )
@@ -212,7 +209,7 @@ void _YMTLSProviderFreeGlobals()
             if ( aLock )
                 YMRelease(aLock);
         }
-        free(gYMTLSLocks);
+        free((void *)gYMTLSLocks);
         gYMTLSLocks = NULL;
     }
     
@@ -410,7 +407,7 @@ void __YMTLSProviderInitSslCtx(__YMTLSProviderRef tls)
             ymerr("tls[%d]: warning: yammer uses the first certificate specified",tls->isServer);
         // todo, are we really going to do anything with a list here?
         cert = certList[0];
-        free(certList);
+        free((void *)certList);
     }
     else
     {
@@ -508,7 +505,7 @@ bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
     // assuming whatever memory was allocated here gets free'd in SSL_CTX_free
     
     //tls->bio = BIO_new(&ym_bio_methods);
-    tls->bio = BIO_new_socket(tls->_common.readFile, BIO_NOCLOSE);
+    tls->bio = BIO_new_socket((YMSOCKET)tls->_common.readFile, BIO_NOCLOSE);
     if ( ! tls->bio )
     {
         sslError = ERR_get_error();

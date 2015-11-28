@@ -146,14 +146,12 @@ void _YMSemaphoreFree(YMTypeRef object)
         ymerr("semaphore[%s,%s]: fatal: pthread_cond_destroy failed: %d (%s)",YMSTR(semaphore->semName),YMSTR(semaphore->userName),result,strerror(result));
         abort();
     }
-#elif !defined(WIN32)
-    int result = sem_unlink(YMSTR(semaphore->semName));
-    if ( result == -1 )
-        ymerr("semaphore[%s,%s]: warning: sem_unlink failed: %d (%s)",YMSTR(semaphore->semName),YMSTR(semaphore->userName),errno,strerror(errno));
 #else
-	BOOL okay = CloseHandle(semaphore->sem);
-	if ( ! okay )
-		ymerr("semaphore[%s,%s]: warning: CloseHandle failed: %x", YMSTR(semaphore->semName), YMSTR(semaphore->userName), GetLastError());
+    int result, error = 0;
+    char *errorStr = NULL;
+	YM_CLOSE_SEMAPHORE(semaphore);
+	if (result == -1)
+		ymerr("semaphore[%s,%s]: warning: sem_unlink failed: %d (%s)", YMSTR(semaphore->semName), YMSTR(semaphore->userName), error, errorStr);
 #endif
     
     YMRelease(semaphore->lock);
@@ -183,27 +181,24 @@ void YMSemaphoreWait(YMSemaphoreRef semaphore_)
     }
     
     YMLockUnlock(semaphore->lock);
-#elif !defined(WIN32)
-sem_retry:
-    ymlog("semaphore[%s,%s]: waiting",YMSTR(semaphore->semName),YMSTR(semaphore->userName));
-    int result = sem_wait(semaphore->sem);
-    if ( result != 0 )
-    {
-        bool retry = ( errno == EINTR );
-        ymerr("semaphore[%s,%s]: sem_wait failed%s: %d (%s)",YMSTR(semaphore->semName),YMSTR(semaphore->userName),retry?", retrying":"",errno,strerror(errno));
-        if ( retry )
-            goto sem_retry;
-        abort();
-    }
-    ymlog("semaphore[%s,%s]: waited!->",YMSTR(semaphore->semName),YMSTR(semaphore->userName));
 #else
-	DWORD result = WaitForSingleObject(semaphore->sem, INFINITE);
-	if ( result != WAIT_OBJECT_0 )
+
+sem_retry:;
+    
+    int result, error = 0;
+    char *errorStr = NULL;
+	YM_WAIT_SEMAPHORE(semaphore);
+	if (result != 0)
 	{
-		ymerr("semaphore[%s,%s]: sem_wait failed: %x", YMSTR(semaphore->semName), YMSTR(semaphore->userName), result);
+        bool retry = YM_RETRY_SEMAPHORE;
+		ymerr("semaphore[%s,%s]: sem_wait failed%s: %d (%s)", YMSTR(semaphore->semName), YMSTR(semaphore->userName), retry ? ", retrying" : "", errno, strerror(errno));
+		if (retry)
+			goto sem_retry;
 		abort();
 	}
 #endif
+
+	ymlog("semaphore[%s,%s]: waited!->", YMSTR(semaphore->semName), YMSTR(semaphore->userName));
 }
 
 void YMSemaphoreSignal(YMSemaphoreRef semaphore_)
@@ -227,21 +222,18 @@ void YMSemaphoreSignal(YMSemaphoreRef semaphore_)
     }
     
     YMLockUnlock(semaphore->lock);
-#elif !defined(WIN32)
-    ymlog("semaphore[%s,%s]: posting",YMSTR(semaphore->semName),YMSTR(semaphore->userName));
-    int result = sem_post(semaphore->sem);
-    if ( result != 0 )
-    {
-        ymerr("semaphore[%s,%s]: fatal: sem_post failed: %d (%s)",YMSTR(semaphore->semName),YMSTR(semaphore->userName),errno,strerror(errno));
-        abort();
-    }
-    ymlog("semaphore[%s,%s]: posted",YMSTR(semaphore->semName),YMSTR(semaphore->userName));
 #else
-	BOOL okay = ReleaseSemaphore(semaphore->sem, 1, NULL);
-	if ( ! okay )
+#ifndef WIN32
+#else
+#endif
+	int result, error = 0;
+	char *errorStr = NULL;
+	YM_POST_SEMAPHORE(semaphore);
+	if ( result != 0 )
 	{
-		ymerr("semaphore[%s,%s]: fatal: ReleaseSemaphore failed: %x", YMSTR(semaphore->semName), YMSTR(semaphore->userName), GetLastError());
+		ymerr("semaphore[%s,%s]: fatal: sem_post failed: %d (%s)", YMSTR(semaphore->semName), YMSTR(semaphore->userName), errno, strerror(errno));
 		abort();
 	}
+	ymlog("semaphore[%s,%s]: posted", YMSTR(semaphore->semName), YMSTR(semaphore->userName));
 #endif
 }

@@ -21,8 +21,8 @@ typedef struct __ym_security_provider
 {
     _YMType _typeID;
     
-    int readFile;
-    int writeFile;
+	YMFILE readFile;
+	YMFILE writeFile;
     ym_security_init_func   initFunc;
     ym_security_read_func   readFunc;
     ym_security_write_func  writeFunc;

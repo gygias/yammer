@@ -57,9 +57,9 @@ typedef struct __ym_address
 typedef struct __ym_address __YMAddress;
 typedef __YMAddress *__YMAddressRef;
 
-YMAddressRef YMAddressCreate(void* addressData, socklen_t length)
+YMAddressRef YMAddressCreate(const void *addressData, uint32_t length)
 {
-    struct sockaddr *addr = addressData;
+    const struct sockaddr *addr = addressData;
     
     YMAddressType type;
     bool isIP = false;

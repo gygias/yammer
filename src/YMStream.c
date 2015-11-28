@@ -62,7 +62,7 @@ typedef struct __ym_stream __YMStream;
 typedef __YMStream *__YMStreamRef;
 
 void __YMStreamCloseFiles(__YMStreamRef stream);
-YMIOResult __YMStreamForward(__YMStreamRef stream, int file, bool toStream, uint64_t *inBytes, uint64_t *outBytes);
+YMIOResult __YMStreamForward(__YMStreamRef stream, YMFILE file, bool toStream, uint64_t *inBytes, uint64_t *outBytes);
 
 YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_ref userInfo, _ym_stream_free_user_info_func callback)
 {
@@ -119,18 +119,15 @@ YMIOResult YMStreamReadUp(YMStreamRef stream_, void *buffer, uint16_t length, ui
 {
     __YMStreamRef stream = (__YMStreamRef)stream_;
     
-    int upstreamRead = YMPipeGetOutputFile(stream->upstreamPipe);
+    YMFILE upstreamRead = YMPipeGetOutputFile(stream->upstreamPipe);
     
     ymlog("  stream[%s]: reading %ub user data",YMSTR(stream->name),length);
     size_t actualLength = 0;
     YMIOResult result = YMReadFull(upstreamRead, buffer, length, &actualLength);
     if ( outLength )
         *outLength = (uint16_t)actualLength;
-    if ( result == YMIOError ) // in-process i/o errors are fatal
-    {
+    if ( result == YMIOError )
         ymerr("  stream[%s]: fatal: reading %ub user data: %d (%s)",YMSTR(stream->name),length,errno,strerror(errno));
-        abort();
-    }
     else if ( result == YMIOEOF )
         ymerr("  stream[%s]: EOF from upstream",YMSTR(stream->name));
     else
@@ -146,7 +143,7 @@ YMIOResult YMStreamWriteDown(YMStreamRef stream_, const void *buffer, uint16_t l
     __YMStreamRef stream = (__YMStreamRef)stream_;
     
     YMIOResult result;
-    int downstreamWrite = YMPipeGetInputFile(stream->downstreamPipe);
+    YMFILE downstreamWrite = YMPipeGetInputFile(stream->downstreamPipe);
     
 #ifdef USE_STREAM_COMMANDS_DOWN
     YMStreamCommand header = { length };
@@ -207,20 +204,20 @@ YMIOResult _YMStreamWriteUp(YMStreamRef stream_, const void *buffer, uint32_t le
     return result;
 }
 
-YMIOResult YMStreamWriteToFile(YMStreamRef stream_, int file, uint64_t *inBytes, uint64_t *outBytes)
+YMIOResult YMStreamWriteToFile(YMStreamRef stream_, YMFILE file, uint64_t *inBytes, uint64_t *outBytes)
 {
     __YMStreamRef stream = (__YMStreamRef)stream_;
     return __YMStreamForward(stream, file, false, inBytes, outBytes);
 }
 
-YMIOResult YMStreamReadFromFile(YMStreamRef stream_, int file, uint64_t *inBytes, uint64_t *outBytes)
+YMIOResult YMStreamReadFromFile(YMStreamRef stream_, YMFILE file, uint64_t *inBytes, uint64_t *outBytes)
 {
     __YMStreamRef stream = (__YMStreamRef)stream_;
     return __YMStreamForward(stream, file, true, inBytes, outBytes);
 }
 
 // for the love of god break this into at least 2 functions
-YMIOResult __YMStreamForward(__YMStreamRef stream, int file, bool fromFileToStream, uint64_t *inBytes, uint64_t *outBytes)
+YMIOResult __YMStreamForward(__YMStreamRef stream, YMFILE file, bool fromFileToStream, uint64_t *inBytes, uint64_t *outBytes)
 {
     uint64_t off = 0;
     bool boundedByCallerOrRemote = ( inBytes != NULL );
@@ -397,7 +394,7 @@ void _YMStreamSendClose(YMStreamRef stream_)
 {
     __YMStreamRef stream = (__YMStreamRef)stream_;
     
-    int downstreamWrite = YMPipeGetInputFile(stream->downstreamPipe);
+    YMFILE downstreamWrite = YMPipeGetInputFile(stream->downstreamPipe);
     
     _YMStreamCommand command = { YMStreamClose };
     YMIOResult result = YMWriteFull(downstreamWrite, (void *)&command, sizeof(command), NULL);

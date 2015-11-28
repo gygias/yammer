@@ -33,7 +33,6 @@
 #include <windows.h>
 #include "arc4random.h"
 #define inline
-//#define close _close
 #endif
 
 #ifdef WIN32

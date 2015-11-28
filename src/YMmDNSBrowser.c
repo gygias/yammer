@@ -509,6 +509,8 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_browser_event_proc(YM_THREAD_PA
     }
     
     ymlog("mDNS event thread %d exiting",fd);
+
+	YM_THREAD_END
 }
 
 void _YMmDNSBrowserDebugSetExpectedTxtKeyPairs(YMmDNSBrowserRef browser_, uint16_t nPairs)

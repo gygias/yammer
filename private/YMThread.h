@@ -23,6 +23,7 @@ typedef struct ym_thread_dispatch_def *ym_thread_dispatch_ref;
 #define YM_THREAD_RETURN void
 #define YM_CALLING_CONVENTION
 #define YM_THREAD_PARAM void *
+#define YM_THREAD_END
 #else
 //typedef DWORD(WINAPI *PTHREAD_START_ROUTINE)(
 //	LPVOID lpThreadParameter
@@ -30,6 +31,7 @@ typedef struct ym_thread_dispatch_def *ym_thread_dispatch_ref;
 #define YM_THREAD_RETURN DWORD
 #define YM_CALLING_CONVENTION WINAPI
 #define YM_THREAD_PARAM LPVOID
+#define YM_THREAD_END return 0;
 #endif
 
 typedef void(YM_CALLING_CONVENTION *ym_thread_dispatch_func)(ym_thread_dispatch_ref);
@@ -72,8 +74,8 @@ typedef struct ym_thread_dispatch_forward_file_context_def ym_thread_dispatch_fo
 typedef ym_thread_dispatch_forward_file_context *ym_thread_dispatch_forward_file_context_ref;
 
 //
-bool YMThreadDispatchForwardFile(int fromFile, YMStreamRef toStream, const uint64_t *nBytesPtr, bool sync, ym_thread_dispatch_forward_file_context callbackInfo);
-bool YMThreadDispatchForwardStream(YMStreamRef fromStream, int toFile, const uint64_t *nBytesPtr, bool sync, ym_thread_dispatch_forward_file_context callbackInfo);
+bool YMThreadDispatchForwardFile(YMFILE fromFile, YMStreamRef toStream, const uint64_t *nBytesPtr, bool sync, ym_thread_dispatch_forward_file_context callbackInfo);
+bool YMThreadDispatchForwardStream(YMStreamRef fromStream, YMFILE toFile, const uint64_t *nBytesPtr, bool sync, ym_thread_dispatch_forward_file_context callbackInfo);
 void YMThreadDispatchJoin(YMThreadRef thread_);
 
 bool YMThreadStart(YMThreadRef thread);

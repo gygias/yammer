@@ -51,8 +51,8 @@ typedef struct __ym_session
     // server
     YMStringRef name;
     YMmDNSServiceRef service;
-    int ipv4ListenSocket;
-    int ipv6ListenSocket;
+	YMSOCKET ipv4ListenSocket;
+	YMSOCKET ipv6ListenSocket;
     YMThreadRef acceptThread;
     bool acceptThreadExitFlag;
     YMThreadRef initConnectionDispatchThread;
@@ -103,8 +103,8 @@ YMSessionRef YMSessionCreate(YMStringRef type)
 
     __YMSessionRef session = (__YMSessionRef)_YMAlloc(_YMSessionTypeID,sizeof(__YMSession));
     session->type = YMRetain(type);
-    session->ipv4ListenSocket = -1;
-    session->ipv6ListenSocket = -1;
+    session->ipv4ListenSocket = NULL_SOCKET;
+    session->ipv6ListenSocket = NULL_SOCKET;
     session->logDescription = YMStringCreateWithFormat("session:%s",YMSTR(type),NULL);
     session->service = NULL;
     session->browser = NULL;
@@ -487,7 +487,8 @@ bool YMSessionStartAdvertising(YMSessionRef session_, YMStringRef name)
     if ( aResult != 0 )
     {
         ymerr("session[%s]: error: failed to listen for server start",YMSTR(session->logDescription));
-        close(socket);
+		int result, error; char *errorStr;
+        YM_CLOSE_SOCKET(socket);
         goto rewind_fail;
     }
     
@@ -549,9 +550,12 @@ bool YMSessionStartAdvertising(YMSessionRef session_, YMStringRef name)
     
 rewind_fail:
     if ( socket >= 0 )
-        close(socket);
-    session->ipv4ListenSocket = -1;
-    session->ipv6ListenSocket = -1;
+	{
+		int result, error; char *errorStr;
+        YM_CLOSE_SOCKET(socket);
+	}
+    session->ipv4ListenSocket = NULL_SOCKET;
+    session->ipv6ListenSocket = NULL_SOCKET;
     if ( session->acceptThread )
     {
         session->acceptThreadExitFlag = true;
@@ -573,22 +577,23 @@ bool YMSessionStopAdvertising(YMSessionRef session_)
     __YMSessionRef session = (__YMSessionRef)session_;
     session->acceptThreadExitFlag = true;
     bool okay = true;
+	int result, error; char *errorStr;
     if ( session->ipv4ListenSocket >= 0 )
     {
-        int result = close(session->ipv4ListenSocket);
+		YM_CLOSE_SOCKET(session->ipv4ListenSocket);
         if ( result != 0 )
         {
-            ymerr("session[%s]: warning: failed to close ipv4 socket",YMSTR(session->name));
+            ymerr("session[%s]: warning: failed to close ipv4 socket: %d %s",YMSTR(session->name),error,errorStr);
             okay = false;
         }
         session->ipv4ListenSocket = -1;
     }
     if ( session->ipv6ListenSocket >= 0 )
     {
-        int result = close(session->ipv6ListenSocket);
+        YM_CLOSE_SOCKET(session->ipv6ListenSocket);
         if ( result != 0 )
         {
-            ymerr("session[%s]: warning: failed to close ipv6 socket",YMSTR(session->name));
+            ymerr("session[%s]: warning: failed to close ipv6 socket: %d %s",YMSTR(session->name),error,errorStr);
             okay = false;
         }
         session->ipv6ListenSocket = -1;
@@ -654,6 +659,8 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_accept_proc(YM_THREAD_PARAM 
     }
     
     session->acceptThreadExitFlag = false;
+
+	YM_THREAD_END
 }
 
 void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(ym_thread_dispatch_ref dispatch)

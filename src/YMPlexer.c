@@ -591,6 +591,8 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_downstream_proc(YM_TH
     
     ymerr(" plexer[%s]: downstream service thread exiting",YMSTR(plexer->name));
     YMRelease(plexer);
+
+	YM_THREAD_END
 }
 
 YMStreamRef __YMPlexerChooseReadyStream(__YMPlexerRef plexer, YMTypeRef **list, int *outReadyStreamsByIdx, int *outListIdx, int *outStreamIdx)
@@ -854,6 +856,8 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_upstream_proc(YM_THRE
     ymerr(" plexer[%s-^]: upstream service thread exiting",YMSTR(plexer->name));
     
     YMRelease(plexer);
+
+	YM_THREAD_END
 }
 
 YMStreamRef __YMPlexerGetOrCreateRemoteStreamWithID(__YMPlexerRef plexer, YMPlexerStreamID streamID)

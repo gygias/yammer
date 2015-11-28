@@ -15,7 +15,7 @@
 #import "YMSemaphore.h"
 
 #define TLSTestRoundTrips 5
-#define TLSTestMessageRoundTrips 1
+#define TLSTestMessageRoundTrips 1000
 #define TLSTestRandomMessages true
 #define TLSTestRandomMessageMaxLength 1024
 
@@ -92,9 +92,9 @@ void __sigpipe_handler (__unused int signum)
     XCTAssert(testResult==testLen,@"failed to receive test message: %d (%s)",errno,strerror(errno));
     XCTAssert(strcmp(testBuffer,testIncoming)==0,@"received test message does not match");
     
-    YMTLSProviderRef localProvider = YMTLSProviderCreateWithFullDuplexFile(localIsServer ? serverSocket : clientSocket, localIsServer);
+    YMTLSProviderRef localProvider = YMTLSProviderCreateWithSocket(localIsServer ? serverSocket : clientSocket, localIsServer);
     XCTAssert(localProvider,@"local provider didn't initialize");
-    YMTLSProviderRef remoteProvider = YMTLSProviderCreateWithFullDuplexFile(localIsServer ? clientSocket : serverSocket, !localIsServer);
+    YMTLSProviderRef remoteProvider = YMTLSProviderCreateWithSocket(localIsServer ? clientSocket : serverSocket, !localIsServer);
     XCTAssert(remoteProvider,@"remote provider didn't initialize");
     
     YMStringRef name = YMSTRC([[self className] UTF8String]);

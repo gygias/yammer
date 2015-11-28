@@ -83,7 +83,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_dispatch_dispatch_thread_proc
 typedef struct __ym_thread_dispatch_forward_file_async_context_def
 {
     __YMThreadRef threadOrNull;
-    int file;
+    YMFILE file;
     YMStreamRef stream;
     bool toStream;
     bool bounded;
@@ -99,7 +99,7 @@ void *__ym_thread_dispatch_forward_file_proc(void *);
 ym_thread_dispatch_ref __YMThreadDispatchCopy(ym_thread_dispatch_ref userDispatchRef);
 __ym_thread_dispatch_thread_context_ref __YMThreadDispatchJoin(__YMThreadRef thread);
 void __YMThreadFreeDispatchContext(__ym_thread_dispatch_context_ref);
-bool __YMThreadDispatchForward(YMStreamRef stream, int file, bool toStream, const uint64_t *nBytesPtr, bool sync, ym_thread_dispatch_forward_file_context callbackInfo);
+bool __YMThreadDispatchForward(YMStreamRef stream, YMFILE file, bool toStream, const uint64_t *nBytesPtr, bool sync, ym_thread_dispatch_forward_file_context callbackInfo);
 
 YM_ONCE_FUNC(__YMThreadDispatchInit,
 {
@@ -240,9 +240,9 @@ bool YMThreadStart(YMThreadRef thread_)
     __YMThreadRef thread = (__YMThreadRef)thread_;
     
     YM_THREAD_TYPE pthread;
-    int result;
     
 #ifndef WIN32
+	int result;
     if ( ( result = pthread_create(&pthread, NULL, (void *(*)(void *))thread->entryPoint, (void *)thread->context) ) )
     {
         ymerr("thread[%s,%s]: error: pthread_create %d %s", YMSTR(thread->name), thread->isDispatchThread?"dispatch":"user", result, strerror(result));
@@ -250,7 +250,7 @@ bool YMThreadStart(YMThreadRef thread_)
     }
 #else
 	DWORD threadId;
-	pthread = CreateThread(NULL, 0, thread->entryPoint, thread->context, 0, &threadId);
+	pthread = CreateThread(NULL, 0, thread->entryPoint, (LPVOID)thread->context, 0, &threadId);
 	if ( pthread == NULL )
 	{
 		ymerr("thread[%s,%s]: error: CreateThread failed: %x", YMSTR(thread->name), thread->isDispatchThread ? "dispatch" : "user", GetLastError());
@@ -366,6 +366,8 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_dispatch_dispatch_thread_proc
     // for exit, YMThread signals us after setting stop flag, we signal them back
     // so they know it's safe to deallocate our stuff
     YMSemaphoreSignal(thread->dispatchExitSemaphore);
+
+	YM_THREAD_END
 }
 
 ym_thread_dispatch_ref __YMThreadDispatchCopy(ym_thread_dispatch_ref userDispatchRef)
@@ -405,19 +407,20 @@ uint64_t _YMThreadGetCurrentThreadNumber()
 #else
 	return GetCurrentThreadId();
 #endif
+
 }
 
-bool YMThreadDispatchForwardFile(int fromFile, YMStreamRef toStream, const uint64_t *nBytesPtr, bool sync, ym_thread_dispatch_forward_file_context callbackInfo)
+bool YMThreadDispatchForwardFile(YMFILE fromFile, YMStreamRef toStream, const uint64_t *nBytesPtr, bool sync, ym_thread_dispatch_forward_file_context callbackInfo)
 {
     return __YMThreadDispatchForward(toStream, fromFile, true, nBytesPtr, sync, callbackInfo);
 }
 
-bool YMThreadDispatchForwardStream(YMStreamRef fromStream, int toFile, const uint64_t *nBytesPtr, bool sync, ym_thread_dispatch_forward_file_context callbackInfo)
+bool YMThreadDispatchForwardStream(YMStreamRef fromStream, YMFILE toFile, const uint64_t *nBytesPtr, bool sync, ym_thread_dispatch_forward_file_context callbackInfo)
 {
     return __YMThreadDispatchForward(fromStream, toFile, false, nBytesPtr, sync, callbackInfo);
 }
 
-bool __YMThreadDispatchForward(YMStreamRef stream, int file, bool toStream, const uint64_t *nBytesPtr, bool sync, ym_thread_dispatch_forward_file_context callbackInfo)
+bool __YMThreadDispatchForward(YMStreamRef stream, YMFILE file, bool toStream, const uint64_t *nBytesPtr, bool sync, ym_thread_dispatch_forward_file_context callbackInfo)
 {
     __YMThreadRef forwardingThread = NULL;
     YMStringRef name = NULL;
@@ -476,7 +479,7 @@ void *__ym_thread_dispatch_forward_file_proc(void *ctx_)
     // todo: tired of defining semi-redundant structs for various tasks in here, should go back and take a look
     __YMThreadRef threadOrNull = ctx->threadOrNull;
     YMStringRef threadName = threadOrNull ? YMRetain(threadOrNull->name) : YMSTRC("*");
-    int file = ctx->file;
+    YMFILE file = ctx->file;
     YMStreamRef stream = ctx->stream;
     bool toStream = ctx->toStream;
     bool bounded = ctx->bounded;
