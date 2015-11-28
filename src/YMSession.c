@@ -84,9 +84,9 @@ __YMSessionRef __YMSessionCreateShared(YMStringRef type, bool isServer);
 bool __YMSessionInterrupt(__YMSessionRef session);
 bool __YMSessionCloseAllConnections(__YMSessionRef session);
 void __YMSessionAddConnection(YMSessionRef session, YMConnectionRef connection);
-YM_CALLBACK_DEF(__ym_session_accept_proc);
-void __ym_session_init_incoming_connection_proc(ym_thread_dispatch_ref);
-void __ym_session_connect_async_proc(ym_thread_dispatch_ref);
+YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_accept_proc(YM_THREAD_PARAM);
+void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(ym_thread_dispatch_ref);
+void YM_CALLING_CONVENTION __ym_session_connect_async_proc(ym_thread_dispatch_ref);
 
 void __ym_session_new_stream_proc(YMConnectionRef connection, YMStreamRef stream, void *context);
 void __ym_session_stream_closing_proc(YMConnectionRef connection, YMStreamRef stream, void *context);
@@ -99,6 +99,8 @@ void __ym_mdns_service_resolved_func(YMmDNSBrowserRef browser, bool success, YMm
 
 YMSessionRef YMSessionCreate(YMStringRef type)
 {
+	YMNetworkingInit();
+
     __YMSessionRef session = (__YMSessionRef)_YMAlloc(_YMSessionTypeID,sizeof(__YMSession));
     session->type = YMRetain(type);
     session->ipv4ListenSocket = -1;
@@ -388,7 +390,7 @@ catch_fail:
     return false;
 }
 
-void __ym_session_connect_async_proc(ym_thread_dispatch_ref dispatch)
+void YM_CALLING_CONVENTION __ym_session_connect_async_proc(ym_thread_dispatch_ref dispatch)
 {
     __ym_session_connect_async_context_ref context = (__ym_session_connect_async_context_ref)dispatch->context;
     __YMSessionRef session = context->session;
@@ -485,9 +487,6 @@ bool YMSessionStartAdvertising(YMSessionRef session_, YMStringRef name)
     if ( aResult != 0 )
     {
         ymerr("session[%s]: error: failed to listen for server start",YMSTR(session->logDescription));
-#ifdef WIN32
-#define close _close
-#endif
         close(socket);
         goto rewind_fail;
     }
@@ -617,11 +616,7 @@ typedef struct __ym_connection_init_context_def
 } ___ym_connection_init_context_def;
 typedef struct __ym_connection_init_context_def *__ym_connection_init_context;
 
-#ifndef WIN32
-void __ym_session_accept_proc(void *ctx)
-#else
-DWORD WINAPI __ym_session_accept_proc(LPVOID ctx)
-#endif
+YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_accept_proc(YM_THREAD_PARAM ctx)
 {
     __ym_session_accept_thread_context context = (__ym_session_accept_thread_context)ctx;
     __YMSessionRef session = context->session;
@@ -661,7 +656,7 @@ DWORD WINAPI __ym_session_accept_proc(LPVOID ctx)
     session->acceptThreadExitFlag = false;
 }
 
-void __ym_session_init_incoming_connection_proc(ym_thread_dispatch_ref dispatch)
+void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(ym_thread_dispatch_ref dispatch)
 {
     __ym_connection_init_context initCtx = dispatch->context;
     __YMSessionRef session = initCtx->session;

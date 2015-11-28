@@ -11,6 +11,7 @@
 #include "YMPlexer.h"
 #include "YMSecurityProvider.h"
 #include "YMTLSProvider.h"
+#include "YMUtilities.h"
 
 #include "YMLog.h"
 #undef ymlog_type
@@ -101,6 +102,8 @@ __YMConnectionRef __YMConnectionCreate(bool isIncoming, int socket, YMAddressRef
         return NULL;
     if ( securityType < __YMConnectionSecurityTypeMin || securityType > __YMConnectionSecurityTypeMax )
         return NULL;
+
+	YMNetworkingInit();
     
     __YMConnectionRef connection = (__YMConnectionRef)_YMAlloc(_YMConnectionTypeID,sizeof(__YMConnection));
     

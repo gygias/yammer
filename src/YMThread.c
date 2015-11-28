@@ -79,7 +79,7 @@ YMLockRef gDispatchThreadListLock = NULL;
 
 // private
 YM_ONCE_DEF(__YMThreadDispatchInit);
-YM_CALLBACK_DEF(__ym_thread_dispatch_dispatch_thread_proc);
+YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_dispatch_dispatch_thread_proc(YM_THREAD_PARAM);
 typedef struct __ym_thread_dispatch_forward_file_async_context_def
 {
     __YMThreadRef threadOrNull;
@@ -318,11 +318,7 @@ void YMThreadDispatchDispatch(YMThreadRef thread_, ym_thread_dispatch dispatch)
     YMSemaphoreSignal(thread->dispatchSemaphore);
 }
 
-#ifndef WIN32
-void __ym_thread_dispatch_dispatch_thread_proc(void *ctx)
-#else
-DWORD WINAPI __ym_thread_dispatch_dispatch_thread_proc(LPVOID ctx)
-#endif
+YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_dispatch_dispatch_thread_proc(YM_THREAD_PARAM ctx)
 {
     __ym_thread_dispatch_thread_context_ref context = (__ym_thread_dispatch_thread_context_ref)ctx;
     __YMThreadRef thread = context->ymThread;

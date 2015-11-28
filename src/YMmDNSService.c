@@ -71,6 +71,8 @@ YMmDNSServiceRef YMmDNSServiceCreate(YMStringRef type, YMStringRef name, uint16_
         ymlog("mdns: invalid service name");
         return NULL;
     }
+
+	YMNetworkingInit();
     
     __YMmDNSServiceRef service = (__YMmDNSServiceRef)_YMAlloc(_YMmDNSServiceTypeID,sizeof(__YMmDNSService));
     

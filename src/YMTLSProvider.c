@@ -35,7 +35,7 @@
 #define ymlog(x,...) ;
 #endif
 
-static void __YMTLSInit();
+YM_ONCE_DEF(__YMTLSInit);
 
 static YMLockRef *gYMTLSLocks = NULL;
 //static YMLockRef gYMTLSLocks[CRYPTO_NUM_LOCKS*sizeof(YMLockRef)];
@@ -97,19 +97,11 @@ YMTLSProviderRef YMTLSProviderCreateWithFullDuplexFile(int file, bool isServer)
     return __YMTLSProviderCreateWithFullDuplexFile(file, false, isServer);
 }
 
-#ifndef WIN32
-static pthread_once_t gYMInitTLSOnce = PTHREAD_ONCE_INIT;
-#else
-static INIT_ONCE gYMInitTLSOnce = INIT_ONCE_STATIC_INIT;
-#endif
+YM_ONCE_OBJ gYMInitTLSOnce = YM_ONCE_INIT;
 
 YMTLSProviderRef __YMTLSProviderCreateWithFullDuplexFile(int file, bool isWrappingSocket, bool isServer)
 {
-#ifndef WIN32
-	pthread_once(&gYMInitTLSOnce, __YMTLSInit);
-#else
-	InitOnceExecuteOnce(&gYMInitTLSOnce, (PINIT_ONCE_FN)__YMTLSInit, NULL, NULL);
-#endif
+	YM_ONCE_DO(gYMInitTLSOnce,__YMTLSInit);
     
 #ifndef WIN32
     struct stat statbuf;
@@ -182,7 +174,7 @@ void _YMTLSProviderFree(YMTypeRef object)
         SSL_CTX_free(tls->sslCtx);
 }
 
-void __YMTLSInit()
+YM_ONCE_FUNC(__YMTLSInit,
 {
     SSL_load_error_strings();
     // ``SSL_library_init() always returns "1", so it is safe to discard the return value.''
@@ -197,7 +189,7 @@ void __YMTLSInit()
     
     gYMTLSExDataList = YMDictionaryCreate();
     gYMTLSExDataLock = YMLockCreate(YMInternalLockType);
-}
+})
 
 void _YMTLSProviderFreeGlobals()
 {

@@ -145,6 +145,26 @@ YMIOResult YMWriteFull(int fd, const uint8_t *buffer, size_t bytes, size_t *outW
         *outWritten = off;
     return result;
 }
+    
+#ifdef WIN32
+YM_ONCE_FUNC(__YMNetworkingInit,
+{
+	WSADATA wsa;
+	int result = WSAStartup(MAKEWORD(2,2),&wsa);
+	if (result != 0)
+	{
+		ymerr("fatal: WSAStartup failed: %x %x",result,GetLastError());
+		exit(1);
+	}
+})
+#endif
+
+void YMNetworkingInit()
+{
+#ifdef WIN32
+	YM_ONCE_DO_LOCAL(__YMNetworkingInit);
+#endif
+}
 
 int32_t YMPortReserve(bool ipv4, int *outSocket)
 {
@@ -169,7 +189,7 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
         thePort = aPort++;
         
         int domain = ipv4 ? PF_INET : PF_INET6;
-        int aResult = socket(domain, SOCK_STREAM, 6);
+        int aResult = socket(domain, SOCK_STREAM, IPPROTO_TCP);
         if ( aResult < 0 )
             goto catch_continue;
         

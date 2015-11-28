@@ -66,7 +66,7 @@ static void DNSSD_API __ym_mdns_browse_callback(DNSServiceRef sdRef, DNSServiceF
 void DNSSD_API __ym_mdns_resolve_callback(DNSServiceRef serviceRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *name,
                                       const char *host, uint16_t port, uint16_t txtLen, const unsigned char *txtRecord, void *context );
 
-YM_CALLBACK_DEF(__ym_mdns_browser_event_proc);
+YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_browser_event_proc(YM_THREAD_PARAM);
 void __YMmDNSBrowserAddOrUpdateService(__YMmDNSBrowserRef browser, YMmDNSServiceRecord *record);
 void __YMmDNSBrowserRemoveServiceNamed(__YMmDNSBrowserRef browser, YMStringRef name);
 
@@ -84,6 +84,8 @@ YMmDNSBrowserRef YMmDNSBrowserCreateWithCallbacks(YMStringRef type,
                                                   ym_mdns_service_removed_func serviceRemoved,
                                                   void *context)
 {
+	YMNetworkingInit();
+
     __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)_YMAlloc(_YMmDNSBrowserTypeID,sizeof(__YMmDNSBrowser));
     
     browser->type = YMRetain(type);
@@ -454,11 +456,7 @@ catch_callback_and_release:
 }
 
 // this function was mostly lifted from "Zero Configuration Networking: The Definitive Guide" -o'reilly
-#ifndef WIN32
-void __ym_mdns_browser_event_proc(void *ctx)
-#else
-DWORD WINAPI __ym_mdns_browser_event_proc(LPVOID ctx)
-#endif
+YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_browser_event_proc(YM_THREAD_PARAM ctx)
 {
     __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)ctx;
     int fd  = DNSServiceRefSockFD(*(browser->browseServiceRef));

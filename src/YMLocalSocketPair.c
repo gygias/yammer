@@ -10,6 +10,7 @@
 
 #include "YMThread.h"
 #include "YMSemaphore.h"
+#include "YMUtilities.h"
 
 #include "YMLog.h"
 #undef ymlog_type
@@ -111,6 +112,8 @@ YMLocalSocketPairRef YMLocalSocketPairCreate(YMStringRef name, bool moreComing)
     
     if ( ! gYMLocalSocketSemaphore )
         __YMLocalSocketPairInitOnce();
+
+	YMNetworkingInit();
     
     // now that thread is going to accept [once more], flag this
     gYMLocalSocketPairAcceptKeepListening = moreComing;

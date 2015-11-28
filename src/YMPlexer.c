@@ -75,9 +75,9 @@ typedef enum YMPlexerCommandType
     YMPlexerCommandCloseStream = -2
 } YMPlexerCommand;
 
-void __ym_plexer_notify_new_stream(ym_thread_dispatch_ref);
-void __ym_plexer_notify_stream_closing(ym_thread_dispatch_ref);
-void __ym_plexer_notify_interrupted(ym_thread_dispatch_ref);
+void YM_CALLING_CONVENTION __ym_plexer_notify_new_stream(ym_thread_dispatch_ref);
+void YM_CALLING_CONVENTION __ym_plexer_notify_stream_closing(ym_thread_dispatch_ref);
+void YM_CALLING_CONVENTION __ym_plexer_notify_interrupted(ym_thread_dispatch_ref);
 
 // linked to 'private' definition in YMPlexerPriv
 typedef struct __ym_plexer_stream_user_info_def
@@ -166,8 +166,8 @@ bool __YMPlexerStartServiceThreads(__YMPlexerRef plexer);
 bool __YMPlexerDoInitialization(__YMPlexerRef plexer, bool master);
 bool __YMPlexerInitAsMaster(__YMPlexerRef plexer);
 bool __YMPlexerInitAsSlave(__YMPlexerRef plexer);
-YM_CALLBACK_DEF(__ym_plexer_service_downstream_proc);
-YM_CALLBACK_DEF(__ym_plexer_service_upstream_proc);
+YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_downstream_proc(YM_THREAD_PARAM);
+YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_upstream_proc(YM_THREAD_PARAM);
 bool __YMPlexerServiceADownstream(__YMPlexerRef plexer, YMStreamRef servicingStream);
 YMStreamRef __YMPlexerGetOrCreateRemoteStreamWithID(__YMPlexerRef plexer, YMPlexerStreamID streamID);
 YMStreamRef __YMPlexerCreateStreamWithID(__YMPlexerRef plexer, YMPlexerStreamID streamID, bool isLocal, YMStringRef userNameToRelease);
@@ -559,11 +559,7 @@ bool __YMPlexerInitAsSlave(__YMPlexerRef plexer)
     return true;
 }
 
-#ifndef WIN32
-void __ym_plexer_service_downstream_proc(void *ctx)
-#else
-DWORD WINAPI __ym_plexer_service_downstream_proc(LPVOID ctx)
-#endif
+YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_downstream_proc(YM_THREAD_PARAM ctx)
 {
     __YMPlexerRef plexer = (__YMPlexerRef)ctx;
     //YMRetain(plexer); // retained on thread creation, matched at the end of this function
@@ -833,11 +829,7 @@ bool __YMPlexerServiceADownstream(__YMPlexerRef plexer, YMStreamRef stream)
     return true;
 }
 
-#ifndef WIN32
-void __ym_plexer_service_upstream_proc(void *ctx)
-#else
-DWORD WINAPI __ym_plexer_service_upstream_proc(LPVOID ctx)
-#endif
+YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_upstream_proc(YM_THREAD_PARAM ctx)
 {
     __YMPlexerRef plexer = (__YMPlexerRef)ctx;
     //YMRetain(plexer); // retained on thread creation, matched at the end of this function
@@ -1134,7 +1126,7 @@ void __YMPlexerDispatchFunctionWithName(__YMPlexerRef plexer, YMStreamRef stream
     YMRelease(nameToRelease);
 }
 
-void __ym_plexer_notify_new_stream(ym_thread_dispatch_ref dispatch)
+void YM_CALLING_CONVENTION __ym_plexer_notify_new_stream(ym_thread_dispatch_ref dispatch)
 {
     __ym_dispatch_plexer_and_stream_ref notifyDef = dispatch->context;
     __YMPlexerRef plexer = notifyDef->plexer;
@@ -1149,7 +1141,7 @@ void __ym_plexer_notify_new_stream(ym_thread_dispatch_ref dispatch)
     //YMRelease(dispatch->description); // done by ThreadDispatch
 }
 
-void __ym_plexer_notify_stream_closing(ym_thread_dispatch_ref dispatch)
+void YM_CALLING_CONVENTION __ym_plexer_notify_stream_closing(ym_thread_dispatch_ref dispatch)
 {
     __ym_dispatch_plexer_and_stream_ref notifyDef = dispatch->context;
     __YMPlexerRef plexer = notifyDef->plexer;
@@ -1169,7 +1161,7 @@ void __ym_plexer_notify_stream_closing(ym_thread_dispatch_ref dispatch)
     //YMRelease(dispatch->description); // done by ThreadDispatch
 }
 
-void __ym_plexer_notify_interrupted(ym_thread_dispatch_ref dispatch)
+void YM_CALLING_CONVENTION __ym_plexer_notify_interrupted(ym_thread_dispatch_ref dispatch)
 {
     _ym_dispatch_plexer_stream_def *notifyDef = (_ym_dispatch_plexer_stream_def *)dispatch->context;
     __YMPlexerRef plexer = notifyDef->plexer;
