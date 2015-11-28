@@ -24,7 +24,7 @@ typedef void (*ym_thread_dispatch_func)(ym_thread_dispatch_ref);
 
 #ifndef WIN32
 typedef ym_void_voidp_func ym_thread_entry;
-#define YM_CALLBACK_DEF(x) void x(void)
+#define YM_CALLBACK_DEF(x) void x(void *)
 //#define YM_CALLBACK_FUNC(x,y) void x(void) { y; }
 #else
 //typedef DWORD(WINAPI *PTHREAD_START_ROUTINE)(

@@ -164,8 +164,6 @@ static void arc4_stir(void)
 	arc4_count = 1600000;
 }
 
-static YMLockRef gArc4Mutex = NULL;
-
 static void arc4_stir_if_needed(void)
 {
 	DWORD pid = GetCurrentThreadId();
@@ -173,7 +171,6 @@ static void arc4_stir_if_needed(void)
 	if (arc4_count <= 0 || !rs_initialized /*|| arc4_stir_pid != pid*/) { // other threads use the same random generator for us
 		arc4_stir_pid = pid;
 		arc4_stir();
-		gArc4Mutex = YMLockCreateWithOptions(YMInternalLockType);
 	}
 }
 
@@ -267,12 +264,18 @@ u_int32_t arc4random_uniformT(u_int32_t upper_bound)
 	return r % upper_bound;
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+static YM_ONCE_OBJ gArc4Once = YM_ONCE_INIT;
+static YMLockRef gArc4Mutex = NULL;
+
+YM_ONCE_FUNC(__arc4Init,
+{
+	gArc4Mutex = YMLockCreateWithOptions(YMInternalLockType);
+})
 
 unsigned int arc4random_uniform(unsigned int upper_bound)
 {
+	YM_ONCE_DO_LOCAL(__arc4Init);
+
 	YMLockLock(gArc4Mutex);
 	unsigned int ret = arc4random_uniformT(upper_bound);
 	YMLockUnlock(gArc4Mutex);
@@ -281,12 +284,10 @@ unsigned int arc4random_uniform(unsigned int upper_bound)
 
 unsigned int arc4random()
 {
+	YM_ONCE_DO(gArc4Once, __arc4Init);
+
 	YMLockLock(gArc4Mutex);
 	unsigned int ret = arc4randomT();
 	YMLockUnlock(gArc4Mutex);
 	return ret;
 }
-
-#ifdef __cplusplus
-}
-#endif

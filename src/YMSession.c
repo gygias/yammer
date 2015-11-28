@@ -929,7 +929,10 @@ void __ym_mdns_service_resolved_func(__unused YMmDNSBrowserRef browser, bool suc
     YMRelease(portString);
     
     if ( result != 0 )
+	{
         ymerr("session[%s]: error: failed to resolve addresses for '%s'",YMSTR(session->logDescription),service->hostNames->h_name);
+		success = false;
+	}
     else
     {
         struct addrinfo *addrInfoIter = outAddrInfo;
