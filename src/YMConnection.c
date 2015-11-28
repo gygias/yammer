@@ -152,7 +152,7 @@ bool YMConnectionConnect(YMConnectionRef connection_)
 {
     __YMConnectionRef connection = (__YMConnectionRef)connection_;
     
-    if ( connection->socket >= 0 || connection->isIncoming )
+    if ( connection->socket != NULL_SOCKET || connection->isIncoming )
     {
         ymerr("connection[%s]: connect called on connected socket",YM_CON_DESC);
         return false;

@@ -100,13 +100,7 @@ YMIOResult YMReadFull(YMFILE fd, uint8_t *buffer, size_t bytes, size_t *outRead)
     while ( off < bytes )
     {
 		ssize_t aRead;
-#ifndef WIN32
-        aRead = read(fd, buffer + off, bytes - off);
-#else
-		BOOL okay = ReadFile(fd, buffer + off, bytes - off, &aRead, NULL);
-		if ( ! okay )
-			aRead = -1;
-#endif
+        YM_READ_FILE(fd, buffer + off, bytes - off);
         if ( aRead == 0 )
         {
             result = YMIOEOF;
@@ -134,12 +128,7 @@ YMIOResult YMWriteFull(YMFILE fd, const uint8_t *buffer, size_t bytes, size_t *o
     size_t off = 0;
     while ( off < bytes )
     {
-#ifndef WIN32
-        aWrite = write(fd, buffer + off, bytes - off);
-#else
-		BOOL okay = WriteFile(fd, buffer+ off, bytes - off, &aWrite, NULL);
-		if ( ! okay ) aWrite = -1;
-#endif
+        YM_WRITE_FILE(fd, buffer + off, bytes - off);
         switch(aWrite)
         {
             case 0:
@@ -184,7 +173,7 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
     bool okay = false;
     uint16_t aPort = IPPORT_RESERVED;
     uint16_t thePort = aPort;
-    int aSocket = -1;
+    YMSOCKET aSocket = NULL_SOCKET;
     
     uint8_t length = ipv4 ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6);
     struct sockaddr *addr = YMALLOC(length);
