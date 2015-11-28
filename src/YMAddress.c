@@ -142,7 +142,7 @@ YMAddressRef YMAddressCreateLocalHostIPV4(uint16_t port)
     newAddr->sin_family = AF_INET;
     newAddr->sin_addr.s_addr = localhost;
     newAddr->sin_port = port;
-#ifdef _DARWIN_C_SOURCE
+#ifdef _MACOS
     newAddr->sin_len = length;
 #endif
     
@@ -167,8 +167,8 @@ YMAddressRef YMAddressCreateWithIPStringAndPort(YMStringRef ipString, uint16_t p
     
     struct sockaddr_in sinAddr = {0,0,0,{0},{0}};
 	socklen_t addrLen = sizeof(struct sockaddr_in);
-#ifdef _DARWIN_C_SOURCE
-    sinAddr.sin_len = addrLen;
+#ifdef _MACOS
+    sinAddr.sin_len = (uint8_t)addrLen;
 #endif
     sinAddr.sin_family = AF_INET;
     sinAddr.sin_port = port;

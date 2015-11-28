@@ -88,7 +88,7 @@ ComparisonResult YMTimevalCompare(struct timeval *a, struct timeval *b)
     return EqualTo;
 }
 
-YMIOResult YMReadFull(int fd, uint8_t *buffer, size_t bytes, size_t *outRead)
+YMIOResult YMReadFull(YMFILE fd, uint8_t *buffer, size_t bytes, size_t *outRead)
 {
     if ( buffer == NULL || bytes == 0 || fd < 0 )
         return YMIOError; // is this success or failure? :)
@@ -98,7 +98,14 @@ YMIOResult YMReadFull(int fd, uint8_t *buffer, size_t bytes, size_t *outRead)
     size_t off = 0;
     while ( off < bytes )
     {
-        ssize_t aRead = read(fd, buffer + off, bytes - off);
+		ssize_t aRead;
+#ifndef WIN32
+        aRead = read(fd, buffer + off, bytes - off);
+#else
+		BOOL okay = ReadFile(fd, buffer + off, bytes - off, &aRead, NULL);
+		if ( ! okay )
+			aRead = -1;
+#endif
         if ( aRead == 0 )
         {
             result = YMIOEOF;
@@ -116,7 +123,7 @@ YMIOResult YMReadFull(int fd, uint8_t *buffer, size_t bytes, size_t *outRead)
     return result;
 }
 
-YMIOResult YMWriteFull(int fd, const uint8_t *buffer, size_t bytes, size_t *outWritten)
+YMIOResult YMWriteFull(YMFILE fd, const uint8_t *buffer, size_t bytes, size_t *outWritten)
 {
     if ( buffer == NULL || bytes == 0 || fd < 0 )
         return YMIOError;
@@ -126,7 +133,12 @@ YMIOResult YMWriteFull(int fd, const uint8_t *buffer, size_t bytes, size_t *outW
     size_t off = 0;
     while ( off < bytes )
     {
+#ifndef WIN32
         aWrite = write(fd, buffer + off, bytes - off);
+#else
+		BOOL okay = WriteFile(fd, buffer+ off, bytes - off, &aWrite, NULL);
+		if ( ! okay ) aWrite = -1;
+#endif
         switch(aWrite)
         {
             case 0:
@@ -176,7 +188,7 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
     uint8_t length = ipv4 ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6);
     struct sockaddr *addr = YMALLOC(length);
     addr->sa_family = ipv4 ? AF_INET : AF_INET6;
-#if defined(_DARWIN_C_SOURCE)
+#if defined(_MACOS)
     addr->sa_len = length;
 #endif
     if ( ipv4 )

@@ -181,7 +181,7 @@ YMIOResult _YMStreamReadDown(YMStreamRef stream_, void *buffer, uint32_t length)
 {
     __YMStreamRef stream = (__YMStreamRef)stream_;
     
-    int downstreamRead = YMPipeGetOutputFile(stream->downstreamPipe);
+	YMFILE downstreamRead = YMPipeGetOutputFile(stream->downstreamPipe);
     ymlog("  stream[%s]: reading %ub from downstream",YMSTR(stream->name),length);
     YMIOResult result = YMReadFull(downstreamRead, buffer, length, NULL);
     if ( result != YMIOSuccess )
@@ -196,7 +196,7 @@ YMIOResult _YMStreamWriteUp(YMStreamRef stream_, const void *buffer, uint32_t le
 {
     __YMStreamRef stream = (__YMStreamRef)stream_;
     
-    int upstreamWrite = YMPipeGetInputFile(stream->upstreamPipe);
+    YMFILE upstreamWrite = YMPipeGetInputFile(stream->upstreamPipe);
     
     YMIOResult result = YMWriteFull(upstreamWrite, buffer, length, NULL);
     if ( result == YMIOError )

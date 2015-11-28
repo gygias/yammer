@@ -15,7 +15,7 @@
 #import "YMSemaphore.h"
 
 #define TLSTestRoundTrips 5
-#define TLSTestMessageRoundTrips 1000
+#define TLSTestMessageRoundTrips 1
 #define TLSTestRandomMessages true
 #define TLSTestRandomMessageMaxLength 1024
 
@@ -56,6 +56,11 @@ typedef struct
 - (void)tearDown {
     // Put teardown code here. This method is called after the invocation of each test method in the class.
     [super tearDown];
+}
+
+void __sigpipe_handler (__unused int signum)
+{
+    fprintf(stderr,"sigpipe happened\n");
 }
 
 - (void)testTLS1 {
@@ -133,15 +138,16 @@ typedef struct
         bool okay = YMSecurityProviderClose((YMSecurityProviderRef)(clientFirst?theClient:theServer));
         XCTAssert(okay,@"client close failed");
     });
+    signal(SIGPIPE, __sigpipe_handler);
     dispatch_sync(dispatch_get_global_queue(0,0),  ^{
         bool okay = YMSecurityProviderClose((YMSecurityProviderRef)(clientFirst?theServer:theClient));
         XCTAssert(okay,@"server close failed");
     });
+    signal(SIGPIPE, SIG_DFL);
     
     YMRelease(clientFirst?theClient:theServer);
     YMRelease(clientFirst?theServer:theClient);
     YMRelease(localSocketPair);
-    
     NSLog(@"tls test finished (%llu in, %llu out)",bytesIn,bytesOut);
 }
 

@@ -37,8 +37,8 @@ ComparisonResult YMTimevalCompare(struct timeval *a, struct timeval *b);
 void YMGetTheBeginningOfPosixTimeForCurrentPlatform(struct timeval *time);
 void YMGetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time);
 
-YMIOResult YMReadFull(int fd, uint8_t *buffer, size_t bytes, size_t *outRead);
-YMIOResult YMWriteFull(int fd, const uint8_t *buffer, size_t bytes, size_t *outWritten);
+YMIOResult YMReadFull(YMFILE fd, uint8_t *buffer, size_t bytes, size_t *outRead);
+YMIOResult YMWriteFull(YMFILE fd, const uint8_t *buffer, size_t bytes, size_t *outWritten);
 
 void YMNetworkingInit();
 int32_t YMPortReserve(bool ipv4, int *outSocket);

@@ -206,7 +206,7 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     bool commonInitOK = __YMConnectionInitCommon(connection, newSocket, false);
     if ( ! commonInitOK )
     {
-        close(newSocket);
+        //close(newSocket); // done beneath us in failure
         return false;
     }
     
@@ -237,22 +237,22 @@ bool __YMConnectionInitCommon(__YMConnectionRef connection, int newSocket, bool 
     if ( ! securityOK )
     {
         ymerr("connection[%s]: security type %d failed to initialize",YM_CON_DESC,connection->securityType);
+		//close(newSocket); // NOCLOSE closed after all?
         goto rewind_fail;
     }
     
-    plexer = YMPlexerCreate(YMAddressGetDescription(connection->address), newSocket, newSocket, asServer);
+    plexer = YMPlexerCreate(YMAddressGetDescription(connection->address), security, asServer);
+	YMPlexerSetNewIncomingStreamFunc(plexer, ym_connection_new_stream_proc);
+	YMPlexerSetInterruptedFunc(plexer, ym_connection_interrupted_proc);
+	YMPlexerSetStreamClosingFunc(plexer, ym_connection_stream_closing_proc);
+	YMPlexerSetCallbackContext(plexer, connection);
+
     bool plexerOK = YMPlexerStart(plexer);
     if ( ! plexerOK )
     {
         ymerr("connection[%s]: plexer failed to initialize",YM_CON_DESC);
         goto rewind_fail;
     }
-    
-    YMPlexerSetSecurityProvider(plexer, security);
-    YMPlexerSetNewIncomingStreamFunc(plexer, ym_connection_new_stream_proc);
-    YMPlexerSetInterruptedFunc(plexer, ym_connection_interrupted_proc);
-    YMPlexerSetStreamClosingFunc(plexer, ym_connection_stream_closing_proc);
-    YMPlexerSetCallbackContext(plexer, connection);
     
     connection->plexer = plexer;
     connection->security = security;

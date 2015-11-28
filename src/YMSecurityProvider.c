@@ -93,7 +93,12 @@ bool YMNoSecurityWrite(__YMSecurityProviderRef provider, const uint8_t *buffer, 
     return YMWriteFull(provider->writeFile, buffer, bytes, NULL);
 }
 
-bool YMNoSecurityClose(__unused __YMSecurityProviderRef provider)
+bool YMNoSecurityClose(__unused __YMSecurityProviderRef provider_)
 {
+    __YMSecurityProviderRef provider = (__YMSecurityProviderRef)provider_;
+    if ( provider->readFile >= 0 )
+        close(provider->readFile);
+    if ( provider->writeFile != provider->readFile && provider->writeFile >= 0 )
+        close(provider->writeFile);
     return true;
 }

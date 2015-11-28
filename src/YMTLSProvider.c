@@ -372,12 +372,8 @@ void __YMTLSProviderInitSslCtx(__YMTLSProviderRef tls)
     unsigned long sslError = SSL_ERROR_NONE;
     YMRSAKeyPairRef rsa = NULL;
     YMX509CertificateRef cert = NULL;
-    
-//#ifdef WIN32 // yuck
-//#undef SSLv23_server_method
-//#undef SSLv23_client_method
-//#endif
-    tls->sslCtx = SSL_CTX_new(tls->isServer ? SSLv23_server_method() : SSLv23_client_method ());    // `` Negotiate highest available
+
+    tls->sslCtx = SSL_CTX_new(tls->isServer ? SSLv23_server_method() : SSLv23_client_method());    // `` Negotiate highest available
     //      SSL/TLS version ''
     if ( ! tls->sslCtx )
     {
@@ -418,13 +414,19 @@ void __YMTLSProviderInitSslCtx(__YMTLSProviderRef tls)
     }
     else
     {
-        ymerr("tls[%d]: user doesn't provide certificates, creating self-signed",tls->usingSelfSigned);
+        ymerr("tls[%d]: user doesn't provide certificates, creating self-signed",tls->isServer);
         tls->usingSelfSigned = true;
         rsa = YMRSAKeyPairCreate();
         YMRSAKeyPairGenerate(rsa);
         cert = YMX509CertificateCreate(rsa);
     }
     
+	if ( ! cert )
+	{
+		ymerr("tls[%d]: fatal: no local certificate",tls->isServer);
+		goto catch_return;
+	}
+
     tls->localCertificate = YMRetain(cert);
     
     result = SSL_CTX_use_certificate(tls->sslCtx, _YMX509CertificateGetX509(cert));
@@ -450,12 +452,11 @@ catch_return:
         SSL_CTX_free(tls->sslCtx);
         tls->sslCtx = NULL;
     }
+	if ( cert )
+		YMRelease(cert);
 success_return:
     if ( rsa )
-    {
         YMRelease(rsa);
-        YMRelease(cert);
-    }
 }
 
 bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
@@ -507,7 +508,7 @@ bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
     // assuming whatever memory was allocated here gets free'd in SSL_CTX_free
     
     //tls->bio = BIO_new(&ym_bio_methods);
-    tls->bio = BIO_new_socket(tls->_common.readFile, 0);
+    tls->bio = BIO_new_socket(tls->_common.readFile, BIO_NOCLOSE);
     if ( ! tls->bio )
     {
         sslError = ERR_get_error();
@@ -518,9 +519,7 @@ bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
     SSL_set_bio(tls->ssl, tls->bio, tls->bio);
     tls->bio->ptr = tls; // this is the elusive context pointer
     
-#ifndef WIN32
     SSL_set_debug(tls->ssl, 1);
-#endif
     
     if ( tls->isServer )
     {
@@ -532,29 +531,18 @@ bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
         //SSL_set_info_callback(tls->ssl, __ym_tls_info_client_callback);
         SSL_set_connect_state(tls->ssl);
     }
-    
-    // todo: judging by higher level TLS libraries, there's probably a way to get called out to mid-accept
-    // to do things like specify local certs and validate remote ones, but i'll be damned if i can find it in the ocean that is ssl.h.
-    // it doesn't really matter if we do it within SSL_accept() or afterwards, though.
-    ymlog("tls[%d]: entering handshake",tls->isServer);
-    do
-    {
-        result = SSL_do_handshake(tls->ssl);
-        //ymlog("tls[%d]: handshake...",tls->isServer);
-        sslError = SSL_get_error(tls->ssl,result);
-        //bool wantsMoreIO = ( sslError == SSL_ERROR_WANT_READ || sslError == SSL_ERROR_WANT_WRITE );
-    } while ( false /*wantsMoreIO this shouldn't happen for us, we're avoiding non-blocking i/o*/ );
-    
-    ymlog("tls[%d]: handshake returned %d: %ld (%s)",tls->isServer, result, sslError, ERR_error_string(sslError, NULL));
+
+	ymlog("tls[%d]: handshaking...", tls->isServer);
+    result = SSL_do_handshake(tls->ssl);
     
     if ( result != openssl_success )
     {
         sslError = SSL_get_error(tls->ssl, result);
-        ymerr("tls[%d]: SSL_do_handshake failed: %d: ssl err: %lu (%s)",tls->isServer , result, sslError, ERR_error_string(sslError,NULL));
+        ymerr("tls[%d]: SSL_do_handshake failed: %d: ssl err: %lu (%s)",tls->isServer, result, sslError, ERR_error_string(sslError,NULL));
         goto catch_return;
     }
-    
-    ymlog("tls[%d]: SSL_accept returned %d",tls->isServer ,result);
+
+    ymlog("tls[%d]: SSL_do_handshake returned %d",tls->isServer, result);
     
     initOkay = true;
     
@@ -590,6 +578,7 @@ bool __YMTLSProviderRead(__YMSecurityProviderRef provider, uint8_t *buffer, size
     }
     
     int result = SSL_read(tls->ssl, buffer, (int)bytes);
+    
     if ( result <= 0 )
     {
         unsigned long sslError = ERR_get_error();
@@ -611,6 +600,7 @@ bool __YMTLSProviderWrite(__YMSecurityProviderRef provider, const uint8_t *buffe
     }
     
     int result = SSL_write(tls->ssl, buffer, (int)bytes);
+    
     if ( result <= 0 )
     {
         unsigned long sslError = ERR_get_error();
@@ -632,6 +622,11 @@ bool __YMTLSProviderClose(__YMSecurityProviderRef provider)
         ymerr("tls[%d]: SSL_shutdown failed: %d: ssl err: %lu (%s)",tls->isServer ,result,sslError,ERR_error_string(sslError, NULL));
         return false;
     }
+    
+//    if ( tls->_common.readFile >= 0 )
+//        close(tls->_common.readFile);
+//    if ( tls->_common.writeFile != tls->_common.readFile && tls->_common.writeFile >= 0 )
+//        close(tls->_common.writeFile);
     
     return true;
 }

@@ -17,10 +17,8 @@
 #endif
 
 #ifndef WIN32
-#define YMPIPEFILE int
 #define CLOSED_FILE -1
 #else
-#define YMPIPEFILE HANDLE
 #define CLOSED_FILE NULL
 #endif
 
@@ -29,8 +27,8 @@ typedef struct __ym_pipe
     _YMType _type;
     
     YMStringRef name;
-	YMPIPEFILE inFd;
-	YMPIPEFILE outFd;
+	YMFILE inFd;
+	YMFILE outFd;
 } ___ym_pipe;
 typedef struct __ym_pipe __YMPipe;
 typedef __YMPipe *__YMPipeRef;
@@ -47,7 +45,7 @@ YMPipeRef YMPipeCreate(YMStringRef name)
     aPipe->outFd = CLOSED_FILE;
     
     uint64_t iter = 1;
-	YMPIPEFILE fds[2];
+	YMFILE fds[2];
 #ifndef WIN32
     while ( pipe(fds) == -1 )
     {
@@ -59,7 +57,7 @@ YMPipeRef YMPipeCreate(YMStringRef name)
         }
 		usleep(10000);
 #else
-	while ( ! CreatePipe(&aPipe->inFd, &aPipe->outFd, NULL, 0) )
+	while ( 0 == CreatePipe(&fds[0], &fds[1], NULL, 0) )
 	{
 		Sleep(100);
 #endif
@@ -95,13 +93,13 @@ void _YMPipeFree(YMTypeRef object)
     YMRelease(pipe->name);
 }
 
-int YMPipeGetInputFile(YMPipeRef pipe_)
+YMFILE YMPipeGetInputFile(YMPipeRef pipe_)
 {
     __YMPipeRef pipe = (__YMPipeRef)pipe_;
     return pipe->inFd;
 }
 
-int YMPipeGetOutputFile(YMPipeRef pipe_)
+YMFILE YMPipeGetOutputFile(YMPipeRef pipe_)
 {
     __YMPipeRef pipe = (__YMPipeRef)pipe_;
     return pipe->outFd;
@@ -112,14 +110,22 @@ void _YMPipeCloseInputFile(YMPipeRef pipe)
     __YMPipeCloseInputFile(pipe);
 }
 
-void __YMPipeCloseFile(__YMPipeRef pipe, YMPIPEFILE *fdPtr)
+void __YMPipeCloseFile(__YMPipeRef pipe, YMFILE *fdPtr)
 {
-    YMPIPEFILE fd = *fdPtr;
+    YMFILE fd = *fdPtr;
     *fdPtr = CLOSED_FILE;
     if ( fd != CLOSED_FILE )
     {
         ymlog("   pipe[%s]: closing %d",YMSTR(pipe->name),fd);
-        int aClose = close(fd);
+		int aClose = 0;
+#ifndef WIN32
+        aClose = close(fd);
+#else
+		BOOL okay = CloseHandle(fd);
+		if ( ! okay )
+			aClose = -1;
+#endif
+
         if ( aClose != 0 )
         {
             ymerr("   pipe[%s,i%d]: close failed: %d (%s)",YMSTR(pipe->name), fd, aClose, ( aClose == -2 ) ? "already closed" : strerror(errno));

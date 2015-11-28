@@ -404,12 +404,12 @@ void YM_CALLING_CONVENTION __ym_session_connect_async_proc(ym_thread_dispatch_re
     
     if ( okay )
     {
-        __YMSessionAddConnection(session,connection);
+        __YMSessionAddConnection(session, connection);
         YMRetain(connection); // user
-        session->connectedFunc(session,connection,session->callbackContext);
+        session->connectedFunc(session, connection, session->callbackContext);
     }
     else
-        session->connectFailedFunc(session,peer,session->callbackContext);
+        session->connectFailedFunc(session, peer, session->callbackContext);
     
     YMRelease(session);
     YMRelease(peer);
@@ -674,7 +674,7 @@ void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(ym_thread_
     
     address = YMAddressCreate(addr, addrLen);
     peer = _YMPeerCreateWithAddress(address);
-    if ( ! session->shouldAcceptFunc(session,peer,session->callbackContext) )
+    if ( ! session->shouldAcceptFunc(session, peer, session->callbackContext) )
     {
         ymlog("session[%s]: client rejected peer %s",YMSTR(session->logDescription),YMSTR(YMAddressGetDescription(address)));
         goto rewind_fail;
@@ -684,6 +684,8 @@ void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(ym_thread_
     if ( ! newConnection )
     {
         ymlog("session[%s]: failed to create new connection",YMSTR(session->logDescription));
+		if ( session->connectFailedFunc ) 
+			session->connectFailedFunc(session, peer, session->callbackContext);
         goto rewind_fail;
     }
     
@@ -703,7 +705,7 @@ void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(ym_thread_
     return;
     
 rewind_fail:
-    close(socket);
+    //close(socket); // plexer-owned and released
     free(addr);
     if ( address )
         YMRelease(address);

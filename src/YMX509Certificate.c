@@ -34,7 +34,6 @@ typedef __YMX509Certificate *__YMX509CertificateRef;
 
 X509* __YMX509CertificateCreateX509(YMRSAKeyPairRef keyPair)
 {
-    unsigned long opensslErr = ERR_LIB_NONE;
     const char *opensslFunc = NULL;
     ASN1_INTEGER *serial = NULL;
     X509_NAME *subject = NULL;
@@ -61,19 +60,18 @@ X509* __YMX509CertificateCreateX509(YMRSAKeyPairRef keyPair)
 //    }
     //YM_CALL_V(openssl_lol, int, 1, 2, 3);
     
+    int result = 0;
     X509 *x509 = X509_new(); // seems you need to own the prototype (and fixed arg list or varg) to tokenize this
     if ( ! x509 )
     {
         opensslFunc = YM_TOKEN_STR(X509_new);
-        opensslErr = ERR_get_error();
         goto catch_return;
     }
     
-    int result = X509_set_version(x509, 1); // const?
+    result = X509_set_version(x509, 1); // const?
     if ( ERR_LIB_NONE != result )
     {
         opensslFunc = YM_TOKEN_STR(X509_set_version);
-        opensslErr = ERR_get_error();
         goto catch_return;
     }
     
@@ -81,7 +79,6 @@ X509* __YMX509CertificateCreateX509(YMRSAKeyPairRef keyPair)
     if ( ! serial )
     {
         opensslFunc = YM_TOKEN_STR(M_ASN1_INTEGER_new);
-		opensslErr = ERR_get_error();
 		goto catch_return;
     }
     
@@ -90,7 +87,6 @@ X509* __YMX509CertificateCreateX509(YMRSAKeyPairRef keyPair)
     {
 		ASN1_INTEGER_free(serial);
         opensslFunc = YM_TOKEN_STR(X509_set_serialNumber);
-        opensslErr = ERR_get_error();
         goto catch_return;
     }
 	ASN1_INTEGER_free(serial);
@@ -99,7 +95,6 @@ X509* __YMX509CertificateCreateX509(YMRSAKeyPairRef keyPair)
     if ( ERR_LIB_NONE != result )
     {
         opensslFunc = YM_TOKEN_STR(X509_get_subject_name);
-        opensslErr = ERR_get_error();
         goto catch_return;
     }
     
@@ -120,7 +115,6 @@ X509* __YMX509CertificateCreateX509(YMRSAKeyPairRef keyPair)
         if ( ERR_LIB_NONE != result )
         {
             opensslFunc = YM_TOKEN_STR(X509_NAME_add_entry_by_txt);
-            opensslErr = ERR_get_error();
             goto catch_return;
         }
     }
@@ -129,7 +123,6 @@ X509* __YMX509CertificateCreateX509(YMRSAKeyPairRef keyPair)
     if ( ERR_LIB_NONE != result )
     {
         opensslFunc = YM_TOKEN_STR(X509_set_subject_name);
-        opensslErr = ERR_get_error();
         goto catch_return;
     }
     
@@ -137,37 +130,16 @@ X509* __YMX509CertificateCreateX509(YMRSAKeyPairRef keyPair)
     if ( ERR_LIB_NONE != result )
     {
         opensslFunc = YM_TOKEN_STR(X509_set_issuer_name);
-        opensslErr = ERR_get_error();
         goto catch_return;
     }
     
-	ASN1_TIME *asn1Now = ASN1_TIME_new();
-	ASN1_TIME_set(asn1Now, time(NULL));
-    ASN1_TIME * timeResult = X509_gmtime_adj(asn1Now, INT32_MIN);
-    if ( ! timeResult ) // no man page or header comment, this is a guess
-    {
-		ASN1_TIME_free(asn1Now);
-        opensslFunc = YM_TOKEN_STR(X509_gmtime_adj);
-        opensslErr = ERR_get_error();
-        goto catch_return;
-    }
-    
-    int maxOffset = INT32_MAX;
-    timeResult = X509_gmtime_adj(asn1Now, maxOffset);
-    if ( ! timeResult ) // no man page or header comment, this is a guess
-    {
-		ASN1_TIME_free(asn1Now);
-        opensslFunc = YM_TOKEN_STR(X509_gmtime_adj);
-        opensslErr = ERR_get_error();
-        goto catch_return;
-    }
-	ASN1_TIME_free(asn1Now);
+    X509_gmtime_adj(X509_get_notBefore(x509), 0);
+    X509_time_adj_ex(X509_get_notAfter(x509), 365, 0, NULL);
     
     key = EVP_PKEY_new(); // todo leaks in happy case?
     if ( ! key )
     {
         opensslFunc = YM_TOKEN_STR(EVP_PKEY_new);
-        opensslErr = ERR_get_error();
         goto catch_return;
     }
     
@@ -179,7 +151,6 @@ X509* __YMX509CertificateCreateX509(YMRSAKeyPairRef keyPair)
     if ( ERR_LIB_NONE != result )
     {
         opensslFunc = YM_TOKEN_STR(EVP_PKEY_set1_RSA);
-        opensslErr = ERR_get_error();
         goto catch_return;
     }
     
@@ -187,25 +158,28 @@ X509* __YMX509CertificateCreateX509(YMRSAKeyPairRef keyPair)
     if ( ERR_LIB_NONE != result )
     {
         opensslFunc = YM_TOKEN_STR(X509_set_pubkey);
-        opensslErr = ERR_get_error();
         goto catch_return;
     }
     
     // $ man X509_sign
     // No manual entry for X509_sign
-    // lol
-    result = X509_sign(x509, key, EVP_md5()); // todo: md5 ok?
+    result = X509_sign(x509, key, EVP_sha1());
     if ( ERR_LIB_NONE != result )
     {
-        opensslFunc = YM_TOKEN_STR(X509_sign);
-        opensslErr = ERR_get_error();
-        goto catch_return;
+		if ( result != 512 )
+		{
+			opensslFunc = YM_TOKEN_STR(X509_sign);
+			goto catch_return;
+		}
+		else
+			result = ERR_LIB_NONE;
     }
     
 catch_return:
-    if ( SSL_ERROR_NONE != opensslErr )
+    if ( ERR_LIB_NONE != result )
     {
-        ymerr("x509: %s failed: %lu (%s)",opensslFunc,opensslErr,ERR_error_string(opensslErr,NULL));
+		unsigned long sslErr = ERR_get_error();
+        ymerr("x509: %s failed: r%d s%lu (%s)",opensslFunc, result, sslErr, ERR_error_string(sslErr,NULL));
         if ( x509 )
         {
             X509_free(x509);

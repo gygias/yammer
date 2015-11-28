@@ -38,6 +38,12 @@
 #define YM_ONCE_DO_LOCAL2(f,p,c) { static YM_ONCE_OBJ gLocalInitOnce = YM_ONCE_INIT; YM_ONCE_DO(gLocalInitOnce,f,p,c); }
 #endif
 
+#ifndef WIN32
+#define YMFILE int
+#else
+#define YMFILE HANDLE
+#endif
+
 #define YM_DEBUG_INFO // consolidate extra-curricular stuff under here so it doesn't get forgotten
 
 #define YM_TYPE_RESERVED (128 - sizeof(YMTypeID))

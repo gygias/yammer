@@ -72,13 +72,13 @@
 		637E3D5D1BF262EE00D702ED /* YMX509Certificate.c in Sources */ = {isa = PBXBuildFile; fileRef = 637E3D5B1BF262EE00D702ED /* YMX509Certificate.c */; };
 		637E3D5E1BF262EE00D702ED /* YMX509Certificate.h in Headers */ = {isa = PBXBuildFile; fileRef = 637E3D5C1BF262EE00D702ED /* YMX509Certificate.h */; };
 		637E3D611BF2CD7300D702ED /* TLSTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 637E3D601BF2CD7300D702ED /* TLSTests.m */; };
+		638E1D661C098AF900BA2FA4 /* libcrypto.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 638E1D651C098AF900BA2FA4 /* libcrypto.tbd */; };
 		63BD75CE1BF3F0E700D01F70 /* YMLocalSocketPair.c in Sources */ = {isa = PBXBuildFile; fileRef = 63BD75CC1BF3F0E700D01F70 /* YMLocalSocketPair.c */; };
 		63BD75CF1BF3F0E700D01F70 /* YMLocalSocketPair.h in Headers */ = {isa = PBXBuildFile; fileRef = 63BD75CD1BF3F0E700D01F70 /* YMLocalSocketPair.h */; };
 		63EEC75D1BFB6AD100990ECE /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 63DDCB311BFB68AA009F91CD /* main.c */; };
 		63EEC75E1BFB6BCF00990ECE /* libyammer.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63225D421BE9026200C28F05 /* libyammer.dylib */; };
 		63FD5B5A1BF1899800174824 /* YMRSAKeyPair.c in Sources */ = {isa = PBXBuildFile; fileRef = 63FD5B581BF1899800174824 /* YMRSAKeyPair.c */; };
 		63FD5B5B1BF1899800174824 /* YMRSAKeyPair.h in Headers */ = {isa = PBXBuildFile; fileRef = 63FD5B591BF1899800174824 /* YMRSAKeyPair.h */; };
-		63FD5B5D1BF1B93400174824 /* libcrypto.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 63FD5B5C1BF1B93400174824 /* libcrypto.tbd */; };
 		63FD5B5F1BF1B94A00174824 /* CryptoTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 63FD5B5E1BF1B94A00174824 /* CryptoTests.m */; };
 /* End PBXBuildFile section */
 
@@ -195,6 +195,7 @@
 		637E3D5F1BF2680B00D702ED /* YMOpenssl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMOpenssl.h; path = private/YMOpenssl.h; sourceTree = "<group>"; };
 		637E3D601BF2CD7300D702ED /* TLSTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TLSTests.m; sourceTree = "<group>"; };
 		637E3D621BF2D12100D702ED /* YMSecurityProviderInternal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMSecurityProviderInternal.h; path = private/YMSecurityProviderInternal.h; sourceTree = "<group>"; };
+		638E1D651C098AF900BA2FA4 /* libcrypto.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libcrypto.tbd; path = usr/lib/libcrypto.tbd; sourceTree = SDKROOT; };
 		63A40EF81BEC239C0085ABD0 /* YMThreadPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMThreadPriv.h; path = private/YMThreadPriv.h; sourceTree = "<group>"; };
 		63BD75CC1BF3F0E700D01F70 /* YMLocalSocketPair.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMLocalSocketPair.c; path = src/YMLocalSocketPair.c; sourceTree = "<group>"; };
 		63BD75CD1BF3F0E700D01F70 /* YMLocalSocketPair.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMLocalSocketPair.h; path = private/YMLocalSocketPair.h; sourceTree = "<group>"; };
@@ -202,7 +203,6 @@
 		63EEC7561BFB6AA400990ECE /* chat */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = chat; sourceTree = BUILT_PRODUCTS_DIR; };
 		63FD5B581BF1899800174824 /* YMRSAKeyPair.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMRSAKeyPair.c; path = src/YMRSAKeyPair.c; sourceTree = "<group>"; };
 		63FD5B591BF1899800174824 /* YMRSAKeyPair.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMRSAKeyPair.h; path = private/YMRSAKeyPair.h; sourceTree = "<group>"; };
-		63FD5B5C1BF1B93400174824 /* libcrypto.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libcrypto.tbd; path = usr/lib/libcrypto.tbd; sourceTree = SDKROOT; };
 		63FD5B5E1BF1B94A00174824 /* CryptoTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CryptoTests.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -227,7 +227,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				63FD5B5D1BF1B93400174824 /* libcrypto.tbd in Frameworks */,
+				638E1D661C098AF900BA2FA4 /* libcrypto.tbd in Frameworks */,
 				63225D9E1BE9372800C28F05 /* libssl.1.0.0.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -319,7 +319,7 @@
 		63225D9C1BE9314100C28F05 /* Dependencies */ = {
 			isa = PBXGroup;
 			children = (
-				63FD5B5C1BF1B93400174824 /* libcrypto.tbd */,
+				638E1D651C098AF900BA2FA4 /* libcrypto.tbd */,
 				63225D9D1BE9372800C28F05 /* libssl.1.0.0.dylib */,
 			);
 			name = Dependencies;
@@ -789,6 +789,7 @@
 					"DEBUG=1",
 					"$(inherited)",
 				);
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = _MACOS;
 				GCC_TREAT_INCOMPATIBLE_POINTER_TYPE_WARNINGS_AS_ERRORS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
@@ -846,6 +847,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = _MACOS;
 				GCC_TREAT_INCOMPATIBLE_POINTER_TYPE_WARNINGS_AS_ERRORS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;

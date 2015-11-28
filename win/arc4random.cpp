@@ -274,7 +274,7 @@ YM_ONCE_FUNC(__arc4Init,
 
 unsigned int arc4random_uniform(unsigned int upper_bound)
 {
-	YM_ONCE_DO_LOCAL(__arc4Init);
+	YM_ONCE_DO(gArc4Once, __arc4Init);
 
 	YMLockLock(gArc4Mutex);
 	unsigned int ret = arc4random_uniformT(upper_bound);

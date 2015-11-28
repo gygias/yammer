@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libyammer", "libyammer.vcxproj", "{36369923-A198-469B-B41B-65AD607E31C3}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "chat", "chat\chat.vcxproj", "{4F667C61-32E6-4964-B0E3-20819566A015}"
+	ProjectSection(ProjectDependencies) = postProject
+		{36369923-A198-469B-B41B-65AD607E31C3} = {36369923-A198-469B-B41B-65AD607E31C3}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

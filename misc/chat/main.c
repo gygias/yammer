@@ -68,6 +68,7 @@ int main(int argc, const char * argv[]) {
         YMSessionSetBrowsingCallbacks(gYMSession, _ym_session_added_peer_func, _ym_session_removed_peer_func, _ym_session_resolve_failed_func, _ym_session_resolved_peer_func, _ym_session_connect_failed_func, NULL);
         if ( ! YMSessionStartBrowsing(gYMSession) )
             exit(1);
+		printf("looking for service...\n");
     }
         
     int longTime = 999999999;

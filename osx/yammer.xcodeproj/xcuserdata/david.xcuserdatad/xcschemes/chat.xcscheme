@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "63312D011BFAF9E600039336"
+               BlueprintIdentifier = "63EEC7551BFB6AA400990ECE"
                BuildableName = "chat"
                BlueprintName = "chat"
                ReferencedContainer = "container:yammer.xcodeproj">
@@ -32,7 +32,7 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "63312D011BFAF9E600039336"
+            BlueprintIdentifier = "63EEC7551BFB6AA400990ECE"
             BuildableName = "chat"
             BlueprintName = "chat"
             ReferencedContainer = "container:yammer.xcodeproj">
@@ -55,12 +55,22 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "63312D011BFAF9E600039336"
+            BlueprintIdentifier = "63EEC7551BFB6AA400990ECE"
             BuildableName = "chat"
             BlueprintName = "chat"
             ReferencedContainer = "container:yammer.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <CommandLineArguments>
+         <CommandLineArgument
+            argument = "_ychat._tcp"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "lol"
+            isEnabled = "NO">
+         </CommandLineArgument>
+      </CommandLineArguments>
       <AdditionalOptions>
       </AdditionalOptions>
    </LaunchAction>
@@ -74,7 +84,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "63312D011BFAF9E600039336"
+            BlueprintIdentifier = "63EEC7551BFB6AA400990ECE"
             BuildableName = "chat"
             BlueprintName = "chat"
             ReferencedContainer = "container:yammer.xcodeproj">

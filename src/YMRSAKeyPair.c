@@ -141,7 +141,6 @@ bool YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair_)
     //pthread_once(&gYMRSAKeyPairSeedOnce, _YMRSAKeyPairSeed);
     __YMRSAKeyPairSeed();
     
-    
 #ifdef YM_DEBUG_INFO
     struct timeval then;
     int timeResult = gettimeofday(&then,NULL);
@@ -167,7 +166,7 @@ bool YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair_)
     BN_set_word(e, keyPair->publicE);
     
     // os x man page doesn't actually state that 1 is success for _ex #yolo
-    result = RSA_generate_key_ex(keyPair->rsa, keyPair->moduloNBits, e	, NULL /*BN_GENCB *cb callback struct*/);
+    result = RSA_generate_key_ex(keyPair->rsa, keyPair->moduloNBits, e, NULL /*BN_GENCB *cb callback struct*/);
     if ( ERR_LIB_NONE != result )
     {
         rsaErrFunc = "RSA_generate_key_ex";

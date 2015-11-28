@@ -13,7 +13,7 @@ typedef YMTypeRef YMPipeRef;
 
 YMPipeRef YMPipeCreate(YMStringRef name);
 
-int YMPipeGetInputFile(YMPipeRef pipe);
-int YMPipeGetOutputFile(YMPipeRef pipe);
+YMFILE YMPipeGetInputFile(YMPipeRef pipe);
+YMFILE YMPipeGetOutputFile(YMPipeRef pipe);
 
 #endif /* YMPipe_h */

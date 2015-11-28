@@ -154,7 +154,9 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
     NSLog(@"plexer test using %u threads, %u trips per thread, %@ streams per thread, %@ messages",PlexerTest1Threads,PlexerTest1RoundTripsPerThread,PlexerTest1NewStreamPerRoundTrip?@"new":@"one",PlexerTest1RandomMessages?@"random":@"fixed");
     
     YMStringRef name = YMSTRC("L");
-    localPlexer = YMPlexerCreate(name,readFromRemote,writeToRemote,localIsMaster);
+    YMSecurityProviderRef noSecurity = YMSecurityProviderCreate(readFromRemote, writeToRemote);
+    localPlexer = YMPlexerCreate(name,noSecurity,localIsMaster);
+    YMRelease(noSecurity);
     YMRelease(name);
     YMPlexerSetInterruptedFunc(localPlexer, local_plexer_interrupted);
     YMPlexerSetNewIncomingStreamFunc(localPlexer, local_plexer_new_stream);
@@ -162,7 +164,9 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
     YMPlexerSetCallbackContext(localPlexer, (__bridge void *)(self));
     
     name = YMSTRC("R");
-    fakeRemotePlexer = YMPlexerCreate(name,readFromLocal,writeToLocal,!localIsMaster);
+    noSecurity = YMSecurityProviderCreate(readFromLocal, writeToLocal);
+    fakeRemotePlexer = YMPlexerCreate(name,noSecurity,!localIsMaster);
+    YMRelease(noSecurity);
     YMRelease(name);
     YMPlexerSetInterruptedFunc(fakeRemotePlexer, remote_plexer_interrupted);
     YMPlexerSetNewIncomingStreamFunc(fakeRemotePlexer, remote_plexer_new_stream);

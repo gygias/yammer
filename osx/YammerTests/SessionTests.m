@@ -251,7 +251,7 @@ typedef struct ManPageThanks
     
     YMConnectionCloseStream(connection,stream);
     
-    NSLog(@"server thread exiting");
+    NSLog(@"write random thread exiting");
     dispatch_semaphore_signal(threadExitSemaphore);
 }
 
@@ -327,7 +327,7 @@ typedef struct ManPageThanks
     }
     
     nManPagesToRead = actuallyWritten;
-    NSLog(@"client thread exiting");
+    NSLog(@"write man thread exiting");
     dispatch_semaphore_signal(threadExitSemaphore);
 }
 
