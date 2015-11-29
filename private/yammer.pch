@@ -26,18 +26,17 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#ifndef WIN32
-#include <unistd.h>
-#else
-#define _WINSOCKAPI_
-#include <windows.h>
-#include "arc4random.h"
-#define inline
+#if defined(_MACOS) || defined(RPI)
+	#include <unistd.h>
+#elif defined(WIN32)
+	#define _WINSOCKAPI_
+	#include <windows.h>
+	#include "arc4random.h"
+	#define inline
+	#define YMAPI __declspec( dllexport )
 #endif
 
-#ifdef WIN32
-#define YMAPI __declspec( dllexport ) 
-#else
+#ifndef WIN32 
 #define YMAPI
 #endif
 

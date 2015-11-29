@@ -84,14 +84,14 @@ typedef enum
 
 YMAPI void YMFreeGlobalResources();
 
-#ifndef WIN32
+#if defined(_MACOS)
 #define YM_VARGS_SENTINEL_REQUIRED __attribute__((sentinel(0,1)))
 #define YM_WPPUSH \
 _Pragma("GCC diagnostic push") \
 _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
 #define YM_WPOP \
 _Pragma("GCC diagnostic pop")
-#else
+#elif defined(WIN32) || defined(RPI)
 /*#define bool unsigned char
  #define false 0
  #define true 1

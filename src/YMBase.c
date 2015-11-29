@@ -67,7 +67,6 @@ void __YMFree(__YMTypeRef object);
 
 YMTypeRef _YMAlloc(YMTypeID type, size_t size)
 {
-    __unused int sss = sizeof(_YMType);
     if ( size < sizeof(_YMType) )
     {
         fprintf(stderr,"base: fatal: bad alloc");
