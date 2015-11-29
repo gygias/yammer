@@ -388,6 +388,11 @@ static void DNSSD_API __ym_mdns_browse_callback(__unused DNSServiceRef serviceRe
         ymerr("mDNS[%s]: error: browse callback: %d",YMSTR(browser->type),result);
         return;
     }
+    if ( domain == NULL )
+    {
+        ymerr("mDNS[%s]: error: service '%s' has no domain",YMSTR(browser->type),name);
+        return;
+    }
     
     // "An enumeration callback with the "Add" flag NOT set indicates a "Remove", i.e. the domain is no longer valid.
     bool remove = (flags & kDNSServiceFlagsAdd) == 0;

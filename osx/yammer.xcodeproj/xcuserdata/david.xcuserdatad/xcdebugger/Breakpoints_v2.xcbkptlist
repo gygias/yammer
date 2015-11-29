@@ -124,15 +124,6 @@
                </BreakpointActionProxy>
             </Actions>
             <Locations>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "_XCTestMain"
-                  moduleName = "XCTest"
-                  usesParentBreakpointCondition = "Yes"
-                  offsetFromSymbolStart = "0">
-               </Location>
             </Locations>
          </BreakpointContent>
       </BreakpointProxy>
@@ -150,203 +141,6 @@
             endingLineNumber = "49"
             landmarkName = "-testX509Generation"
             landmarkType = "5">
-            <Locations>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[D_CryptoTests testX509Generation]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "470450151.959194"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "49"
-                  endingLineNumber = "49"
-                  offsetFromSymbolStart = "399">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[D_CryptoTests testX509Generation]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "470450151.959739"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "49"
-                  endingLineNumber = "49"
-                  offsetFromSymbolStart = "928">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[D_CryptoTests testX509Generation]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "470450151.960531"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "49"
-                  endingLineNumber = "49"
-                  offsetFromSymbolStart = "1401">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[D_CryptoTests testX509Generation]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "470450151.961337"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "49"
-                  endingLineNumber = "49"
-                  offsetFromSymbolStart = "1763">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[D_CryptoTests testX509Generation]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "470450151.96187"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "49"
-                  endingLineNumber = "49"
-                  offsetFromSymbolStart = "1787">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[D_CryptoTests testX509Generation]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "470450151.962464"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "49"
-                  endingLineNumber = "49"
-                  offsetFromSymbolStart = "2372">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[D_CryptoTests testX509Generation]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "470450151.963056"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "49"
-                  endingLineNumber = "49"
-                  offsetFromSymbolStart = "2857">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[D_CryptoTests testX509Generation]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "470450151.963627"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "49"
-                  endingLineNumber = "49"
-                  offsetFromSymbolStart = "3246">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[D_CryptoTests testX509Generation]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "470450151.964217"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "49"
-                  endingLineNumber = "49"
-                  offsetFromSymbolStart = "3790">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[D_CryptoTests testX509Generation]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "470450151.96492"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "49"
-                  endingLineNumber = "49"
-                  offsetFromSymbolStart = "4275">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[D_CryptoTests testX509Generation]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "470450151.965534"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "49"
-                  endingLineNumber = "49"
-                  offsetFromSymbolStart = "4664">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[D_CryptoTests testX509Generation]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "470450151.966038"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "49"
-                  endingLineNumber = "49"
-                  offsetFromSymbolStart = "4873">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[D_CryptoTests testX509Generation]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/CryptoTests.m"
-                  timestampString = "470450151.966682"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "49"
-                  endingLineNumber = "49"
-                  offsetFromSymbolStart = "5358">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -363,158 +157,6 @@
             endingLineNumber = "135"
             landmarkName = "-testmDNSCreateDiscoverResolve"
             landmarkType = "5">
-            <Locations>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[E_mDNSTests testmDNSCreateDiscoverResolve]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/mDNSTests.m"
-                  timestampString = "470450151.967603"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "135"
-                  endingLineNumber = "135"
-                  offsetFromSymbolStart = "750">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[E_mDNSTests testmDNSCreateDiscoverResolve]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/mDNSTests.m"
-                  timestampString = "470450151.968076"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "135"
-                  endingLineNumber = "135"
-                  offsetFromSymbolStart = "1311">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[E_mDNSTests testmDNSCreateDiscoverResolve]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/mDNSTests.m"
-                  timestampString = "470450151.969612"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "135"
-                  endingLineNumber = "135"
-                  offsetFromSymbolStart = "1805">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[E_mDNSTests testmDNSCreateDiscoverResolve]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/mDNSTests.m"
-                  timestampString = "470450151.970707"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "135"
-                  endingLineNumber = "135"
-                  offsetFromSymbolStart = "2179">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[E_mDNSTests testmDNSCreateDiscoverResolve]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/mDNSTests.m"
-                  timestampString = "470450151.97105"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "135"
-                  endingLineNumber = "135"
-                  offsetFromSymbolStart = "2209">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[E_mDNSTests testmDNSCreateDiscoverResolve]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/mDNSTests.m"
-                  timestampString = "470450151.971829"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "135"
-                  endingLineNumber = "135"
-                  offsetFromSymbolStart = "2883">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[E_mDNSTests testmDNSCreateDiscoverResolve]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/mDNSTests.m"
-                  timestampString = "470450151.972438"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "135"
-                  endingLineNumber = "135"
-                  offsetFromSymbolStart = "3377">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[E_mDNSTests testmDNSCreateDiscoverResolve]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/mDNSTests.m"
-                  timestampString = "470450151.97307"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "135"
-                  endingLineNumber = "135"
-                  offsetFromSymbolStart = "3781">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[E_mDNSTests testmDNSCreateDiscoverResolve]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/mDNSTests.m"
-                  timestampString = "470450151.973625"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "135"
-                  endingLineNumber = "135"
-                  offsetFromSymbolStart = "4810">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[E_mDNSTests testmDNSCreateDiscoverResolve]"
-                  moduleName = "YammerTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/david/sandbox/yammer/osx/YammerTests/mDNSTests.m"
-                  timestampString = "470450151.974173"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "135"
-                  endingLineNumber = "135"
-                  offsetFromSymbolStart = "5304">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -627,6 +269,22 @@
             endingLineNumber = "30"
             landmarkName = "-testFreeGlobals"
             landmarkType = "5">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../misc/chat/main.c"
+            timestampString = "470478865.715186"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "134"
+            endingLineNumber = "134"
+            landmarkName = "__sigint_handler()"
+            landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

@@ -57,21 +57,23 @@ YMAPI void YMSelfUnlock(YMTypeRef object);
     #define YM_CLOSE_FILE(fd) { BOOL okay = CloseHandle(fd); if ( ! okay ) result = -1; else result = 0; }
     #define YMSOCKET SOCKET
     #define NULL_SOCKET ((SOCKET)NULL)
+	#define GENERIC_WERROR_STR "windows error" // unfortunately the strerror equivalent FormatMessage needs the caller to take ownership, which we don't want to mess with.
+												// we could have our own method with static strings. P.S. ERROR_ARENA_TRASHED
     #define YM_CLOSE_SOCKET(socket) { result = closesocket(socket); \
-                                      if ( result == SOCKET_ERROR ) { result = -1; error = GetLastError(); errorStr = "windows error"; } \
+                                      if ( result == SOCKET_ERROR ) { result = -1; error = GetLastError(); errorStr = GENERIC_WERROR_STR; } \
                                       else { result = 0; error = 0; errorStr = NULL; } }
     #define YM_WAIT_SEMAPHORE(s) { DWORD dResult = WaitForSingleObject(s->sem, INFINITE); \
                                    if ( dResult != WAIT_OBJECT_0 ) { \
                                         if ( dResult == WAIT_FAILED ) error = (int)GetLastError(); \
                                         else error = (int)dResult; \
-                                        result = -1; errorStr = "windows error"; } \
+                                        result = -1; errorStr = GENERIC_WERROR_STR; } \
                                     else { result = 0; error = 0; errorStr = NULL; } }
     #define YM_POST_SEMAPHORE(s) { BOOL okay = ReleaseSemaphore(s->sem, 1, NULL); \
-                                    if ( ! okay ) { result = -1; error = GetLastError(); errorStr = "windows error"; } \
+                                    if ( ! okay ) { result = -1; error = GetLastError(); errorStr = GENERIC_WERROR_STR; } \
                                     else { result = 0; error = 0; errorStr = NULL; } }
     #define YM_RETRY_SEMAPHORE false
     #define YM_CLOSE_SEMAPHORE(s) { BOOL okay = CloseHandle(s->sem); \
-                                    if ( ! okay ) { result = -1; error = (int)GetLastError(); errorStr = "windows error"; } \
+                                    if ( ! okay ) { result = -1; error = (int)GetLastError(); errorStr = GENERIC_WERROR_STR; } \
                                     else { result = 0; error = 0; errorStr = NULL; } }
 #endif
 
@@ -92,14 +94,6 @@ _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
 #define YM_WPOP \
 _Pragma("GCC diagnostic pop")
 #else
-/*#define bool unsigned char
- #define false 0
- #define true 1
- typedef __int32 int32_t;
- typedef unsigned __int32 uint32_t;
- typedef unsigned __int16 uint16_t;
- typedef unsigned __int8 uint8_t;
- typedef unsigned int size_t;*/
 #define ssize_t SSIZE_T
 #define YM_VARGS_SENTINEL_REQUIRED
 #define __printflike(x,y)
