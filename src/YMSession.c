@@ -639,12 +639,12 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_accept_proc(YM_THREAD_PARAM 
         int aResult = accept(socket, (struct sockaddr *)bigEnoughAddr, &thisLength);
         if ( aResult < 0 )
         {
-            ymlog("session[%s]: accept(%d) failed: %d (%s)",YMSTR(session->logDescription),socket,errno,strerror(errno));
+            ymerr("session[%s]: accept(%d) failed: %d (%s)",YMSTR(session->logDescription),socket,errno,strerror(errno));
             free(bigEnoughAddr);
             continue;
         }
         
-        ymlog("session[%s]: accepted %d, dispatching connection init",YMSTR(session->logDescription), aResult);
+        ymerr("session[%s]: accepted %d, dispatching connection init",YMSTR(session->logDescription), aResult);
         
         __ym_connection_init_context initCtx = (__ym_connection_init_context)YMALLOC(sizeof(struct __ym_connection_init_context_def));
         initCtx->session = session;

@@ -57,7 +57,7 @@ typedef struct __ym_tls_provider
     
     bool isServer;
     bool isWrappingSocket;
-    bool usingSelfSigned; // todo client-supplied
+    bool usingGeneratedCert; // todo client-supplied
     bool preverified;
     SSL_CTX *sslCtx;
     //int sslCtxExDataIdx; // if only!
@@ -133,7 +133,7 @@ YMTLSProviderRef __YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isWrappin
     tls->_common.writeFile = (YMFILE)socket;
     tls->isWrappingSocket = isWrappingSocket;
     tls->isServer = isServer;
-    tls->usingSelfSigned = false;
+    tls->usingGeneratedCert = false;
     tls->preverified = false;
     
     tls->localCertificate = NULL;
@@ -334,7 +334,7 @@ int __ym_tls_certificate_verify_callback(int preverify_ok, X509_STORE_CTX *x509_
     }
     else if ( ! preverify_ok )
     {
-        if ( ! tls->isServer && tls->usingSelfSigned && ( err != X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT ) )
+        if ( ! tls->isServer && tls->usingGeneratedCert && ( err != X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT ) )
         {
             ymerr("tls[%d]: verify error: preverify: %d (%s)",tls->isServer,err,X509_verify_cert_error_string(err));
             return 0;
@@ -412,7 +412,7 @@ void __YMTLSProviderInitSslCtx(__YMTLSProviderRef tls)
     else
     {
         ymerr("tls[%d]: user doesn't provide certificates, creating self-signed",tls->isServer);
-        tls->usingSelfSigned = true;
+        tls->usingGeneratedCert = true;
         rsa = YMRSAKeyPairCreate();
         YMRSAKeyPairGenerate(rsa);
         cert = YMX509CertificateCreate(rsa);
@@ -423,8 +423,9 @@ void __YMTLSProviderInitSslCtx(__YMTLSProviderRef tls)
 		ymerr("tls[%d]: fatal: no local certificate",tls->isServer);
 		goto catch_return;
 	}
-
-    tls->localCertificate = YMRetain(cert);
+    
+    if ( ! tls->usingGeneratedCert )
+        tls->localCertificate = YMRetain(cert);
     
     result = SSL_CTX_use_certificate(tls->sslCtx, _YMX509CertificateGetX509(cert));
     if ( result != openssl_success )

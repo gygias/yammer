@@ -158,7 +158,7 @@ typedef __ym_dispatch_plexer_and_stream *__ym_dispatch_plexer_and_stream_ref;
 
 YM_ONCE_DEF(__YMRegisterSigpipe);
 void __ym_sigpipe_handler (int signum);
-YMStreamRef __YMPlexerChooseReadyStream(__YMPlexerRef plexer, YMTypeRef **list, int *outReadyStreamsByIdx, int *outStreamListIdx, int *outStreamIdx);
+YMStreamRef __YMPlexerRetainReadyStream(__YMPlexerRef plexer);
 void __YMPlexerDispatchFunctionWithName(__YMPlexerRef plexer, YMStreamRef stream, YMThreadRef targetThread, ym_thread_dispatch_func function, YMStringRef nameToRelease);
 bool __YMPlexerStartServiceThreads(__YMPlexerRef plexer);
 bool __YMPlexerDoInitialization(__YMPlexerRef plexer, bool master);
@@ -546,9 +546,6 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_downstream_proc(YM_TH
     //YMRetain(plexer); // retained on thread creation, matched at the end of this function
     
     ymlog(" plexer[%s]: downstream service thread entered",YMSTR(plexer->name));
-
-	YMTypeRef *listOfLocksAndLists[] = { (YMTypeRef[]) { plexer->localAccessLock, plexer->localStreamsByID },
-		(YMTypeRef[]) { plexer->remoteAccessLock, plexer->remoteStreamsByID } };
     
     while( plexer->active )
     {
@@ -562,12 +559,9 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_downstream_proc(YM_TH
             break;
         }
         
-        int readyStreamsByList[2] = { 0, 0 };
-        int listIdx = -1;
-        int streamIdx = -1;
-        YMStreamRef servicingStream = __YMPlexerChooseReadyStream(plexer, listOfLocksAndLists, readyStreamsByList, &listIdx, &streamIdx);
+        YMStreamRef servicingStream = __YMPlexerRetainReadyStream(plexer);
         
-        ymlog(" plexer[%s-V]: signaled, [d%d,u%d] streams ready",YMSTR(plexer->name),readyStreamsByList[__YMOutgoingListIdx],readyStreamsByList[__YMIncomingListIdx]);
+        ymlog(" plexer[%s-V]: signaled,",YMSTR(plexer->name));
         
         // todo about not locking until we've consumed as many semaphore signals as we can
         //while ( --readyStreams )
@@ -580,6 +574,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_downstream_proc(YM_TH
             
             YM_DEBUG_ASSERT_MALLOC(servicingStream);
             bool okay = __YMPlexerServiceADownstream(plexer, servicingStream);
+            YMRelease(servicingStream);
             if ( ! okay )
             {
                 if ( __YMPlexerInterrupt(plexer,false) )
@@ -595,11 +590,14 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_downstream_proc(YM_TH
 	YM_THREAD_END
 }
 
-YMStreamRef __YMPlexerChooseReadyStream(__YMPlexerRef plexer, YMTypeRef **list, int *outReadyStreamsByIdx, int *outListIdx, int *outStreamIdx)
+YMStreamRef __YMPlexerRetainReadyStream(__YMPlexerRef plexer)
 {
     YMStreamRef oldestStream = NULL;
     struct timeval newestTime = {0,0};
     YMGetTheEndOfPosixTimeForCurrentPlatform(&newestTime);
+    
+    YMTypeRef *list[] = { (YMTypeRef[]) { plexer->localAccessLock, plexer->localStreamsByID },
+        (YMTypeRef[]) { plexer->remoteAccessLock, plexer->remoteStreamsByID } };
     
     int streamIdx;
     int listIdx = 0;
@@ -643,17 +641,11 @@ YMStreamRef __YMPlexerChooseReadyStream(__YMPlexerRef plexer, YMTypeRef **list, 
                 
                 ymlog(" plexer[%s-choose]: %s stream %u is ready! %s%llub",YMSTR(plexer->name),listIdx==__YMOutgoingListIdx?"local":"remote",aStreamID,userInfo->userClosed?"(closing) ":"",aStreamBytesAvailable);
                 
-                if ( outReadyStreamsByIdx )
-                    outReadyStreamsByIdx[listIdx]++;
-                
                 struct timeval *thisStreamLastService = YM_STREAM_INFO(aStream)->lastServiceTime;
                 if ( YMTimevalCompare(thisStreamLastService, &newestTime ) != GreaterThan )
                 {
-                    if ( outStreamIdx )
-                        *outStreamIdx = streamIdx;
-                    if ( outListIdx )
-                        *outListIdx = listIdx;
-                    oldestStream = aStream;
+                    if ( oldestStream ) YMRelease(oldestStream);
+                    oldestStream = YMRetain(aStream);
                 }
                 
             catch_continue:

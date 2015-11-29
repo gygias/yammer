@@ -37,7 +37,8 @@ typedef struct __ym_local_socket_pair
 {
     _YMType _type;
     
-    YMStringRef name;
+    YMStringRef socketName;
+    YMStringRef userName;
     int socketA;
     int socketB;
 } ___ym_local_socket_pair;
@@ -73,6 +74,14 @@ void YMLocalSocketPairStop()
         gYMLocalSocketSemaphore = NULL;
         YMRelease(gYMLocalSocketPairAcceptThread);
         gYMLocalSocketPairAcceptThread = NULL;
+        
+#ifdef _MACOS
+        YMStringRef tmpPath = YMSTRCF("/tmp/%s",YMSTR(gYMLocalSocketPairName));
+        result = unlink(YMSTR(tmpPath));
+        if ( result != 0 )
+            ymerr("local-socket[%s]: failed to unlink socket file: %d %s",YMSTR(gYMLocalSocketPairName),errno,strerror(errno));
+        YMRelease(tmpPath);
+#endif
         YMRelease(gYMLocalSocketPairName);
         gYMLocalSocketPairName = NULL;
     }
@@ -136,8 +145,8 @@ YMLocalSocketPairRef YMLocalSocketPairCreate(YMStringRef name, bool moreComing)
     
     __YMLocalSocketPairRef pair = (__YMLocalSocketPairRef)_YMAlloc(_YMLocalSocketPairTypeID,sizeof(__YMLocalSocketPair));
     
-    pair->name = YMStringCreateWithFormat("ls:%s:s%d<->c%d",YMSTR(name),serverSocket,clientSocket,NULL);
-    
+    pair->userName = YMStringCreateWithFormat("ls:%s:s%d<->c%d",YMSTR(name),serverSocket,clientSocket,NULL);
+    pair->socketName = YMRetain(gYMLocalSocketPairName);
     pair->socketA = serverSocket;
     pair->socketB = clientSocket;
     
@@ -165,17 +174,18 @@ void _YMLocalSocketPairFree(YMTypeRef object)
     int result = close(pair->socketA);
     if ( result != 0 )
     {
-        ymerr("local-socket[%s]: close failed (%d): %d (%s)",YMSTR(pair->name),result,errno,strerror(errno));
+        ymerr("local-socket[%s]: close failed (%d): %d (%s)",YMSTR(pair->userName),result,errno,strerror(errno));
         abort();
     }
     result = close(pair->socketB);
     if ( result != 0 )
     {
-        ymerr("local-socket[%s]: close failed (%d): %d (%s)",YMSTR(pair->name),result,errno,strerror(errno));
+        ymerr("local-socket[%s]: close failed (%d): %d (%s)",YMSTR(pair->userName),result,errno,strerror(errno));
         abort();
     }
     
-    YMRelease(pair->name);
+    YMRelease(pair->userName);
+    YMRelease(pair->socketName);
 }
 
 // lifted from http://www.gnu.org/software/libc/manual/html_node/Local-Socket-Example.html

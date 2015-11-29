@@ -39,7 +39,7 @@
 }
 @end
 
-const uint64_t gSomeLength = 5678900;
+uint64_t gSomeLength = 5678900;
 SessionTests *gTheSessionTest = nil;
 
 #define FAKE_DELAY_MAX 3
@@ -98,13 +98,13 @@ SessionTests *gTheSessionTest = nil;
 #define RUN_SERVER
 #ifdef RUN_SERVER
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
-        [self _runServer:serverSession];
+        [self _serverWriteRandom:serverSession];
     });
 #endif
 #define CLIENT_TOO // debugging forward-file hang-up
 #ifdef CLIENT_TOO
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
-        [self _runClient:clientSession];
+        [self _clientWriteManPages:clientSession];
     });
 #endif
     
@@ -217,7 +217,7 @@ typedef struct ManPageThanks
     char thx4Man[NAME_MAX+1+15];
 }_ManPageThanks;
 
-- (void)_runServer:(YMSessionRef)server
+- (void)_serverWriteRandom:(YMSessionRef)server
 {
     YMConnectionRef connection = YMSessionGetDefaultConnection(server);
     // todo sometimes this is inexplicably null, yet not in the session by the time the test runs
@@ -255,7 +255,7 @@ typedef struct ManPageThanks
     dispatch_semaphore_signal(threadExitSemaphore);
 }
 
-- (void)_runClient:(YMSessionRef)client
+- (void)_clientWriteManPages:(YMSessionRef)client
 {
     YMConnectionRef connection = YMSessionGetDefaultConnection(client);
     NSString *basePath = @"/usr/share/man/man2";
@@ -397,7 +397,10 @@ typedef struct ManPageThanks
     tempFile = [NSString stringWithUTF8String:temp];
     XCTAssert(result>=0,@"eat random out handle %d %s",errno,strerror(errno));
     uint64_t outBytes = 0;
-    YMIOResult ymResult = YMStreamWriteToFile(stream, result, NULL, &outBytes);
+    BOOL boundIncoming = arc4random_uniform(2);
+    NSLog(@"_eatRandom is %@bounding incoming",boundIncoming?@"":@"NOT ");
+    uint64_t *randomBounded = boundIncoming ? &gSomeLength : NULL;
+    YMIOResult ymResult = YMStreamWriteToFile(stream, result, randomBounded, &outBytes);
     XCTAssert(ymResult!=YMIOError,@"eat random result");
     XCTAssert(outBytes==gSomeLength,@"eat random outBytes");
     NoisyTestLog(@"_eatManPages: finished: %llu bytes",outBytes);
