@@ -16,6 +16,8 @@
 #ifdef WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#elif defined(RPI)
+#include <netinet/in.h>
 #endif
 
 #include "YMLog.h"

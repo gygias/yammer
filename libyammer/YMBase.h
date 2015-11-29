@@ -93,14 +93,17 @@ _Pragma("GCC diagnostic push") \
 _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
 #define YM_WPOP \
 _Pragma("GCC diagnostic pop")
-#elif defined(WIN32) || defined(RPI)
+#elif defined(WIN32)
 #define ssize_t SSIZE_T
+#define typeof decltype
+#endif
+
+#if defined(WIN32) || defined(RPI)
 #define YM_VARGS_SENTINEL_REQUIRED
-#define __printflike(x,y)
 #define YM_WPPUSH
 #define YM_WPOP
+#define __printflike(x,y)
 #define __unused
-#define typeof decltype
 #endif
 
 #ifdef __cplusplus

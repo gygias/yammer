@@ -31,6 +31,9 @@
 #include <sys/select.h>
 #include <sys/time.h>
 #include <pthread.h> // explicit for sigpipe
+# if defined (RPI)
+# include <signal.h>
+# endif
 #else
 #include <winsock2.h> // gettimeofday
 #endif

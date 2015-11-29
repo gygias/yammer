@@ -25,6 +25,9 @@
 #ifndef WIN32
 #include <sys/socket.h>
 #include <netinet/in.h> // protocols
+# if defined (RPI)
+# define __USE_MISC
+# endif
 #include <arpa/inet.h>
 #else
 #define _WINSOCK_DEPRECATED_NO_WARNINGS // todo, inet_ntoa
@@ -165,7 +168,8 @@ YMAddressRef YMAddressCreateWithIPStringAndPort(YMStringRef ipString, uint16_t p
         return NULL;
     }
     
-    struct sockaddr_in sinAddr = {0,0,0,{0},{0}};
+    struct sockaddr_in sinAddr;
+    bzero(&sinAddr, sizeof(sinAddr));
 	socklen_t addrLen = sizeof(struct sockaddr_in);
 #ifdef _MACOS
     sinAddr.sin_len = (uint8_t)addrLen;

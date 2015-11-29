@@ -31,6 +31,11 @@
 #endif
 #include <stddef.h> // offsetof
 
+#if defined(RPI) // __USE_MISC /usr/include/arm-linux-gnueabihf/sys/un.h
+# define SUN_LEN(ptr) ((size_t) (((struct sockaddr_un *) 0)->sun_path)	      \
+		      + strlen ((ptr)->sun_path))
+#endif
+
 #ifndef WIN32 // todo? this is only used by the os x unit tests atm
 
 typedef struct __ym_local_socket_pair

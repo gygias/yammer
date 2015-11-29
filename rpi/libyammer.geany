@@ -23,10 +23,10 @@ long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=22
-FILE_NAME_0=4682;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMAddress.c;0;4
+current_page=20
+FILE_NAME_0=4504;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMAddress.c;0;4
 FILE_NAME_1=2019;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMBase.c;0;4
-FILE_NAME_2=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMConnection.c;0;4
+FILE_NAME_2=516;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMConnection.c;0;4
 FILE_NAME_3=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMDictionary.c;0;4
 FILE_NAME_4=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMLinkedList.c;0;4
 FILE_NAME_5=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMLocalSocketPair.c;0;4
@@ -38,32 +38,32 @@ FILE_NAME_10=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMmDNSServic
 FILE_NAME_11=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMPeer.c;0;4
 FILE_NAME_12=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMPipe.c;0;4
 FILE_NAME_13=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMPlexer.c;0;4
-FILE_NAME_14=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMRSAKeyPair.c;0;4
+FILE_NAME_14=237;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMRSAKeyPair.c;0;4
 FILE_NAME_15=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMSecurityProvider.c;0;4
-FILE_NAME_16=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMSemaphore.c;0;4
-FILE_NAME_17=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMSession.c;0;4
+FILE_NAME_16=542;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMSemaphore.c;0;4
+FILE_NAME_17=642;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMSession.c;0;4
 FILE_NAME_18=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMStream.c;0;4
 FILE_NAME_19=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMString.c;0;4
 FILE_NAME_20=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMThread.c;0;4
-FILE_NAME_21=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMTLSProvider.c;0;4
-FILE_NAME_22=462;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMUtilities.c;0;4
+FILE_NAME_21=9274;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMTLSProvider.c;0;4
+FILE_NAME_22=416;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMUtilities.c;0;4
 FILE_NAME_23=5694;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMX509Certificate.c;0;4
 FILE_NAME_24=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Flibyammer%2FYammer.h;0;4
 FILE_NAME_25=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Flibyammer%2FYMAddress.h;0;4
-FILE_NAME_26=4277;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Flibyammer%2FYMBase.h;0;4
+FILE_NAME_26=4735;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Flibyammer%2FYMBase.h;0;4
 FILE_NAME_27=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Flibyammer%2FYMConnection.h;0;4
 FILE_NAME_28=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Flibyammer%2FYMDictionary.h;0;4
 FILE_NAME_29=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Flibyammer%2FYMPeer.h;0;4
 FILE_NAME_30=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Flibyammer%2FYMSession.h;0;4
 FILE_NAME_31=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Flibyammer%2FYMStream.h;0;4
 FILE_NAME_32=356;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Flibyammer%2FYMString.h;0;4
-FILE_NAME_33=961;None;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2Fyammer.pch;0;4
+FILE_NAME_33=830;None;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2Fyammer.pch;0;4
 FILE_NAME_34=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMConnectionPriv.h;0;4
 FILE_NAME_35=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMDebug.h;0;4
 FILE_NAME_36=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMInternal.h;0;4
 FILE_NAME_37=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMLinkedList.h;0;4
 FILE_NAME_38=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMLocalSocketPair.h;0;4
-FILE_NAME_39=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMLock.h;0;4
+FILE_NAME_39=260;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMLock.h;0;4
 FILE_NAME_40=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMLockPriv.h;0;4
 FILE_NAME_41=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMLog.h;0;4
 FILE_NAME_42=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMmDNS.h;0;4
@@ -85,17 +85,19 @@ FILE_NAME_57=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMThread
 FILE_NAME_58=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMThreadPriv.h;0;4
 FILE_NAME_59=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMTLSProvider.h;0;4
 FILE_NAME_60=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMTLSProviderPriv.h;0;4
-FILE_NAME_61=1420;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMUtilities.h;0;4
+FILE_NAME_61=1246;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMUtilities.h;0;4
 FILE_NAME_62=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMX509Certificate.h;0;4
 FILE_NAME_63=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMX509CertificatePriv.h;0;4
-FILE_NAME_64=1436;C;0;16;1;1;0;%2Fusr%2Finclude%2Farm-linux-gnueabihf%2Fsys%2Fuio.h;0;4
+FILE_NAME_64=3481;C;0;16;1;1;0;%2Fusr%2Finclude%2Ftime.h;0;4
+FILE_NAME_65=0;C++;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fwin%2Farc4random.cpp;0;4
+FILE_NAME_66=170;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fwin%2Farc4random.h;0;4
 
 [VTE]
 last_dir=/home/pi
 
 [build-menu]
 CFT_00_LB=_Compile
-CFT_00_CM=gcc -c "%f" -I../ -I../private -I../libyammer -include ../private/yammer.pch -DRPI -std=c99
+CFT_00_CM=gcc -c "%f" -I../ -I../private -I../libyammer -I../win -include ../private/yammer.pch -DRPI -std=c99
 CFT_00_WD=
 filetypes=C;
 CFT_02_LB=Compile -Wall

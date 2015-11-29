@@ -14,6 +14,9 @@ extern "C" {
 #endif
 
 #ifndef WIN32
+# if defined(RPI)
+# define __USE_UNIX98
+# endif
 #include <pthread.h>
 #define MUTEX_TYPE pthread_mutex_t
 #define MUTEX_PTR_TYPE MUTEX_TYPE *

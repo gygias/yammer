@@ -13,6 +13,9 @@
 
 #ifndef WIN32
 #include <sys/socket.h>
+# if defined(RPI)
+# include <netinet/in.h>
+# endif
 #else
 #include <winsock2.h>
 #include <ws2tcpip.h>

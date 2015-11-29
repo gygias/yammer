@@ -27,6 +27,10 @@
 #include <semaphore.h>
 #endif
 
+#if defined(RPI)
+#include <sys/stat.h>
+#endif
+
 typedef struct __ym_semaphore
 {
     _YMType _typeID;

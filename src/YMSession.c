@@ -28,6 +28,10 @@
 #endif
 
 #ifndef WIN32
+# if defined(RPI)
+# define __USE_POSIX
+# include <sys/socket.h>
+# endif
 #include <netinet/in.h>
 #include <netdb.h> // struct hostent
 #else
