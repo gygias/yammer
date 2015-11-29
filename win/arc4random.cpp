@@ -247,7 +247,8 @@ u_int32_t arc4random_uniformT(u_int32_t upper_bound)
 		return 0;
 
 	/* 2**32 % x == (2**32 - x) % x */
-	min = -upper_bound % upper_bound;
+	u_int32_t minus_upper_bound = INT32_MIN;
+	min = minus_upper_bound % upper_bound;
 
 	/*
 	* This could theoretically loop forever but each retry has

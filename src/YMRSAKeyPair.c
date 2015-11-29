@@ -48,7 +48,6 @@ typedef struct __ym_rsa_key_pair
 typedef struct __ym_rsa_key_pair __YMRSAKeyPair;
 typedef __YMRSAKeyPair *__YMRSAKeyPairRef;
 
-//static pthread_once_t gYMRSAKeyPairSeedOnce = PTHREAD_ONCE_INIT;
 void __YMRSAKeyPairSeed();
 
 YMRSAKeyPairRef YMRSAKeyPairCreateWithModuloSize(int moduloBits, int publicExponent)

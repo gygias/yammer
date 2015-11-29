@@ -37,7 +37,7 @@
 
 static YMLockRef *gYMTLSLocks = NULL;
 //static YMLockRef gYMTLSLocks[CRYPTO_NUM_LOCKS*sizeof(YMLockRef)];
-void __ym_tls_lock_callback(int mode, int type, __unused char *file, __unused int line);
+void __ym_tls_lock_callback(int mode, int type, __unused const char *file, __unused int line);
 
 #define YMTLSProviderVerifyDepth 0
 
@@ -94,10 +94,9 @@ YM_ONCE_FUNC(__YMTLSInit,
 	OpenSSL_add_all_algorithms();
 
 	gYMTLSLocks = calloc(CRYPTO_num_locks(),sizeof(YMLockRef));
-	//bzero(gYMTLSLocks,CRYPTO_NUM_LOCKS*sizeof(YMLockRef));
 
 	CRYPTO_THREADID_set_callback(ym_tls_thread_id_callback);
-	CRYPTO_set_locking_callback((void(*)())__ym_tls_lock_callback);
+	CRYPTO_set_locking_callback(__ym_tls_lock_callback);
 
 	gYMTLSExDataList = YMDictionaryCreate();
 	gYMTLSExDataLock = YMLockCreate(YMInternalLockType);
@@ -217,15 +216,11 @@ void _YMTLSProviderFreeGlobals()
 	CRYPTO_THREADID_set_callback(NULL);
     CRYPTO_set_locking_callback(NULL);
     
-#ifndef WIN32
-    pthread_once_t onceAgain = PTHREAD_ONCE_INIT;
-#else
-	INIT_ONCE onceAgain = INIT_ONCE_STATIC_INIT;
-#endif
+	YM_ONCE_OBJ onceAgain = YM_ONCE_INIT;
 	memcpy(&gYMInitTLSOnce, &onceAgain, sizeof(onceAgain));
 }
 
-void __ym_tls_lock_callback(int mode, int type, __unused char *file, __unused int line)
+void __ym_tls_lock_callback(int mode, int type, __unused const char *file, __unused int line)
 {
     bool lock = mode & CRYPTO_LOCK;
     //ymlog("__ym_tls_lock_callback: %04x %s:%d #%d (%s)",mode,file,line,type,lock?"lock":"unlock");
