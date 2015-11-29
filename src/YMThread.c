@@ -400,12 +400,14 @@ void __YMThreadFreeDispatchContext(__ym_thread_dispatch_context_ref dispatchCont
 // xxx i wonder if this is actually going to be portable
 uint64_t _YMThreadGetCurrentThreadNumber()
 {
-#ifndef WIN32
+#ifdef _MACOS
     uint64_t threadId = 0;
 	pthread_threadid_np(pthread_self(), &threadId);
     return threadId;
-#else
+#elif defined(WIN32)
 	return GetCurrentThreadId();
+#else
+	return pthread_self();
 #endif
 
 }
