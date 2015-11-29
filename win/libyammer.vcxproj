@@ -92,6 +92,7 @@
       <AdditionalOptions>
       </AdditionalOptions>
       <DisableSpecificWarnings>4068</DisableSpecificWarnings>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
