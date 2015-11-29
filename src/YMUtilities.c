@@ -18,18 +18,19 @@
 #define ymlog(x,...) ;
 #endif
 
-#if defined(_OSX) || defined(RPI)
+#if defined(_MACOS) || defined(RPI)
 #include <netinet/in.h>
 # if defined(RPI)
 # define __USE_UNIX98
 # endif
 #include <pthread.h>
-#if defined (_OSX)
+# if defined (_MACOS)
+# include <sys/time.h>
 # define YM_PORT_MAX IPPORT_HILASTAUTO
-#else
+# else
 # define YM_PORT_MAX 65535
-#endif
-#else
+# endif
+#elif defined(WIN32)
 #define YM_PORT_MAX IPPORT_DYNAMIC_MAX
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -67,7 +68,7 @@ void YMGetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time)
 {
 	YM_WPPUSH
     
-#ifdef _OSX
+#ifdef _MACOS
     time->tv_sec = MAX_OF(typeof(time->tv_sec));
 	time->tv_usec = MAX_OF(typeof(time->tv_usec));
 #else
