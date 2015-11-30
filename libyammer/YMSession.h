@@ -9,16 +9,16 @@
 #ifndef YMSession_h
 #define YMSession_h
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <libyammer/YMBase.h>
 
 #include <libyammer/YMString.h>
 #include <libyammer/YMDictionary.h>
 #include <libyammer/YMPeer.h>
 #include <libyammer/YMConnection.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 typedef YMTypeRef YMSessionRef;
 

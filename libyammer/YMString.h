@@ -13,6 +13,8 @@
 extern "C" {
 #endif
 
+#include <libyammer/YMBase.h>
+
 typedef const struct __ym_string *YMStringRef;
 
 YMAPI YMStringRef YMStringCreate();
@@ -36,9 +38,7 @@ YMAPI bool YMStringEquals(YMStringRef stringA, YMStringRef stringB);
 #define YMSTR(x) YMStringGetCString(x)
 #define YMSTRC(x) YMStringCreateWithCString(x)
 // Token pasting of ',' and __VA_ARGS__ is a GNU extension
-YM_WPPUSH
 #define YMSTRCF(x,...) YMStringCreateWithFormat((x),##__VA_ARGS__,NULL)
-YM_WPOP
 #define YMLEN(x) YMStringGetLength(x)
 
 #ifdef __cplusplus

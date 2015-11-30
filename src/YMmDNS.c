@@ -9,6 +9,9 @@
 #include "YMmDNS.h"
 
 #ifndef WIN32
+# if defined(RPI)
+# define __USE_POSIX
+# endif
 #include <netdb.h>
 #else
 #define _WINSOCK_DEPRECATED_NO_WARNINGS // todo, gethostbyname
@@ -84,10 +87,16 @@ YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*typ
     
     if ( hostname )
     {
-        struct hostent *hostNames = gethostbyname(hostname);
-        if ( ! hostNames )
-            ymerr("mdns: warning: gethostbyname failed for %s",hostname);
-        record->hostNames = hostNames;
+		struct addrinfo hints = { 0, AF_INET, SOCK_STREAM, 0, 0, NULL, NULL, NULL };
+		struct addrinfo *addrinfo = NULL;
+		char *noLocal = strdup(hostname);
+		char *firstDot = strstr(noLocal,".");
+		firstDot[0] = '\0';
+		int result = getaddrinfo(noLocal, NULL, &hints, &addrinfo);
+		free(noLocal);
+        if ( result != 0 )
+            ymerr("mdns: warning: gethostbyname failed for %s: %d %d (%s)",hostname,result,errno,strerror(errno));
+        record->addrinfo = addrinfo;
     }
     
     record->port = port;
@@ -115,8 +124,8 @@ void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record)
         YMRelease(record->type);
     if ( record->domain )
         YMRelease(record->domain);
-    //if ( record->hostNames )  // todo: i can't find any mention of ownership of this struct
-    //    free( (char *)record->hostNames );
+    if ( record->addrinfo )
+        free( record->addrinfo );
     if ( record->txtRecordKeyPairs )
         _YMmDNSTxtKeyPairsFree( (YMmDNSTxtRecordKeyPair **)record->txtRecordKeyPairs, record->txtRecordKeyPairsSize );
     free(record);

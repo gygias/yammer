@@ -9,6 +9,10 @@
 #ifndef defs_h
 #define defs_h
 
+#if defined(WIN32) || defined(RPI)
+#define __unused
+#endif
+
 void _ym_session_added_peer_func(YMSessionRef session, YMPeerRef peer, void* context);
 void _ym_session_removed_peer_func(YMSessionRef session, YMPeerRef peer, void* context);
 void _ym_session_resolve_failed_func(YMSessionRef session, YMPeerRef peer, void* context);

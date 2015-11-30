@@ -1,7 +1,7 @@
 [file_prefs]
 final_new_line=true
 ensure_convert_new_lines=false
-strip_trailing_spaces=true
+strip_trailing_spaces=false
 replace_tabs=false
 
 [indentation]
@@ -23,7 +23,7 @@ long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=66
+current_page=7
 FILE_NAME_0=512;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMAddress.c;0;4
 FILE_NAME_1=2019;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMBase.c;0;4
 FILE_NAME_2=9813;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMConnection.c;0;4
@@ -31,9 +31,9 @@ FILE_NAME_3=1824;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMDictiona
 FILE_NAME_4=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMLinkedList.c;0;4
 FILE_NAME_5=608;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMLocalSocketPair.c;0;4
 FILE_NAME_6=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMLock.c;0;4
-FILE_NAME_7=899;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMLog.c;0;4
+FILE_NAME_7=1023;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMLog.c;0;4
 FILE_NAME_8=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMmDNS.c;0;4
-FILE_NAME_9=287;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMmDNSBrowser.c;0;4
+FILE_NAME_9=18748;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMmDNSBrowser.c;0;4
 FILE_NAME_10=244;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMmDNSService.c;0;4
 FILE_NAME_11=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMPeer.c;0;4
 FILE_NAME_12=287;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMPipe.c;0;4
@@ -61,7 +61,7 @@ FILE_NAME_33=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMLinked
 FILE_NAME_34=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMLocalSocketPair.h;0;4
 FILE_NAME_35=260;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMLock.h;0;4
 FILE_NAME_36=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMLockPriv.h;0;4
-FILE_NAME_37=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMLog.h;0;4
+FILE_NAME_37=265;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMLog.h;0;4
 FILE_NAME_38=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMmDNS.h;0;4
 FILE_NAME_39=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMmDNSBrowser.h;0;4
 FILE_NAME_40=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fprivate%2FYMmDNSService.h;0;4
@@ -91,6 +91,7 @@ FILE_NAME_63=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMSemaphore.
 FILE_NAME_64=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMSession.c;0;4
 FILE_NAME_65=0;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMStream.c;0;4
 FILE_NAME_66=392;C;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Fsrc%2FYMString.c;0;4
+FILE_NAME_67=667;Make;0;16;1;1;0;%2Fhome%2Fpi%2Fsandbox%2Fyammer%2Frpi%2FMakefile;0;4
 
 [VTE]
 last_dir=/home/pi
@@ -103,18 +104,18 @@ filetypes=C;
 CFT_02_LB=Compile -Wall
 CFT_02_CM=gcc -Wall -c "%f" -I../ -I../private -I../libyammer -include ../private/yammer.pch -DRPI -std=c99
 CFT_02_WD=
-EX_00_LB=chat server
-EX_00_CM=./out/chat _ychat._tcp
-EX_00_WD=
-EX_01_LB=chat client
-EX_01_CM=./out/chat _ychat._tcp lol
-EX_01_WD=
-NF_01_LB=Make clean
-NF_01_CM=make clean
+EX_00_LB=chat client
+EX_00_CM=gdb --args ./out/chat _ychat._tcp
+EX_00_WD=/home/pi/sandbox/yammer/rpi
+EX_01_LB=chat server
+EX_01_CM=gdb --args ./out/chat _ychat._tcp lol
+EX_01_WD=/home/pi/sandbox/yammer/rpi
+NF_01_LB=
+NF_01_CM=
 NF_01_WD=
-NF_02_LB=
-NF_02_CM=
-NF_02_WD=
+NF_02_LB=Make clean
+NF_02_CM=make clean
+NF_02_WD=/home/pi/sandbox/yammer/rpi
 NF_00_LB=_Make
 NF_00_CM=make
-NF_00_WD=
+NF_00_WD=/home/pi/sandbox/yammer/rpi

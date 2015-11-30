@@ -5,8 +5,9 @@ DEP=$(OBJ:%.o=$(OUT)/%.o)
 CC=gcc
 INC=-I../ -I../private -I../libyammer -I../win
 PT=-pthread
-FLG=-include ../private/yammer.pch -std=c99 $(DEF) $(PT)
+FLG=-include ../private/yammer.pch -std=c99 $(DEF) $(PT) -g
 DEF=-DRPI
+DBG=-ggdb3
 
 #ALG=-L/usr/lib/arm-linux-gnueabihf
 LIB=-lssl -lcrypto -ldns_sd
@@ -22,13 +23,13 @@ $(OUT):
 	mkdir -p $(OUT)
 
 $(TGT): $(OBJ)
-	$(CC) -shared -o $(OUT)/$@ $(PT) $(DEP) $(ALG) $(LIB)
+	$(CC) -shared -o $(OUT)/$@ $(PT) $(DEP) $(ALG) $(LIB) $(DBG)
 
 %.o: ../src/%.c
-	$(CC) -c $< -o $(OUT)/$@ $(INC) $(FLG)
+	$(CC) -c $< -o $(OUT)/$@ $(INC) $(FLG) $(DBG)
 
 chat: chat.o
-	$(CC) -o $(OUT)/$@ $(PT) $(OUT)/chat.o $(OUT)/libyammer.o
+	$(CC) -o $(OUT)/$@ $(PT) $(OUT)/chat.o $(OUT)/libyammer.o $(DBG)
 
 chat.o:
-	$(CC) -c ../misc/chat/main.c -o $(OUT)/$@ -I../ $(DEF) $(PT)
+	$(CC) -c ../misc/chat/main.c -o $(OUT)/$@ -I../ $(DEF) $(PT) $(DBG)

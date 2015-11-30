@@ -13,12 +13,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#ifdef WIN32
-#define YMAPI __declspec( dllimport ) 
-#else
-#define YMAPI
-#endif
-
 #include <libyammer/YMBase.h>
 #include <libyammer/YMString.h>
 #include <libyammer/YMDictionary.h>
