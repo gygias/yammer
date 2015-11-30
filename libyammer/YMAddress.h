@@ -15,6 +15,8 @@
 extern "C" {
 #endif
 
+#include <libyammer/YMBase.h>
+
 typedef struct __YMAddressRef *YMAddressRef;
 
 typedef enum

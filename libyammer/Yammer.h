@@ -11,13 +11,7 @@
 
 #include <sys/types.h>
 #include <stdbool.h>
-
-#ifdef WIN32
 #include <stdint.h>
-#define YMAPI __declspec( dllimport ) 
-#else
-#define YMAPI
-#endif
 
 #include <libyammer/YMBase.h>
 #include <libyammer/YMString.h>

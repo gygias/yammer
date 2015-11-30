@@ -932,38 +932,26 @@ void __ym_mdns_service_resolved_func(__unused YMmDNSBrowserRef browser, bool suc
     YMDictionaryRef addresses = YMDictionaryCreate();
     
     YMStringRef portString = YMStringCreateWithFormat("%u",service->port,NULL);
-    struct addrinfo *outAddrInfo;
-    int result = getaddrinfo(service->hostNames->h_name, YMSTR(portString), NULL, &outAddrInfo);
-    YMRelease(portString);
-    
-    if ( result != 0 )
+	struct addrinfo *addrInfoIter = service->addrinfo;
+	while ( addrInfoIter )
 	{
-        ymerr("session[%s]: error: failed to resolve addresses for '%s'",YMSTR(session->logDescription),service->hostNames->h_name);
-		success = false;
+		if ( addrInfoIter->ai_family == AF_INET /*|| addrInfoIter->ai_family == AF_INET6*/ )
+		{
+			((struct sockaddr_in *)addrInfoIter->ai_addr)->sin_port = service->port; // FIXME getaddrinfo port 0
+			YMAddressRef address = YMAddressCreate(addrInfoIter->ai_addr, addrInfoIter->ai_addrlen);
+			if ( address )
+				YMDictionaryAdd(addresses, (YMDictionaryKey)address, address);
+			ymlog("session[%s]: %s address with family %d proto %d length %d canon %s: %s",YMSTR(session->logDescription),address?"parsed":"failed to parse",
+				  addrInfoIter->ai_family,addrInfoIter->ai_protocol,addrInfoIter->ai_addrlen,addrInfoIter->ai_canonname,address?YMSTR(YMAddressGetDescription(address)):"(null");
+		}
+		else
+			ymlog("session[%s]: ignoring address with family %d proto %d length %d canon %s:",YMSTR(session->logDescription),
+				  addrInfoIter->ai_family,addrInfoIter->ai_protocol,addrInfoIter->ai_addrlen,addrInfoIter->ai_canonname);
+		addrInfoIter = addrInfoIter->ai_next;
 	}
-    else
-    {
-        struct addrinfo *addrInfoIter = outAddrInfo;
-        while ( addrInfoIter )
-        {
-            if ( addrInfoIter->ai_family == AF_INET /*|| addrInfoIter->ai_family == AF_INET6*/ )
-            {
-                YMAddressRef address = YMAddressCreate(addrInfoIter->ai_addr, addrInfoIter->ai_addrlen);
-                if ( address )
-                    YMDictionaryAdd(addresses, (YMDictionaryKey)address, address);
-                ymlog("session[%s]: %s address with family %d proto %d length %d canon %s: %s",YMSTR(session->logDescription),address?"parsed":"failed to parse",
-                      addrInfoIter->ai_family,addrInfoIter->ai_protocol,addrInfoIter->ai_addrlen,addrInfoIter->ai_canonname,address?YMSTR(YMAddressGetDescription(address)):"(null");
-            }
-            else
-                ymlog("session[%s]: ignoring address with family %d proto %d length %d canon %s:",YMSTR(session->logDescription),
-                      addrInfoIter->ai_family,addrInfoIter->ai_protocol,addrInfoIter->ai_addrlen,addrInfoIter->ai_canonname);
-            addrInfoIter = addrInfoIter->ai_next;
-        }
-        freeaddrinfo(outAddrInfo);
-        
-        _YMPeerSetAddresses(peer, addresses);
-        _YMPeerSetPort(peer, service->port);
-    }
+	
+	_YMPeerSetAddresses(peer, addresses);
+	_YMPeerSetPort(peer, service->port);
     
     YMRelease(addresses);
     

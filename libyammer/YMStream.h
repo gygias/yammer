@@ -9,11 +9,11 @@
 #ifndef YMStream_h
 #define YMStream_h
 
-#include <libyammer/YMBase.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <libyammer/YMBase.h>
 
 typedef YMTypeRef YMStreamRef;
 

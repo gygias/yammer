@@ -13,6 +13,8 @@
 extern "C" {
 #endif
 
+#include <libyammer/YMBase.h>
+
 typedef YMTypeRef YMDictionaryRef;
 
 typedef uint64_t YMDictionaryKey;

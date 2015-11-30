@@ -27,7 +27,7 @@ typedef struct _YMmDNSServiceRecord
     
     // values below aren't known until the service is resolved
     bool resolved;
-    struct hostent *hostNames;
+    struct addrinfo *addrinfo;
     uint16_t port;
     YMmDNSTxtRecordKeyPair **txtRecordKeyPairs;
     size_t txtRecordKeyPairsSize;

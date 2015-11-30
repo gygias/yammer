@@ -13,6 +13,21 @@
 extern "C" {
 #endif
 
+#if defined(_MACOS) || defined(RPI)
+#define YM_VARGS_SENTINEL_REQUIRED __attribute__((sentinel(0)))
+#endif
+
+#if defined(RPI)
+#define __printflike(x,y) __attribute__ ((format (printf, x, y)))
+#endif
+
+#ifdef WIN32
+#define YMAPI __declspec( dllimport ) 
+#define YM_VARGS_SENTINEL_REQUIRED
+#else
+#define YMAPI
+#endif
+
 typedef const void *YMTypeRef;
 typedef char YMTypeID;
 
@@ -85,26 +100,6 @@ typedef enum
 } YMIOResult;
 
 YMAPI void YMFreeGlobalResources();
-
-#if defined(_MACOS)
-#define YM_VARGS_SENTINEL_REQUIRED __attribute__((sentinel(0,1)))
-#define YM_WPPUSH \
-_Pragma("GCC diagnostic push") \
-_Pragma("GCC diagnostic ignored \"-Wpedantic\"")
-#define YM_WPOP \
-_Pragma("GCC diagnostic pop")
-#elif defined(WIN32)
-#define ssize_t SSIZE_T
-#define typeof decltype
-#endif
-
-#if defined(WIN32) || defined(RPI)
-#define YM_VARGS_SENTINEL_REQUIRED
-#define YM_WPPUSH
-#define YM_WPOP
-#define __printflike(x,y)
-#define __unused
-#endif
 
 #ifdef __cplusplus
 }

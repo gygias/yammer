@@ -12,6 +12,9 @@
 #ifndef WIN32
 #include <unistd.h>
 #include <pthread.h>
+# if defined(RPI)
+# include <signal.h>
+# endif
 #else
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
