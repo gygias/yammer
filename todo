@@ -1,3 +1,4 @@
+- match plexer buffer / max i/o to connection mtu?
 - __YMX509CertificateCreateX509 is misinterpreting errors from various openssl 'namespaces'
 - eliminate redundant framing between forward file and plexer
 - myabort, so aborts can be switched on and off, or at least not require a compound block, soft and hard for debugging vs internal error
@@ -11,7 +12,7 @@ opaque_thing_that_closes_input_file
                                                     V
                                             Plexer:StreamReadDown -> medium
 
-- adopt 'synchronized self'?
+- adopt 'synchronized self'? mutexes not small
 - connection ownership/lifetime not clear
 - automatic log indentation by level
 - inlines

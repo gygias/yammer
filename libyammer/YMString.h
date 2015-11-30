@@ -37,7 +37,6 @@ YMAPI bool YMStringEquals(YMStringRef stringA, YMStringRef stringB);
 
 #define YMSTR(x) YMStringGetCString(x)
 #define YMSTRC(x) YMStringCreateWithCString(x)
-// Token pasting of ',' and __VA_ARGS__ is a GNU extension
 #define YMSTRCF(x,...) YMStringCreateWithFormat((x),##__VA_ARGS__,NULL)
 #define YMLEN(x) YMStringGetLength(x)
 

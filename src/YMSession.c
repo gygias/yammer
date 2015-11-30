@@ -931,7 +931,6 @@ void __ym_mdns_service_resolved_func(__unused YMmDNSBrowserRef browser, bool suc
     
     YMDictionaryRef addresses = YMDictionaryCreate();
     
-    YMStringRef portString = YMStringCreateWithFormat("%u",service->port,NULL);
 	YM_ADDRINFO *addrInfoIter = service->addrinfo;
 	while ( addrInfoIter )
 	{

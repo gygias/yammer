@@ -904,6 +904,7 @@
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PUBLIC_HEADERS_FOLDER_PATH = /usr/local/include/libyammer;
+				WARNING_CFLAGS = "-Wall";
 			};
 			name = Debug;
 		};
@@ -930,6 +931,7 @@
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PUBLIC_HEADERS_FOLDER_PATH = /usr/local/include/libyammer;
+				WARNING_CFLAGS = "-Wall";
 			};
 			name = Release;
 		};
