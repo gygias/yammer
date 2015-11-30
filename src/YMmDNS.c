@@ -66,8 +66,51 @@ void _YMmDNSServiceListFree(YMmDNSServiceList *serviceList)
 
 YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*type, const char *domain, bool resolved, const char *hostname,
                                                 uint16_t port, const unsigned char *txtRecord, uint16_t txtLength)
-{
+{   
+	char *noProto = NULL;
+	YM_ADDRINFO *addrinfo = NULL;
+	size_t txtSize = 0;
+	YMmDNSTxtRecordKeyPair **txtList = NULL;
+	
+	if ( ! name || ! type || ! domain )
+		return NULL;
+	
+    if ( hostname )
+    {
+		noProto = strdup(hostname);
+		char *dot = noProto;
+		for ( int i = 0; i < 2; i++ )
+		{
+			dot = strstr(dot,".");
+			if ( dot == NULL )
+			{
+				ymerr("mdns: failed to parse hostname '%s'",noProto);
+				goto catch_fail;
+			}
+		}
+		
+		dot[0] = '\0';
+		struct addrinfo hints = { 0, AF_INET, SOCK_STREAM, 0, 0, NULL, NULL, NULL };
+		int result = getaddrinfo(noProto, NULL, &hints, &addrinfo);
+        if ( result != 0 )
+        {
+			ymerr("mdns: failed to parse hostname '%s': %d %d (%s)", noProto,result,errno,strerror(errno));
+			goto catch_fail;
+		}
+    }
+    
+    if ( txtRecord && txtLength > 1 )
+    {
+        txtList = _YMmDNSTxtKeyPairsCreate(txtRecord, txtLength, &txtSize);
+        if ( ! txtList )
+        {
+			ymerr("mdns: failed to parse txt record for %s:%s",type,name);
+			goto catch_fail;
+		}
+	}
+	
     YMmDNSServiceRecord *record = (YMmDNSServiceRecord *)YMALLOC(sizeof(struct _YMmDNSServiceRecord));
+    
     if ( name )
         record->name = YMSTRC(name);
     else
@@ -82,30 +125,14 @@ YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*typ
         record->domain = YMSTRC(domain);
     else
         record->domain = NULL;
-    
-    record->resolved = resolved;
-    
-    if ( hostname )
-    {
-		struct addrinfo hints = { 0, AF_INET, SOCK_STREAM, 0, 0, NULL, NULL, NULL };
-		YM_ADDRINFO *addrinfo = NULL;
-
-		char *noProto = strdup(hostname);
-		char *secondDot = strstr(strstr(noProto,"."),"."); // FIXME
-		secondDot[0] = '\0';
-		int result = getaddrinfo(noProto, NULL, &hints, &addrinfo);
-        if ( result != 0 )
-            ymerr("mdns: warning: getaddrinfo failed for %s: %d %d (%s)", noProto,result,errno,strerror(errno));
-		free(noProto);
-        record->addrinfo = addrinfo;
-    }
-    
+        
+    record->addrinfo = addrinfo;    
+    record->resolved = resolved;    
     record->port = port;
     
-    if ( txtRecord )
+    if ( txtList )
     {
-        size_t txtSize = 0;
-        record->txtRecordKeyPairs = _YMmDNSTxtKeyPairsCreate(txtRecord, txtLength, &txtSize);
+        record->txtRecordKeyPairs = txtList;
         record->txtRecordKeyPairsSize = txtSize;
     }
     else
@@ -115,6 +142,15 @@ YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*typ
     }
     
     return record;
+    
+catch_fail:
+    if ( noProto )
+		free(noProto);
+	if ( addrinfo )
+		freeaddrinfo(addrinfo);
+	if ( txtList )
+		_YMmDNSTxtKeyPairsFree(txtList, txtSize);
+	return NULL;
 }
 
 void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record)

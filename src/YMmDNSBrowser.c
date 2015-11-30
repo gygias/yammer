@@ -317,7 +317,7 @@ void __YMmDNSBrowserAddOrUpdateService(__YMmDNSBrowserRef browser, YMmDNSService
     aListItem = browser->serviceList;
     YMmDNSServiceList *newItem = (YMmDNSServiceList *)YMALLOC(sizeof(YMmDNSServiceList));
     newItem->service = record;
-    newItem->next = aListItem;
+    newItem->next = browser->serviceList;
     browser->serviceList = newItem;
     
     if ( browser->serviceAppeared )
@@ -386,7 +386,7 @@ static void DNSSD_API __ym_mdns_browse_callback(__unused DNSServiceRef serviceRe
                                                 void *context)
 {
     
-    //ymlog("__ym_mdns_browse_callback: %s/%s:?: if: %u flags: %04x", type, name, ifIdx, result);
+    ymlog("__ym_mdns_browse_callback: %s/%s.%s:?: if: %u flags: %04x", type, name, domain, ifIdx, result);
     __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)context;
     if ( result != kDNSServiceErr_NoError )
     {
@@ -427,7 +427,7 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
                                           void *context )
 {
     __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)context;
-    //ymlog("__ym_mdns_resolve_callback: %s/%s -> %s:%u",browser->type,fullname,host,(unsigned)port);
+    ymlog("__ym_mdns_resolve_callback: %s/%s -> %s:%u",YMSTR(browser->type),fullname,host,(unsigned)port);
     uint16_t hostPort = ntohs(port);
     
     bool okay = ( result == kDNSServiceErr_NoError );
@@ -447,16 +447,13 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
         }
         firstDotPtr[0] = '\0';
         
-        record = _YMmDNSServiceRecordCreate(noLocal, YMSTR(browser->type),
-#ifdef YMmDNS_ENUMERATION
-#error fixme
-#else
-                                            NULL,
-#endif
-                                            true, host, ntohs(hostPort), txtRecord, txtLength); // could be optimized
+        record = _YMmDNSServiceRecordCreate(noLocal, YMSTR(browser->type), "local",
+                                            true, host, ntohs(hostPort), txtRecord, txtLength);    
+        if ( record )   
+			__YMmDNSBrowserAddOrUpdateService(browser, record);
+        else
+			okay = false;
         free(noLocal);
-        
-        __YMmDNSBrowserAddOrUpdateService(browser, record);
     }
     
 catch_callback_and_release:

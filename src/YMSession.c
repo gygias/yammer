@@ -937,7 +937,7 @@ void __ym_mdns_service_resolved_func(__unused YMmDNSBrowserRef browser, bool suc
 	{
 		if ( addrInfoIter->ai_family == AF_INET /*|| addrInfoIter->ai_family == AF_INET6*/ )
 		{
-			((struct sockaddr_in *)addrInfoIter->ai_addr)->sin_port = service->port; // FIXME getaddrinfo port 0
+			((struct sockaddr_in *)addrInfoIter->ai_addr)->sin_port = service->port;
 			YMAddressRef address = YMAddressCreate(addrInfoIter->ai_addr, addrInfoIter->ai_addrlen);
 			if ( address )
 				YMDictionaryAdd(addresses, (YMDictionaryKey)address, address);
