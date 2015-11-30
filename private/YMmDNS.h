@@ -9,6 +9,12 @@
 #ifndef YMmDNS_h
 #define YMmDNS_h
 
+#ifdef WIN32
+#define _WINSOCK_DEPRECATED_NO_WARNINGS // todo, gethostbyname
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
+
 #define mDNS_SERVICE_NAME_LENGTH_MAX 63
 #define mDNS_SERVICE_NAME_LENGTH_MIN 1
 
@@ -19,6 +25,12 @@ typedef struct _YMmDNSTxtRecordKeyPair
     uint8_t valueLen; // length of key + value can't exceed 255 (allowing for '=')
 } YMmDNSTxtRecordKeyPair;
 
+#ifndef WIN32
+#define YM_ADDRINFO struct addrinfo
+#else
+#define YM_ADDRINFO ADDRINFOA
+#endif
+
 typedef struct _YMmDNSServiceRecord
 {
     YMStringRef type;
@@ -27,7 +39,7 @@ typedef struct _YMmDNSServiceRecord
     
     // values below aren't known until the service is resolved
     bool resolved;
-    struct addrinfo *addrinfo;
+	YM_ADDRINFO *addrinfo;
     uint16_t port;
     YMmDNSTxtRecordKeyPair **txtRecordKeyPairs;
     size_t txtRecordKeyPairsSize;

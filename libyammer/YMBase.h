@@ -23,6 +23,7 @@ extern "C" {
 
 #ifdef WIN32
 #define YMAPI __declspec( dllimport ) 
+#define __printflike(x,y)
 #define YM_VARGS_SENTINEL_REQUIRED
 #else
 #define YMAPI

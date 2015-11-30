@@ -88,14 +88,15 @@ YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*typ
     if ( hostname )
     {
 		struct addrinfo hints = { 0, AF_INET, SOCK_STREAM, 0, 0, NULL, NULL, NULL };
-		struct addrinfo *addrinfo = NULL;
-		char *noLocal = strdup(hostname);
-		char *firstDot = strstr(noLocal,".");
-		firstDot[0] = '\0';
-		int result = getaddrinfo(noLocal, NULL, &hints, &addrinfo);
-		free(noLocal);
+		YM_ADDRINFO *addrinfo = NULL;
+
+		char *noProto = strdup(hostname);
+		char *secondDot = strstr(strstr(noProto,"."),"."); // FIXME
+		secondDot[0] = '\0';
+		int result = getaddrinfo(noProto, NULL, &hints, &addrinfo);
         if ( result != 0 )
-            ymerr("mdns: warning: gethostbyname failed for %s: %d %d (%s)",hostname,result,errno,strerror(errno));
+            ymerr("mdns: warning: getaddrinfo failed for %s: %d %d (%s)", noProto,result,errno,strerror(errno));
+		free(noProto);
         record->addrinfo = addrinfo;
     }
     

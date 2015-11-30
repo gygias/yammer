@@ -932,7 +932,7 @@ void __ym_mdns_service_resolved_func(__unused YMmDNSBrowserRef browser, bool suc
     YMDictionaryRef addresses = YMDictionaryCreate();
     
     YMStringRef portString = YMStringCreateWithFormat("%u",service->port,NULL);
-	struct addrinfo *addrInfoIter = service->addrinfo;
+	YM_ADDRINFO *addrInfoIter = service->addrinfo;
 	while ( addrInfoIter )
 	{
 		if ( addrInfoIter->ai_family == AF_INET /*|| addrInfoIter->ai_family == AF_INET6*/ )
