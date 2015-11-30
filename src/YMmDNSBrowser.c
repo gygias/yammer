@@ -435,7 +435,8 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
     YMmDNSServiceRecord *record = NULL;
     if ( okay )
     {
-        // fullname:        The full service domain name, in the form <servicename>.<protocol>.<domain>.
+        // fullname: The full service domain name, in the form <servicename>.<protocol>.<domain>.
+		// e.g. "host._whatever._tcp.local."
         char *noLocal = strdup(fullname);
         char *firstDotPtr = strstr(noLocal, ".");
         if ( ! firstDotPtr )

@@ -77,19 +77,9 @@ YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*typ
 	
     if ( hostname )
     {
+		// host.local. -> host
 		noProto = strdup(hostname);
-		char *dot = noProto;
-		for ( int i = 0; i < 2; i++ )
-		{
-			dot = strstr(dot,".");
-			if ( dot == NULL )
-			{
-				ymerr("mdns: failed to parse hostname '%s'",noProto);
-				goto catch_fail;
-			}
-		}
-		
-		dot[0] = '\0';
+		noProto[strlen(noProto) - 1] = '\0';
 		struct addrinfo hints = { 0, AF_INET, SOCK_STREAM, 0, 0, NULL, NULL, NULL };
 		int result = getaddrinfo(noProto, NULL, &hints, &addrinfo);
         if ( result != 0 )
@@ -97,6 +87,7 @@ YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*typ
 			ymerr("mdns: failed to parse hostname '%s': %d %d (%s)", noProto,result,errno,strerror(errno));
 			goto catch_fail;
 		}
+		free(noProto);
     }
     
     if ( txtRecord && txtLength > 1 )
