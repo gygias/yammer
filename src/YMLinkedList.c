@@ -22,22 +22,21 @@ typedef struct _YMLinkedListItem
     struct _YMLinkedListItem *next;
 } YMLinkedListItem;
 
-typedef struct __ym_linked_list
+typedef struct __ym_linked_list_t
 {
     _YMType _type;
     
     bool isYMTypeList;
     YMLinkedListItem *head;
     size_t count;
-} ___ym_linked_list;
-typedef struct __ym_linked_list __YMLinkedList;
-typedef __YMLinkedList *__YMLinkedListRef;
+} __ym_linked_list_t;
+typedef struct __ym_linked_list_t *__YMLinkedListRef;
 
 YMLinkedListItem *__YMLinkedListFindItemWithIdentifier(YMLinkedListItem *head, bool (*identifierFunc)(void *), YMLinkedListItem **outPreviousItem);
 
 YMLinkedListRef YMLinkedListCreate()
 {
-    __YMLinkedListRef list = (__YMLinkedListRef)_YMAlloc(_YMLinkedListTypeID,sizeof(__YMLinkedList));
+    __YMLinkedListRef list = (__YMLinkedListRef)_YMAlloc(_YMLinkedListTypeID,sizeof(struct __ym_linked_list_t));
     
     list->head = NULL;
     list->count = 0;

@@ -53,7 +53,7 @@ typedef struct _YMmDNSServiceList
 
 YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*type, const char *domain, bool resolved, const char *hostname,
                                                 uint16_t port, const unsigned char *txtRecord, uint16_t txtLength);
-void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *service);
+void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record, bool floatResolvedInfo);
 
 YMmDNSTxtRecordKeyPair **_YMmDNSTxtKeyPairsCreate(const unsigned char *txtRecord, uint16_t txtLength, size_t *outSize);
 void _YMmDNSTxtKeyPairsFree(YMmDNSTxtRecordKeyPair **keyPairList, size_t size);

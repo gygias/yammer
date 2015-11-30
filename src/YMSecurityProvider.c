@@ -31,7 +31,7 @@ YMSecurityProviderRef YMSecurityProviderCreateWithSocket(YMSOCKET fd)
 
 YMSecurityProviderRef YMSecurityProviderCreate(YMFILE readFile, YMFILE writeFile)
 {    
-    __YMSecurityProviderRef provider = (__YMSecurityProviderRef)_YMAlloc(_YMSecurityProviderTypeID,sizeof(__YMSecurityProvider));
+    __YMSecurityProviderRef provider = (__YMSecurityProviderRef)_YMAlloc(_YMSecurityProviderTypeID,sizeof(struct __ym_security_provider_t));
     provider->initFunc = YMNoSecurityInit;
     
     provider->readFunc = YMNoSecurityRead;

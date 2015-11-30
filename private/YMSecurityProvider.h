@@ -13,7 +13,7 @@
 #include <winsock2.h>
 #endif
 
-typedef YMTypeRef YMSecurityProviderRef;
+typedef const struct __ym_security_provider_t *YMSecurityProviderRef;
 
 YMSecurityProviderRef YMSecurityProviderCreateWithSocket(YMSOCKET fd);
 YMSecurityProviderRef YMSecurityProviderCreate(YMFILE inFd, YMFILE outFd);

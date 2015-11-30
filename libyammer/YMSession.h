@@ -20,7 +20,7 @@ extern "C" {
 #include <libyammer/YMPeer.h>
 #include <libyammer/YMConnection.h>
 
-typedef YMTypeRef YMSessionRef;
+typedef const struct __ym_session_t *YMSessionRef;
 
 // browsing, discover & connection
 typedef void(*ym_session_added_peer_func)(YMSessionRef,YMPeerRef,void*);

@@ -38,7 +38,7 @@
 
 #ifndef WIN32 // todo? this is only used by the os x unit tests atm
 
-typedef struct __ym_local_socket_pair
+typedef struct __ym_local_socket_pair_t
 {
     _YMType _type;
     
@@ -46,9 +46,8 @@ typedef struct __ym_local_socket_pair
     YMStringRef userName;
     int socketA;
     int socketB;
-} ___ym_local_socket_pair;
-typedef struct __ym_local_socket_pair __YMLocalSocketPair;
-typedef __YMLocalSocketPair *__YMLocalSocketPairRef;
+} __ym_local_socket_pair_t;
+typedef struct __ym_local_socket_pair_t *__YMLocalSocketPairRef;
 
 int __YMLocalSocketPairCreateClient();
 void __ym_local_socket_accept_proc(void *);
@@ -148,7 +147,7 @@ YMLocalSocketPairRef YMLocalSocketPairCreate(YMStringRef name, bool moreComing)
         return NULL;
     }
     
-    __YMLocalSocketPairRef pair = (__YMLocalSocketPairRef)_YMAlloc(_YMLocalSocketPairTypeID,sizeof(__YMLocalSocketPair));
+    __YMLocalSocketPairRef pair = (__YMLocalSocketPairRef)_YMAlloc(_YMLocalSocketPairTypeID,sizeof(struct __ym_local_socket_pair_t));
     
     pair->userName = YMStringCreateWithFormat("ls:%s:s%d<->c%d",YMSTR(name),serverSocket,clientSocket,NULL);
     pair->socketName = YMRetain(gYMLocalSocketPairName);

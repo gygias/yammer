@@ -15,7 +15,7 @@ extern "C" {
 
 #include <libyammer/YMBase.h>
 
-typedef YMTypeRef YMStreamRef;
+typedef const struct __ym_stream_t *YMStreamRef;
 
 YMAPI YMIOResult YMStreamWriteDown(YMStreamRef stream, const void *buffer, uint16_t length);
 YMAPI YMIOResult YMStreamReadUp(YMStreamRef stream_, void *buffer, uint16_t length, uint16_t *outLength);

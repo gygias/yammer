@@ -58,7 +58,7 @@ void _YMmDNSServiceListFree(YMmDNSServiceList *serviceList)
         YMmDNSServiceList *aListItem = listIter;
         struct _YMmDNSServiceRecord *service = (struct _YMmDNSServiceRecord *)aListItem->service;
         if ( service )
-            _YMmDNSServiceRecordFree(service);
+            _YMmDNSServiceRecordFree(service, false);
         listIter = listIter->next;
         free(aListItem);
     }
@@ -144,7 +144,7 @@ catch_fail:
 	return NULL;
 }
 
-void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record)
+void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record, bool floatResolvedInfo)
 {
     if ( record->name )
         YMRelease(record->name);
@@ -152,10 +152,13 @@ void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record)
         YMRelease(record->type);
     if ( record->domain )
         YMRelease(record->domain);
-    if ( record->addrinfo )
-        free( record->addrinfo );
-    if ( record->txtRecordKeyPairs )
-        _YMmDNSTxtKeyPairsFree( (YMmDNSTxtRecordKeyPair **)record->txtRecordKeyPairs, record->txtRecordKeyPairsSize );
+    if ( ! floatResolvedInfo ) // allows in-place update of existing service record
+    {
+        if ( record->addrinfo )
+            free( record->addrinfo );
+        if ( record->txtRecordKeyPairs )
+            _YMmDNSTxtKeyPairsFree( (YMmDNSTxtRecordKeyPair **)record->txtRecordKeyPairs, record->txtRecordKeyPairsSize );
+    }
     free(record);
 }
 

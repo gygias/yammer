@@ -23,14 +23,13 @@
 #define ymlog(x,...) ;
 #endif
 
-typedef struct __ym_x509_certificate
+typedef struct __ym_x509_certificate_t
 {
     _YMType _type;
     
     X509 *x509;
-} ___ym_x509_certificate;
-typedef struct __ym_x509_certificate __YMX509Certificate;
-typedef __YMX509Certificate *__YMX509CertificateRef;
+} __ym_x509_certificate_t;
+typedef struct __ym_x509_certificate_t *__YMX509CertificateRef;
 
 X509* __YMX509CertificateCreateX509(YMRSAKeyPairRef keyPair)
 {
@@ -204,7 +203,7 @@ YMX509CertificateRef YMX509CertificateCreate(YMRSAKeyPairRef keyPair)
 
 YMX509CertificateRef _YMX509CertificateCreateWithX509(X509 *x509, bool copy)
 {
-    __YMX509CertificateRef certificate = (__YMX509CertificateRef)_YMAlloc(_YMX509CertificateTypeID,sizeof(__YMX509Certificate));
+    __YMX509CertificateRef certificate = (__YMX509CertificateRef)_YMAlloc(_YMX509CertificateTypeID,sizeof(struct __ym_x509_certificate_t));
     
     certificate->x509 = copy ? X509_dup(x509) : x509;
     

@@ -9,7 +9,7 @@
 #ifndef YMLinkedList_h
 #define YMLinkedList_h
 
-typedef YMTypeRef YMLinkedListRef;
+typedef const struct __ym_linked_list_t *YMLinkedListRef;
 
 YMLinkedListRef YMLinkedListCreate();
 

@@ -11,7 +11,7 @@
 
 #include "YMRSAKeyPair.h"
 
-typedef YMTypeRef YMX509CertificateRef;
+typedef const struct __ym_x509_certificate_t *YMX509CertificateRef;
 
 YMX509CertificateRef YMX509CertificateCreate(YMRSAKeyPairRef);
 

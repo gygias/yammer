@@ -36,7 +36,7 @@
 // private key (d)
 // message^e must be greater than N
 
-typedef struct __ym_rsa_key_pair
+typedef struct __ym_rsa_keypair_t
 {
     _YMType _typeID;
     
@@ -44,9 +44,8 @@ typedef struct __ym_rsa_key_pair
     int moduloNBits;
     
     RSA *rsa;
-} ___ym_rsa_key_pair;
-typedef struct __ym_rsa_key_pair __YMRSAKeyPair;
-typedef __YMRSAKeyPair *__YMRSAKeyPairRef;
+} __ym_rsa_keypair_t;
+typedef struct __ym_rsa_keypair_t *__YMRSAKeyPairRef;
 
 void __YMRSAKeyPairSeed();
 
@@ -67,7 +66,7 @@ YMRSAKeyPairRef YMRSAKeyPairCreateWithModuloSize(int moduloBits, int publicExpon
         return NULL;
     }
     
-    __YMRSAKeyPairRef keyPair = (__YMRSAKeyPairRef)_YMAlloc(_YMRSAKeyPairTypeID,sizeof(__YMRSAKeyPair));
+    __YMRSAKeyPairRef keyPair = (__YMRSAKeyPairRef)_YMAlloc(_YMRSAKeyPairTypeID,sizeof(struct __ym_rsa_keypair_t));
     
     keyPair->rsa = rsa;
     keyPair->moduloNBits = moduloBits;

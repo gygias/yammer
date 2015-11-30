@@ -11,13 +11,18 @@
 #include "YMUtilities.h"
 #include "YMThread.h"
 
+#include <dns_sd.h>
 #include <errno.h>
 
-#ifdef WIN32
+#ifndef WIN32
+# if defined(RPI)
+# define __USE_POSIX
+# include <netinet/in.h>
+# endif
+#include <netdb.h>
+#else
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#elif defined(RPI)
-#include <netinet/in.h>
 #endif
 
 #include "YMLog.h"
@@ -28,7 +33,7 @@
 #define ymlog(x,...) ;
 #endif
 
-typedef struct __ym_mdns_browser
+typedef struct __ym_mdns_browser_t
 {
     _YMType _type;
     
@@ -55,9 +60,8 @@ typedef struct __ym_mdns_browser
     void *callbackContext;
     
     uint16_t debugExpectedPairs;
-} ___ym_mdns_browser;
-typedef struct __ym_mdns_browser __YMmDNSBrowser;
-typedef __YMmDNSBrowser *__YMmDNSBrowserRef;
+} __ym_mdns_browser_t;
+typedef struct __ym_mdns_browser_t *__YMmDNSBrowserRef;
 
 #pragma mark callback/event goo
 #ifdef YMmDNS_ENUMERATION
@@ -69,7 +73,7 @@ void DNSSD_API __ym_mdns_resolve_callback(DNSServiceRef serviceRef, DNSServiceFl
                                       const char *host, uint16_t port, uint16_t txtLen, const unsigned char *txtRecord, void *context );
 
 YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_browser_event_proc(YM_THREAD_PARAM);
-void __YMmDNSBrowserAddOrUpdateService(__YMmDNSBrowserRef browser, YMmDNSServiceRecord *record);
+YMmDNSServiceRecord *__YMmDNSBrowserAddOrUpdateService(__YMmDNSBrowserRef browser, YMmDNSServiceRecord *record);
 void __YMmDNSBrowserRemoveServiceNamed(__YMmDNSBrowserRef browser, YMStringRef name);
 
 YMmDNSServiceRecord *__YMmDNSBrowserGetServiceWithName(__YMmDNSBrowserRef browser, YMStringRef name, bool remove);
@@ -88,7 +92,7 @@ YMmDNSBrowserRef YMmDNSBrowserCreateWithCallbacks(YMStringRef type,
 {
 	YMNetworkingInit();
 
-    __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)_YMAlloc(_YMmDNSBrowserTypeID,sizeof(__YMmDNSBrowser));
+    __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)_YMAlloc(_YMmDNSBrowserTypeID,sizeof(struct __ym_mdns_browser_t));
     
     browser->type = YMRetain(type);
     browser->serviceList = NULL;
@@ -293,7 +297,7 @@ bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser_, YMStringRef serviceName)
     return true;
 }
 
-void __YMmDNSBrowserAddOrUpdateService(__YMmDNSBrowserRef browser, YMmDNSServiceRecord *record)
+YMmDNSServiceRecord *__YMmDNSBrowserAddOrUpdateService(__YMmDNSBrowserRef browser, YMmDNSServiceRecord *record)
 {
     YMmDNSServiceList *aListItem = (YMmDNSServiceList *)browser->serviceList;
     // update?
@@ -301,13 +305,35 @@ void __YMmDNSBrowserAddOrUpdateService(__YMmDNSBrowserRef browser, YMmDNSService
     {
         if ( 0 == strcmp(YMSTR(record->name),YMSTR(((YMmDNSServiceRecord *)aListItem->service)->name)) )
         {
-            YMmDNSServiceRecord *oldRecord = aListItem->service;
-            aListItem->service = record;
-            _YMmDNSServiceRecordFree(oldRecord);
+            YMmDNSServiceRecord *existingRecord = aListItem->service;
+            
+            // the mDNSResponder api behaves such that when ProcessResult is called either from
+            // either the browser event thread or after Resolve, we're called back out to on the
+            // same thread, so if the client performs a resolve synchronously upon service discovery,
+            // we're actually in:
+            // event thread -> browse callback -> appeared callback -> resolve -> resolve callback
+            // ServiceRecords are public via the C api, so we can't safely replace this object here.
+            // we assume name type and domain will never move beneath us, only that upon resolution
+            // we get address information, so update the structure here.
+            // we don't update synchronize around updating these members, concurrent client calls
+            // on the same service are reasonably not thread safe.
+            // an optimization would be to refactor these private methods so that we didn't construct
+            // a throw-away copy of the record structure.
+            if ( existingRecord->txtRecordKeyPairs )
+                _YMmDNSTxtKeyPairsFree(existingRecord->txtRecordKeyPairs, existingRecord->txtRecordKeyPairsSize);
+            if ( existingRecord->addrinfo )
+                freeaddrinfo(existingRecord->addrinfo);
+            
+            existingRecord->txtRecordKeyPairs = record->txtRecordKeyPairs;
+            existingRecord->txtRecordKeyPairsSize = record->txtRecordKeyPairsSize;
+            existingRecord->addrinfo = record->addrinfo;
+            
+            _YMmDNSServiceRecordFree(record, true);
+            
             // keep the list item for now
             if ( browser->serviceUpdated )
-                browser->serviceUpdated((YMmDNSBrowserRef)browser, record, browser->callbackContext);
-            return;
+                browser->serviceUpdated((YMmDNSBrowserRef)browser, existingRecord, browser->callbackContext);
+            return existingRecord;
         }
         aListItem = aListItem->next;
     }
@@ -321,6 +347,8 @@ void __YMmDNSBrowserAddOrUpdateService(__YMmDNSBrowserRef browser, YMmDNSService
     
     if ( browser->serviceAppeared )
         browser->serviceAppeared((YMmDNSBrowserRef)browser, record, browser->callbackContext);
+    
+    return record;
 }
 
 #define _YMmDNSServiceFoundAndRemovedHack ((YMmDNSServiceRecord *)0xEA75F00D)
@@ -339,7 +367,7 @@ YMmDNSServiceRecord *__YMmDNSBrowserGetServiceWithName(__YMmDNSBrowserRef browse
                 previousListItem->next = aListItem->next; // nil or not
                 if ( aListItem == browser->serviceList )
                     browser->serviceList = NULL;
-                _YMmDNSServiceRecordFree(aRecord);
+                _YMmDNSServiceRecordFree(aRecord,false);
                 free(aListItem);
                 matchedRecord = _YMmDNSServiceFoundAndRemovedHack;
             }
@@ -450,7 +478,7 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
         record = _YMmDNSServiceRecordCreate(noLocal, YMSTR(browser->type), "local",
                                             true, host, ntohs(hostPort), txtRecord, txtLength);    
         if ( record )   
-			__YMmDNSBrowserAddOrUpdateService(browser, record);
+			record = __YMmDNSBrowserAddOrUpdateService(browser, record);
         else
 			okay = false;
         free(noLocal);

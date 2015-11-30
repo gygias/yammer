@@ -11,9 +11,7 @@
 
 #include "YMmDNS.h"
 
-#include <dns_sd.h>
-
-typedef YMTypeRef YMmDNSBrowserRef;
+typedef const struct __ym_mdns_browser_t *YMmDNSBrowserRef;
 
 // callback definitions
 typedef void (*ym_mdns_service_appeared_func)(YMmDNSBrowserRef browser, YMmDNSServiceRecord * service, void *context);

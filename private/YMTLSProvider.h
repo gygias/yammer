@@ -18,7 +18,7 @@
 
 #endif /* YMTLSProvider_h */
 
-typedef YMTypeRef YMTLSProviderRef;
+typedef const struct __ym_tls_provider_t *YMTLSProviderRef;
 
 //YMTLSProviderRef YMTLSProviderCreate(YMFILE inFile, YMFILE outFile, bool isServer);
 YMTLSProviderRef YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isServer);

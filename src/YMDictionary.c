@@ -28,23 +28,22 @@ typedef struct __YMDictionaryItem
 } _YMDictionaryItem;
 typedef _YMDictionaryItem *_YMDictionaryItemRef;
 
-typedef struct __ym_dictionary
+typedef struct __ym_dictionary_t
 {
     _YMType _type;
     
     bool isYMTypeDict;
     _YMDictionaryItemRef head;
     size_t count;
-} ___ym_dictionary;
-typedef struct __ym_dictionary __YMDictionary;
-typedef __YMDictionary *__YMDictionaryRef;
+} __ym_dictionary_t;
+typedef struct __ym_dictionary_t *__YMDictionaryRef;
 
 _YMDictionaryItemRef _YMDictionaryFindItemWithIdentifier(_YMDictionaryItemRef head, YMDictionaryKey key, _YMDictionaryItemRef *outPreviousItem);
 _YMDictionaryItemRef _YMDictionaryCopyItem(_YMDictionaryItemRef item);
 
 YMDictionaryRef YMDictionaryCreate()
 {
-    __YMDictionaryRef dict = (__YMDictionaryRef)_YMAlloc(_YMDictionaryTypeID, sizeof(__YMDictionary));
+    __YMDictionaryRef dict = (__YMDictionaryRef)_YMAlloc(_YMDictionaryTypeID, sizeof(struct __ym_dictionary_t));
     
     dict->head = NULL;
     dict->count = 0;

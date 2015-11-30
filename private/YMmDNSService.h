@@ -12,7 +12,7 @@
 #include "YMBase.h"
 #include "YMmDNS.h"
 
-typedef YMTypeRef YMmDNSServiceRef;
+typedef const struct __ym_mdns_service_t *YMmDNSServiceRef;
 
 YMmDNSServiceRef YMmDNSServiceCreate(YMStringRef type, YMStringRef name, uint16_t port);
 

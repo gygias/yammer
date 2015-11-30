@@ -16,23 +16,22 @@
 #define ymlog(x,...) ;
 #endif
 
-typedef struct __ym_pipe
+typedef struct __ym_pipe_t
 {
     _YMType _type;
     
     YMStringRef name;
 	YMFILE inFd;
 	YMFILE outFd;
-} ___ym_pipe;
-typedef struct __ym_pipe __YMPipe;
-typedef __YMPipe *__YMPipeRef;
+} __ym_pipe_t;
+typedef struct __ym_pipe_t *__YMPipeRef;
 
 void __YMPipeCloseInputFile(YMPipeRef pipe_);
 void __YMPipeCloseOutputFile(YMPipeRef pipe_);
 
 YMPipeRef YMPipeCreate(YMStringRef name)
 {
-    __YMPipeRef aPipe = (__YMPipeRef)_YMAlloc(_YMPipeTypeID,sizeof(__YMPipe));
+    __YMPipeRef aPipe = (__YMPipeRef)_YMAlloc(_YMPipeTypeID,sizeof(struct __ym_pipe_t));
     
     aPipe->name = name ? YMRetain(name) : YMSTRC("*");
     aPipe->inFd = NULL_FILE;

@@ -11,7 +11,7 @@
 
 #include "YMStream.h"
 
-typedef YMTypeRef YMThreadRef;
+typedef const struct __ym_thread_t *YMThreadRef;
 
 typedef void (*ym_void_voidp_func)(void *);
 typedef void *(*ym_voidp_voidp_func)(void *);

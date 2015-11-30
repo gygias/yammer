@@ -8,7 +8,7 @@
 
 #include "YMPeer.h"
 
-typedef struct __ym_peer
+typedef struct __ym_peer_t
 {
     _YMType _type;
     
@@ -16,9 +16,8 @@ typedef struct __ym_peer
     YMDictionaryRef addresses;
     uint16_t port;
     YMDictionaryRef certificates;
-} ___ym_peer;
-typedef struct __ym_peer __YMPeer;
-typedef __YMPeer *__YMPeerRef;
+} __ym_peer_t;
+typedef struct __ym_peer_t *__YMPeerRef;
 
 YMPeerRef __YMPeerCreate(YMStringRef name, YMDictionaryRef addresses, YMDictionaryRef certificates);
 
@@ -39,7 +38,7 @@ YMPeerRef _YMPeerCreate(YMStringRef name, YMDictionaryRef addresses, YMDictionar
 
 YMPeerRef __YMPeerCreate(YMStringRef name, YMDictionaryRef addresses, YMDictionaryRef certificates)
 {
-    __YMPeerRef peer = (__YMPeerRef)_YMAlloc(_YMPeerTypeID,sizeof(__YMPeer));
+    __YMPeerRef peer = (__YMPeerRef)_YMAlloc(_YMPeerTypeID,sizeof(struct __ym_peer_t));
     
     peer->name = name ? YMRetain(name) : YMSTRC("unnamed-peer");
     peer->addresses = addresses ? YMRetain(addresses) : NULL;

@@ -9,7 +9,7 @@
 #ifndef YMPipe_h
 #define YMPipe_h
 
-typedef YMTypeRef YMPipeRef;
+typedef const struct __ym_pipe_t *YMPipeRef;
 
 YMPipeRef YMPipeCreate(YMStringRef name);
 

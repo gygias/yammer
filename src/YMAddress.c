@@ -95,11 +95,8 @@ YMAddressRef YMAddressCreate(const void *addressData, uint32_t length)
     if ( type == YMAddressIPV4 || type == YMAddressIPV6 )
     {
         struct sockaddr_in *inAddr = (struct sockaddr_in *)address->address;
-//#ifndef WIN32
         char *ipString = inet_ntoa( inAddr->sin_addr );
-//#else
-//		char *ipString = inet_ntop( AF_INET, inAddr->sin_addr, &lol);
-//#endif
+        
         if ( ! ipString ) // i can't imagine how this would fail short of segfaulting, man isn't specific
         {
             //uint32_t ip = ntohl(inAddr->sin_addr.s_addr);

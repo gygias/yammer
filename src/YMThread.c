@@ -34,7 +34,7 @@
 typedef uint64_t YMThreadDispatchID;
 typedef uint64_t YMThreadDispatchThreadID;
 
-typedef struct __ym_thread
+typedef struct __ym_thread_t
 {
     _YMType _typeID;
     
@@ -54,9 +54,8 @@ typedef struct __ym_thread
     YMSemaphoreRef dispatchExitSemaphore;
     YMDictionaryRef dispatchesByID;
     YMLockRef dispatchListLock;
-} ___ym_thread;
-typedef struct __ym_thread __YMThread;
-typedef __YMThread *__YMThreadRef;
+} __ym_thread_t;
+typedef struct __ym_thread_t *__YMThreadRef;
 
 // dispatch stuff
 typedef struct __ym_thread_dispatch_thread_context_t
@@ -111,7 +110,7 @@ YM_ONCE_FUNC(__YMThreadDispatchInit,
 
 __YMThreadRef __YMThreadInitCommon(YMStringRef name, const void *context)
 {
-    __YMThreadRef thread = (__YMThreadRef)_YMAlloc(_YMThreadTypeID,sizeof(__YMThread));
+    __YMThreadRef thread = (__YMThreadRef)_YMAlloc(_YMThreadTypeID,sizeof(struct __ym_thread_t));
 
 	YM_ONCE_DO_LOCAL(__YMThreadDispatchInit);
     

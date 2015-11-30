@@ -51,9 +51,9 @@ void __ym_tls_lock_callback(int mode, int type, __unused const char *file, __unu
 static YMDictionaryRef gYMTLSExDataList; // maps ssl, which we can get without knowing the 'index', to its index...
 static YMLockRef gYMTLSExDataLock;
 
-typedef struct __ym_tls_provider
+typedef struct __ym_tls_provider_t
 {
-    struct __ym_security_provider _common;
+    struct __ym_security_provider_t _common;
     
     bool isServer;
     bool isWrappingSocket;
@@ -71,9 +71,8 @@ typedef struct __ym_tls_provider
     void *localCertsContext;
     ym_tls_provider_should_accept peerCertsFunc;
     void *peerCertsContext;
-} ___ym_tls_provider;
-typedef struct __ym_tls_provider __YMTLSProvider;
-typedef __YMTLSProvider *__YMTLSProviderRef;
+} __ym_tls_provider_t;
+typedef struct __ym_tls_provider_t *__YMTLSProviderRef;
 
 bool __YMTLSProviderInit(__YMSecurityProviderRef provider);
 bool __YMTLSProviderRead(__YMSecurityProviderRef provider, uint8_t *buffer, size_t bytes);
@@ -126,7 +125,7 @@ YMTLSProviderRef __YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isWrappin
     }
 #endif
     
-    __YMTLSProviderRef tls = (__YMTLSProviderRef)_YMAlloc(_YMTLSProviderTypeID,sizeof(__YMTLSProvider));
+    __YMTLSProviderRef tls = (__YMTLSProviderRef)_YMAlloc(_YMTLSProviderTypeID,sizeof(struct __ym_tls_provider_t));
     
     tls->_common.readFile = (YMFILE)socket;
     tls->_common.writeFile = (YMFILE)socket;

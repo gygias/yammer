@@ -39,7 +39,7 @@
 #include <ws2tcpip.h>
 #endif
 
-typedef struct __ym_session
+typedef struct __ym_session_t
 {
     _YMType _type;
     
@@ -78,9 +78,8 @@ typedef struct __ym_session
     ym_session_new_stream_func newStreamFunc;
     ym_session_stream_closing_func streamClosingFunc;
     void *callbackContext;
-} ___ym_session;
-typedef struct __ym_session __YMSession;
-typedef __YMSession *__YMSessionRef;
+} __ym_session_t;
+typedef struct __ym_session_t *__YMSessionRef;
 
 #pragma mark setup
 
@@ -105,7 +104,7 @@ YMSessionRef YMSessionCreate(YMStringRef type)
 {
 	YMNetworkingInit();
 
-    __YMSessionRef session = (__YMSessionRef)_YMAlloc(_YMSessionTypeID,sizeof(__YMSession));
+    __YMSessionRef session = (__YMSessionRef)_YMAlloc(_YMSessionTypeID,sizeof(struct __ym_session_t));
     session->type = YMRetain(type);
     session->ipv4ListenSocket = NULL_SOCKET;
     session->ipv6ListenSocket = NULL_SOCKET;
@@ -774,7 +773,7 @@ bool __YMSessionCloseAllConnections(__YMSessionRef session)
         while ( YMDictionaryGetCount(session->connectionsByAddress) )
         {
             YMDictionaryKey aKey = YMDictionaryGetRandomKey(session->connectionsByAddress);
-            YMConnectionRef aConnection = YMDictionaryRemove(session->connectionsByAddress, aKey);
+            YMConnectionRef aConnection = (YMConnectionRef)YMDictionaryRemove(session->connectionsByAddress, aKey);
             if ( ! aConnection )
             {
                 ymerr("session[%s]: sanity check dictionary: %llu",YMSTR(session->logDescription), aKey);

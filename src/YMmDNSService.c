@@ -31,7 +31,7 @@
 #define ymlog(x,...) ;
 #endif
 
-typedef struct __ym_mdns_service
+typedef struct __ym_mdns_service_t
 {
     _YMType _type;
     
@@ -45,9 +45,8 @@ typedef struct __ym_mdns_service
     DNSServiceRef *dnsService;
     bool advertising;
     YMThreadRef eventThread;
-} ___ym_mdns_service;
-typedef struct __ym_mdns_service __YMmDNSService;
-typedef __YMmDNSService *__YMmDNSServiceRef;
+} __ym_mdns_service_t;
+typedef struct __ym_mdns_service_t *__YMmDNSServiceRef;
 
 void __YMmDNSRegisterCallback(__unused DNSServiceRef sdRef,
                               __unused DNSServiceFlags flags,
@@ -77,7 +76,7 @@ YMmDNSServiceRef YMmDNSServiceCreate(YMStringRef type, YMStringRef name, uint16_
 
 	YMNetworkingInit();
     
-    __YMmDNSServiceRef service = (__YMmDNSServiceRef)_YMAlloc(_YMmDNSServiceTypeID,sizeof(__YMmDNSService));
+    __YMmDNSServiceRef service = (__YMmDNSServiceRef)_YMAlloc(_YMmDNSServiceTypeID,sizeof(struct __ym_mdns_service_t));
     
     service->type = YMRetain(type);
     service->name = YMRetain(name);

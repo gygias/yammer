@@ -15,7 +15,7 @@ extern "C" {
 
 #include <libyammer/YMBase.h>
 
-typedef YMTypeRef YMDictionaryRef;
+typedef const struct __ym_dictionary_t *YMDictionaryRef;
 
 typedef uint64_t YMDictionaryKey;
 typedef const void *YMDictionaryValue;

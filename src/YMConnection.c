@@ -7,6 +7,7 @@
 //
 
 #include "YMConnection.h"
+#include "YMConnectionPriv.h"
 
 #include "YMPlexer.h"
 #include "YMSecurityProvider.h"
@@ -32,7 +33,7 @@
 
 #define NOT_CONNECTED ( ( connection->socket == NULL_SOCKET ) && ! connection->isConnected )
 
-typedef struct __ym_connection
+typedef struct __ym_connection_t
 {
     _YMType _type;
     
@@ -53,9 +54,8 @@ typedef struct __ym_connection
     bool isConnected;
     YMSecurityProviderRef security;
     YMPlexerRef plexer;
-} ___ym_connection;
-typedef struct __ym_connection __YMConnection;
-typedef __YMConnection *__YMConnectionRef;
+} __ym_connection_t;
+typedef struct __ym_connection_t *__YMConnectionRef;
 
 enum
 {
@@ -104,7 +104,7 @@ __YMConnectionRef __YMConnectionCreate(bool isIncoming, YMSOCKET socket, YMAddre
 
 	YMNetworkingInit();
     
-    __YMConnectionRef connection = (__YMConnectionRef)_YMAlloc(_YMConnectionTypeID,sizeof(__YMConnection));
+    __YMConnectionRef connection = (__YMConnectionRef)_YMAlloc(_YMConnectionTypeID,sizeof(struct __ym_connection_t));
     
     connection->socket = socket;
     connection->isIncoming = isIncoming;
@@ -267,7 +267,7 @@ rewind_fail:
     return false;
 }
 
-bool _YMConnectionClose(YMConnectionRef connection_)
+bool YMConnectionClose(YMConnectionRef connection_)
 {
     __YMConnectionRef connection = (__YMConnectionRef)connection_;
     return __YMConnectionDestroy(connection);

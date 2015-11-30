@@ -107,7 +107,7 @@ typedef struct {
     YMPlexerStreamID streamID;
 } YMPlexerMessage;
 
-typedef struct __ym_plexer
+typedef struct __ym_plexer_t
 {
     _YMType _type;
     
@@ -146,9 +146,8 @@ typedef struct __ym_plexer
     ym_plexer_new_upstream_func newIncomingFunc;
     ym_plexer_stream_closing_func closingFunc;
     void *callbackContext;
-} ___ym_plexer;
-typedef struct __ym_plexer __YMPlexer;
-typedef __YMPlexer *__YMPlexerRef;
+} __ym_plexer_t;
+typedef struct __ym_plexer_t *__YMPlexerRef;
 
 // generic context pointer definition for "plexer & stream" entry points
 typedef struct __ym_dispatch_plexer_stream_def
@@ -188,7 +187,7 @@ YMPlexerRef YMPlexerCreate(YMStringRef name, YMSecurityProviderRef provider, boo
 {
 	YM_ONCE_DO_LOCAL(__YMRegisterSigpipe);
     
-    __YMPlexerRef plexer = (__YMPlexerRef)_YMAlloc(_YMPlexerTypeID,sizeof(__YMPlexer));
+    __YMPlexerRef plexer = (__YMPlexerRef)_YMAlloc(_YMPlexerTypeID,sizeof(struct __ym_plexer_t));
     
     plexer->name = YMStringCreateWithFormat("plex-%s(%s)",name?YMSTR(name):"*",master?"m":"s",NULL);
     plexer->provider = YMRetain(provider);

@@ -17,7 +17,7 @@ extern "C" {
 #include <libyammer/YMPeer.h>
 #include <libyammer/YMAddress.h>
 
-typedef YMTypeRef YMPeerRef;
+typedef const struct __ym_peer_t *YMPeerRef;
 
 YMAPI YMStringRef YMPeerGetName(YMPeerRef peer);
 YMAPI YMDictionaryRef YMPeerGetAddresses(YMPeerRef peer);

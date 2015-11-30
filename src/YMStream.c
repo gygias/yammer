@@ -38,7 +38,7 @@
 #define LOG_STREAM_LIFECYCLE(x) ;
 #endif
 
-typedef struct __ym_stream
+typedef struct __ym_stream_t
 {
     _YMType _type;
     
@@ -57,16 +57,15 @@ typedef struct __ym_stream
     bool direct;
     
     ym_stream_user_info_ref userInfo; // weak, plexer
-} ___ym_stream;
-typedef struct __ym_stream __YMStream;
-typedef __YMStream *__YMStreamRef;
+} __ym_stream_t;
+typedef struct __ym_stream_t *__YMStreamRef;
 
 void __YMStreamCloseFiles(__YMStreamRef stream);
 YMIOResult __YMStreamForward(__YMStreamRef stream, YMFILE file, bool toStream, uint64_t *inBytes, uint64_t *outBytes);
 
 YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_ref userInfo, _ym_stream_free_user_info_func callback)
 {
-    __YMStreamRef stream = (__YMStreamRef)_YMAlloc(_YMStreamTypeID,sizeof(__YMStream));
+    __YMStreamRef stream = (__YMStreamRef)_YMAlloc(_YMStreamTypeID,sizeof(struct __ym_stream_t));
     
     stream->name = name ? YMRetain(name) : YMSTRC("*");
     
