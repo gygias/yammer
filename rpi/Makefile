@@ -5,14 +5,15 @@ DEP=$(OBJ:%.o=$(OUT)/%.o)
 CC=gcc
 INC=-I../ -I../private -I../libyammer -I../win
 PT=-pthread
-FLG=-include ../private/yammer.pch -DRPI -std=c99 $(PT)
+FLG=-include ../private/yammer.pch -std=c99 $(DEF) $(PT)
+DEF=-DRPI
 
 #ALG=-L/usr/lib/arm-linux-gnueabihf
 LIB=-lssl -lcrypto -ldns_sd
 
 TGT = libyammer.o
 
-all: $(OUT) $(TGT)
+all: $(OUT) $(TGT) chat
 
 clean:
 	rm -rf $(OUT)
@@ -25,3 +26,9 @@ $(TGT): $(OBJ)
 
 %.o: ../src/%.c
 	$(CC) -c $< -o $(OUT)/$@ $(INC) $(FLG)
+
+chat: chat.o
+	$(CC) -o $(OUT)/$@ $(PT) $(OUT)/chat.o $(OUT)/libyammer.o
+
+chat.o:
+	$(CC) -c ../misc/chat/main.c -o $(OUT)/$@ -I../ $(DEF) $(PT)
