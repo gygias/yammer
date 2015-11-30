@@ -117,7 +117,7 @@ __YMThreadRef __YMThreadInitCommon(YMStringRef name, const void *context)
     
     thread->name = name ? YMRetain(name) : YMSTRC("*");
     thread->context = context;
-    thread->pthread = NULL;
+    thread->pthread = (YM_THREAD_TYPE)NULL;
     
     thread->didStart = false;
     

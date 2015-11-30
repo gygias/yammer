@@ -5,7 +5,7 @@ DEP=$(OBJ:%.o=$(OUT)/%.o)
 CC=gcc
 INC=-I../ -I../private -I../libyammer -I../win
 PT=-pthread
-FLG=-include ../private/yammer.pch -std=c99 $(DEF) $(PT) -g
+FLG=-include ../private/yammer.pch -std=c99 $(DEF) $(PT) -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast -g
 DEF=-DRPI
 DBG=-ggdb3
 
