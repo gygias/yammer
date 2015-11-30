@@ -108,7 +108,6 @@ YMAddressRef YMAddressCreate(const void *addressData, uint32_t length)
             goto rewind_fail;
         }
         uint16_t port = ntohs(inAddr->sin_port);
-        ymerr("lol %u -> %u",inAddr->sin_port,port);
         address->description = YMStringCreateWithFormat("%s:%u",ipString,port,NULL);
     }
     else if ( isIP )
@@ -127,7 +126,6 @@ YMAddressRef YMAddressCreate(const void *addressData, uint32_t length)
         else
             port = ntohs(((struct sockaddr_in6 *)addr)->sin6_port);
         address->description = YMStringCreateWithFormat("%s:%u",ipString,port,NULL);
-        ymerr("lol %u -> %u",((struct sockaddr_in *)addr)->sin_port,port);
     }
     
     return (YMAddressRef)address;

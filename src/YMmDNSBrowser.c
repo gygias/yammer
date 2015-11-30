@@ -288,8 +288,7 @@ bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser_, YMStringRef serviceName)
         return false;
     }
     
-    // FIXME what's up with domain string
-    //ymlog("mdns[%s]: resolving %s (%s)...", YMSTR(browser->type), YMSTR(serviceName), theService->domain ? YMSTR(theService->domain) : "(NULL)");
+    ymlog("mdns[%s]: resolving %s (%s)...", YMSTR(browser->type), YMSTR(serviceName), theService->domain ? YMSTR(theService->domain) : "(NULL)");
     
     return true;
 }
