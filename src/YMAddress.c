@@ -169,7 +169,11 @@ YMAddressRef YMAddressCreateWithIPStringAndPort(YMStringRef ipString, uint16_t p
     }
     
     struct sockaddr_in sinAddr;
+#ifdef WIN32
+	ZeroMemory(&sinAddr, sizeof(struct sockaddr_in));
+#else
     bzero(&sinAddr, sizeof(sinAddr));
+#endif
 	socklen_t addrLen = sizeof(struct sockaddr_in);
 #ifdef _MACOS
     sinAddr.sin_len = (uint8_t)addrLen;

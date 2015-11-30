@@ -34,6 +34,7 @@
 #define YM_PORT_MAX IPPORT_DYNAMIC_MAX
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <time.h>
 #endif
 
 #ifdef __cplusplus
