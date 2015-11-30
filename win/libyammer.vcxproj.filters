@@ -150,8 +150,8 @@
     <ClInclude Include="..\private\YMX509CertificatePriv.h">
       <Filter>private</Filter>
     </ClInclude>
-    <ClInclude Include="arc4random.h">
-      <Filter>win</Filter>
+    <ClInclude Include="..\private\arc4random.h">
+      <Filter>private</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -236,8 +236,8 @@
     <ClCompile Include="..\src\YMX509Certificate.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="arc4random.cpp">
-      <Filter>win</Filter>
+    <ClCompile Include="..\src\arc4random.c">
+      <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

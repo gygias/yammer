@@ -172,6 +172,7 @@
     <ClInclude Include="..\libyammer\YMSession.h" />
     <ClInclude Include="..\libyammer\YMStream.h" />
     <ClInclude Include="..\libyammer\YMString.h" />
+    <ClInclude Include="..\private\arc4random.h" />
     <ClInclude Include="..\private\YMConnectionPriv.h" />
     <ClInclude Include="..\private\YMDebug.h" />
     <ClInclude Include="..\private\YMInternal.h" />
@@ -202,12 +203,12 @@
     <ClInclude Include="..\private\YMUtilities.h" />
     <ClInclude Include="..\private\YMX509Certificate.h" />
     <ClInclude Include="..\private\YMX509CertificatePriv.h" />
-    <ClInclude Include="arc4random.h" />
     <ClInclude Include="libyammer.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\arc4random.c" />
     <ClCompile Include="..\src\YMAddress.c" />
     <ClCompile Include="..\src\YMBase.c" />
     <ClCompile Include="..\src\YMConnection.c" />
@@ -250,7 +251,6 @@
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="libyammer.cpp" />
-    <ClCompile Include="arc4random.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
