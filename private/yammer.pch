@@ -30,13 +30,14 @@
 # include "arc4random.h"
 # define __USE_BSD
 # endif
-	#include <unistd.h>
+#include <unistd.h>
 #elif defined(WIN32)
-	#define _WINSOCKAPI_
-	#include <windows.h>
-	#include "arc4random.h"
-	#define inline
-	#define YMAPI __declspec( dllexport )
+#define _WINSOCKAPI_
+#include <windows.h>
+#include "arc4random.h"
+#define inline
+#define YMAPI __declspec( dllexport )
+#define bzero ZeroMemory
 #endif
 
 #include <string.h>

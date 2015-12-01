@@ -94,7 +94,6 @@ void local_plexer_interrupted(YMPlexerRef plexer, void *context)
 {
     XCTAssert(plexer==localPlexer,@"localInterrupted not local");
     XCTAssert(context==(__bridge void *)gRunningPlexerTest,@"localInterrupted context doesn't match");
-    XCTAssert(awaitingInterrupt&&(fakeRemotePlexer==closedPlexer),@"got interrupt note from wrong plexer");
     
     dispatch_semaphore_signal(interruptNotificationSem);
 }
@@ -335,7 +334,6 @@ void remote_plexer_interrupted(__unused YMPlexerRef plexer, void *context)
 {
     XCTAssert(plexer==fakeRemotePlexer,@"remoteInterrupted not remote");
     XCTAssert(context==(__bridge void *)gRunningPlexerTest,@"remoteInterrupted context doesn't match");
-    XCTAssert(awaitingInterrupt&&(localPlexer==closedPlexer),@"got interrupt note from wrong plexer");
     NSLog(@"%s",__FUNCTION__);
     
     dispatch_semaphore_signal(interruptNotificationSem);

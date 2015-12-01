@@ -36,7 +36,7 @@ mDNSTests *gGlobalSelf;
 #pragma mark mDNS tests
 
 #define testServiceType "_yammer._tcp"
-#define testKeyPairReserved ( 2 ) // length char and '=', length char seems to include itself
+#define testKeyPairReserved ( 3 ) // length char, '=' and zero-length
 #define testKeyMaxLen ( UINT8_MAX - testKeyPairReserved )
 
 #if 0 // actually debugging
@@ -150,7 +150,7 @@ mDNSTests *gGlobalSelf;
     {
         keyPairs[idx] = calloc(1,sizeof(YMmDNSTxtRecordKeyPair));
         
-        remaining -= testKeyPairReserved; // '=' and length byte (which seems to be included in its own length)
+        remaining -= testKeyPairReserved; // length char, '=' and zero-length
         
         // The "Name" MUST be at least one character. Strings beginning with an '=' character (i.e. the name is missing) SHOULD be silently ignored.
         uint8_t aKeyLenMax = ( testKeyMaxLen > remaining ) ? ( remaining - testKeyPairReserved ) : testKeyMaxLen;

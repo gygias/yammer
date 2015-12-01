@@ -24,7 +24,7 @@
 #define ymlog(x,...) ;
 #endif
 
-//#define LOG_STREAM_LIFECYCLE
+#define LOG_STREAM_LIFECYCLE
 #ifdef LOG_STREAM_LIFECYCLE
 #undef LOG_STREAM_LIFECYCLE
 #define LOG_STREAM_LIFECYCLE(x) \
@@ -238,7 +238,10 @@ YMIOResult __YMStreamForward(__YMStreamRef stream, YMFILE file, bool fromFileToS
         {
             _YMStreamBoundType length = *inBytes;
             YMStreamWriteDown(stream, &length, sizeof(length));
+            ymerr("  stream[%s]: beginning bounded file write (%llub)",YMSTR(stream->name),length);
         }
+        else
+            ymerr("  stream[%s]: beginning unbounded file write",YMSTR(stream->name));
     }
     // if we're writing to file, read the coordination stuff above
     else
@@ -257,9 +260,11 @@ YMIOResult __YMStreamForward(__YMStreamRef stream, YMFILE file, bool fromFileToS
             
             remainingIfBounded = length;
             boundedByCallerOrRemote = true;
+            ymerr("  stream[%s]: beginning remote-bounded file read (%llub)",YMSTR(stream->name),remainingIfBounded);
         }
         else if ( peekCommand.command == YMStreamForwardFileUnbounded )
         {
+            ymerr("  stream[%s]: beginning unbounded file read",YMSTR(stream->name));
             boundedByCallerOrRemote = false; // expect a 'forward end' command
         }
         else abort();
@@ -317,6 +322,8 @@ YMIOResult __YMStreamForward(__YMStreamRef stream, YMFILE file, bool fromFileToS
             lastIter = true;
         else if ( fromFileToStream && aDesiredLength != aActualLength )
             ymerr("  stream[%s]: warning: %d%s forward read %llu-%llu %u != %u: %d (%s)",YMSTR(stream->name),file,fromFileToStream?"->":"<-",off,off+aDesiredLength,aActualLength,aDesiredLength,errno,strerror(errno));
+        else
+            ymerr("  stream[%s]: %s read %ub (%llu) remaining...",YMSTR(stream->name),fromFileToStream?"F>S":"F<S",aActualLength,remainingIfBounded);
         
         if ( fromFileToStream )
         {
@@ -358,6 +365,8 @@ YMIOResult __YMStreamForward(__YMStreamRef stream, YMFILE file, bool fromFileToS
                 lastIter = true;
         }
         
+        ymerr("  stream[%s]: %s wrote %ub (%llu) remaining...",YMSTR(stream->name),fromFileToStream?"F>S":"F<S",aActualLength,remainingIfBounded);
+        
         off += aActualLength;
     } while ( ! lastIter );
     
@@ -370,6 +379,7 @@ YMIOResult __YMStreamForward(__YMStreamRef stream, YMFILE file, bool fromFileToS
     {
         _YMStreamCommand endCommand = { YMStreamForwardFileEnd };
         YMStreamWriteDown(stream, &endCommand, sizeof(endCommand));
+        ymerr("  stream[%s]: wrote ForwardFileEnd",YMSTR(stream->name));
     }
     
     if ( inBytes && off != *inBytes )

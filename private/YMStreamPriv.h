@@ -35,12 +35,11 @@ typedef struct _ym_stream_command_t _YMStreamCommand;
 //} __ym_stream_bounded_command_t;
 //typedef struct _ym_stream_bounded_command_t _YMStreamBoundedCommand;
 
-typedef struct _ym_stream_user_info_def
+typedef struct _ym_stream_user_info_t
 {
     YMStringRef name;
-} __ym_stream_user_info_def;
-typedef struct _ym_stream_user_info_def ym_stream_user_info;
-typedef struct ym_stream_user_info *ym_stream_user_info_ref;
+} _ym_stream_user_info_t;
+typedef struct _ym_stream_user_info_t *ym_stream_user_info_ref;
 typedef void (*_ym_stream_free_user_info_func)(YMStreamRef);
 
 YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_ref userInfo, _ym_stream_free_user_info_func callback);

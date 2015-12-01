@@ -55,27 +55,24 @@ typedef struct ym_thread_dispatch_def
     YMStringRef description; // optional, assigns a name that will be included in logging from YMThreadDispatch
 } _ym_thread_dispatch_def;
 
-// description (and other non-opaque types) will be copied
-// todo, make dispatch api less boilerplate-y
-//void YMThreadDispatchDispatch(YMThreadRef thread,   ym_thread_dispatch_entry entryProc,
-//                                                    ym_thread_dispatch_finally finallyProc,
-//                                                    bool freeContextWhenDone, // convenience for YMALLOC contexts that don't nest other allocations. mutually exclusive with finallyProc.
-//                                                    const char *description,
-//                                                    void *context);
 void YMThreadDispatchDispatch(YMThreadRef thread, ym_thread_dispatch dispatch);
 
-typedef void (*ym_dispatch_forward_file_callback)(void *, uint64_t);
-typedef struct ym_thread_dispatch_forward_file_context_def
+typedef void (*ym_dispatch_forward_file_callback)(void *, YMIOResult, uint64_t);
+typedef struct _ym_thread_forward_file_context_t
 {
     ym_dispatch_forward_file_callback callback;
     void * context;
-} _ym_thread_dispatch_forward_file_context_def;
-typedef struct ym_thread_dispatch_forward_file_context_def ym_thread_dispatch_forward_file_context;
-typedef ym_thread_dispatch_forward_file_context *ym_thread_dispatch_forward_file_context_ref;
+} _ym_thread_forward_file_context_t;
+typedef struct _ym_thread_forward_file_context_t *_ym_thread_forward_file_context_ref;
 
-//
-bool YMThreadDispatchForwardFile(YMFILE fromFile, YMStreamRef toStream, const uint64_t *nBytesPtr, bool sync, ym_thread_dispatch_forward_file_context callbackInfo);
-bool YMThreadDispatchForwardStream(YMStreamRef fromStream, YMFILE toFile, const uint64_t *nBytesPtr, bool sync, ym_thread_dispatch_forward_file_context callbackInfo);
+// the 'forward file' problem
+// user should be able to asynchronously forward a file, release ownership of stream and forget it
+// plexer cannot send remote-close at the time user forwards and releases
+// want to be able to leave stream open, forward file doesn't imply close after completion
+// need event based way to either notify user when forward is complete, or 'close when done' in sync with plexer's list of streams
+// should the client 'forward' api be on connection, so it can ConnectionCloseStream either on callback or after sync method?
+bool YMThreadDispatchForwardFile(YMFILE fromFile, YMStreamRef toStream, const uint64_t *nBytesPtr, bool sync, _ym_thread_forward_file_context_ref callbackInfo);
+bool YMThreadDispatchForwardStream(YMStreamRef fromStream, YMFILE toFile, const uint64_t *nBytesPtr, bool sync, _ym_thread_forward_file_context_ref callbackInfo);
 void YMThreadDispatchJoin(YMThreadRef thread_);
 
 bool YMThreadStart(YMThreadRef thread);

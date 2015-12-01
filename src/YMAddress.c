@@ -104,8 +104,8 @@ YMAddressRef YMAddressCreate(const void *addressData, uint32_t length)
             ymerr("address: error: inet_ntoa failed for %u.%u.%u.%u: %d (%s)",ipPtr[0],ipPtr[1],ipPtr[2],ipPtr[4],errno,strerror(errno));
             goto rewind_fail;
         }
-        uint16_t port = ntohs(inAddr->sin_port);
-        address->description = YMStringCreateWithFormat("%s:%u",ipString,port,NULL);
+        uint16_t hostPort = ntohs(inAddr->sin_port);
+        address->description = YMStringCreateWithFormat("%s:%u",ipString,hostPort,NULL);
     }
     else if ( isIP )
     {
@@ -117,12 +117,12 @@ YMAddressRef YMAddressCreate(const void *addressData, uint32_t length)
             ymerr("address: error: inet_ntop failed for address length %d",ipLength);
             goto rewind_fail;
         }
-        uint16_t port;
+        uint16_t hostPort;
         if ( isIPV4 )
-            port = ntohs(((struct sockaddr_in *)addr)->sin_port);
+            hostPort = ntohs(((struct sockaddr_in *)addr)->sin_port);
         else
-            port = ntohs(((struct sockaddr_in6 *)addr)->sin6_port);
-        address->description = YMStringCreateWithFormat("%s:%u",ipString,port,NULL);
+            hostPort = ntohs(((struct sockaddr_in6 *)addr)->sin6_port);
+        address->description = YMStringCreateWithFormat("%s:%u",ipString,hostPort,NULL);
     }
     
     return (YMAddressRef)address;
@@ -141,7 +141,7 @@ YMAddressRef YMAddressCreateLocalHostIPV4(uint16_t port)
     struct sockaddr_in *newAddr = YMALLOC(length);
     newAddr->sin_family = AF_INET;
     newAddr->sin_addr.s_addr = localhost;
-    newAddr->sin_port = port;
+    newAddr->sin_port = htons(port);
 #ifdef _MACOS
     newAddr->sin_len = length;
 #endif
@@ -154,11 +154,7 @@ YMAddressRef YMAddressCreateLocalHostIPV4(uint16_t port)
 YMAddressRef YMAddressCreateWithIPStringAndPort(YMStringRef ipString, uint16_t port)
 {
     struct in_addr inAddr = {0};
-#ifndef WIN32
-    int result = inet_aton(YMSTR(ipString), &inAddr);
-#else
 	int result = inet_pton(AF_INET, YMSTR(ipString), &inAddr);
-#endif
     if ( result != 1 )
     {
         ymlog("address: failed to parse '%s' (%u)",YMSTR(ipString),port);
@@ -166,17 +162,13 @@ YMAddressRef YMAddressCreateWithIPStringAndPort(YMStringRef ipString, uint16_t p
     }
     
     struct sockaddr_in sinAddr;
-#ifdef WIN32
-	ZeroMemory(&sinAddr, sizeof(struct sockaddr_in));
-#else
     bzero(&sinAddr, sizeof(sinAddr));
-#endif
 	socklen_t addrLen = sizeof(struct sockaddr_in);
 #ifdef _MACOS
     sinAddr.sin_len = (uint8_t)addrLen;
 #endif
     sinAddr.sin_family = AF_INET;
-    sinAddr.sin_port = port;
+    sinAddr.sin_port = htons(port);
     sinAddr.sin_addr.s_addr = inAddr.s_addr;
     
     return YMAddressCreate(&sinAddr, addrLen);

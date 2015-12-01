@@ -480,7 +480,7 @@ bool YMSessionStartAdvertising(YMSessionRef session_, YMStringRef name)
     bool ipv4 = true;
     
     int32_t port = YMPortReserve(ipv4, &socket);
-    if ( port < -1 || socket == -1 || socket > UINT16_MAX )
+    if ( port < 0 || socket == -1 || socket > UINT16_MAX )
     {
         ymerr("session[%s]: error: failed to reserve port for server start",YMSTR(session->logDescription));
         return false;

@@ -13,6 +13,7 @@
 #include "YMSecurityProvider.h"
 #include "YMTLSProvider.h"
 #include "YMUtilities.h"
+#include "YMThread.h"
 
 #include "YMLog.h"
 #undef ymlog_type
@@ -76,6 +77,9 @@ void ym_connection_interrupted_proc(YMPlexerRef plexer, void *context);
 __YMConnectionRef __YMConnectionCreate(bool isIncoming, YMSOCKET socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType);
 bool __YMConnectionDestroy(__YMConnectionRef connection);
 bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, bool asServer);
+
+bool __YMConnectionForward(YMConnectionRef connection, bool toFile, YMStreamRef stream, YMFILE file, const uint64_t *nBytesPtr, bool sync, ym_connection_forward_context_t*);
+void _ym_connection_forward_callback_proc(void *context, YMIOResult result, uint64_t bytesForwarded);
 
 YMConnectionRef YMConnectionCreate(YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType)
 {
@@ -328,6 +332,78 @@ void YMConnectionCloseStream(YMConnectionRef connection_, YMStreamRef stream)
 {
     __YMConnectionRef connection = (__YMConnectionRef)connection_;
     YMPlexerCloseStream(connection->plexer, stream);
+}
+
+typedef struct __ym_connection_forward_callback_t
+{
+    YMConnectionRef connection;
+    YMStreamRef stream;
+    YMFILE file;
+    bool fileToStream;
+    bool bounded;
+    ym_connection_forward_context_t *userContext;
+} __ym_connection_forward_callback_t;
+
+bool YMConnectionForwardFile(YMConnectionRef connection, YMFILE fromFile, YMStreamRef toStream, const uint64_t *nBytesPtr, bool sync, ym_connection_forward_context_t *callbackInfo)
+{
+    return __YMConnectionForward(connection, false, toStream, fromFile, nBytesPtr, sync, callbackInfo);
+}
+
+bool YMConnectionForwardStream(YMConnectionRef connection, YMStreamRef fromStream, YMFILE toFile, const uint64_t *nBytesPtr, bool sync, ym_connection_forward_context_t *callbackInfo)
+{
+    return __YMConnectionForward(connection, true, fromStream, toFile, nBytesPtr, sync, callbackInfo);
+}
+
+bool __YMConnectionForward(YMConnectionRef connection, bool toFile, YMStreamRef stream, YMFILE file, const uint64_t *nBytesPtr, bool sync, ym_connection_forward_context_t *callbackInfo)
+{
+    
+    __ym_connection_forward_callback_t *myContext = NULL;
+    _ym_thread_forward_file_context_ref threadContext = NULL;
+    
+    if ( ! sync )
+    {
+        myContext = YMALLOC(sizeof(struct __ym_connection_forward_callback_t));
+        myContext->connection = YMRetain(connection);
+        myContext->stream = YMRetain(stream);
+        myContext->file = file;
+        myContext->fileToStream = ! toFile;
+        myContext->bounded = ( nBytesPtr != NULL );
+        myContext->userContext = callbackInfo;
+        
+        threadContext = YMALLOC(sizeof(_ym_thread_forward_file_context_t));
+        threadContext->callback = _ym_connection_forward_callback_proc;
+        threadContext->context = myContext;
+    }
+    
+    bool ret;
+    if ( toFile )
+        ret = YMThreadDispatchForwardStream(stream, file, nBytesPtr, sync, threadContext);
+    else
+        ret = YMThreadDispatchForwardFile(file, stream, nBytesPtr, sync, threadContext);
+    
+    return ret;
+}
+
+void _ym_connection_forward_callback_proc(void *context, YMIOResult result, uint64_t bytesForwarded)
+{
+    __ym_connection_forward_callback_t *myContext = (__ym_connection_forward_callback_t *)context;
+    YMConnectionRef connection = myContext->connection;
+    YMStreamRef stream = myContext->stream;
+    
+    // allow user to async-forward, if they don't specify callback info it implies "close stream for me when done"
+    if ( ! myContext->userContext )
+    {
+        ymerr("connection[%s]: automatically closing stream %p after async forward",YM_CON_DESC,myContext->stream);
+        YMConnectionCloseStream(connection, stream);
+    }
+    else
+    {
+        if ( myContext->userContext->callback )
+        {
+            myContext->userContext->callback(connection, stream, result, bytesForwarded, myContext->userContext->context);
+        }
+    }
+    
 }
 
 void ym_connection_new_stream_proc(__unused YMPlexerRef plexer,YMStreamRef stream, void *context)

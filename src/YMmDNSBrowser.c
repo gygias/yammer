@@ -327,6 +327,7 @@ YMmDNSServiceRecord *__YMmDNSBrowserAddOrUpdateService(__YMmDNSBrowserRef browse
             existingRecord->txtRecordKeyPairs = record->txtRecordKeyPairs;
             existingRecord->txtRecordKeyPairsSize = record->txtRecordKeyPairsSize;
             existingRecord->addrinfo = record->addrinfo;
+            existingRecord->port = record->port;
             
             _YMmDNSServiceRecordFree(record, true);
             
@@ -455,7 +456,6 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
 {
     __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)context;
     ymlog("__ym_mdns_resolve_callback: %s/%s -> %s:%u",YMSTR(browser->type),fullname,host,(unsigned)port);
-    uint16_t hostPort = ntohs(port);
     
     bool okay = ( result == kDNSServiceErr_NoError );
     
@@ -476,7 +476,7 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
         firstDotPtr[0] = '\0';
         
         record = _YMmDNSServiceRecordCreate(noLocal, YMSTR(browser->type), "local",
-                                            true, host, ntohs(hostPort), txtRecord, txtLength);    
+                                            true, host, port, txtRecord, txtLength);
         if ( record )   
 			record = __YMmDNSBrowserAddOrUpdateService(browser, record);
         else

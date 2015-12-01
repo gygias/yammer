@@ -211,10 +211,10 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
             goto catch_continue;
         
         if ( ipv4 )
-            ((struct sockaddr_in *)addr)->sin_port = thePort;
+            ((struct sockaddr_in *)addr)->sin_port = htons(thePort);
         
         else
-            ((struct sockaddr_in6 *)addr)->sin6_port = thePort;
+            ((struct sockaddr_in6 *)addr)->sin6_port = htons(thePort);
         
         aResult = bind(aSocket, addr, length);
         if ( aResult != 0 )

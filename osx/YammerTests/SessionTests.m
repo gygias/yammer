@@ -21,6 +21,7 @@
     
     YMConnectionRef serverConnection;
     YMConnectionRef clientConnection;
+    BOOL serverAsync, lastClientAsync;
     uint64_t lastClientFileSize;
     uint64_t nManPagesToRead;
     uint64_t nManPagesRead;
@@ -33,8 +34,6 @@
     dispatch_queue_t serialQueue;
     dispatch_semaphore_t connectSemaphore;
     dispatch_semaphore_t threadExitSemaphore;
-    dispatch_semaphore_t serverAsyncForwardSemaphore;
-    dispatch_semaphore_t clientAsyncForwardSemaphore;
     BOOL stopping;
 }
 @end
@@ -87,8 +86,6 @@ SessionTests *gTheSessionTest = nil;
     nonRegularFileNames = [NSMutableArray new];
     serialQueue = dispatch_queue_create("ymsessiontests", DISPATCH_QUEUE_SERIAL);
     connectSemaphore = dispatch_semaphore_create(0);
-    serverAsyncForwardSemaphore = dispatch_semaphore_create(0);
-    clientAsyncForwardSemaphore = dispatch_semaphore_create(0);
     threadExitSemaphore = dispatch_semaphore_create(0);
     
     // wait for 2 connects
@@ -199,12 +196,6 @@ SessionTests *gTheSessionTest = nil;
     NSLog(@"session test finished");
 }
 
-typedef struct asyncCallbackInfo
-{
-    void *theTest;
-    void *semaphore;
-} _asyncCallbackInfo;
-
 typedef struct ManPageHeader
 {
     uint64_t len;
@@ -225,7 +216,6 @@ typedef struct ManPageThanks
     
     NSString *file = @"/dev/random"; // @"/var/vm/sleepimage"; not user readable
     
-    NSLog(@"server chose %@",file);
     NSFileHandle *handle = [NSFileHandle fileHandleForReadingAtPath:file];
     XCTAssert(handle,@"server file handle");
     YMStringRef name = YMSTRCF("test-server-write-%s",[file UTF8String]);
@@ -233,26 +223,26 @@ typedef struct ManPageThanks
     YMRelease(name);
     XCTAssert(stream,@"server create stream");
     
-    bool testAsync = arc4random_uniform(2);
-    ym_thread_dispatch_forward_file_context ctx = {NULL,NULL};
-    if ( testAsync )
+    serverAsync = arc4random_uniform(2);
+    ym_connection_forward_context_t *ctx = NULL;
+    if ( serverAsync )
     {
-        ctx.callback = _server_async_forward_callback;
-        struct asyncCallbackInfo *info = malloc(sizeof(struct asyncCallbackInfo));
-        info->theTest = (__bridge void *)(self);
-        info->semaphore = (__bridge void *)(serverAsyncForwardSemaphore);
-        ctx.context = info;
+        ctx = calloc(sizeof(struct ym_connection_forward_context_t),1);
+        ctx->callback = _server_async_forward_callback;
+        ctx->context = (__bridge void *)self;
     }
-    BOOL okay = YMThreadDispatchForwardFile([handle fileDescriptor], stream, &gSomeLength, !testAsync, ctx);
+    
+    NSLog(@"writing random %ssync",serverAsync?"a":"");
+    BOOL okay = YMConnectionForwardFile(connection, [handle fileDescriptor], stream, &gSomeLength, !serverAsync, ctx);
     XCTAssert(okay,@"server forward file");
     
-    if ( testAsync )
-        dispatch_semaphore_wait(serverAsyncForwardSemaphore, DISPATCH_TIME_FOREVER);
+    if ( ! serverAsync )
+    {
+        YMConnectionCloseStream(connection,stream);
+        dispatch_semaphore_signal(threadExitSemaphore);
+    }
     
-    YMConnectionCloseStream(connection,stream);
-    
-    NSLog(@"write random thread exiting");
-    dispatch_semaphore_signal(threadExitSemaphore);
+    NSLog(@"write random thread (%sSYNC) exiting",serverAsync?"A":"");
 }
 
 - (void)_clientWriteManPages:(YMSessionRef)client
@@ -290,27 +280,24 @@ typedef struct ManPageThanks
             YMConnectionCloseStream(connection, stream);
             break;
         }
-        bool testAsync = arc4random_uniform(2);
-        ym_thread_dispatch_forward_file_context ctx = {NULL,NULL};
-        if ( testAsync )
+        lastClientAsync = arc4random_uniform(2);
+        ym_connection_forward_context_t *ctx = NULL;
+        if ( lastClientAsync )
         {
-            ctx.callback = _client_async_forward_callback;
-            struct asyncCallbackInfo *info = malloc(sizeof(struct asyncCallbackInfo));
-            info->theTest = (__bridge void *)(self);
-            info->semaphore = (__bridge void *)(clientAsyncForwardSemaphore);
-            ctx.context = info;
+            ctx = calloc(sizeof(struct ym_connection_forward_context_t),1);
+            ctx->callback = _client_async_forward_callback;
+            ctx->context = (__bridge void *)self;
         }
         
-        YMThreadDispatchForwardFile([handle fileDescriptor], stream, NULL, !testAsync, ctx);
-        
-        if (testAsync)
-            dispatch_semaphore_wait(clientAsyncForwardSemaphore, DISPATCH_TIME_FOREVER);
+        NSLog(@"writing man page '%@' %ssync",aFile,lastClientAsync?"a":"");
+        bool okay = YMConnectionForwardFile(connection, [handle fileDescriptor], stream, NULL, !lastClientAsync, ctx);
+        XCTAssert(okay,@"forwardfile failed");
         
 #define THX_FOR_MAN // disable this to observe running out of open files
 #ifdef THX_FOR_MAN
         struct ManPageThanks thx;
         uint16_t outLength = 0, length = sizeof(thx);
-        YMIOResult result = YMStreamReadUp(stream, &thx, length,&outLength);
+        YMIOResult result = YMStreamReadUp(stream, &thx, length, &outLength);
         if ( stopping )
         {
             YMConnectionCloseStream(connection, stream);
@@ -322,13 +309,15 @@ typedef struct ManPageThanks
         XCTAssert(0==strcmp(thx.thx4Man,[thxFormat cStringUsingEncoding:NSASCIIStringEncoding]),@"is this how one thx for man? %s",thx.thx4Man);
 #endif
         
-        YMConnectionCloseStream(connection, stream);
+        if ( ! lastClientAsync )
+            YMConnectionCloseStream(connection, stream);
+        
         actuallyWritten++;
     }
     
     nManPagesToRead = actuallyWritten;
-    NSLog(@"write man thread exiting");
     dispatch_semaphore_signal(threadExitSemaphore);
+    NSLog(@"write man pages threadexiting");
 }
 
 - (void)_eatManPage:(YMConnectionRef)connection :(YMStreamRef)stream
@@ -399,8 +388,7 @@ typedef struct ManPageThanks
     uint64_t outBytes = 0;
     BOOL boundIncoming = arc4random_uniform(2);
     NSLog(@"_eatRandom is %@bounding incoming",boundIncoming?@"":@"NOT ");
-    uint64_t *randomBounded = boundIncoming ? &gSomeLength : NULL;
-    YMIOResult ymResult = YMStreamWriteToFile(stream, result, randomBounded, &outBytes);
+    YMIOResult ymResult = YMStreamWriteToFile(stream, result, NULL, &outBytes);
     XCTAssert(ymResult!=YMIOError,@"eat random result");
     XCTAssert(outBytes==gSomeLength,@"eat random outBytes");
     NoisyTestLog(@"_eatManPages: finished: %llu bytes",outBytes);
@@ -415,38 +403,37 @@ typedef struct ManPageThanks
     NSLog(@"eat random exiting");
 }
 
-void _server_async_forward_callback(void * ctx, uint64_t bytesWritten)
+void _server_async_forward_callback(YMConnectionRef connection, YMStreamRef stream, YMIOResult result, uint64_t bytesWritten, void * ctx)
 {
     NoisyTestLog(@"%s",__PRETTY_FUNCTION__);
-    struct asyncCallbackInfo *info = (struct asyncCallbackInfo *)ctx;
-    SessionTests *SELF = (__bridge SessionTests *)info->theTest;
-    [SELF _asyncForwardCallback:YES :ctx :bytesWritten];
-    free(info);
+    SessionTests *SELF = (__bridge SessionTests *)ctx;
+    [SELF _asyncForwardCallback:connection :stream :result :bytesWritten :YES];
 }
 
-void _client_async_forward_callback(void * ctx, uint64_t bytesWritten)
+void _client_async_forward_callback(YMConnectionRef connection, YMStreamRef stream, YMIOResult result, uint64_t bytesWritten, void * ctx)
 {
     NoisyTestLog(@"%s",__PRETTY_FUNCTION__);
-    struct asyncCallbackInfo *info = (struct asyncCallbackInfo *)ctx;
-    SessionTests *SELF = (__bridge SessionTests *)info->theTest;
-    [SELF _asyncForwardCallback:NO :ctx :bytesWritten];
-    free(info);
+    SessionTests *SELF = (__bridge SessionTests *)ctx;
+    [SELF _asyncForwardCallback:connection :stream :result :bytesWritten :NO];
 }
 
-- (void)_asyncForwardCallback:(BOOL)isServer :(void *)ctx :(uint64_t)written
+- (void)_asyncForwardCallback:(YMConnectionRef)connection :(YMStreamRef)stream :(YMIOResult)result :(uint64_t)bytesWritten :(BOOL)isServer
 {
-    XCTAssert(ctx,@"client callback ctx null");
-    struct asyncCallbackInfo *info = (struct asyncCallbackInfo *)ctx;
+    XCTAssert(connection,@"connection nil");
+    XCTAssert(stream,@"stream nil");
+    XCTAssert(result==YMIOSuccess,@"!result");
+    XCTAssert((isServer&&serverAsync)||(!isServer&&lastClientAsync),@"callback for sync forward (%d)",isServer);
     
     if ( isServer )
-        XCTAssert(written==gSomeLength,@"lengths don't match");
+        XCTAssert(bytesWritten==gSomeLength,@"lengths don't match");
     else
-        XCTAssert(written==lastClientFileSize,@"lengths don't match");
+        XCTAssert(bytesWritten==lastClientFileSize,@"lengths don't match");
     
-    dispatch_semaphore_t sem = (__bridge dispatch_semaphore_t)info->semaphore;
-    XCTAssert(sem==clientAsyncForwardSemaphore||sem==serverAsyncForwardSemaphore,@"async callback unknown sem");
-    NoisyTestLog(@"_async_forward_callback (%s): %llu",sem==clientAsyncForwardSemaphore?"client":"server",written);
-    dispatch_semaphore_signal(sem);
+    YMConnectionCloseStream(connection, stream);
+    
+    NSLog(@"_async_forward_callback (%s): %llu",isServer?"client":"server",bytesWritten);
+    if ( isServer )
+        dispatch_semaphore_signal(threadExitSemaphore);
 }
 
 // client, discover->connect
