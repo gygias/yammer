@@ -15,12 +15,11 @@
 typedef uint32_t YMPlexerStreamID;
 #define YMPlexerStreamIDMax UINT32_MAX
 
-typedef struct ym_plexer_stream_user_info_def
+typedef struct ym_plexer_stream_user_info_t
 {
     const char *name;
     YMPlexerStreamID streamID;
-} _ym_plexer_stream_user_info_def;
-typedef struct ym_plexer_stream_user_info_def ym_plexer_stream_user_info;
-typedef ym_plexer_stream_user_info * ym_plexer_stream_user_info_ref;
+} ym_plexer_stream_user_info_t;
+typedef struct ym_plexer_stream_user_info_t * ym_plexer_stream_user_info_ref;
 
 #endif /* YMPlexerPriv_h */

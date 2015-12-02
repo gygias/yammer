@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		63028B0F1C013D120075B6AC /* FreeGlobalsTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 63028B0E1C013D120075B6AC /* FreeGlobalsTest.m */; };
+		63028B0F1C013D120075B6AC /* CheckStateTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 63028B0E1C013D120075B6AC /* CheckStateTest.m */; };
 		6307F77E1BECA44A009C64CD /* YMStreamPriv.h in Headers */ = {isa = PBXBuildFile; fileRef = 6307F77D1BECA44A009C64CD /* YMStreamPriv.h */; };
 		630A5CE91BE93BEF003292EE /* YMTLSProvider.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CE71BE93BEF003292EE /* YMTLSProvider.c */; };
 		630A5CEA1BE93BEF003292EE /* YMTLSProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5CE81BE93BEF003292EE /* YMTLSProvider.h */; };
@@ -106,7 +106,7 @@
 
 /* Begin PBXFileReference section */
 		63028B0D1C013C9E0075B6AC /* YMTLSProviderPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMTLSProviderPriv.h; path = private/YMTLSProviderPriv.h; sourceTree = "<group>"; };
-		63028B0E1C013D120075B6AC /* FreeGlobalsTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FreeGlobalsTest.m; sourceTree = "<group>"; };
+		63028B0E1C013D120075B6AC /* CheckStateTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CheckStateTest.m; sourceTree = "<group>"; };
 		6307F77D1BECA44A009C64CD /* YMStreamPriv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMStreamPriv.h; path = private/YMStreamPriv.h; sourceTree = "<group>"; };
 		630A5CE71BE93BEF003292EE /* YMTLSProvider.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMTLSProvider.c; path = src/YMTLSProvider.c; sourceTree = "<group>"; };
 		630A5CE81BE93BEF003292EE /* YMTLSProvider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMTLSProvider.h; path = private/YMTLSProvider.h; sourceTree = "<group>"; };
@@ -255,7 +255,7 @@
 				63476A401BEAEFC500D10081 /* PlexerTests.m */,
 				633CAC101BFBBF4800304DCD /* SessionTests.m */,
 				630A5D021BE96CE9003292EE /* YammerTests.m */,
-				63028B0E1C013D120075B6AC /* FreeGlobalsTest.m */,
+				63028B0E1C013D120075B6AC /* CheckStateTest.m */,
 				630A5D041BE96CE9003292EE /* Info.plist */,
 				6332A4BA1BF12C12004BB764 /* lldb_source.sh */,
 			);
@@ -609,7 +609,7 @@
 				63476A411BEAEFC500D10081 /* PlexerTests.m in Sources */,
 				63FD5B5F1BF1B94A00174824 /* CryptoTests.m in Sources */,
 				63476A3F1BEAE54100D10081 /* mDNSTests.m in Sources */,
-				63028B0F1C013D120075B6AC /* FreeGlobalsTest.m in Sources */,
+				63028B0F1C013D120075B6AC /* CheckStateTest.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

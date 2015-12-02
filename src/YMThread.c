@@ -485,19 +485,18 @@ YMIOResult __ym_thread_dispatch_forward_file_proc(void *ctx_)
     uint64_t nBytes = ctx->nBytes;
     bool sync = ctx->sync;
     _ym_thread_forward_file_context_ref callbackInfo = ctx->callbackInfo;
-    free(ctx);
     
     uint64_t outBytes = 0;
     
     YMPlexerStreamID streamID = YM_STREAM_INFO(stream)->streamID;
-    ymlog("thread[%s]: forward: entered for %d%ss%u",YMSTR(threadName),file,toStream?"->":"<-",streamID);
+    ymlog("thread[%s]: forward: entered for f%d%ss%u",YMSTR(threadName),file,toStream?"->":"<-",streamID);
     uint64_t forwardBytes = bounded ? nBytes : 0;
     YMIOResult result;
     if ( toStream )
         result = YMStreamReadFromFile(stream, file, bounded ? &forwardBytes : NULL, &outBytes);
     else
         result = YMStreamWriteToFile(stream, file, bounded ? &forwardBytes : NULL, &outBytes);
-    ymlog("thread[%s]: forward: %s %llu bytes from %d%ss%u",YMSTR(threadName), (result == YMIOError)?"error at offset":"finished",outBytes,file,toStream?"->":"<-",streamID);
+    ymlog("thread[%s]: forward: %s %llu bytes from f%d%ss%u",YMSTR(threadName), (result == YMIOError)?"error at offset":"finished",outBytes,file,toStream?"->":"<-",streamID);
     
     if ( ! sync && callbackInfo->callback )
     {
@@ -509,5 +508,7 @@ YMIOResult __ym_thread_dispatch_forward_file_proc(void *ctx_)
     YMRelease(stream);
     if ( threadOrNull )
         YMRelease(threadOrNull);
+    free(ctx->callbackInfo);
+    free(ctx);
     return result;
 }

@@ -1,3 +1,4 @@
+- server session's port order is backwards
 - match plexer buffer / max i/o to connection mtu?
 - __YMX509CertificateCreateX509 is misinterpreting errors from various openssl 'namespaces'
 - eliminate redundant framing between forward file and plexer

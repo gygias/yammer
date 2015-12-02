@@ -124,7 +124,6 @@ __YMConnectionRef __YMConnectionCreate(bool isIncoming, YMSOCKET socket, YMAddre
     connection->interruptedFuncContext = NULL;
     
     connection->isConnected = false;
-    connection->security = NULL;
     connection->plexer = NULL;
     
     return connection;
@@ -187,7 +186,7 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     int yes = 1;
     int result = setsockopt(newSocket, SOL_SOCKET, SO_REUSEADDR, (const void *)&yes, sizeof(yes));
     if (result != 0 )
-        ymerr("connection: warning: setsockopt failed on %d: %d: %d (%s)",newSocket,result,errno,strerror(errno));
+        ymerr("connection[%s]: warning: setsockopt failed on f%d: %d: %d (%s)",YM_CON_DESC,newSocket,result,errno,strerror(errno));
     
     ymlog("connection[%s]: connecting...",YM_CON_DESC);
     
@@ -199,7 +198,7 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     result = connect(newSocket, addr, addrLen);
     if ( result != 0 )
     {
-        ymerr("connection: error: connect(%s): %d (%s)",YMSTR(YMAddressGetDescription(connection->address)),errno,strerror(errno));
+        ymerr("connection[%s]: error: connect(%s): %d (%s)",YM_CON_DESC,YMSTR(YMAddressGetDescription(connection->address)),errno,strerror(errno));
 		int error; char *errorStr;
         YM_CLOSE_SOCKET(newSocket);
         return false;
@@ -209,10 +208,7 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     
     bool commonInitOK = __YMConnectionInitCommon(connection, newSocket, false);
     if ( ! commonInitOK )
-    {
-        //close(newSocket); // done beneath us in failure
         return false;
-    }
     
     connection->socket = newSocket;
     
@@ -241,7 +237,6 @@ bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, 
     if ( ! securityOK )
     {
         ymerr("connection[%s]: security type %d failed to initialize",YM_CON_DESC,connection->securityType);
-		//close(newSocket); // NOCLOSE closed after all?
         goto rewind_fail;
     }
     
@@ -259,8 +254,8 @@ bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, 
     }
     
     connection->plexer = plexer;
-    connection->security = security;
     
+    YMRelease(security);
     return true;
     
 rewind_fail:
@@ -280,15 +275,6 @@ bool YMConnectionClose(YMConnectionRef connection_)
 bool __YMConnectionDestroy(__YMConnectionRef connection)
 {
     bool okay = true;
-    if ( connection->security )
-    {
-        okay = YMSecurityProviderClose(connection->security);
-        if ( ! okay )
-            ymerr("connection[%s]: warning: failed to close security",YM_CON_DESC);
-        
-        YMRelease(connection->security);
-        connection->security = NULL;
-    }
     if ( connection->plexer )
     {
         bool plexerOK = YMPlexerStop(connection->plexer);
@@ -404,6 +390,10 @@ void _ym_connection_forward_callback_proc(void *context, YMIOResult result, uint
         }
     }
     
+    YMRelease(connection);
+    YMRelease(stream);
+    free(myContext->userContext);
+    free(myContext);
 }
 
 void ym_connection_new_stream_proc(__unused YMPlexerRef plexer,YMStreamRef stream, void *context)

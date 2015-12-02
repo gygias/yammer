@@ -49,7 +49,6 @@ typedef struct __ym_session_t
     YMDictionaryRef connectionsByAddress;
     YMLockRef connectionsByAddressLock;
     YMConnectionRef defaultConnection;
-    YMLockRef interruptionLock;
     bool interrupted;
     
     // server
@@ -84,7 +83,7 @@ typedef struct __ym_session_t *__YMSessionRef;
 #pragma mark setup
 
 __YMSessionRef __YMSessionCreateShared(YMStringRef type, bool isServer);
-bool __YMSessionInterrupt(__YMSessionRef session);
+bool __YMSessionInterrupt(__YMSessionRef session, YMConnectionRef floatConnection);
 bool __YMSessionCloseAllConnections(__YMSessionRef session);
 void __YMSessionAddConnection(YMSessionRef session, YMConnectionRef connection);
 YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_accept_proc(YM_THREAD_PARAM);
@@ -119,10 +118,6 @@ YMSessionRef YMSessionCreate(YMStringRef type)
     
     YMStringRef memberName = YMSTRC("connections-by-address");
     session->connectionsByAddressLock = YMLockCreate(YMInternalLockType, memberName);
-    YMRelease(memberName);
-    
-    memberName = YMSTRC("connection-interrupt");
-    session->interruptionLock = YMLockCreate(YMInternalLockType, memberName);
     YMRelease(memberName);
     
     session->knownPeers = YMDictionaryCreate();
@@ -170,7 +165,7 @@ void _YMSessionFree(YMTypeRef object)
 {
     __YMSessionRef session = (__YMSessionRef)object;
     
-    __YMSessionInterrupt(session);
+    __YMSessionInterrupt(session, NULL);
     
     // release these first, threads join on their exit flag when they're deallocated,
     // and we have async stuff that depends on other session members below
@@ -187,8 +182,6 @@ void _YMSessionFree(YMTypeRef object)
     YMRelease(session->connectionsByAddress);
     YMRelease(session->connectionsByAddressLock);
     YMRelease(session->logDescription);
-    //if ( session->defaultConnection )
-    //    YMRelease(session->defaultConnection);
     
     // server
     if ( session->name )
@@ -216,7 +209,6 @@ void _YMSessionFree(YMTypeRef object)
     
     YMRelease(session->knownPeers);
     YMRelease(session->knownPeersLock);
-    YMRelease(session->interruptionLock);
 }
 
 #pragma mark client
@@ -271,7 +263,7 @@ bool YMSessionStopBrowsing(YMSessionRef session_)
 bool YMSessionCloseAllConnections(YMSessionRef session_)
 {
     __YMSessionRef session = (__YMSessionRef)session_;
-    bool okay = __YMSessionInterrupt(session);
+    bool okay = __YMSessionInterrupt(session, NULL);
     return okay;
 }
 
@@ -379,11 +371,9 @@ bool YMSessionConnectToPeer(YMSessionRef session_, YMPeerRef peer, bool sync)
         YMThreadDispatchDispatch(session->connectDispatchThread, connectDispatch);
     }
     else
-    {
         __ym_session_connect_async_proc(&connectDispatch);
-        //free(context); free'd by proc, to have one code path with async
-    }
     
+    YMRelease(newConnection);
     YMRelease(name);
     return true;
     
@@ -408,7 +398,6 @@ void YM_CALLING_CONVENTION __ym_session_connect_async_proc(ym_thread_dispatch_re
     if ( okay )
     {
         __YMSessionAddConnection(session, connection);
-        YMRetain(connection); // user
         session->connectedFunc(session, connection, session->callbackContext);
     }
     else
@@ -428,12 +417,8 @@ void __YMSessionAddConnection(YMSessionRef session_, YMConnectionRef connection)
     YMLockLock(session->connectionsByAddressLock);
     {
         YMDictionaryKey key = (YMDictionaryKey)connection;
-        if ( YMDictionaryContains(session->connectionsByAddress, key) )
-        {
-            ymerr("session[%s]: error: connections list already contains %llu",YMSTR(session->logDescription),key);
-            abort();
-        }
-        YMDictionaryAdd(session->connectionsByAddress, key, connection);
+        ymassert(!YMDictionaryContains(session->connectionsByAddress, key), "connections by address state");
+        YMDictionaryAdd(session->connectionsByAddress, key, YMRetain(connection));
     }
     YMLockUnlock(session->connectionsByAddressLock);
     
@@ -459,12 +444,12 @@ void __YMSessionAddConnection(YMSessionRef session_, YMConnectionRef connection)
 
 #pragma mark server
 
-typedef struct __ym_session_accept_thread_context_def
+typedef struct __ym_session_accept_thread_context_t
 {
     __YMSessionRef session;
     bool ipv4;
-} _ym_session_accept_thread_context_def;
-typedef struct __ym_session_accept_thread_context_def *__ym_session_accept_thread_context;
+} _ym_session_accept_thread_context_t;
+typedef struct __ym_session_accept_thread_context_t *__ym_session_accept_thread_context_ref;
 
 bool YMSessionStartAdvertising(YMSessionRef session_, YMStringRef name)
 {
@@ -503,8 +488,8 @@ bool YMSessionStartAdvertising(YMSessionRef session_, YMStringRef name)
         session->ipv6ListenSocket = socket;
     
     YMStringRef memberName = YMStringCreateWithFormat("session-accept-%s",YMSTR(session->type),NULL);
-    __ym_session_accept_thread_context ctx = YMALLOC(sizeof(struct __ym_session_accept_thread_context_def));
-    ctx->session = session;
+    __ym_session_accept_thread_context_ref ctx = YMALLOC(sizeof(struct __ym_session_accept_thread_context_t));
+    ctx->session = (__YMSessionRef)YMRetain(session);
     ctx->ipv4 = ipv4;
     session->acceptThread = YMThreadCreate(memberName, __ym_session_accept_proc, ctx);
     YMRelease(memberName);
@@ -626,31 +611,30 @@ typedef struct __ym_connection_init_context_def *__ym_connection_init_context;
 
 YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_accept_proc(YM_THREAD_PARAM ctx)
 {
-    __ym_session_accept_thread_context context = (__ym_session_accept_thread_context)ctx;
+    __ym_session_accept_thread_context_ref context = ctx;
     __YMSessionRef session = context->session;
     bool ipv4 = context->ipv4;
-    free(context);
     
     while ( ! session->acceptThreadExitFlag )
     {
-        ymerr("session[%s]: accepting...",YMSTR(session->logDescription));
         int socket = ipv4 ? session->ipv4ListenSocket : session->ipv6ListenSocket;
         
         struct sockaddr_in6 *bigEnoughAddr = calloc(1,sizeof(struct sockaddr_in6));
         socklen_t thisLength = ipv4 ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6);
         
+        ymerr("session[%s]: accepting on sf%d...",YMSTR(session->logDescription),socket);
         int aResult = accept(socket, (struct sockaddr *)bigEnoughAddr, &thisLength);
         if ( aResult < 0 )
         {
-            ymerr("session[%s]: accept(%d) failed: %d (%s)",YMSTR(session->logDescription),socket,errno,strerror(errno));
+            ymerr("session[%s]: accept(sf%d) failed: %d (%s)",YMSTR(session->logDescription),socket,errno,strerror(errno));
             free(bigEnoughAddr);
             continue;
         }
         
-        ymerr("session[%s]: accepted %d, dispatching connection init",YMSTR(session->logDescription), aResult);
+        ymerr("session[%s]: accepted sf%d, dispatching connection init",YMSTR(session->logDescription), aResult);
         
         __ym_connection_init_context initCtx = (__ym_connection_init_context)YMALLOC(sizeof(struct __ym_connection_init_context_def));
-        initCtx->session = session;
+        initCtx->session = (__YMSessionRef)YMRetain(session);
         initCtx->socket = aResult;
         initCtx->addr = (struct sockaddr *)bigEnoughAddr;
         initCtx->addrLen = thisLength;
@@ -662,7 +646,9 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_accept_proc(YM_THREAD_PARAM 
     }
     
     session->acceptThreadExitFlag = false;
-
+    
+    YMRelease(session);
+    free(context);
 	YM_THREAD_END
 }
 
@@ -674,9 +660,8 @@ void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(ym_thread_
     struct sockaddr *addr = initCtx->addr;
     socklen_t addrLen = initCtx->addrLen;
     __unused bool ipv4 = initCtx->ipv4;
-    free(initCtx);
     
-    ymlog("session[%s]: __ym_session_init_connection entered: %d %d %d",YMSTR(session->logDescription),socket,addrLen,ipv4);
+    ymlog("session[%s]: __ym_session_init_connection entered: sf%d %d %d",YMSTR(session->logDescription),socket,addrLen,ipv4);
     
     YMAddressRef address = NULL;
     YMPeerRef peer = NULL;
@@ -687,7 +672,7 @@ void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(ym_thread_
     if ( ! session->shouldAcceptFunc(session, peer, session->callbackContext) )
     {
         ymlog("session[%s]: client rejected peer %s",YMSTR(session->logDescription),YMSTR(YMAddressGetDescription(address)));
-        goto rewind_fail;
+        goto catch_release;
     }
     
     newConnection = YMConnectionCreateIncoming(socket, address, YMConnectionStream, YMTLS);
@@ -696,33 +681,26 @@ void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(ym_thread_
         ymlog("session[%s]: failed to create new connection",YMSTR(session->logDescription));
 		if ( session->connectFailedFunc ) 
 			session->connectFailedFunc(session, peer, session->callbackContext);
-        goto rewind_fail;
+        goto catch_release;
     }
     
     ymlog("session[%s]: new connection %s",YMSTR(session->logDescription),YMSTR(YMAddressGetDescription(address)));
     
     __YMSessionAddConnection(session, newConnection);
-    if ( session->defaultConnection == NULL )
-        abort();
-    YMRetain(newConnection); // user
+    ymassert(session->defaultConnection,"connection init incoming");
     session->connectedFunc(session,newConnection,session->callbackContext);
     
-    if ( address )
-        YMRelease(address);
-    if ( peer )
-        YMRelease(peer);
-    free(addr);
-    return;
+catch_release:
     
-rewind_fail:
-    //close(socket); // plexer-owned and released
-    free(addr);
     if ( address )
         YMRelease(address);
     if ( peer )
         YMRelease(peer);
     if ( newConnection )
         YMRelease(newConnection);
+    YMRelease(session);
+    free(addr);
+    free(initCtx);
 }
 
 #pragma mark connected shared
@@ -740,52 +718,31 @@ YMDictionaryRef YMSessionGetConnections(YMSessionRef session_)
     return *(YMDictionaryRef *)session; // todo, sync
 }
 
-bool __YMSessionInterrupt(__YMSessionRef session)
+bool __YMSessionInterrupt(__YMSessionRef session, YMConnectionRef floatConnection)
 {
-    bool firstInterrupt = false;
-    YMLockLock(session->interruptionLock);
+    bool first = false;
+    YMLockLock(session->connectionsByAddressLock);
     {
         if ( ! session->interrupted )
         {
-            firstInterrupt = true;
+            first = true;
             session->interrupted = true;
-        }
-    }
+            session->defaultConnection = NULL;
     
-    __YMSessionCloseAllConnections(session);
-    
-    YMLockUnlock(session->interruptionLock);
-    
-    if ( ! firstInterrupt )
-        return false;
-    
-    return true;
-}
-
-bool __YMSessionCloseAllConnections(__YMSessionRef session)
-{
-    bool okay = true;
-    
-    session->defaultConnection = NULL;
-    
-    YMLockLock(session->connectionsByAddressLock);
-    {
-        while ( YMDictionaryGetCount(session->connectionsByAddress) )
-        {
-            YMDictionaryKey aKey = YMDictionaryGetRandomKey(session->connectionsByAddress);
-            YMConnectionRef aConnection = (YMConnectionRef)YMDictionaryRemove(session->connectionsByAddress, aKey);
-            if ( ! aConnection )
+            while ( YMDictionaryGetCount(session->connectionsByAddress) )
             {
-                ymerr("session[%s]: sanity check dictionary: %llu",YMSTR(session->logDescription), aKey);
-                abort();
+                YMDictionaryKey aKey = YMDictionaryGetRandomKey(session->connectionsByAddress);
+                YMConnectionRef aConnection = (YMConnectionRef)YMDictionaryRemove(session->connectionsByAddress, aKey);
+                ymassert(aConnection,"connection list state");
+                ymerr("session[%s]: releasing %s",YMSTR(session->logDescription),YMSTR(YMAddressGetDescription(YMConnectionGetAddress(aConnection))));
+                if ( aConnection != floatConnection )
+                    YMRelease(aConnection);
             }
-            ymerr("session[%s]: releasing %s",YMSTR(session->logDescription),YMSTR(YMAddressGetDescription(YMConnectionGetAddress(aConnection))));
-            YMRelease(aConnection);
         }
     }
     YMLockUnlock(session->connectionsByAddressLock);
     
-    return okay;
+    return first;
 }
 
 #pragma mark connection callbacks
@@ -812,11 +769,11 @@ void __ym_session_stream_closing_proc(YMConnectionRef connection, YMStreamRef st
     
     YMAddressRef address = YMConnectionGetAddress(connection);
     YMPlexerStreamID streamID = YM_STREAM_INFO(stream)->streamID;
-    ymlog("session[%s]: stream %u closing on %s",YMSTR(session->logDescription),streamID,YMSTR(YMAddressGetDescription(address)));
+    ymlog("session[%s]: remote stream %u closing on %s",YMSTR(session->logDescription),streamID,YMSTR(YMAddressGetDescription(address)));
     
     if ( connection != session->defaultConnection )
     {
-        ymerr("session[%s]: warning: closing stream on non-default connection",YMSTR(session->logDescription));
+        ymerr("session[%s]: warning: closing remote stream on non-default connection",YMSTR(session->logDescription));
         return;
     }
     
@@ -828,14 +785,13 @@ void __ym_session_connection_interrupted_proc(YMConnectionRef connection, void *
 {
     __YMSessionRef session = context;
     
-    bool first = __YMSessionInterrupt(session); // connection probably getting deallocated here
+    bool first = __YMSessionInterrupt(session, connection);
     if ( ! first )
         return;
     
-    YMAddressRef address = (YMAddressRef)YMRetain(YMConnectionGetAddress(connection));
-    
     bool isDefault = ( connection == session->defaultConnection );
     
+    ymerr("session[%s]: connection interrupted: %s",YMSTR(session->logDescription),YMSTR(YMAddressGetDescription(YMConnectionGetAddress(connection))));
     
     if ( isDefault )
     {
@@ -843,9 +799,7 @@ void __ym_session_connection_interrupted_proc(YMConnectionRef connection, void *
             session->interruptedFunc(session,session->callbackContext);
     }
     
-    ymerr("session[%s]: connection interrupted: %s",YMSTR(session->logDescription),YMSTR(YMAddressGetDescription(address)));
-    
-    YMRelease(address);
+    YMRelease(connection);
 }
 
 #pragma mark client mdns callbacks

@@ -36,7 +36,7 @@
 		      + strlen ((ptr)->sun_path))
 #endif
 
-#ifndef WIN32 // todo? this is only used by the os x unit tests atm
+#ifndef WIN32 // only used by the os x unit tests atm
 
 typedef struct __ym_local_socket_pair_t
 {
@@ -149,7 +149,7 @@ YMLocalSocketPairRef YMLocalSocketPairCreate(YMStringRef name, bool moreComing)
     
     __YMLocalSocketPairRef pair = (__YMLocalSocketPairRef)_YMAlloc(_YMLocalSocketPairTypeID,sizeof(struct __ym_local_socket_pair_t));
     
-    pair->userName = YMStringCreateWithFormat("ls:%s:s%d<->c%d",YMSTR(name),serverSocket,clientSocket,NULL);
+    pair->userName = YMSTRCF("ls:%s:sf%d<->cf%d",YMSTR(name),serverSocket,clientSocket);
     pair->socketName = YMRetain(gYMLocalSocketPairName);
     pair->socketA = serverSocket;
     pair->socketB = clientSocket;
@@ -222,7 +222,7 @@ int __YMLocalSocketPairCreateClient()
         return -1;
     }
     
-    ymlog("local-socket[new-client]: connected: %d",sock);
+    ymlog("local-socket[new-client]: connected: sf%d",sock);
     
     return sock;
 }
@@ -259,7 +259,7 @@ void __ym_local_socket_accept_proc(__unused void *ctx)
     int yes = 1;
     int aResult = setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
     if ( aResult != 0 )
-        ymerr("local-socket[spawn-server]: warning: setsockopt failed on %d: %d: %d (%s)",listenSocket,aResult,errno,strerror(errno));
+        ymerr("local-socket[spawn-server]: warning: setsockopt failed on sf%d: %d: %d (%s)",listenSocket,aResult,errno,strerror(errno));
     
     /* Bind a name to the socket. */
     struct sockaddr_un sockName;
@@ -311,7 +311,7 @@ void __ym_local_socket_accept_proc(__unused void *ctx)
         else
             gYMLocalSocketPairAcceptedLast = newClient;
         
-        ymlog("local-socket[spawn-server]: accepted: %d",newClient);
+        ymlog("local-socket[spawn-server]: accepted: sf%d",newClient);
         
         YMSemaphoreSignal(gYMLocalSocketSemaphore);
         

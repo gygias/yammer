@@ -11,6 +11,8 @@
 #import "YMSession.h"
 #import "YMThread.h"
 #import "YMStreamPriv.h" // todo need an 'internal' header
+#import "YMPipe.h"
+#import "YMPipePriv.h"
 
 @interface SessionTests : XCTestCase
 {
@@ -21,14 +23,17 @@
     
     YMConnectionRef serverConnection;
     YMConnectionRef clientConnection;
-    BOOL serverAsync, lastClientAsync;
+    BOOL serverAsync, serverBounding, lastClientAsync, lastClientBounded;
+    YMPipeRef asyncServerMiddlemanPipe;
+    NSFileHandle *randomHandle;
     uint64_t lastClientFileSize;
     uint64_t nManPagesToRead;
     uint64_t nManPagesRead;
     
     NSMutableArray *nonRegularFileNames;
-    NSString *tempFile;
-    NSString *tempDir;
+    NSString *tempServerSrc;
+    NSString *tempServerDst;
+    NSString *tempManDir;
     
     // keeping all of these separate to have as tight a test as possible
     dispatch_queue_t serialQueue;
@@ -42,6 +47,7 @@ uint64_t gSomeLength = 5678900;
 SessionTests *gTheSessionTest = nil;
 
 #define FAKE_DELAY_MAX 3
+#define ServerTestFile "/private/var/log/install.log"
 
 @implementation SessionTests
 
@@ -141,14 +147,14 @@ SessionTests *gTheSessionTest = nil;
     YMRelease(clientSession);
     
 #ifdef CLIENT_TOO
-    NSLog(@"diffing %@",tempDir);
+    NSLog(@"diffing %@",tempManDir);
     NSPipe *outputPipe = [NSPipe pipe];
     NSTask *diff = [NSTask new];
     [diff setLaunchPath:@"/usr/bin/diff"];
-    [diff setArguments:@[@"-r",@"/usr/share/man/man2",tempDir]];
+    [diff setArguments:@[@"-r",@"/usr/share/man/man2",tempManDir]];
     [diff setStandardOutput:outputPipe];
-    __block BOOL checked = NO;
-    __block BOOL checkOK = YES;
+    __block BOOL manChecked = NO;
+    __block BOOL manOK = YES;
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         NSData *output = [[outputPipe fileHandleForReading] readDataToEndOfFile];
         NSString *outputStr = [[NSString alloc] initWithData:output encoding:NSUTF8StringEncoding];
@@ -168,8 +174,8 @@ SessionTests *gTheSessionTest = nil;
             if ( ! lineOK )
             {
                 NSLog(@"no match for '%@'",line);
-                checkOK = NO;
-                checked = YES;
+                manOK = NO;
+                manChecked = YES;
                 *stop = YES;
             }
         }];
@@ -177,20 +183,25 @@ SessionTests *gTheSessionTest = nil;
     });
     [diff launch];
     [diff waitUntilExit];
+    XCTAssert(manOK,@"man diff");
+    
+    diff = [NSTask new];
+    [diff setLaunchPath:@"/usr/bin/diff"];
+    [diff setArguments:@[tempServerSrc,tempServerDst]];
+    [diff launch];
+    [diff waitUntilExit];
+    BOOL fileOK = [diff terminationStatus] == 0;
+    XCTAssert(fileOK,@"file diff");
+    
     dispatch_semaphore_wait(threadExitSemaphore, DISPATCH_TIME_FOREVER);
-    XCTAssert([diff terminationStatus]==0||checkOK,@"diff");
     NSLog(@"cleaning up");
-    okay = [[NSFileManager defaultManager] removeItemAtPath:tempDir error:NULL];
+    okay = [[NSFileManager defaultManager] removeItemAtPath:tempManDir error:NULL];
     XCTAssert(okay,@"tempDir");
 #endif
-    okay = [[NSFileManager defaultManager] removeItemAtPath:tempFile error:NULL];
+    okay = [[NSFileManager defaultManager] removeItemAtPath:tempServerSrc error:NULL];
     XCTAssert(okay,@"tempFile");
-    
-#define CHECK_THREADS
-#ifdef CHECK_THREADS
-    CFRunLoopRunInMode(kCFRunLoopDefaultMode, 2, false);
-    [[NSTask launchedTaskWithLaunchPath:@"/usr/bin/sample" arguments:@[@"-file",@"/dev/stdout",@"xctest",@"1",@"1000"]] waitUntilExit];
-#endif
+    okay = [[NSFileManager defaultManager] removeItemAtPath:tempServerDst error:NULL];
+    XCTAssert(okay,@"tempFile");
     
     YMFreeGlobalResources();
     NSLog(@"session test finished");
@@ -200,6 +211,7 @@ typedef struct ManPageHeader
 {
     uint64_t len;
     char     name[NAME_MAX+1];
+    BOOL     willBoundDataStream;
 }_ManPageHeader;
 
 #define THXFORMANTEMPLATE "thx 4 man, man!%s"
@@ -214,11 +226,23 @@ typedef struct ManPageThanks
     // todo sometimes this is inexplicably null, yet not in the session by the time the test runs
     XCTAssert(connection,@"server connection");
     
-    NSString *file = @"/dev/random"; // @"/var/vm/sleepimage"; not user readable
+    NSString *origFile = @ServerTestFile;
     
-    NSFileHandle *handle = [NSFileHandle fileHandleForReadingAtPath:file];
-    XCTAssert(handle,@"server file handle");
-    YMStringRef name = YMSTRCF("test-server-write-%s",[file UTF8String]);
+    tempServerSrc = [NSString stringWithFormat:@"/tmp/ymsessiontest-%@-org",[origFile lastPathComponent]];
+    [[NSFileManager defaultManager] removeItemAtPath:tempServerSrc error:NULL];
+    XCTAssert([[NSFileManager defaultManager] copyItemAtPath:origFile toPath:tempServerSrc error:NULL],@"copy random orig");
+    
+    serverBounding = arc4random_uniform(2);
+    if ( serverBounding )
+    {
+        NSFileHandle *update = [NSFileHandle fileHandleForUpdatingAtPath:tempServerSrc];
+        [update truncateFileAtOffset:gSomeLength];
+        [update closeFile];
+    }
+    
+    randomHandle = [NSFileHandle fileHandleForReadingAtPath:tempServerSrc]; // member so it doesn't get deallocated and closed if we forward async and go out of scope
+    XCTAssert(randomHandle,@"server file handle");
+    YMStringRef name = YMSTRCF("test-server-write-%s",[[origFile lastPathComponent] UTF8String]);
     YMStreamRef stream = YMConnectionCreateStream(connection, name);
     YMRelease(name);
     XCTAssert(stream,@"server create stream");
@@ -232,17 +256,50 @@ typedef struct ManPageThanks
         ctx->context = (__bridge void *)self;
     }
     
-    NSLog(@"writing random %ssync",serverAsync?"a":"");
-    BOOL okay = YMConnectionForwardFile(connection, [handle fileDescriptor], stream, &gSomeLength, !serverAsync, ctx);
+    int readFd = [randomHandle fileDescriptor];
+    if ( ! serverBounding )
+    {
+        uint32_t writeRandomUnboundedFor = arc4random_uniform(10) + 10;
+        YMStringRef str = YMSTRC("middleman");
+        asyncServerMiddlemanPipe = YMPipeCreate(str);
+        YMRelease(str);
+        readFd = YMPipeGetOutputFile(asyncServerMiddlemanPipe);
+        int writeFd = YMPipeGetInputFile(asyncServerMiddlemanPipe);
+        dispatch_async(dispatch_get_global_queue(0, 0), ^{
+            unsigned char buf[1024];
+            NSDate *startDate = [NSDate date];
+            while(1) {
+                ssize_t aRead = read([randomHandle fileDescriptor], buf, 1024);
+                //XCTAssert(aRead==1024,"middleman read");
+                
+                ssize_t aWrite = write(writeFd, buf, aRead);
+                XCTAssert(aWrite==aRead,"middleman write");
+                
+                if ( [[NSDate date] timeIntervalSinceDate:startDate] > writeRandomUnboundedFor )
+                {
+                    NSLog(@"closing /dev/random handle (f%d)",[randomHandle fileDescriptor]);
+                    _YMPipeCloseInputFile(asyncServerMiddlemanPipe);
+                    return;
+                }
+            }
+            
+            if ( serverAsync )
+                YMRelease(asyncServerMiddlemanPipe);
+        });
+    }
+    
+    NSLog(@"writing random %sbounded, %ssync from f%d",serverBounding?"":"un",serverAsync?"a":"",[randomHandle fileDescriptor]);
+    BOOL okay = YMConnectionForwardFile(connection, readFd, stream, serverBounding ? &gSomeLength : NULL, !serverAsync, ctx);
     XCTAssert(okay,@"server forward file");
     
     if ( ! serverAsync )
     {
+        if ( ! serverBounding ) YMRelease(asyncServerMiddlemanPipe);
         YMConnectionCloseStream(connection,stream);
         dispatch_semaphore_signal(threadExitSemaphore);
     }
     
-    NSLog(@"write random thread (%sSYNC) exiting",serverAsync?"A":"");
+    NSLog(@"writing random thread (%sSYNC) exiting",serverAsync?"A":"");
 }
 
 - (void)_clientWriteManPages:(YMSessionRef)client
@@ -250,10 +307,17 @@ typedef struct ManPageThanks
     YMConnectionRef connection = YMSessionGetDefaultConnection(client);
     NSString *basePath = @"/usr/share/man/man2";
     
+    tempManDir = @"/tmp/ymsessiontest-man";
+    BOOL okay = [[NSFileManager defaultManager] removeItemAtPath:tempManDir error:NULL];
+    okay = [[NSFileManager defaultManager] createDirectoryAtPath:tempManDir withIntermediateDirectories:NO attributes:NULL error:NULL];
+    XCTAssert(okay,@"temp dir");
+    
     uint64_t actuallyWritten = 0;
     NSFileManager *fm = [NSFileManager defaultManager];
-    for ( NSString *aFile in [fm contentsOfDirectoryAtPath:basePath error:NULL] )
+    NSArray *contents = [fm contentsOfDirectoryAtPath:basePath error:NULL];
+    for ( NSUInteger i = 0 ; i < contents.count; i++ )
     {
+        NSString *aFile = contents[i];
         NSString *fullPath = [basePath stringByAppendingPathComponent:aFile];
         NSDictionary *attributes = [fm attributesOfItemAtPath:fullPath error:NULL];
         if ( ! [NSFileTypeRegular isEqualToString:(NSString *)attributes[NSFileType]] )
@@ -272,7 +336,9 @@ typedef struct ManPageThanks
         XCTAssert(handle,@"client file handle %@",fullPath);
         
         lastClientFileSize = [(NSNumber *)attributes[NSFileSize] unsignedLongLongValue];
-        struct ManPageHeader header = { lastClientFileSize , {0} };
+        lastClientAsync = ( i == contents.count - 1 ) ? NO : arc4random_uniform(2); // don't let filehandle go out of scope on the last iter
+        lastClientBounded = arc4random_uniform(2); // also tell remote whether we're bounding the file or pretending we don't know for testing
+        struct ManPageHeader header = { lastClientFileSize , {0}, lastClientBounded };
         strncpy(header.name, [aFile UTF8String], NAME_MAX+1);
         YMStreamWriteDown(stream, &header, sizeof(header));
         if ( stopping )
@@ -280,7 +346,7 @@ typedef struct ManPageThanks
             YMConnectionCloseStream(connection, stream);
             break;
         }
-        lastClientAsync = arc4random_uniform(2);
+        
         ym_connection_forward_context_t *ctx = NULL;
         if ( lastClientAsync )
         {
@@ -289,12 +355,10 @@ typedef struct ManPageThanks
             ctx->context = (__bridge void *)self;
         }
         
-        NSLog(@"writing man page '%@' %ssync",aFile,lastClientAsync?"a":"");
-        bool okay = YMConnectionForwardFile(connection, [handle fileDescriptor], stream, NULL, !lastClientAsync, ctx);
+        NoisyTestLog(@"writing man page '%@' %sbounded, %ssync from f%d",aFile,lastClientBounded?"":"un",lastClientAsync?"a":"",[handle fileDescriptor]);
+        okay = YMConnectionForwardFile(connection, [handle fileDescriptor], stream, lastClientBounded ? &lastClientFileSize : NULL, !lastClientAsync, ctx);
         XCTAssert(okay,@"forwardfile failed");
         
-#define THX_FOR_MAN // disable this to observe running out of open files
-#ifdef THX_FOR_MAN
         struct ManPageThanks thx;
         uint16_t outLength = 0, length = sizeof(thx);
         YMIOResult result = YMStreamReadUp(stream, &thx, length, &outLength);
@@ -307,31 +371,20 @@ typedef struct ManPageThanks
         XCTAssert(length==outLength,@"length!=outLength");
         NSString *thxFormat = [NSString stringWithFormat:@THXFORMANTEMPLATE,header.name];
         XCTAssert(0==strcmp(thx.thx4Man,[thxFormat cStringUsingEncoding:NSASCIIStringEncoding]),@"is this how one thx for man? %s",thx.thx4Man);
-#endif
         
-        if ( ! lastClientAsync )
-            YMConnectionCloseStream(connection, stream);
+        YMConnectionCloseStream(connection, stream);
         
         actuallyWritten++;
+        NoisyTestLog(@"wrote the %lluth man page",actuallyWritten);
     }
     
     nManPagesToRead = actuallyWritten;
     dispatch_semaphore_signal(threadExitSemaphore);
-    NSLog(@"write man pages threadexiting");
+    NSLog(@"write man pages thread exiting");
 }
 
 - (void)_eatManPage:(YMConnectionRef)connection :(YMStreamRef)stream
 {
-    dispatch_sync(serialQueue, ^{
-        if ( ! tempDir )
-        {
-            char tempd[256] = "/tmp/ymsessiontest-man-XXXXXXXXX";
-            char *mkd = mkdtemp(tempd);
-            XCTAssert(mkd==tempd,@"man page out dir %d %s",errno,strerror(errno));
-            tempDir = [NSString stringWithUTF8String:mkd];
-        }
-    });
-    
     struct ManPageHeader header;
     uint16_t outLength = 0, length = sizeof(header);
     YMIOResult ymResult = YMStreamReadUp(stream, &header, length, &outLength);
@@ -340,26 +393,24 @@ typedef struct ManPageThanks
         YMConnectionCloseStream(connection, stream);
         return;
     }
-    XCTAssert(ymResult==YMIOSuccess,@"read man header");
-    XCTAssert(outLength==length,@"outLength!=length");
+    XCTAssert(ymResult==YMIOSuccess&&outLength==length,@"read man header");
     XCTAssert(strlen(header.name)>0&&strlen(header.name)<=NAME_MAX, @"??? %s",header.name);
     uint64_t outBytes = 0;
     
-    NSString *filePath = [tempDir stringByAppendingPathComponent:(NSString *_Nonnull)[NSString stringWithUTF8String:header.name]];
+    NSString *filePath = [tempManDir stringByAppendingPathComponent:(NSString *_Nonnull)[NSString stringWithUTF8String:header.name]];
     BOOL okay = [[NSFileManager defaultManager] createFileAtPath:filePath contents:[NSData data] attributes:nil];
     XCTAssert(okay,@"touch man file %@",filePath);
     NSFileHandle *outHandle = [NSFileHandle fileHandleForWritingAtPath:filePath];
     XCTAssert(outHandle,@"get handle to %@",filePath);
     
     uint64_t len64 = header.len;
-    ymResult = YMStreamWriteToFile(stream, [outHandle fileDescriptor], &len64, &outBytes);
-    XCTAssert(ymResult==YMIOEOF,@"eat man result");
-    XCTAssert(outBytes>0,@"eat man outBytes");
+    NoisyTestLog(@"reading man page '%s'[%llu] %sbounded, sync to f%d",header.name,header.len,header.willBoundDataStream?"":"un",[outHandle fileDescriptor]);
+    ymResult = YMStreamWriteToFile(stream, [outHandle fileDescriptor], header.willBoundDataStream ? &len64 : NULL, &outBytes);
+    XCTAssert(ymResult==YMIOSuccess||(!header.willBoundDataStream&&ymResult==YMIOEOF),@"eat man result");
+    XCTAssert(outBytes==header.len,"eat man result");
     NoisyTestLog(@"_eatManPages: finished: %llu bytes: %@ : %s",outBytes,tempDir,header.name);
     [outHandle closeFile];
     
-#define THX_FOR_MAN // disable this to observe running out of open files
-#ifdef THX_FOR_MAN
     struct ManPageThanks thx;
     NSString *thxString = [NSString stringWithFormat:@THXFORMANTEMPLATE,header.name];
     strncpy(thx.thx4Man,[thxString cStringUsingEncoding:NSASCIIStringEncoding],sizeof(thx.thx4Man));
@@ -369,7 +420,6 @@ typedef struct ManPageThanks
         YMConnectionCloseStream(connection, stream);
         return;
     }
-#endif
     
     // todo randomize whether we close here, during streamClosing, after streamClosing, dispatch_after?
     // it's also worth noting that if you [forcibly] interrupt the session and immediately
@@ -381,19 +431,18 @@ typedef struct ManPageThanks
 
 - (void)_eatRandom:(YMConnectionRef)connection :(YMStreamRef)stream
 {
-    char temp[256] = "/tmp/ymsessiontest-rand-XXXXXXXXX";
-    int result = mkstemp(temp);
-    tempFile = [NSString stringWithUTF8String:temp];
-    XCTAssert(result>=0,@"eat random out handle %d %s",errno,strerror(errno));
+    tempServerDst = [NSString stringWithFormat:@"/tmp/ymsessiontest-%@-dst",[@ServerTestFile lastPathComponent]];
+    [[NSFileManager defaultManager] removeItemAtPath:tempServerDst error:NULL];
+    XCTAssert([[NSFileManager defaultManager] createFileAtPath:tempServerDst contents:nil attributes:nil],@"create out file");
+    NSFileHandle *writeHandle = [NSFileHandle fileHandleForWritingAtPath:tempServerDst];
+    XCTAssert(tempServerDst,@"eat file handle %d %s",errno,strerror(errno));
     uint64_t outBytes = 0;
-    BOOL boundIncoming = arc4random_uniform(2);
-    NSLog(@"_eatRandom is %@bounding incoming",boundIncoming?@"":@"NOT ");
-    YMIOResult ymResult = YMStreamWriteToFile(stream, result, NULL, &outBytes);
+    NSLog(@"reading random %sbounded...",serverBounding?"":"un");
+    YMIOResult ymResult = YMStreamWriteToFile(stream, [writeHandle fileDescriptor], serverBounding ? &gSomeLength : NULL, &outBytes);
     XCTAssert(ymResult!=YMIOError,@"eat random result");
-    XCTAssert(outBytes==gSomeLength,@"eat random outBytes");
-    NoisyTestLog(@"_eatManPages: finished: %llu bytes",outBytes);
-    result = close(result);
-    XCTAssert(result==0,@"close rand temp failed %d %s",errno,strerror(errno));
+    XCTAssert(!serverBounding||outBytes==gSomeLength,@"eat random outBytes");
+    NSLog(@"reading random finished: %llu bytes",outBytes);
+    [writeHandle closeFile];
     
     // todo randomize whether we close here, during streamClosing, after streamClosing, dispatch_after?
     // it's also worth noting that if you [forcibly] interrupt the session and immediately
@@ -421,19 +470,24 @@ void _client_async_forward_callback(YMConnectionRef connection, YMStreamRef stre
 {
     XCTAssert(connection,@"connection nil");
     XCTAssert(stream,@"stream nil");
-    XCTAssert(result==YMIOSuccess,@"!result");
+    XCTAssert(result==YMIOSuccess||(isServer&&!serverBounding&&result==YMIOEOF)||
+                                    (!isServer&&!lastClientBounded&&result==YMIOEOF),@"!result");
     XCTAssert((isServer&&serverAsync)||(!isServer&&lastClientAsync),@"callback for sync forward (%d)",isServer);
     
-    if ( isServer )
+    if ( isServer && serverBounding )
         XCTAssert(bytesWritten==gSomeLength,@"lengths don't match");
-    else
+    else if ( ! isServer )
         XCTAssert(bytesWritten==lastClientFileSize,@"lengths don't match");
     
-    YMConnectionCloseStream(connection, stream);
-    
-    NSLog(@"_async_forward_callback (%s): %llu",isServer?"client":"server",bytesWritten);
     if ( isServer )
+        NSLog(@"_async_forward_callback (random): %llu",bytesWritten);
+    else
+        NoisyTestLog(@"_async_forward_callback (man): %llu",bytesWritten);
+    if ( isServer )
+    {
+        YMConnectionCloseStream(connection, stream); // client is effectively synchronized by the 'thx for man' writeback
         dispatch_semaphore_signal(threadExitSemaphore);
+    }
 }
 
 // client, discover->connect

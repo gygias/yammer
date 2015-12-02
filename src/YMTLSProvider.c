@@ -120,7 +120,7 @@ YMTLSProviderRef __YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isWrappin
     fstat(socket, &statbuf);
     if ( ! S_ISSOCK(statbuf.st_mode) )
     {
-        ymerr("tls[%d]: error: file %d is not a socket",isServer,socket);
+        ymerr("tls[%d]: error: file f%d is not a socket",isServer,socket);
         return NULL;
     }
 #endif
@@ -172,14 +172,10 @@ void YMTLSProviderSetAcceptPeerCertsFunc(YMTLSProviderRef tls_, ym_tls_provider_
 void _YMTLSProviderFree(YMTypeRef object)
 {
     __YMTLSProviderRef tls = (__YMTLSProviderRef)object;
-    //if ( tls->isWrappingSocket ) // when YMConnection is involved, it 'owns' the socket
-    //    close(tls->socket);
     if ( tls->localCertificate )
         YMRelease(tls->localCertificate);
     if ( tls->peerCertificate )
         YMRelease(tls->peerCertificate);
-    //if ( tls->bio )
-    //    BIO_free(tls->bio); // seems to be included with SSL*
     if ( tls->ssl )
         SSL_free(tls->ssl);
     if ( tls->sslCtx )
@@ -419,7 +415,8 @@ void __YMTLSProviderInitSslCtx(__YMTLSProviderRef tls)
 	}
     
     if ( ! tls->usingGeneratedCert )
-        tls->localCertificate = YMRetain(cert);
+        YMRetain(cert);
+    tls->localCertificate = cert;
     
     result = SSL_CTX_use_certificate(tls->sslCtx, _YMX509CertificateGetX509(cert));
     if ( result != openssl_success )
@@ -614,11 +611,6 @@ bool __YMTLSProviderClose(__YMSecurityProviderRef provider)
         ymerr("tls[%d]: SSL_shutdown failed: %d: ssl err: %lu (%s)",tls->isServer ,result,sslError,ERR_error_string(sslError, NULL));
         return false;
     }
-    
-//    if ( tls->_common.readFile >= 0 )
-//        close(tls->_common.readFile);
-//    if ( tls->_common.writeFile != tls->_common.readFile && tls->_common.writeFile >= 0 )
-//        close(tls->_common.writeFile);
     
     return true;
 }

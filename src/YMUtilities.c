@@ -111,14 +111,17 @@ YMIOResult YMReadFull(YMFILE fd, uint8_t *buffer, size_t bytes, size_t *outRead)
         YM_READ_FILE(fd, buffer + off, bytes - off);
         if ( aRead == 0 )
         {
+            ymlog("    io: read(f%d, %p + %zu, %zu - %zu) EOF",fd, buffer, off, bytes, off);
             result = YMIOEOF;
             break;
         }
         else if ( aRead == -1 )
         {
+            ymerr("    io: read(f%d, %p + %zu, %zu - %zu) failed: %d (%s)",fd, buffer, off, bytes, off, errno, strerror(errno));
             result = YMIOError;
             break;
         }
+        ymlog("    io: read(f%d, %p + %zu, %zu - %zu): %zd",fd, buffer, off, bytes, off, aRead);
         off += aRead;
     }
     if ( outRead )
@@ -140,19 +143,22 @@ YMIOResult YMWriteFull(YMFILE fd, const uint8_t *buffer, size_t bytes, size_t *o
         switch(aWrite)
         {
             case 0:
-                ymerr("YMWrite: aWrite=0?");
+                ymerr("    io: write(f%d, %p + %zu, %zu - %zu) failed 0?: %d (%s)",fd, buffer, off, bytes, off, errno, strerror(errno));
                 abort();
-                break;
+                //goto catch_fail;
             case -1:
+                ymerr("    io: write(f%d, %p + %zu, %zu - %zu) failed: %d (%s)",fd, buffer, off, bytes, off, errno, strerror(errno));
                 result = YMIOError;
-                break;
+                goto catch_fail;
             default:
+                ymlog("    io: write(f%d, %p + %zu, %zu - %zu): %zd",fd, buffer, off, bytes, off, aWrite);
                 break;
         }
         off += aWrite;
     }
     if ( outWritten )
         *outWritten = off;
+catch_fail:
     return result;
 }
     

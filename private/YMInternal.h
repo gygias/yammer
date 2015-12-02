@@ -40,6 +40,17 @@
 
 #define YM_DEBUG_INFO // consolidate extra-curricular stuff under here so it doesn't get forgotten
 
+#ifndef YM_SOFT_ASSERTS
+#define YM_SOFT_ASSERTS 1
+#endif
+#define ymsoftassert(x,y) _ymsoftassert(x,y,YM_SOFT_ASSERTS)
+#define _ymsoftassert(x,y,z) { if (!(x)) { fprintf(stderr,"soft assert: "y"\n"); if (z) abort(); } }
+
+#ifndef YM_HARD_ASSERT
+#define YM_HARD_ASSERT 1
+#endif
+#define ymassert(x,y) { if (!(x)) { fprintf(stderr,"hard assert: "y"\n"); abort(); } }
+
 #define YM_TYPE_RESERVED (128 - sizeof(YMTypeID))
 
 typedef struct _ym_type

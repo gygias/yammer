@@ -149,7 +149,7 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
     int readFromRemote = YMPipeGetOutputFile(networkSimPipeOut);
     
     BOOL localIsMaster = (BOOL)arc4random_uniform(2);
-    NSLog(@"plexer test using pipes: L(%s)-i%d-o%d <-> i%d-o%d R(%s)",localIsMaster?"M":"S",readFromRemote,writeToRemote,readFromLocal,writeToLocal,localIsMaster?"S":"M");
+    NSLog(@"plexer test using pipes: L(%s)-if%d-of%d <-> if%d-of%d R(%s)",localIsMaster?"M":"S",readFromRemote,writeToRemote,readFromLocal,writeToLocal,localIsMaster?"S":"M");
     NSLog(@"plexer test using %u threads, %u trips per thread, %@ streams per thread, %@ messages",PlexerTest1Threads,PlexerTest1RoundTripsPerThread,PlexerTest1NewStreamPerRoundTrip?@"new":@"one",PlexerTest1RandomMessages?@"random":@"fixed");
     
     YMStringRef name = YMSTRC("L");

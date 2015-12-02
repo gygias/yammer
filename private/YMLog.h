@@ -10,7 +10,7 @@
 #define ymlog_type YMLogDefault
 #endif
 #ifndef ymlog_target
-#define ymlog_target ( YMLogError | YMLogSession | YMLogConnection | YMLogmDNS )
+#define ymlog_target ( YMLogError )
 // Token pasting of ',' and __VA_ARGS__ is a GNU extension
 YM_WPPUSH
 #define ymlog(x,...) if ( ymlog_type & ymlog_target ) __YMLogType((x),##__VA_ARGS__)
@@ -35,8 +35,7 @@ typedef enum
     YMLogPlexer = 1 << 8,
     YMLogThreadSync = 1 << 9,
     YMLogStream = 1 << 10,
-    YMLogPipe = 1 << 11,
-    YMLogIO = 1 << 12,
+    YMLogIO = 1 << 11,
     YMLogEverything = 0xFFFF
 } YMLogLevel;
 

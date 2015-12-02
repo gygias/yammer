@@ -321,8 +321,10 @@ YMmDNSServiceRecord *__YMmDNSBrowserAddOrUpdateService(__YMmDNSBrowserRef browse
             // a throw-away copy of the record structure.
             if ( existingRecord->txtRecordKeyPairs )
                 _YMmDNSTxtKeyPairsFree(existingRecord->txtRecordKeyPairs, existingRecord->txtRecordKeyPairsSize);
+            existingRecord->txtRecordKeyPairs = record->txtRecordKeyPairs;
             if ( existingRecord->addrinfo )
                 freeaddrinfo(existingRecord->addrinfo);
+            existingRecord->addrinfo = record->addrinfo;
             
             existingRecord->txtRecordKeyPairs = record->txtRecordKeyPairs;
             existingRecord->txtRecordKeyPairsSize = record->txtRecordKeyPairsSize;
@@ -499,7 +501,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_browser_event_proc(YM_THREAD_PA
     __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)ctx;
     int fd  = DNSServiceRefSockFD(*(browser->browseServiceRef));
     
-    ymlog("mdns[%s]: event thread %d entered", YMSTR(browser->type), fd);
+    ymlog("mdns[%s]: event thread f%d entered", YMSTR(browser->type), fd);
     
     bool keepGoing = true;
     while ( keepGoing )
@@ -531,7 +533,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_browser_event_proc(YM_THREAD_PA
             }
             if (err != kDNSServiceErr_NoError)
             {
-                ymerr("mdns[%s]: event thread process result on %d failed: %d", YMSTR(browser->type), fd, err);
+                ymerr("mdns[%s]: event thread process result on f%d failed: %d", YMSTR(browser->type), fd, err);
                 keepGoing = false;
             }
         }
@@ -541,12 +543,12 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_browser_event_proc(YM_THREAD_PA
         }
         else
         {
-            ymerr("mdns[%s]: event thread select on %d failed: %d: %d (%s)",YMSTR(browser->type), fd, result,errno,strerror(errno));
+            ymerr("mdns[%s]: event thread select on f%d failed: %d: %d (%s)",YMSTR(browser->type), fd, result,errno,strerror(errno));
             keepGoing = false;
         }
     }
     
-    ymlog("mdns[%s] event thread %d exiting", YMSTR(browser->type), fd);
+    ymlog("mdns[%s] event thread f%d exiting", YMSTR(browser->type), fd);
 
 	YM_THREAD_END
 }

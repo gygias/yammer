@@ -1,5 +1,5 @@
 //
-//  FreeGlobalsTest.m
+//  CheckStateTest.m
 //  yammer
 //
 //  Created by david on 11/21/15.
@@ -8,11 +8,11 @@
 
 #import "YammerTests.h"
 
-@interface FreeGlobalsTest : XCTestCase
+@interface CheckStateTest : XCTestCase
 
 @end
 
-@implementation FreeGlobalsTest
+@implementation CheckStateTest
 
 - (void)setUp {
     [super setUp];
@@ -24,9 +24,10 @@
     [super tearDown];
 }
 
-- (void)testFreeGlobals {
+- (void)testCheckStateTest {
     YMFreeGlobalResources();
     CFRunLoopRunInMode(kCFRunLoopDefaultMode, 2, false);
+    [[NSTask launchedTaskWithLaunchPath:@"/usr/bin/sample" arguments:@[@"-file",@"/dev/stdout",@"xctest",@"1",@"1000"]] waitUntilExit];
 }
 
 @end

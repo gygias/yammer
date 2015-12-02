@@ -27,8 +27,8 @@
 #define TLSTests                F_TLSTests
 #define PlexerTests             G_PlexerTests
 #define ConnectionTests         H_ConnectionTests
-#define SessionTests            A_SessionTests
-#define FreeGlobalsTest         Z_FreeGlobalsTest
+#define SessionTests            I_SessionTests
+#define CheckStateTest          Z_CheckStateTest
 
 NSString *YMRandomASCIIStringWithMaxLength(uint16_t maxLength, BOOL for_mDNSServiceName);
 NSData *YMRandomDataWithMaxLength(uint16_t length);

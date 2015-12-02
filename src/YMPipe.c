@@ -7,10 +7,11 @@
 //
 
 #include "YMPipe.h"
+#include "YMPipePriv.h"
 
 #include "YMLog.h"
 #undef ymlog_type
-#define ymlog_type YMLogPipe
+#define ymlog_type YMLogIO
 #if ( ymlog_type > ymlog_target )
 #undef ymlog
 #define ymlog(x,...) ;
@@ -26,8 +27,8 @@ typedef struct __ym_pipe_t
 } __ym_pipe_t;
 typedef struct __ym_pipe_t *__YMPipeRef;
 
-void __YMPipeCloseInputFile(YMPipeRef pipe_);
 void __YMPipeCloseOutputFile(YMPipeRef pipe_);
+void __YMPipeCloseFile(__YMPipeRef pipe, YMFILE *fdPtr);
 
 YMPipeRef YMPipeCreate(YMStringRef name)
 {
@@ -64,11 +65,10 @@ YMPipeRef YMPipeCreate(YMStringRef name)
   
     // todo this number is based on mac test cases, if open files rises above 200
     // something isn't closing/releasing their streams (in practice doesn't seem to go above 100)
+//#ifdef _MACOS
 #define TOO_MANY_FILES 200
-#ifdef DEBUG
-    if ( fds[0] > TOO_MANY_FILES || fds[1] > TOO_MANY_FILES )
-        abort();
-#endif
+//#else
+    ymsoftassert(fds[0]<TOO_MANY_FILES&&fds[1]<TOO_MANY_FILES, "too many open files");
     
     aPipe->outFd = fds[0];
     aPipe->inFd = fds[1];
@@ -80,7 +80,7 @@ void _YMPipeFree(YMTypeRef object)
 {
     __YMPipeRef pipe = (__YMPipeRef)object;
     
-    __YMPipeCloseInputFile(pipe);
+    _YMPipeCloseInputFile(pipe);
     __YMPipeCloseOutputFile(pipe);
     
     YMRelease(pipe->name);
@@ -91,40 +91,23 @@ YMFILE YMPipeGetInputFile(YMPipeRef pipe_)
     __YMPipeRef pipe = (__YMPipeRef)pipe_;
     return pipe->inFd;
 }
-
+    
 YMFILE YMPipeGetOutputFile(YMPipeRef pipe_)
 {
     __YMPipeRef pipe = (__YMPipeRef)pipe_;
     return pipe->outFd;
 }
-
-void _YMPipeCloseInputFile(YMPipeRef pipe)
-{
-    __YMPipeCloseInputFile(pipe);
-}
-
-void __YMPipeCloseFile(__YMPipeRef pipe, YMFILE *fdPtr)
-{
-    YMFILE fd = *fdPtr;
-    *fdPtr = NULL_FILE;
-    if ( fd != NULL_FILE)
-    {
-        int result, error = 0;
-        char *errorStr = NULL;
-        
-        ymlog("   pipe[%s]: closing %d",YMSTR(pipe->name),fd);
-		YM_CLOSE_FILE(fd);
-
-        if ( result != 0 )
-        {
-            ymerr("   pipe[%s,i%d]: close failed: %d (%s)",YMSTR(pipe->name), fd, result, errorStr);
-            //abort(); plexer
-        }
-    }
     
+void __YMPipeCloseOutputFile(YMPipeRef pipe_)
+{
+    __YMPipeRef pipe = (__YMPipeRef)pipe_;
+    
+    YMSelfLock(pipe);
+    __YMPipeCloseFile(pipe, &pipe->outFd);
+    YMSelfUnlock(pipe);
 }
 
-void __YMPipeCloseInputFile(YMPipeRef pipe_)
+void _YMPipeCloseInputFile(YMPipeRef pipe_)
 {
     __YMPipeRef pipe = (__YMPipeRef)pipe_;
     
@@ -134,11 +117,23 @@ void __YMPipeCloseInputFile(YMPipeRef pipe_)
     YMSelfUnlock(pipe);
 }
 
-void __YMPipeCloseOutputFile(YMPipeRef pipe_)
+void __YMPipeCloseFile(__YMPipeRef pipe, YMFILE *fdPtr)
 {
-    __YMPipeRef pipe = (__YMPipeRef)pipe_;
+    YMFILE fd = *fdPtr;
+    *fdPtr = NULL_FILE;
+    if ( fd != NULL_FILE )
+    {
+        int result, error = 0;
+        char *errorStr = NULL;
+        
+        ymlog("   pipe[%s]: closing f%d",YMSTR(pipe->name),fd);
+		YM_CLOSE_FILE(fd);
+
+        if ( result != 0 )
+        {
+            ymerr("   pipe[%s]: close on f%d failed: %d (%s)",YMSTR(pipe->name), fd, result, errorStr);
+            //abort(); plexer
+        }
+    }
     
-    YMSelfLock(pipe);
-    __YMPipeCloseFile(pipe, &pipe->outFd);
-    YMSelfUnlock(pipe);
 }

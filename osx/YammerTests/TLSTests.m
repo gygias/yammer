@@ -143,11 +143,12 @@ void __sigpipe_handler (__unused int signum)
         bool okay = YMSecurityProviderClose((YMSecurityProviderRef)(clientFirst?theServer:theClient));
         XCTAssert(okay,@"server close failed");
     });
-    signal(SIGPIPE, SIG_DFL);
     
     YMRelease(clientFirst?theClient:theServer);
     YMRelease(clientFirst?theServer:theClient);
     YMRelease(localSocketPair);
+    
+    signal(SIGPIPE, SIG_DFL);
     NSLog(@"tls test finished (%llu in, %llu out)",bytesIn,bytesOut);
 }
 

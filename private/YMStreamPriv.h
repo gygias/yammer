@@ -49,7 +49,7 @@ void _YMStreamSetDataAvailableCallback(YMStreamRef stream, _ym_stream_data_avail
 YMIOResult _YMStreamReadDown(YMStreamRef stream, void *buffer, uint32_t length);
 YMIOResult _YMStreamWriteUp(YMStreamRef stream, const void *buffer, uint32_t length);
 
-void _YMStreamCloseReadUpFile(YMStreamRef stream);
+void _YMStreamCloseWriteUp(YMStreamRef stream);
 void _YMStreamSendClose(YMStreamRef stream);
 
 ym_stream_user_info_ref _YMStreamGetUserInfo(YMStreamRef);

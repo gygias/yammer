@@ -51,6 +51,9 @@
 #endif
 
 #if defined(_MACOS)
+#define YM_WPUSH \
+_Pragma("GCC diagnostic push") \
+_Pragma("GCC diagnostic ignored \"-Wall\"")
 #define YM_WPPUSH \
 _Pragma("GCC diagnostic push") \
 _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
