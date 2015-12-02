@@ -28,13 +28,13 @@ typedef struct DictionaryTest
     YMDictionaryRef existingKeys;
     bool endTest;
     uint64_t completedTests;
-    ym_test_assert_func assertFunc;
-    const void *funcContext;
+    ym_test_assert_func assert;
+    const void *context;
 } DictionaryTest;
 
-void DictionaryTestRun(ym_test_assert_func assertFunc, const void *funcContext)
+void DictionaryTestRun(ym_test_assert_func assert, const void *context)
 {
-    DictionaryTest theTest = { YMDictionaryCreate(), YMLockCreate(), YMSemaphoreCreate(0), YMDictionaryCreate(), false, 0, assertFunc, funcContext };
+    DictionaryTest theTest = { YMDictionaryCreate(), YMLockCreate(), YMSemaphoreCreate(0), YMDictionaryCreate(), false, 0, assert, context };
     
     YMStringRef name = YMSTRC("DictionaryTestQueue");
     YMRelease(name);
@@ -78,7 +78,7 @@ void _dictionary_test_proc(void *ctx)
     
     while (!theTest->endTest)
     {
-        const char *random_string = YMRandomASCIIStringWithMaxLength(arc4random_uniform(MaxItemLength), false);
+        const char *random_string = YMRandomASCIIStringWithMaxLength(arc4random_uniform(MaxItemLength), false, false);
         const uint8_t *random_data = YMRandomDataWithMaxLength(MaxItemLength,NULL);
         
         YMLockLock(theTest->lock);

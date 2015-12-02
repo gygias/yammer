@@ -12,6 +12,6 @@
 #include "YammerTests.h"
 #include "Tests.h"
 
-void DictionaryTestRun(ym_test_assert_func assertFunc, const void *funcContext);
+void DictionaryTestRun(ym_test_assert_func assert, const void *context);
 
 #endif /* DictionaryTests_h */

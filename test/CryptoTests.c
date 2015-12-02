@@ -13,15 +13,15 @@
 
 typedef struct CryptoTest
 {
-    ym_test_assert_func assertFunc;
-    const void *funcContext;
+    ym_test_assert_func assert;
+    const void *context;
 } CryptoTest;
 
 void _X509GenerationTestRun(struct CryptoTest *test);
 
-void CryptoTestRun(ym_test_assert_func assertFunc, const void *funcContext)
+void CryptoTestRun(ym_test_assert_func assert, const void *context)
 {
-    struct CryptoTest theTest = { assertFunc, funcContext };
+    struct CryptoTest theTest = { assert, context };
     
     _X509GenerationTestRun(&theTest);
 }

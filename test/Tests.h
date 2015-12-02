@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 
 #import "Yammer.h"
 
@@ -27,11 +28,11 @@
 #define ymlog(x,...) ;
 #endif
 
-#define testassert(x,y,...) theTest->assertFunc(theTest->funcContext,(x),y,##__VA_ARGS__);
+#define testassert(x,y,...) { theTest->assert(theTest->context,(x),y,##__VA_ARGS__); }
 
 typedef void (*ym_test_assert_func)(const void *ctx, bool exp, const char *fmt, ...);
 
-const char *YMRandomASCIIStringWithMaxLength(uint16_t maxLength, bool for_mDNSServiceName);
-const uint8_t *YMRandomDataWithMaxLength(uint16_t length, uint16_t *outLength);
+char *YMRandomASCIIStringWithMaxLength(uint16_t maxLength, bool for_mDNSServiceName, bool for_txtKey);
+uint8_t *YMRandomDataWithMaxLength(uint16_t length, uint16_t *outLength);
 
 #endif /* Tests_h */

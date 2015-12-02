@@ -1,17 +1,17 @@
 //
-//  CryptoTests.h
+//  mDNSTests.h
 //  yammer
 //
 //  Created by david on 12/2/15.
 //  Copyright © 2015 combobulated. All rights reserved.
 //
 
-#ifndef CryptoTests_h
-#define CryptoTests_h
+#ifndef mDNSTests_h
+#define mDNSTests_h
 
 #include "YammerTests.h"
 #include "Tests.h"
 
-void CryptoTestRun(ym_test_assert_func assert, const void *context);
+void mDNSTestRun(ym_test_assert_func assert, const void *context);
 
-#endif /* CryptoTests_h */
+#endif /* mDNSTests_h */

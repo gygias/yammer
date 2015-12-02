@@ -10,6 +10,7 @@
 
 #import "DictionaryTests.h"
 #import "CryptoTests.h"
+#import "mDNSTests.H"
 
 @interface YammerTests : XCTestCase
 
@@ -54,6 +55,11 @@ void ym_test_assert_proc(const void *ctx, bool exp, const char *fmt, ...)
 - (void)testDictionary {
     const void *SELF = (__bridge const void *)(self);
     DictionaryTestRun(ym_test_assert_proc, SELF);
+}
+
+- (void)testmDNS {
+    const void *SELF = (__bridge const void *)(self);
+    mDNSTestRun(ym_test_assert_proc, SELF);
 }
 
 @end

@@ -45,7 +45,7 @@ const char *YMGetCurrentTimeString(char *buf, size_t bufLen)
 {
     struct timeval epoch = {0,0};
     gettimeofday(&epoch, NULL);
-    struct tm *now = localtime((const time_t *)&epoch.tv_sec);
+    struct tm *now = localtime((const time_t *)&epoch.tv_sec); // um, what? todo
     if ( ! now )
         return NULL;
     size_t result = strftime(buf, bufLen, "%Y-%m-%d %H:%M:%S", now);
