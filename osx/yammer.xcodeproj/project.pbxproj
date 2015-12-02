@@ -77,6 +77,7 @@
 		63DD2E0D1C0F92D700D822D1 /* YammerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 63DD2E0C1C0F92D700D822D1 /* YammerTests.m */; };
 		63DD2E101C0F988700D822D1 /* CryptoTests.c in Sources */ = {isa = PBXBuildFile; fileRef = 63DD2E0E1C0F988700D822D1 /* CryptoTests.c */; };
 		63DD2E131C0F9A6000D822D1 /* mDNSTests.c in Sources */ = {isa = PBXBuildFile; fileRef = 63DD2E111C0F9A6000D822D1 /* mDNSTests.c */; };
+		63DD2E161C0FB07B00D822D1 /* LocalSocketPairTests.c in Sources */ = {isa = PBXBuildFile; fileRef = 63DD2E141C0FB07B00D822D1 /* LocalSocketPairTests.c */; };
 		63EEC75D1BFB6AD100990ECE /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 63DDCB311BFB68AA009F91CD /* main.c */; };
 		63EEC75E1BFB6BCF00990ECE /* libyammer.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63225D421BE9026200C28F05 /* libyammer.dylib */; };
 		63FD5B5A1BF1899800174824 /* YMRSAKeyPair.c in Sources */ = {isa = PBXBuildFile; fileRef = 63FD5B581BF1899800174824 /* YMRSAKeyPair.c */; };
@@ -206,6 +207,8 @@
 		63DD2E0F1C0F988700D822D1 /* CryptoTests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CryptoTests.h; path = ../test/CryptoTests.h; sourceTree = "<group>"; };
 		63DD2E111C0F9A6000D822D1 /* mDNSTests.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mDNSTests.c; path = ../test/mDNSTests.c; sourceTree = "<group>"; };
 		63DD2E121C0F9A6000D822D1 /* mDNSTests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mDNSTests.h; path = ../test/mDNSTests.h; sourceTree = "<group>"; };
+		63DD2E141C0FB07B00D822D1 /* LocalSocketPairTests.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = LocalSocketPairTests.c; path = ../test/LocalSocketPairTests.c; sourceTree = "<group>"; };
+		63DD2E151C0FB07B00D822D1 /* LocalSocketPairTests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LocalSocketPairTests.h; path = ../test/LocalSocketPairTests.h; sourceTree = "<group>"; };
 		63DDCB311BFB68AA009F91CD /* main.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = main.c; sourceTree = "<group>"; };
 		63EEC7561BFB6AA400990ECE /* chat */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = chat; sourceTree = BUILT_PRODUCTS_DIR; };
 		63FD5B581BF1899800174824 /* YMRSAKeyPair.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMRSAKeyPair.c; path = src/YMRSAKeyPair.c; sourceTree = "<group>"; };
@@ -428,6 +431,8 @@
 				63DD2E0E1C0F988700D822D1 /* CryptoTests.c */,
 				63DD2E071C0F7D2D00D822D1 /* DictionaryTests.h */,
 				63DD2E061C0F7D2D00D822D1 /* DictionaryTests.c */,
+				63DD2E151C0FB07B00D822D1 /* LocalSocketPairTests.h */,
+				63DD2E141C0FB07B00D822D1 /* LocalSocketPairTests.c */,
 				63DD2E121C0F9A6000D822D1 /* mDNSTests.h */,
 				63DD2E111C0F9A6000D822D1 /* mDNSTests.c */,
 			);
@@ -627,6 +632,7 @@
 				63DD2E131C0F9A6000D822D1 /* mDNSTests.c in Sources */,
 				633165FF1BFC29DF0094F801 /* LocalSocketPairTests.m in Sources */,
 				63DD2E081C0F7D2D00D822D1 /* DictionaryTests.c in Sources */,
+				63DD2E161C0FB07B00D822D1 /* LocalSocketPairTests.c in Sources */,
 				63476A411BEAEFC500D10081 /* PlexerTests.m in Sources */,
 				63DD2E101C0F988700D822D1 /* CryptoTests.c in Sources */,
 				63028B0F1C013D120075B6AC /* CheckStateTest.m in Sources */,
