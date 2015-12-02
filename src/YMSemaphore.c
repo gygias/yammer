@@ -61,6 +61,8 @@ typedef __YMSemaphore *__YMSemaphoreRef;
 uint16_t gYMSemaphoreIndex = 40;
 YMLockRef gYMSemaphoreIndexLock = NULL;
 
+YMSemaphoreRef __YMSemaphoreCreate(YMStringRef name, int initialValue);
+
 YM_ONCE_FUNC(__YMSemaphoreInit,
 {
     YMStringRef name = YMSTRC(YM_TOKEN_STR(gYMSemaphoreIndex));
@@ -68,7 +70,17 @@ YM_ONCE_FUNC(__YMSemaphoreInit,
     YMRelease(name);
 })
 
-YMSemaphoreRef YMSemaphoreCreate(YMStringRef name, int initialValue)
+YMSemaphoreRef YMSemaphoreCreate(int initialValue)
+{
+    return __YMSemaphoreCreate(NULL, initialValue);
+}
+
+YMSemaphoreRef YMSemaphoreCreateWithName(YMStringRef name, int initialValue)
+{
+    return __YMSemaphoreCreate(name, initialValue);
+}
+
+YMSemaphoreRef __YMSemaphoreCreate(YMStringRef name, int initialValue)
 {
     if (initialValue < 0)
     {

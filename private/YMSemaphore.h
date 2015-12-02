@@ -11,7 +11,8 @@
 
 typedef struct __YMSemaphore *YMSemaphoreRef;
 
-YMSemaphoreRef YMSemaphoreCreate(YMStringRef name, int initialValue);
+YMSemaphoreRef YMSemaphoreCreate(int initialValue);
+YMSemaphoreRef YMSemaphoreCreateWithName(YMStringRef name, int initialValue);
 
 void YMSemaphoreWait(YMSemaphoreRef semaphore);
 void YMSemaphoreSignal(YMSemaphoreRef semaphore);

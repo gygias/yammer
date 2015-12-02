@@ -163,11 +163,11 @@ YMThreadRef YMThreadDispatchCreate(YMStringRef name)
     
     thread->dispatchesByID = YMDictionaryCreate();
     memberName = YMSTRCF("%s-dispatch",YMSTR(name));
-    thread->dispatchSemaphore = YMSemaphoreCreate(memberName,0);
+    thread->dispatchSemaphore = YMSemaphoreCreateWithName(memberName,0);
     YMRelease(memberName);
     
     memberName = YMSTRCF("%s-dispatch-exit",YMSTR(name));
-    thread->dispatchExitSemaphore = YMSemaphoreCreate(memberName, 0);
+    thread->dispatchExitSemaphore = YMSemaphoreCreateWithName(memberName, 0);
     YMRelease(memberName);
     
     thread->dispatchIDNext = 0;

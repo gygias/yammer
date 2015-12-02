@@ -6,6 +6,7 @@
 //  Copyright © 2015 combobulated. All rights reserved.
 //
 
+#import <XCTest/XCTest.h>
 #import "YammerTests.h"
 
 @interface CheckStateTest : XCTestCase

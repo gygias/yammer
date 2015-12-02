@@ -6,6 +6,7 @@
 //  Copyright © 2015 combobulated. All rights reserved.
 //
 
+#import <XCTest/XCTest.h>
 #import "YammerTests.h"
 
 #include "YMBase.h"
@@ -258,7 +259,11 @@ const char *testRemoteResponse = "もしもし。you are coming in loud and clea
         
         NSData *outgoingMessage;
         if ( PlexerTest1RandomMessages )
-            outgoingMessage = YMRandomDataWithMaxLength(PlexerTest1RandomMessageMaxLength);
+        {
+            uint16_t length;
+            const uint8_t *data = YMRandomDataWithMaxLength(PlexerTest1RandomMessageMaxLength, &length);
+            outgoingMessage = [NSData dataWithBytesNoCopy:(void *)data length:length freeWhenDone:YES];
+        }
         else
             outgoingMessage = [NSData dataWithBytesNoCopy:(void *)testLocalMessage length:strlen(testLocalMessage) + 1];
         
@@ -379,7 +384,11 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *cont
         
         NSData *outgoingMessage;
         if ( PlexerTest1RandomMessages )
-            outgoingMessage = YMRandomDataWithMaxLength(PlexerTest1RandomMessageMaxLength);
+        {
+            uint16_t length;
+            const uint8_t *data = YMRandomDataWithMaxLength(PlexerTest1RandomMessageMaxLength, &length);
+            outgoingMessage = [NSData dataWithBytesNoCopy:(void *)data length:length freeWhenDone:YES];
+        }
         else
             outgoingMessage = [NSData dataWithBytesNoCopy:(void*)testRemoteResponse length:strlen(testRemoteResponse) + 1];
         

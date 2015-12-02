@@ -6,6 +6,7 @@
 //  Copyright © 2015 combobulated. All rights reserved.
 //
 
+#import <XCTest/XCTest.h>
 #import "YammerTests.h"
 
 #import "YMTLSProvider.h"
@@ -99,7 +100,7 @@ void __sigpipe_handler (__unused int signum)
     
     YMStringRef name = YMSTRC([[self className] UTF8String]);
     stateLock = YMLockCreateWithOptionsAndName(YMInternalLockType, name);
-    threadExitSemaphore = YMSemaphoreCreate(name, 0);
+    threadExitSemaphore = YMSemaphoreCreateWithName(name, 0);
     YMRelease(name);
     bytesIn = 0;
     bytesOut = 0;
@@ -165,7 +166,11 @@ const char *testResponse = "creative technologist? or technology creative? foodi
         
         NSData *outgoingMessage;
         if ( TLSTestRandomMessages )
-            outgoingMessage = YMRandomDataWithMaxLength(TLSTestRandomMessageMaxLength);
+        {
+            uint16_t length;
+            const uint8_t *bytes = YMRandomDataWithMaxLength(TLSTestRandomMessageMaxLength,&length);
+            outgoingMessage = [NSData dataWithBytesNoCopy:(void *)bytes length:length freeWhenDone:YES];
+        }
         else
             outgoingMessage = [NSData dataWithBytesNoCopy:(void *)testMessage length:strlen(testMessage) + 1 freeWhenDone:NO];
         

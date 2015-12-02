@@ -19,12 +19,10 @@
 		630A5CF71BE9518A003292EE /* YMSession.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5CF51BE9518A003292EE /* YMSession.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		630A5CFA1BE95E36003292EE /* YMThread.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CF81BE95E36003292EE /* YMThread.c */; };
 		630A5CFB1BE95E36003292EE /* YMThread.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5CF91BE95E36003292EE /* YMThread.h */; };
-		630A5D031BE96CE9003292EE /* YammerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 630A5D021BE96CE9003292EE /* YammerTests.m */; };
 		630A5D051BE96CE9003292EE /* libyammer.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63225D421BE9026200C28F05 /* libyammer.dylib */; };
 		630A5D161BE9777C003292EE /* YMmDNSBrowser.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5D141BE9777C003292EE /* YMmDNSBrowser.c */; };
 		630A5D171BE9777C003292EE /* YMmDNSBrowser.h in Headers */ = {isa = PBXBuildFile; fileRef = 630A5D151BE9777C003292EE /* YMmDNSBrowser.h */; };
 		630A5D1C1BE98199003292EE /* YMmDNS.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5D1B1BE98199003292EE /* YMmDNS.c */; };
-		631683941BEEF1FB00F6AB99 /* DictionaryTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 631683931BEEF1FB00F6AB99 /* DictionaryTests.m */; };
 		631916341BFCFF13001475FC /* Yammer.h in Headers */ = {isa = PBXBuildFile; fileRef = 631916331BFCFF13001475FC /* Yammer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6319163B1BFCFF93001475FC /* YMSession.h in Headers */ = {isa = PBXBuildFile; fileRef = 631916391BFCFF93001475FC /* YMSession.h */; };
 		6319163C1BFCFF93001475FC /* YMSession.m in Sources */ = {isa = PBXBuildFile; fileRef = 6319163A1BFCFF93001475FC /* YMSession.m */; };
@@ -75,6 +73,9 @@
 		638E1D661C098AF900BA2FA4 /* libcrypto.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 638E1D651C098AF900BA2FA4 /* libcrypto.tbd */; };
 		63BD75CE1BF3F0E700D01F70 /* YMLocalSocketPair.c in Sources */ = {isa = PBXBuildFile; fileRef = 63BD75CC1BF3F0E700D01F70 /* YMLocalSocketPair.c */; };
 		63BD75CF1BF3F0E700D01F70 /* YMLocalSocketPair.h in Headers */ = {isa = PBXBuildFile; fileRef = 63BD75CD1BF3F0E700D01F70 /* YMLocalSocketPair.h */; };
+		63DD2E081C0F7D2D00D822D1 /* DictionaryTests.c in Sources */ = {isa = PBXBuildFile; fileRef = 63DD2E061C0F7D2D00D822D1 /* DictionaryTests.c */; };
+		63DD2E0B1C0F898200D822D1 /* Tests.c in Sources */ = {isa = PBXBuildFile; fileRef = 63DD2E0A1C0F898200D822D1 /* Tests.c */; };
+		63DD2E0D1C0F92D700D822D1 /* YammerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 63DD2E0C1C0F92D700D822D1 /* YammerTests.m */; };
 		63EEC75D1BFB6AD100990ECE /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 63DDCB311BFB68AA009F91CD /* main.c */; };
 		63EEC75E1BFB6BCF00990ECE /* libyammer.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63225D421BE9026200C28F05 /* libyammer.dylib */; };
 		63FD5B5A1BF1899800174824 /* YMRSAKeyPair.c in Sources */ = {isa = PBXBuildFile; fileRef = 63FD5B581BF1899800174824 /* YMRSAKeyPair.c */; };
@@ -119,14 +120,12 @@
 		630A5CF81BE95E36003292EE /* YMThread.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMThread.c; path = src/YMThread.c; sourceTree = "<group>"; };
 		630A5CF91BE95E36003292EE /* YMThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMThread.h; path = private/YMThread.h; sourceTree = "<group>"; };
 		630A5D001BE96CE9003292EE /* YammerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YammerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		630A5D021BE96CE9003292EE /* YammerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = YammerTests.m; sourceTree = "<group>"; };
 		630A5D041BE96CE9003292EE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		630A5D0B1BE96D6E003292EE /* Yammer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Yammer.h; path = libyammer/Yammer.h; sourceTree = "<group>"; };
 		630A5D141BE9777C003292EE /* YMmDNSBrowser.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMmDNSBrowser.c; path = src/YMmDNSBrowser.c; sourceTree = "<group>"; };
 		630A5D151BE9777C003292EE /* YMmDNSBrowser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMmDNSBrowser.h; path = private/YMmDNSBrowser.h; sourceTree = "<group>"; };
 		630A5D1A1BE97D5A003292EE /* YMmDNS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMmDNS.h; path = private/YMmDNS.h; sourceTree = "<group>"; };
 		630A5D1B1BE98199003292EE /* YMmDNS.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMmDNS.c; path = src/YMmDNS.c; sourceTree = "<group>"; };
-		631683931BEEF1FB00F6AB99 /* DictionaryTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DictionaryTests.m; sourceTree = "<group>"; };
 		631799691BF9B05B0086EB05 /* YMPipePriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMPipePriv.h; path = private/YMPipePriv.h; sourceTree = "<group>"; };
 		631916311BFCFF13001475FC /* Yammer.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Yammer.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		631916331BFCFF13001475FC /* Yammer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Yammer.h; sourceTree = "<group>"; };
@@ -199,6 +198,11 @@
 		63A40EF81BEC239C0085ABD0 /* YMThreadPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMThreadPriv.h; path = private/YMThreadPriv.h; sourceTree = "<group>"; };
 		63BD75CC1BF3F0E700D01F70 /* YMLocalSocketPair.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMLocalSocketPair.c; path = src/YMLocalSocketPair.c; sourceTree = "<group>"; };
 		63BD75CD1BF3F0E700D01F70 /* YMLocalSocketPair.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMLocalSocketPair.h; path = private/YMLocalSocketPair.h; sourceTree = "<group>"; };
+		63DD2E061C0F7D2D00D822D1 /* DictionaryTests.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = DictionaryTests.c; path = ../test/DictionaryTests.c; sourceTree = "<group>"; };
+		63DD2E071C0F7D2D00D822D1 /* DictionaryTests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DictionaryTests.h; path = ../test/DictionaryTests.h; sourceTree = "<group>"; };
+		63DD2E091C0F7D6C00D822D1 /* Tests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Tests.h; path = ../test/Tests.h; sourceTree = "<group>"; };
+		63DD2E0A1C0F898200D822D1 /* Tests.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Tests.c; path = ../test/Tests.c; sourceTree = "<group>"; };
+		63DD2E0C1C0F92D700D822D1 /* YammerTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = YammerTests.m; sourceTree = "<group>"; };
 		63DDCB311BFB68AA009F91CD /* main.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = main.c; sourceTree = "<group>"; };
 		63EEC7561BFB6AA400990ECE /* chat */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = chat; sourceTree = BUILT_PRODUCTS_DIR; };
 		63FD5B581BF1899800174824 /* YMRSAKeyPair.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMRSAKeyPair.c; path = src/YMRSAKeyPair.c; sourceTree = "<group>"; };
@@ -247,14 +251,13 @@
 			isa = PBXGroup;
 			children = (
 				6332A4B91BEFCDCF004BB764 /* YammerTests.h */,
-				631683931BEEF1FB00F6AB99 /* DictionaryTests.m */,
+				63DD2E0C1C0F92D700D822D1 /* YammerTests.m */,
 				63FD5B5E1BF1B94A00174824 /* CryptoTests.m */,
 				633165FE1BFC29DF0094F801 /* LocalSocketPairTests.m */,
 				63476A3E1BEAE54100D10081 /* mDNSTests.m */,
 				637E3D601BF2CD7300D702ED /* TLSTests.m */,
 				63476A401BEAEFC500D10081 /* PlexerTests.m */,
 				633CAC101BFBBF4800304DCD /* SessionTests.m */,
-				630A5D021BE96CE9003292EE /* YammerTests.m */,
 				63028B0E1C013D120075B6AC /* CheckStateTest.m */,
 				630A5D041BE96CE9003292EE /* Info.plist */,
 				6332A4BA1BF12C12004BB764 /* lldb_source.sh */,
@@ -299,6 +302,7 @@
 				631916461BFD069A001475FC /* libyammer */,
 				631916321BFCFF13001475FC /* Yammer */,
 				63225D9C1BE9314100C28F05 /* Dependencies */,
+				63DD2E051C0F7C4200D822D1 /* tests */,
 				630A5D011BE96CE9003292EE /* YammerTests */,
 				63312D031BFAF9E600039336 /* chat */,
 				63225D431BE9026200C28F05 /* Products */,
@@ -413,6 +417,17 @@
 			);
 			name = Private;
 			path = ..;
+			sourceTree = "<group>";
+		};
+		63DD2E051C0F7C4200D822D1 /* tests */ = {
+			isa = PBXGroup;
+			children = (
+				63DD2E071C0F7D2D00D822D1 /* DictionaryTests.h */,
+				63DD2E061C0F7D2D00D822D1 /* DictionaryTests.c */,
+				63DD2E091C0F7D6C00D822D1 /* Tests.h */,
+				63DD2E0A1C0F898200D822D1 /* Tests.c */,
+			);
+			name = tests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -602,10 +617,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				633CAC111BFBBF4800304DCD /* SessionTests.m in Sources */,
-				630A5D031BE96CE9003292EE /* YammerTests.m in Sources */,
+				63DD2E0B1C0F898200D822D1 /* Tests.c in Sources */,
+				63DD2E0D1C0F92D700D822D1 /* YammerTests.m in Sources */,
 				637E3D611BF2CD7300D702ED /* TLSTests.m in Sources */,
-				631683941BEEF1FB00F6AB99 /* DictionaryTests.m in Sources */,
 				633165FF1BFC29DF0094F801 /* LocalSocketPairTests.m in Sources */,
+				63DD2E081C0F7D2D00D822D1 /* DictionaryTests.c in Sources */,
 				63476A411BEAEFC500D10081 /* PlexerTests.m in Sources */,
 				63FD5B5F1BF1B94A00174824 /* CryptoTests.m in Sources */,
 				63476A3F1BEAE54100D10081 /* mDNSTests.m in Sources */,

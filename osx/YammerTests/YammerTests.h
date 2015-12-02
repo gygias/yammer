@@ -9,8 +9,8 @@
 #ifndef YammerTests_h
 #define YammerTests_h
 
-#import <XCTest/XCTest.h>
 #import "Yammer.h"
+#import "Tests.h"
 
 //#define     Logging 1
 #ifdef      Logging
@@ -20,7 +20,7 @@
 #endif
 
 // this is the best way of ordering XCTestCase classes that i could find, at the time
-#define DictionaryTests         B_DictionaryTests
+#define YammerTests             B_YammerTests
 #define LocalSocketPairTests    C_LocalSocketPairTests
 #define CryptoTests             D_CryptoTests
 #define mDNSTests               E_mDNSTests
@@ -29,8 +29,5 @@
 #define ConnectionTests         H_ConnectionTests
 #define SessionTests            I_SessionTests
 #define CheckStateTest          Z_CheckStateTest
-
-NSString *YMRandomASCIIStringWithMaxLength(uint16_t maxLength, BOOL for_mDNSServiceName);
-NSData *YMRandomDataWithMaxLength(uint16_t length);
 
 #endif /* YammerTests_h */

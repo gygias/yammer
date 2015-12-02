@@ -94,7 +94,7 @@ void YMLocalSocketPairStop()
 void __YMLocalSocketPairInitOnce(void)
 {
     YMStringRef name = YMSTRC("local-socket-spawn");
-    gYMLocalSocketSemaphore = YMSemaphoreCreate(name, 0);
+    gYMLocalSocketSemaphore = YMSemaphoreCreateWithName(name, 0);
     gYMLocalSocketPairAcceptThread = YMThreadCreate(name, __ym_local_socket_accept_proc, NULL);
     YMRelease(name);
     

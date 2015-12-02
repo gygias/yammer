@@ -6,6 +6,7 @@
 //  Copyright © 2015 combobulated. All rights reserved.
 //
 
+#import <XCTest/XCTest.h>
 #import "YammerTests.h"
 
 #import "YMmDNS.h"
@@ -85,7 +86,7 @@ mDNSTests *gGlobalSelf;
 - (void)testmDNSCreateDiscoverResolve
 {
     BOOL okay;
-    testServiceName = YMRandomASCIIStringWithMaxLength(mDNS_SERVICE_NAME_LENGTH_MAX - 1, YES);
+    testServiceName = [NSString stringWithUTF8String:YMRandomASCIIStringWithMaxLength(mDNS_SERVICE_NAME_LENGTH_MAX - 1, YES)];
     YMStringRef type = YMSTRC(testServiceType);
     YMStringRef name = YMSTRC([testServiceName UTF8String]);
     service = YMmDNSServiceCreate(type, name, 5050);
@@ -154,7 +155,7 @@ mDNSTests *gGlobalSelf;
         
         // The "Name" MUST be at least one character. Strings beginning with an '=' character (i.e. the name is missing) SHOULD be silently ignored.
         uint8_t aKeyLenMax = ( testKeyMaxLen > remaining ) ? ( remaining - testKeyPairReserved ) : testKeyMaxLen;
-        NSString *randomKey = YMRandomASCIIStringWithMaxLength(aKeyLenMax, NO);
+        NSString *randomKey = [NSString stringWithUTF8String:YMRandomASCIIStringWithMaxLength(aKeyLenMax, NO)];
         keyPairs[idx]->key = YMSTRC([randomKey cStringUsingEncoding:NSASCIIStringEncoding]);//"test-key";
         
         remaining -= [randomKey length];
@@ -162,7 +163,9 @@ mDNSTests *gGlobalSelf;
         // as far as i can tell, value can be empty
         uint8_t valueLenMax = ( UINT8_MAX - [randomKey length] - testKeyPairReserved );
         uint16_t aValueLenMax = ( valueLenMax > remaining ) ? remaining : valueLenMax;
-        NSData *valueData = YMRandomDataWithMaxLength(aValueLenMax);
+        uint16_t length;
+        const uint8_t *value_data = YMRandomDataWithMaxLength(aValueLenMax, &length);
+        NSData *valueData = [NSData dataWithBytesNoCopy:(void *)value_data length:length freeWhenDone:YES];
         keyPairs[idx]->value = calloc(1,[valueData length]);
         memcpy((void *)keyPairs[idx]->value, [valueData bytes], [valueData length]);
         keyPairs[idx]->valueLen = (uint8_t)[valueData length];

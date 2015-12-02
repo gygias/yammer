@@ -15,6 +15,14 @@ extern "C" {
 
 #if defined(_MACOS) || defined(RPI)
 #define YM_VARGS_SENTINEL_REQUIRED __attribute__((sentinel(0)))
+#define YM_WPUSH \
+_Pragma("GCC diagnostic push") \
+_Pragma("GCC diagnostic ignored \"-Wall\"")
+#define YM_WPPUSH \
+_Pragma("GCC diagnostic push") \
+_Pragma("GCC diagnostic ignored \"-Wpedantic\"")
+#define YM_WPOP \
+_Pragma("GCC diagnostic pop")
 #endif
 
 #if defined(RPI)
@@ -29,6 +37,9 @@ extern "C" {
 #define YMSOCKET SOCKET
 #define __printflike(x,y)
 #define YM_VARGS_SENTINEL_REQUIRED
+#define YM_WPPUSH
+#define YM_WPUSH
+#define YM_WPOP
 #else
 #define YMAPI
 #define YMFILE int

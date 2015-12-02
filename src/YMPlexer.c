@@ -225,7 +225,7 @@ YMPlexerRef YMPlexerCreate(YMStringRef name, YMSecurityProviderRef provider, boo
     YMRelease(aString);
     
     aString = YMStringCreateWithFormat("%s-down-signal",YMSTR(plexer->name),NULL);
-    plexer->downstreamReadySemaphore = YMSemaphoreCreate(aString,0);
+    plexer->downstreamReadySemaphore = YMSemaphoreCreateWithName(aString,0);
     YMRelease(aString);
     
     plexer->interruptedFunc = NULL;
