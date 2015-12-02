@@ -18,8 +18,6 @@
 #define RunFor 5.0
 #define MaxItemLength 2048
 
-#define testassert(x,y,...) theTest->assertFunc(theTest->funcContext,(x),y,##__VA_ARGS__);
-
 void _dictionary_test_proc(void *ctx);
 
 typedef struct DictionaryTest

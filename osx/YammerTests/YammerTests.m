@@ -9,6 +9,7 @@
 #import <XCTest/XCTest.h>
 
 #import "DictionaryTests.h"
+#import "CryptoTests.h"
 
 @interface YammerTests : XCTestCase
 
@@ -45,15 +46,14 @@ void ym_test_assert_proc(const void *ctx, bool exp, const char *fmt, ...)
     XCTAssert(false,"custom assert, see stdout");
 }
 
-- (void)testDictionary {
-    DictionaryTestRun(ym_test_assert_proc, (__bridge const void *)(self));
+- (void)testCrypto {
+    const void *SELF = (__bridge const void *)(self);
+    CryptoTestRun(ym_test_assert_proc, SELF);
 }
 
-- (void)testPerformanceExample {
-    // This is an example of a performance test case.
-    [self measureBlock:^{
-        // Put the code you want to measure the time of here.
-    }];
+- (void)testDictionary {
+    const void *SELF = (__bridge const void *)(self);
+    DictionaryTestRun(ym_test_assert_proc, SELF);
 }
 
 @end

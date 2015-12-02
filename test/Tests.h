@@ -27,6 +27,8 @@
 #define ymlog(x,...) ;
 #endif
 
+#define testassert(x,y,...) theTest->assertFunc(theTest->funcContext,(x),y,##__VA_ARGS__);
+
 typedef void (*ym_test_assert_func)(const void *ctx, bool exp, const char *fmt, ...);
 
 const char *YMRandomASCIIStringWithMaxLength(uint16_t maxLength, bool for_mDNSServiceName);
