@@ -12,6 +12,7 @@
 #import "CryptoTests.h"
 #import "LocalSocketPairTests.h"
 #import "mDNSTests.H"
+#import "TLSTests.h"
 
 @interface YammerTests : XCTestCase
 
@@ -66,6 +67,11 @@ void ym_test_assert_proc(const void *ctx, bool exp, const char *fmt, ...)
 - (void)testmDNS {
     const void *SELF = (__bridge const void *)(self);
     mDNSTestRun(ym_test_assert_proc, SELF);
+}
+
+- (void)testTLS {
+    const void *SELF = (__bridge const void *)(self);
+    TLSTestRun(ym_test_assert_proc, SELF);
 }
 
 @end
