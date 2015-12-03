@@ -7,7 +7,6 @@
 //
 
 #include "YMTLSProvider.h"
-#include "YMTLSProviderPriv.h"
 
 #include "YMOpenssl.h"
 #include "YMSecurityProviderInternal.h"

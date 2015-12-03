@@ -68,10 +68,7 @@ void __YMFree(__YMTypeRef object);
 YMTypeRef _YMAlloc(YMTypeID type, size_t size)
 {
     if ( size < sizeof(_YMType) )
-    {
-        fprintf(stderr,"base: fatal: bad alloc");
-        abort();
-    }
+        ymabort("base: fatal: bad alloc '%c'",type);
     
     __YMTypeRef object = YMALLOC(size);
     object->__type = type;
@@ -79,10 +76,7 @@ YMTypeRef _YMAlloc(YMTypeID type, size_t size)
     
     object->__mutex = YMCreateMutexWithOptions(YMLockRecursive);
     if ( ! object->__mutex )
-    {
-        fprintf(stderr,"base: fatal: create mutex failed");
-        abort();
-    }
+        ymabort("base: fatal: create mutex failed");
     
     // can't divine a way to escape infinite recursion here
     //YMStringRef name = _YMStringCreateForYMAlloc("ymtype-%p", object, NULL);
@@ -97,10 +91,8 @@ YMTypeRef YMRetain(YMTypeRef object_)
     __YMTypeRef object = (__YMTypeRef)object_;
     YMLockMutex(object->__mutex);
     if ( object->__retainCount < 1 )
-    {
-        ymerr("base: fatal: retain count inconsistent");
-        abort();
-    }
+        ymabort("base: fatal: retain count inconsistent for %p",object);
+
     object->__retainCount++;
     YMUnlockMutex(object->__mutex);
     
@@ -118,11 +110,8 @@ YM_RELEASE_RETURN_TYPE YMRelease(YMTypeRef object_)
     YMLockMutex(object->__mutex);
     bool dealloc = false;
     if ( object->__retainCount < 1 )
-    {
-        // we will just as easily crash before we reach this
-        ymerr("base: fatal: something has overreleased %p (%c)",object,object->__type);
-        abort();
-    }
+        ymabort("base: fatal: something has overreleased %p (%c)",object,object->__type);
+    
     if ( object->__retainCount-- == 1 )
     {
         dealloc = true;
@@ -184,10 +173,7 @@ void __YMFree(__YMTypeRef object)
     else if ( type == _YMStringTypeID )
         _YMStringFree(object);
     else
-    {
-        ymlog("YMFree unknown type %c",type);
-        abort();
-    }
+        ymabort("base: fatal: free type unknown %c",type);
 }
 
 void YMSelfLock(YMTypeRef object)
