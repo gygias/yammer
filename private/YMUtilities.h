@@ -47,6 +47,8 @@ YMIOResult YMWriteFull(YMFILE fd, const uint8_t *buffer, size_t bytes, size_t *o
 void YMNetworkingInit();
 int32_t YMPortReserve(bool ipv4, int *outSocket);
 
+int YMGetNumberOfOpenFilesForCurrentProcess();
+
 // in utilities for YMAlloc
 #include "YMLock.h"
 

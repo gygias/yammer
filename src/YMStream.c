@@ -346,7 +346,7 @@ YMIOResult __YMStreamForward(__YMStreamRef stream, YMFILE file, bool fromFileToS
             if ( aActualLength > 0 )
             {
                 aResult = YMWriteFull(file, buffer, aActualLength, &outWritten);
-                fsync(file); // REMOVE ME
+                //fsync(file); // REMOVE ME
                 ymsoftassert(aActualLength==outWritten,"write forward file");
             }
         }

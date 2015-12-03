@@ -9,6 +9,12 @@
 #ifndef PrefixHeader_pch
 #define PrefixHeader_pch
 
+#if defined(DEBUG) || defined(_DEBUG)
+#define YMDEBUG 1
+#else
+#undef YMDEBUG
+#endif
+
 #define YM_TOKEN_STR(x) #x
 #define YM_STR_TOKEN(x,y) x ## y
 
@@ -22,6 +28,7 @@
 #include <stdio.h>
 
 #if defined(_MACOS) || defined(RPI)
+#include <unistd.h>
 # if defined (RPI)
   typedef __ssize_t ssize_t;
 # include <limits.h>
@@ -30,7 +37,6 @@
 # include "arc4random.h"
 # define __USE_BSD
 # endif
-#include <unistd.h>
 #elif defined(WIN32)
 #define _WINSOCKAPI_
 #include <windows.h>

@@ -43,13 +43,14 @@
 #ifndef YM_SOFT_ASSERTS
 #define YM_SOFT_ASSERTS 1
 #endif
-#define ymsoftassert(x,y) _ymsoftassert(x,y,YM_SOFT_ASSERTS)
-#define _ymsoftassert(x,y,z) { if (!(x)) { fprintf(stderr,"soft assert: "y"\n"); if (z) abort(); } }
+#define ymsoftassert(x,y,...) _ymsoftassert(YM_SOFT_ASSERTS,x,y,##__VA_ARGS__)
+#define _ymsoftassert(z,x,y,...) { if (!(x)) { ymerr("soft assert: "y,##__VA_ARGS__); if (z) abort(); } }
 
 #ifndef YM_HARD_ASSERT
 #define YM_HARD_ASSERT 1
 #endif
-#define ymassert(x,y) { if (!(x)) { fprintf(stderr,"hard assert: "y"\n"); abort(); } }
+#define ymassert(x,y,...) { if (!(x)) { ymerr("hard assert: "y,##__VA_ARGS__); abort(); } }
+#define ymabort(x,...) ymassert(false,x,##__VA_ARGS__)
 
 #define YM_TYPE_RESERVED (128 - sizeof(YMTypeID))
 

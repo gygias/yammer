@@ -98,7 +98,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>c:\Program Files\Bonjour SDK\Lib\Win32;lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>dnssd.lib;ws2_32.lib;ssleay32.lib;libeay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dnssd.lib;ws2_32.lib;ssleay32.lib;libeay32.lib;ntdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/NODEFAULTLIB:libcmt.lib</AdditionalOptions>
       <IgnoreAllDefaultLibraries>
       </IgnoreAllDefaultLibraries>
@@ -199,7 +199,6 @@
     <ClInclude Include="..\private\YMThread.h" />
     <ClInclude Include="..\private\YMThreadPriv.h" />
     <ClInclude Include="..\private\YMTLSProvider.h" />
-    <ClInclude Include="..\private\YMTLSProviderPriv.h" />
     <ClInclude Include="..\private\YMUtilities.h" />
     <ClInclude Include="..\private\YMX509Certificate.h" />
     <ClInclude Include="..\private\YMX509CertificatePriv.h" />

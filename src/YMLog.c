@@ -30,7 +30,7 @@ YM_ONCE_FUNC(__YMLogInit,
     gTimeFormatBuf = YMALLOC(gTimeFormatBufLen);
 })
 
-void __YMLogType( char* format, ... )
+void __YMLogType( int level, char* format, ... )
 {
 	YM_ONCE_DO_LOCAL(__YMLogInit);
     
@@ -44,7 +44,7 @@ void __YMLogType( char* format, ... )
         
         va_list args;
         va_start(args,format);
-        vprintf(format, args);
+        vfprintf(level==YMLogError?stderr:stdout,format, args);
         va_end(args);
         
         

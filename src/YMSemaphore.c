@@ -98,7 +98,8 @@ YMSemaphoreRef __YMSemaphoreCreate(YMStringRef name, int initialValue)
         ymerr(YM_SEM_LOG_PREFIX "warning: semaphore name index reset",YM_SEM_LOG_DESC);
     ymlog("semaphore[%s,%s]: created",YMSTR(semaphore->semName),YMSTR(semaphore->userName));
     YMLockUnlock(gYMSemaphoreIndexLock);
-    
+
+#ifndef WIN32
 try_again:;
     semaphore->sem = sem_open(YMSTR(semaphore->semName), O_CREAT|O_EXCL, S_IRUSR|S_IWUSR, initialValue); // todo mode?
     if ( semaphore->sem == SEM_FAILED )
@@ -111,15 +112,19 @@ try_again:;
                 goto try_again;
             }
             else
-            {
-                ymerr(YM_SEM_LOG_PREFIX "failed: %d (%s)",YM_SEM_LOG_DESC,errno,strerror(errno));
-                abort();
-            }
+			{
+				ymerr(YM_SEM_LOG_PREFIX "sem_unlink failed %d (%s)",YM_SEM_LOG_DESC,errno,strerror(errno));
+				goto try_again;
+			}
         }
         else
-            ymerr(YM_SEM_LOG_PREFIX "fatal: sem_open failed: %d (%s)",YM_SEM_LOG_DESC,errno,strerror(errno));
-        abort(); // since we handle names internally
+            ymabort(YM_SEM_LOG_PREFIX "fatal: sem_open failed: %d (%s)",YM_SEM_LOG_DESC,errno,strerror(errno));
     }
+#else
+	semaphore->sem = CreateSemaphore(NULL, 0, LONG_MAX, NULL);
+	if (semaphore->sem == NULL)
+		ymabort(YM_SEM_LOG_PREFIX "fatal: CreateSemaphore failed: %x", YM_SEM_LOG_DESC, GetLastError());
+#endif
     
     return (YMSemaphoreRef)semaphore;
 }

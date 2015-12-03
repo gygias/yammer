@@ -182,7 +182,7 @@ void _YMTLSProviderFree(YMTypeRef object)
         SSL_CTX_free(tls->sslCtx);
 }
 
-void _YMTLSProviderFreeGlobals()
+void YMTLSProviderFreeGlobals()
 {
     if ( gYMTLSExDataList )
     {

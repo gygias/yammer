@@ -62,10 +62,8 @@ void YMLockLock(YMLockRef lock_)
     
     bool okay = YMLockMutex(lock->mutex);
     
-//#ifndef DUMB_AND_DUMBER
     if ( ! okay )
-        abort();
-//#endif
+        ymabort("fatal: failed to lock mutex");
 }
 
 void YMLockUnlock(YMLockRef lock_)

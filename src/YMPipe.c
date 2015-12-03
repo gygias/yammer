@@ -8,6 +8,7 @@
 
 #include "YMPipe.h"
 #include "YMPipePriv.h"
+#include "YMUtilities.h"
 
 #include "YMLog.h"
 #undef ymlog_type
@@ -63,12 +64,13 @@ YMPipeRef YMPipeCreate(YMStringRef name)
         }
     }
   
+#ifdef YMDEBUG
     // todo this number is based on mac test cases, if open files rises above 200
     // something isn't closing/releasing their streams (in practice doesn't seem to go above 100)
-//#ifdef _MACOS
 #define TOO_MANY_FILES 200
-//#else
-    ymsoftassert(fds[0]<TOO_MANY_FILES&&fds[1]<TOO_MANY_FILES, "too many open files");
+    int openFiles = YMGetNumberOfOpenFilesForCurrentProcess();
+	ymsoftassert(openFiles<TOO_MANY_FILES, "too many open files");
+#endif
     
     aPipe->outFd = fds[0];
     aPipe->inFd = fds[1];

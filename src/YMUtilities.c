@@ -8,6 +8,8 @@
 
 #include "YMUtilities.h"
 
+#include <fcntl.h>
+
 #include "YMLock.h"
 
 #include "YMLog.h"
@@ -32,9 +34,12 @@
 # endif
 #elif defined(WIN32)
 #define YM_PORT_MAX IPPORT_DYNAMIC_MAX
-#include <winsock2.h>
-#include <ws2tcpip.h>
+#include <Winsock2.h>
+#include <Ws2tcpip.h>
 #include <time.h>
+#include <Winternl.h> // NtQuery
+#include <Processthreadsapi.h> // GetCurrentProcessId
+#include <VersionHelpers.h> // IsWindows*
 #endif
 
 #ifdef __cplusplus
@@ -242,6 +247,84 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
     return okay ? (uint32_t)thePort : -1;
 }
 
+int YMGetNumberOfOpenFilesForCurrentProcess()
+{
+    int nFiles = 0;
+#ifndef WIN32
+    struct rlimit r_limit;
+    int result = getrlimit(RLIMIT_NOFILE, &r_limit);
+    ymsoftassert(result==0, "getrlimit: %d %s",errno,strerror(errno));
+    
+    for( rlim_t i = 0; i < r_limit.rlim_cur; i++ )
+    {
+        errno = 0;
+        result = fcntl((int)i, F_GETFD);
+        if ( result == 0 )
+            nFiles++;
+    }
+#else // maybe there's a hidden "getrlimit" for win32? couldn't find it
+	// cribbed from http://www.codeproject.com/Articles/18975/Listing-Used-Files
+    // Get the list of all handles in the system
+	typedef struct _SYSTEM_HANDLE
+	{
+		DWORD       dwProcessId;
+		BYTE		bObjectType;
+		BYTE		bFlags;
+		WORD		wValue;
+		PVOID       pAddress;
+		DWORD GrantedAccess;
+	}SYSTEM_HANDLE;
+
+	typedef struct _SYSTEM_HANDLE_INFORMATION
+	{
+		DWORD         dwCount;
+		SYSTEM_HANDLE Handles[1];
+	} SYSTEM_HANDLE_INFORMATION, *PSYSTEM_HANDLE_INFORMATION, **PPSYSTEM_HANDLE_INFORMATION;
+
+	typedef enum _SYSTEM_INFORMATION_CLASS {
+		SystemHandleInformation = 0X10,
+	} SYSTEM_INFORMATION_CLASS;
+
+#define VISTA_FILETYPE  25
+#define XP_FILETYPE 28
+	int nFileType = IsWindowsVistaOrGreater() ? VISTA_FILETYPE : XP_FILETYPE;
+
+	SYSTEM_HANDLE_INFORMATION *pSysHandleInformation = NULL;
+	DWORD sysHandleInformationSize = 0;
+    NTSTATUS status = NtQuerySystemInformation( SystemHandleInformation,
+                                               NULL, 0, &sysHandleInformationSize);
+	if ( NT_SUCCESS(status) || sysHandleInformationSize == 0 )
+		return -1;
+
+	sysHandleInformationSize = sysHandleInformationSize + 1024;
+	pSysHandleInformation = malloc(sysHandleInformationSize);
+    status = NtQuerySystemInformation( SystemHandleInformation,
+                                        pSysHandleInformation, sysHandleInformationSize, &sysHandleInformationSize);
+    if( !NT_SUCCESS(status))
+	{
+		free(pSysHandleInformation);
+		return -1;
+	}
+    
+	DWORD currentProcessID = GetCurrentProcessId();
+	for ( DWORD i = 0; i < pSysHandleInformation->dwCount; i++ )
+	{
+		SYSTEM_HANDLE sh = pSysHandleInformation->Handles[i];
+		if ( sh.dwProcessId != currentProcessID )
+			continue;
+		if( sh.bObjectType != nFileType )// Under windows XP file handle is of type 28
+			continue;
+		ymerr("open file: %d",sh.wValue);
+		nFiles++;
+	}
+
+	free(pSysHandleInformation);
+#endif
+    
+    ymlog("open files: %d",nFiles);
+    return nFiles;
+}
+
 #ifndef WIN32
 pthread_mutex_t *YMCreateMutexWithOptions(YMLockOptions options)
 {
@@ -384,9 +467,5 @@ int gettimeofday(struct timeval * tp, struct timezone * tzp)
 	tp->tv_sec = (long)((time - EPOCH) / 10000000L);
 	tp->tv_usec = (long)(system_time.wMilliseconds * 1000);
 	return 0;
-}
-#endif
-
-#ifdef __cplusplus
 }
 #endif

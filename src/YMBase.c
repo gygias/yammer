@@ -200,9 +200,9 @@ void YMSelfUnlock(YMTypeRef object)
     YMUnlockMutex(((__YMTypeRef)object)->__mutex);
 }
 
-#include "YMTLSProviderPriv.h"
+#include "YMTLSProvider.h"
 
 void YMFreeGlobalResources()
 {
-    _YMTLSProviderFreeGlobals();
+    YMTLSProviderFreeGlobals();
 }
