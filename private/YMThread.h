@@ -16,8 +16,7 @@ typedef const struct __ym_thread_t *YMThreadRef;
 typedef void (*ym_void_voidp_func)(void *);
 typedef void *(*ym_voidp_voidp_func)(void *);
 
-typedef struct ym_thread_dispatch_def ym_thread_dispatch;
-typedef struct ym_thread_dispatch_def *ym_thread_dispatch_ref;
+typedef struct ym_thread_dispatch_t *ym_thread_dispatch_ref;
 
 #ifndef WIN32
 #define YM_THREAD_RETURN void
@@ -46,16 +45,16 @@ YMThreadRef YMThreadDispatchCreate(YMStringRef name);
 void YMThreadSetContext(YMThreadRef thread, void *context);
 
 // if context contains nested allocations, or doesn't use the YMALLOC allocator, use ym_thread_dispatch_dealloc
-typedef struct ym_thread_dispatch_def
+typedef struct ym_thread_dispatch_t
 {
     ym_thread_dispatch_func dispatchProc;
     ym_thread_dispatch_dealloc deallocProc; // optional // todo why is this this necessary? can't dispatchProc take care of opaque stuff before it finishes?
     bool freeContextWhenDone; // optional convenience for YMALLOC'd context pointers. will be free'd after deallocProc, if it is specified.
     void *context; // weak
     YMStringRef description; // optional, assigns a name that will be included in logging from YMThreadDispatch
-} _ym_thread_dispatch_def;
+} _ym_thread_dispatch_t;
 
-void YMThreadDispatchDispatch(YMThreadRef thread, ym_thread_dispatch dispatch);
+void YMThreadDispatchDispatch(YMThreadRef thread, struct ym_thread_dispatch_t dispatch);
 
 typedef void (*ym_dispatch_forward_file_callback)(void *, YMIOResult, uint64_t);
 typedef struct _ym_thread_forward_file_context_t

@@ -23,7 +23,7 @@
 typedef struct __YMDictionaryItem
 {
     uint64_t key;
-    const void *value;
+    void *value;
     struct __YMDictionaryItem *next;
 } _YMDictionaryItem;
 typedef _YMDictionaryItem *_YMDictionaryItemRef;

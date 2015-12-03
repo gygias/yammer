@@ -78,8 +78,8 @@ void _dictionary_test_proc(void *ctx)
     
     while (!theTest->endTest)
     {
-        const char *random_string = YMRandomASCIIStringWithMaxLength(arc4random_uniform(MaxItemLength), false, false);
-        const uint8_t *random_data = YMRandomDataWithMaxLength(MaxItemLength,NULL);
+        char *random_string = YMRandomASCIIStringWithMaxLength(arc4random_uniform(MaxItemLength), false, false);
+        uint8_t *random_data = YMRandomDataWithMaxLength(MaxItemLength,NULL);
         
         YMLockLock(theTest->lock);
         {

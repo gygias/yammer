@@ -18,7 +18,7 @@ extern "C" {
 typedef const struct __ym_dictionary_t *YMDictionaryRef;
 
 typedef uint64_t YMDictionaryKey;
-typedef const void *YMDictionaryValue;
+typedef void *YMDictionaryValue;
 
 YMAPI YMDictionaryRef YMDictionaryCreate();
 

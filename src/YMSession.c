@@ -348,7 +348,7 @@ bool YMSessionConnectToPeer(YMSessionRef session_, YMPeerRef peer, bool sync)
     context->connection = (YMConnectionRef)YMRetain(newConnection);
     
     YMStringRef name = YMStringCreateWithFormat("session-async-connect-%s",YMSTR(YMAddressGetDescription(address)),NULL);
-    ym_thread_dispatch connectDispatch = {__ym_session_connect_async_proc, 0, 0, context, name};
+    struct ym_thread_dispatch_t connectDispatch = {__ym_session_connect_async_proc, 0, 0, context, name};
     
     if ( ! sync )
     {
@@ -418,7 +418,7 @@ void __YMSessionAddConnection(YMSessionRef session_, YMConnectionRef connection)
     {
         YMDictionaryKey key = (YMDictionaryKey)connection;
         ymassert(!YMDictionaryContains(session->connectionsByAddress, key), "connections by address state");
-        YMDictionaryAdd(session->connectionsByAddress, key, YMRetain(connection));
+        YMDictionaryAdd(session->connectionsByAddress, key, (void *)YMRetain(connection));
     }
     YMLockUnlock(session->connectionsByAddressLock);
     
@@ -640,7 +640,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_accept_proc(YM_THREAD_PARAM 
         initCtx->addrLen = thisLength;
         initCtx->ipv4 = ipv4;
         YMStringRef description = YMSTRC("init-connection");
-        ym_thread_dispatch dispatch = { __ym_session_init_incoming_connection_proc, NULL, false, initCtx, description };
+        struct ym_thread_dispatch_t dispatch = { __ym_session_init_incoming_connection_proc, NULL, false, initCtx, description };
         YMThreadDispatchDispatch(session->initConnectionDispatchThread, dispatch);
         YMRelease(description);
     }
@@ -811,7 +811,7 @@ void __ym_mdns_service_appeared_func(__unused YMmDNSBrowserRef browser, YMmDNSSe
     
     YMPeerRef peer = _YMPeerCreate(service->name, NULL, NULL);
     YMLockLock(session->knownPeersLock);
-    YMDictionaryAdd(session->knownPeers, (YMDictionaryKey)peer, peer);
+    YMDictionaryAdd(session->knownPeers, (YMDictionaryKey)peer, (void *)peer);
     YMLockUnlock(session->knownPeersLock);
     
     session->addedFunc(session,peer,session->callbackContext);

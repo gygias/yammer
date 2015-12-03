@@ -20,13 +20,13 @@
 #endif
 
 // this is the best way of ordering XCTestCase classes that i could find, at the time
-#define YammerTests             B_YammerTests
-#define LocalSocketPairTests    C_LocalSocketPairTests
-#define CryptoTests             D_CryptoTests
-#define mDNSTests               E_mDNSTests
-#define TLSTests                F_TLSTests
-#define PlexerTests             G_PlexerTests
-#define ConnectionTests         H_ConnectionTests
+#define YammerTests             A_YammerTests
+//#define LocalSocketPairTests    C_LocalSocketPairTests
+//#define CryptoTests             D_CryptoTests
+//#define mDNSTests               E_mDNSTests
+//#define TLSTests                F_TLSTests
+//#define PlexerTests             G_PlexerTests
+//#define ConnectionTests         H_ConnectionTests
 #define SessionTests            I_SessionTests
 #define CheckStateTest          Z_CheckStateTest
 

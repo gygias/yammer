@@ -58,7 +58,7 @@ void _TestSpawnManyStopThenSpawnAnother(struct LocalSocketPairTest *theTest)
         int socketB = YMLocalSocketPairGetB(aPair);
         testassert(socketA>=0&&socketB>=0,"sockets < 0");
         
-        YMDictionaryAdd(pairs, (YMDictionaryKey)aPair, aPair);
+        YMDictionaryAdd(pairs, (YMDictionaryKey)aPair, (void *)aPair);
     }
     
     for ( int i = 0; i < nPairs; i++ )

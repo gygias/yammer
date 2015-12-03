@@ -53,8 +53,8 @@ typedef struct RunEndpointContext
 } RunEndpointContext;
 
 void _RunEndpoint(struct RunEndpointContext *context);
-void _SendMessage(struct TLSTest *theTest, YMTLSProviderRef tls, uint8_t *message, uint16_t messageLen);
-uint8_t *_ReceiveMessage(struct TLSTest *theTest, YMTLSProviderRef tls, uint16_t *outLen);
+void _SendAMessage(struct TLSTest *theTest, YMTLSProviderRef tls, uint8_t *message, uint16_t messageLen);
+uint8_t *_ReceiveAMessage(struct TLSTest *theTest, YMTLSProviderRef tls, uint16_t *outLen);
 
 void __sigpipe_handler (__unused int signum)
 {
@@ -176,7 +176,7 @@ void _RunEndpoint(struct RunEndpointContext *context)
         
         if ( isServer )
         {
-            uint8_t *incomingMessage = _ReceiveMessage(theTest,tls,&incomingMessageLen);
+            uint8_t *incomingMessage = _ReceiveAMessage(theTest,tls,&incomingMessageLen);
             testassert(incomingMessageLen&&theTest->lastMessageSentLen&&0==memcmp(incomingMessage, theTest->lastMessageSent, incomingMessageLen),
                       "incoming and last written do not match (i%zu o%zu)",incomingMessageLen,theTest->lastMessageSentLen);
             free(incomingMessage);
@@ -184,16 +184,16 @@ void _RunEndpoint(struct RunEndpointContext *context)
             if ( TLSTestRandomMessages && theTest->lastMessageSent ) free(theTest->lastMessageSent);
             theTest->lastMessageSent = outgoingMessage;
             theTest->lastMessageSentLen = outgoingMessageLen;
-            _SendMessage(theTest, tls, outgoingMessage, outgoingMessageLen);
+            _SendAMessage(theTest, tls, outgoingMessage, outgoingMessageLen);
         }
         else
         {
             if ( TLSTestRandomMessages && theTest->lastMessageSent ) free(theTest->lastMessageSent);
             theTest->lastMessageSent = outgoingMessage;
             theTest->lastMessageSentLen = outgoingMessageLen;
-            _SendMessage(theTest, tls, outgoingMessage, outgoingMessageLen);
+            _SendAMessage(theTest, tls, outgoingMessage, outgoingMessageLen);
             
-            uint8_t *incomingMessage = _ReceiveMessage(theTest, tls, &incomingMessageLen);
+            uint8_t *incomingMessage = _ReceiveAMessage(theTest, tls, &incomingMessageLen);
             testassert(incomingMessageLen&&theTest->lastMessageSentLen&&0==memcmp(incomingMessage, theTest->lastMessageSent, incomingMessageLen),
                       "incoming and last written do not match (i%zu o%zu)",incomingMessageLen,theTest->lastMessageSentLen);
             free(incomingMessage);
@@ -214,15 +214,15 @@ void _RunEndpoint(struct RunEndpointContext *context)
     YMSemaphoreSignal(theTest->threadExitSemaphore);
 }
 
-void _SendMessage(struct TLSTest *theTest, YMTLSProviderRef tls, uint8_t *message, uint16_t messageLen)
+void _SendAMessage(__unused struct TLSTest *theTest, YMTLSProviderRef tls, uint8_t *message, uint16_t messageLen)
 {
     bool okay = YMSecurityProviderWrite((YMSecurityProviderRef)tls, (void *)&messageLen, sizeof(messageLen));
-    testassert(okay,"failed to write message length");
+    //testassert(okay,"failed to write message length");
     okay = YMSecurityProviderWrite((YMSecurityProviderRef)tls, message, messageLen);
-    testassert(okay,"failed to write message");
+    //testassert(okay,"failed to write message");
 }
 
-uint8_t *_ReceiveMessage(struct TLSTest *theTest, YMTLSProviderRef tls, uint16_t *outLen)
+uint8_t *_ReceiveAMessage(struct TLSTest *theTest, YMTLSProviderRef tls, uint16_t *outLen)
 {
     uint16_t length;
     bool okay = YMSecurityProviderRead((YMSecurityProviderRef)tls, (void *)&length, sizeof(length));

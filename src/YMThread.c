@@ -162,11 +162,11 @@ YMThreadRef YMThreadDispatchCreate(YMStringRef name)
     YMRelease(memberName);
     
     thread->dispatchesByID = YMDictionaryCreate();
-    memberName = YMSTRCF("%s-dispatch",YMSTR(name));
+    memberName = YMSTRCF("%s-dispatch",name ? YMSTR(name) : "*");
     thread->dispatchSemaphore = YMSemaphoreCreateWithName(memberName,0);
     YMRelease(memberName);
     
-    memberName = YMSTRCF("%s-dispatch-exit",YMSTR(name));
+    memberName = YMSTRCF("%s-dispatch-exit",name ? YMSTR(name) : "*");
     thread->dispatchExitSemaphore = YMSemaphoreCreateWithName(memberName, 0);
     YMRelease(memberName);
     
@@ -284,7 +284,7 @@ bool YMThreadJoin(YMThreadRef thread_)
     return true;
 }
 
-void YMThreadDispatchDispatch(YMThreadRef thread_, ym_thread_dispatch dispatch)
+void YMThreadDispatchDispatch(YMThreadRef thread_, struct ym_thread_dispatch_t dispatch)
 {
     __YMThreadRef thread = (__YMThreadRef)thread_;
     
@@ -371,7 +371,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_dispatch_dispatch_thread_proc
 
 ym_thread_dispatch_ref __YMThreadDispatchCopy(ym_thread_dispatch_ref userDispatchRef)
 {
-    ym_thread_dispatch_ref copy = YMALLOC(sizeof(ym_thread_dispatch));
+    ym_thread_dispatch_ref copy = YMALLOC(sizeof(struct ym_thread_dispatch_t));
     copy->dispatchProc = userDispatchRef->dispatchProc;
     copy->context = userDispatchRef->context;
     copy->freeContextWhenDone = userDispatchRef->freeContextWhenDone;

@@ -13,6 +13,7 @@
 #import "LocalSocketPairTests.h"
 #import "mDNSTests.H"
 #import "TLSTests.h"
+#import "PlexerTests.h"
 
 @interface YammerTests : XCTestCase
 
@@ -72,6 +73,11 @@ void ym_test_assert_proc(const void *ctx, bool exp, const char *fmt, ...)
 - (void)testTLS {
     const void *SELF = (__bridge const void *)(self);
     TLSTestRun(ym_test_assert_proc, SELF);
+}
+
+- (void)testPlexer {
+    const void *SELF = (__bridge const void *)(self);
+    PlexerTestRun(ym_test_assert_proc, SELF);
 }
 
 @end

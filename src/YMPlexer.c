@@ -366,7 +366,7 @@ YMStreamRef YMPlexerCreateStream(YMPlexerRef plexer_, YMStringRef name)
         YMStringRef userName = name ? YMRetain(name) : YMSTRC("*");
         newStream = __YMPlexerCreateStreamWithID(plexer, newStreamID, true, userName);
         
-        YMDictionaryAdd(plexer->localStreamsByID, newStreamID, newStream);
+        YMDictionaryAdd(plexer->localStreamsByID, newStreamID, (void *)newStream);
         YMRetain(newStream); // retain for user
         
     } while (false);
@@ -896,7 +896,7 @@ YMStreamRef __YMPlexerRetainOrCreateRemoteStreamWithID(__YMPlexerRef plexer, YMP
                 YMStringRef name = YMSTRC("remote");
                 theStream = __YMPlexerCreateStreamWithID(plexer,streamID,false,name);
                 
-                YMDictionaryAdd(plexer->remoteStreamsByID, streamID, theStream);
+                YMDictionaryAdd(plexer->remoteStreamsByID, streamID, (void *)theStream);
                 YMRetain(theStream); // retain for user (complements close)
                 YMRetain(theStream); // retain for function
                 
@@ -1031,11 +1031,11 @@ void __YMPlexerDispatchFunctionWithName(__YMPlexerRef plexer, YMStreamRef stream
     __ym_dispatch_plexer_and_stream_ref notifyDef = (__ym_dispatch_plexer_and_stream_ref)YMALLOC(sizeof(__ym_dispatch_plexer_and_stream));
     notifyDef->plexer = (__YMPlexerRef)YMRetain(plexer);
     notifyDef->stream = stream ? YMRetain(stream) : NULL;
-    ym_thread_dispatch dispatch = { function, NULL, true, notifyDef, nameToRelease };
+    struct ym_thread_dispatch_t dispatch = { function, NULL, true, notifyDef, nameToRelease };
     
-//#define YMPLEXER_NO_EVENT_QUEUE // for debugging
+#define YMPLEXER_NO_EVENT_QUEUE // for debugging
 #ifdef YMPLEXER_NO_EVENT_QUEUE
-    __unused void *silence = targetThread;
+    __unused const void *silence = targetThread;
     function(&dispatch);
 #else
     YMThreadDispatchDispatch(targetThread, dispatch);
