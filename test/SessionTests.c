@@ -164,9 +164,7 @@ void _TestSessionWritingDevRandomAndReadingManPages(struct SessionTest *theTest)
     // but we can randomize which we close first to find real bugs.
     //XCTAssert(okay,@"second (%@) session close",stopServerFirst?@"client":@"server");
     
-    //YMRelease(sC);
     YMRelease(theTest->serverSession);
-    //YMRelease(cC);
     YMRelease(theTest->clientSession);
     
     bool diffOK;

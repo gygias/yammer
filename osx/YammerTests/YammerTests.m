@@ -50,7 +50,7 @@ void ym_test_assert_proc(const void *ctx, bool exp, const char *fmt, ...)
 
 bool ym_test_diff_proc(const void *ctx, const char *path1, const char *path2, bool recursive, YMDictionaryRef exceptions)
 {
-    YammerTests *SELF = (__bridge YammerTests *)(ctx);
+    __unused YammerTests *SELF = (__bridge YammerTests *)(ctx);
     NSLog(@"diffing %s%s vs %s",recursive?"-r ":"",path1,path2);
     NSPipe *outputPipe = [NSPipe pipe];
     NSTask *diff = [NSTask new];
