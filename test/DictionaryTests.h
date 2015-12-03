@@ -9,7 +9,6 @@
 #ifndef DictionaryTests_h
 #define DictionaryTests_h
 
-#include "YammerTests.h"
 #include "Tests.h"
 
 void DictionaryTestRun(ym_test_assert_func assert, const void *context);

@@ -9,7 +9,6 @@
 #ifndef LocalSocketPairTests_h
 #define LocalSocketPairTests_h
 
-#include "YammerTests.h"
 #include "Tests.h"
 
 void LocalSocketPairTestRun(ym_test_assert_func assert, const void *context);

@@ -9,7 +9,6 @@
 #ifndef CryptoTests_h
 #define CryptoTests_h
 
-#include "YammerTests.h"
 #include "Tests.h"
 
 void CryptoTestRun(ym_test_assert_func assert, const void *context);

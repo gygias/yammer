@@ -7,7 +7,8 @@
 //
 
 #import <XCTest/XCTest.h>
-#import "YammerTests.h"
+
+#import "Tests.h"
 
 @interface CheckStateTest : XCTestCase
 

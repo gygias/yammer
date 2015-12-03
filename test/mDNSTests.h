@@ -9,7 +9,6 @@
 #ifndef mDNSTests_h
 #define mDNSTests_h
 
-#include "YammerTests.h"
 #include "Tests.h"
 
 void mDNSTestRun(ym_test_assert_func assert, const void *context);

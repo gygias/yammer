@@ -176,7 +176,7 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     YMRelease(theTest->plexerTest1Lock);
     YMRelease(theTest->lastMessageWrittenByStreamID);
     
-    
+    sleep(2); // let the system settle 3.0 (let threads exit before stack theTest goes out of scope without coordination)
     ymlog("plexer test finished %llu incoming round-trips on %d threads (%d round-trips per %s)",theTest->incomingStreamRoundTrips,
           PlexerTest1Threads,
           PlexerTest1RoundTripsPerThread,

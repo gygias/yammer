@@ -11,8 +11,6 @@
 #include "YMmDNSBrowser.h"
 #include "YMmDNSService.h"
 
-#include <time.h>
-
 typedef struct mDNSTest
 {
     ym_test_assert_func assert;

@@ -107,7 +107,7 @@ try_again:;
         {
             if ( sem_unlink(YMSTR(semaphore->semName)) == 0 )
             {
-                ymerr(YM_SEM_LOG_PREFIX "exists",YM_SEM_LOG_DESC);
+                ymlog(YM_SEM_LOG_PREFIX "exists",YM_SEM_LOG_DESC);
                 goto try_again;
             }
             else
