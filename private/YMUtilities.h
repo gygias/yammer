@@ -57,6 +57,8 @@ bool YMLockMutex(MUTEX_PTR_TYPE mutex);
 bool YMUnlockMutex(MUTEX_PTR_TYPE mutex);
 bool YMDestroyMutex(MUTEX_PTR_TYPE mutex);
 
+void YMUtilitiesFreeGlobals();
+
 #if defined(WIN32) || defined(_YOLO_DONT_TELL_PROFESSOR)
 int gettimeofday(struct timeval * tp, struct timezone * tzp);
 #endif

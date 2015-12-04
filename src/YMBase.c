@@ -191,4 +191,5 @@ void YMSelfUnlock(YMTypeRef object)
 void YMFreeGlobalResources()
 {
     YMTLSProviderFreeGlobals();
+	YMUtilitiesFreeGlobals();
 }

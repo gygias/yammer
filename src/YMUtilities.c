@@ -426,23 +426,35 @@ bool YMDestroyMutex(pthread_mutex_t *mutex)
 }
 
 #else
+
 bool YMLockMutex(HANDLE mutex)
 {
 	return ( WaitForSingleObject(mutex,INFINITE) == WAIT_OBJECT_0 );
 }
+
 bool YMUnlockMutex(HANDLE mutex)
 {
 	return ReleaseMutex(mutex);
 }
+
 bool YMDestroyMutex(HANDLE mutex)
 {
 	return CloseHandle(mutex);
 }
+
 HANDLE YMCreateMutexWithOptions(YMLockOptions options)
 {
 	return CreateMutex(NULL, false, NULL);
 }
+
 #endif
+
+void YMUtilitiesFreeGlobals()
+{
+#ifdef WIN32
+	WSACleanup();
+#endif
+}
 
 #if defined(WIN32) || defined(_YOLO_DONT_TELL_PROFESSOR)
 int gettimeofday(struct timeval * tp, struct timezone * tzp)
