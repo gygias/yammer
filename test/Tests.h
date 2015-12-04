@@ -26,6 +26,7 @@
 #endif
 #include <errno.h>
 
+#define ymlog_type YMLogDefault
 #include "Yammer.h"
 #include "YMLog.h"
 

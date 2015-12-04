@@ -42,17 +42,19 @@ void __YMLogType( int level, char* format, ... )
         const char *timeStr = YMGetCurrentTimeString(gTimeFormatBuf, gTimeFormatBufLen);
 		uint64_t threadID = _YMThreadGetCurrentThreadNumber();
 
+		FILE *file = (level == YMLogError) ? stderr : stdout;
+
         if ( timeStr )
-            fprintf(stdout,"%s yammer[%llu]: ",timeStr,threadID);
+            fprintf(file,"%s yammer[%llu]: ",timeStr,threadID);
         
         va_list args;
         va_start(args,format);
-        vfprintf(level==YMLogError?stderr:stdout,format, args);
+        vfprintf(file,format, args);
         va_end(args);
         
         
-        fprintf(stdout,"\n");
-        fflush(stdout);
+        fprintf(file,"\n");
+        fflush(file);
     }
     YMLockUnlock(gYMLogLock);
 }
