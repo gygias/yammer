@@ -11,13 +11,8 @@
 #include "YMUtilities.h"
 #include "YMLock.h"
 
-#include "YMLog.h"
-#undef ymlog_type
 #define ymlog_type YMLogThreadSync
-#if ( ymlog_type > ymlog_target )
-#undef ymlog
-#define ymlog(x,...) ;
-#endif
+#include "YMLog.h"
 
 #include <fcntl.h>
 //#define PTHREAD_SEMAPHORE
@@ -135,7 +130,7 @@ void _YMSemaphoreFree(YMTypeRef object)
     ymlog("semaphore[%s,%s]: deallocating",YMSTR(semaphore->semName),YMSTR(semaphore->userName));
     
     int result, error = 0;
-    char *errorStr = NULL;
+    const char *errorStr = NULL;
 	YM_CLOSE_SEMAPHORE(semaphore);
 	if (result == -1)
 		ymerr(YM_SEM_LOG_PREFIX "warning: sem_unlink failed: %d (%s)", YM_SEM_LOG_DESC, error, errorStr);
@@ -153,7 +148,7 @@ void YMSemaphoreWait(YMSemaphoreRef semaphore_)
     while ( retry )
     {
         int result, error = 0;
-        char *errorStr = NULL;
+        const char *errorStr = NULL;
         YM_WAIT_SEMAPHORE(semaphore);
         if (result != 0)
         {
@@ -174,7 +169,7 @@ void YMSemaphoreSignal(YMSemaphoreRef semaphore_)
     __YMSemaphoreRef semaphore = (__YMSemaphoreRef)semaphore_;
     
 	int result, error = 0;
-	char *errorStr = NULL;
+	const char *errorStr = NULL;
 	YM_POST_SEMAPHORE(semaphore);
 	if ( result != 0 )
 	{

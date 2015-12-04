@@ -12,13 +12,8 @@
 #include "YMSemaphore.h"
 #include "YMUtilities.h"
 
-#include "YMLog.h"
-#undef ymlog_type
 #define ymlog_type YMLogIO
-#if ( ymlog_type > ymlog_target )
-#undef ymlog
-#define ymlog(x,...) ;
-#endif
+#include "YMLog.h"
 
 #ifndef WIN32
 #include <sys/socket.h>
@@ -36,7 +31,7 @@
 		      + strlen ((ptr)->sun_path))
 #endif
 
-#ifndef WIN32 // only used by the os x unit tests atm
+//#ifndef WIN32 // only used by the os x unit tests atm
 
 typedef struct __ym_local_socket_pair_t
 {
@@ -44,13 +39,13 @@ typedef struct __ym_local_socket_pair_t
     
     YMStringRef socketName;
     YMStringRef userName;
-    int socketA;
-    int socketB;
+    YMSOCKET socketA;
+	YMSOCKET socketB;
 } __ym_local_socket_pair_t;
 typedef struct __ym_local_socket_pair_t *__YMLocalSocketPairRef;
 
 int __YMLocalSocketPairCreateClient();
-void __ym_local_socket_accept_proc(void *);
+YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_local_socket_accept_proc(YM_THREAD_PARAM);
 void __YMLocalSocketPairInitOnce(void);
 
 const char *__YMLocalSocketPairNameBase = "ym-lsock";
@@ -59,8 +54,8 @@ static YMStringRef gYMLocalSocketPairName = NULL;
 static YMSemaphoreRef gYMLocalSocketSemaphore = NULL; // thread ready & each 'accepted'
 static bool gYMLocalSocketPairAcceptKeepListening = false;
 static bool gYMLocalSocketThreadEnd = false; // sadly not quite the same as 'keep listening'
-static int gYMLocalSocketListenSocket = -1;
-static int gYMLocalSocketPairAcceptedLast = -1;
+static YMSOCKET gYMLocalSocketListenSocket = -1;
+static YMSOCKET gYMLocalSocketPairAcceptedLast = -1;
 
 void YMLocalSocketPairStop()
 {
@@ -69,7 +64,8 @@ void YMLocalSocketPairStop()
         // flag & signal thread to exit
         gYMLocalSocketPairAcceptKeepListening = false;
         gYMLocalSocketThreadEnd = true;
-        int result = close(gYMLocalSocketListenSocket);
+        int result, error; const char *errorStr;
+        YM_CLOSE_SOCKET(gYMLocalSocketListenSocket);
         if ( result != 0 )
             ymerr("local-socket: warning: failed to close listen socket: %d (%s)",errno,strerror(errno));
         gYMLocalSocketListenSocket = -1;
@@ -160,12 +156,12 @@ YMLocalSocketPairRef YMLocalSocketPairCreate(YMStringRef name, bool moreComing)
     return pair;
 }
 
-int YMLocalSocketPairGetA(YMLocalSocketPairRef pair_)
+YMSOCKET YMLocalSocketPairGetA(YMLocalSocketPairRef pair_)
 {
     __YMLocalSocketPairRef pair = (__YMLocalSocketPairRef)pair_;
     return pair->socketA;
 }
-int YMLocalSocketPairGetB(YMLocalSocketPairRef pair_)
+YMSOCKET YMLocalSocketPairGetB(YMLocalSocketPairRef pair_)
 {
     __YMLocalSocketPairRef pair = (__YMLocalSocketPairRef)pair_;
     return pair->socketB;
@@ -175,13 +171,14 @@ void _YMLocalSocketPairFree(YMTypeRef object)
 {
     __YMLocalSocketPairRef pair = (__YMLocalSocketPairRef)object;
     
-    int result = close(pair->socketA);
+	int result, error; const char *errorStr;
+    YM_CLOSE_SOCKET(pair->socketA);
     if ( result != 0 )
     {
         ymerr("local-socket[%s]: close failed (%d): %d (%s)",YMSTR(pair->userName),result,errno,strerror(errno));
         abort();
     }
-    result = close(pair->socketB);
+    YM_CLOSE_SOCKET(pair->socketB);
     if ( result != 0 )
     {
         ymerr("local-socket[%s]: close failed (%d): %d (%s)",YMSTR(pair->userName),result,errno,strerror(errno));
@@ -193,9 +190,17 @@ void _YMLocalSocketPairFree(YMTypeRef object)
 }
 
 // lifted from http://www.gnu.org/software/libc/manual/html_node/Local-Socket-Example.html
+#ifndef WIN32
+#define LOCAL_SOCKET_DOMAIN PF_LOCAL
+#else
+#define LOCAL_SOCKET_DOMAIN PF_INET
+#define LOCAL_SOCKET_ADDR 0x7f000001
+#define LOCAL_SOCKET_PORT 6969 // fixme use YMReservePort
+#endif
+
 int __YMLocalSocketPairCreateClient()
 {
-    int sock = socket(PF_LOCAL, SOCK_STREAM, PF_UNSPEC/* IP, /etc/sockets man 5 protocols*/);
+    YMSOCKET sock = socket(LOCAL_SOCKET_DOMAIN, SOCK_STREAM, PF_UNSPEC/* IP, /etc/sockets man 5 protocols*/);
     if ( sock < 0 )
     {
         ymerr("local-socket[new-client]: socket failed: %d (%s)",errno,strerror(errno));
@@ -203,22 +208,29 @@ int __YMLocalSocketPairCreateClient()
     }
     
     int yes = 1;
-    int result = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+    int result = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const void *)&yes, sizeof(yes));
     if ( result != 0 )
         ymerr("local-socket[new-client]: warning: setsockopt failed on %d: %d: %d (%s)",sock,result,errno,strerror(errno));
     
     /* Bind a name to the socket. */
+#ifndef WIN32
     struct sockaddr_un sockName;
     sockName.sun_family = AF_LOCAL;
     strncpy (sockName.sun_path, YMSTR(gYMLocalSocketPairName), sizeof (sockName.sun_path));
     sockName.sun_path[sizeof (sockName.sun_path) - 1] = '\0';
     socklen_t size = (socklen_t)SUN_LEN(&sockName);
+#else
+	struct sockaddr_in sockName = { AF_INET, htons(LOCAL_SOCKET_PORT), {0}, {0}};
+	result = inet_pton(AF_INET, "127.0.0.1",&sockName.sin_addr.s_addr);
+	socklen_t size = sizeof(struct sockaddr_in);
+#endif
     
     result = connect(sock, (struct sockaddr *) &sockName, size);
     if ( result != 0 )
     {
         ymerr("local-socket[new-client]: connect failed: %d: %d (%s)",result,errno,strerror(errno));
-        close(sock);
+		int error; const char *errorStr;
+        YM_CLOSE_SOCKET(sock);
         return -1;
     }
     
@@ -227,7 +239,7 @@ int __YMLocalSocketPairCreateClient()
     return sock;
 }
 
-void __ym_local_socket_accept_proc(__unused void *ctx)
+YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_local_socket_accept_proc(__unused YM_THREAD_PARAM ctx)
 {
     ymlog("__ym_local_socket_accept_proc entered");
     
@@ -257,22 +269,29 @@ void __ym_local_socket_accept_proc(__unused void *ctx)
     }
     
     int yes = 1;
-    int aResult = setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
-    if ( aResult != 0 )
-        ymerr("local-socket[spawn-server]: warning: setsockopt failed on sf%d: %d: %d (%s)",listenSocket,aResult,errno,strerror(errno));
+    int result = setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, (const void *)&yes, sizeof(yes));
+    if (result != 0 )
+        ymerr("local-socket[spawn-server]: warning: setsockopt failed on sf%d: %d: %d (%s)",listenSocket,result,errno,strerror(errno));
     
     /* Bind a name to the socket. */
+#ifndef WIN32
     struct sockaddr_un sockName;
     sockName.sun_family = AF_LOCAL;
     strncpy (sockName.sun_path, YMSTR(socketName), sizeof (sockName.sun_path));
     sockName.sun_path[sizeof (sockName.sun_path) - 1] = '\0'; // ensure null termination if name is longer than (104)
     socklen_t size = (socklen_t) SUN_LEN(&sockName);
+#else
+	struct sockaddr_in sockName = { AF_INET, htons(LOCAL_SOCKET_PORT), {0} , {0} };
+	result = inet_pton(AF_INET, "127.0.0.1", &sockName.sin_addr.s_addr);
+	socklen_t size = sizeof(sockName);
+#endif
     
-    aResult = bind (listenSocket, (struct sockaddr *) &sockName, size);
-    if ( aResult != 0 )
+	result = bind (listenSocket, (struct sockaddr *) &sockName, size);
+    if (result != 0 )
     {
         int bindErrno = errno;
-        close(listenSocket);
+		int error; const char *errorStr;
+        YM_CLOSE_SOCKET(listenSocket);
         if ( bindErrno == EADDRINUSE )
         {
             ymerr("local-socket[spawn-server]: %s in use, retrying",YMSTR(socketName));
@@ -283,13 +302,9 @@ void __ym_local_socket_accept_proc(__unused void *ctx)
         abort();
     }
     
-    aResult = listen(listenSocket, 1);
-    if ( aResult != 0 )
-    {
-        ymerr("local-socket[spawn-server]: listen failed: %d (%s)",errno,strerror(errno));
-        close(listenSocket);
-        abort();
-    }
+	result = listen(listenSocket, 1);
+    if (result != 0 )
+		ymabort("local-socket[spawn-server]: listen failed: %d (%s)", errno, strerror(errno));
     
     gYMLocalSocketListenSocket = listenSocket;
     gYMLocalSocketPairName = socketName;
@@ -319,8 +334,10 @@ void __ym_local_socket_accept_proc(__unused void *ctx)
     } while ( gYMLocalSocketPairAcceptKeepListening );
     
     ymlog("__ym_local_socket_accept_proc exiting");
+
+	YM_THREAD_END
 }
 
-#else // not WIN32
-void _YMLocalSocketPairFree(YMTypeRef object) {}
-#endif
+//#else // not WIN32
+//void _YMLocalSocketPairFree(YMTypeRef object) {}
+//#endif

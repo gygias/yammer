@@ -24,9 +24,9 @@ extern "C" {
 
 typedef const struct __ym_connection_t *YMConnectionRef;
 
-YMAPI YMAddressRef YMConnectionGetAddress(YMConnectionRef connection);
-YMAPI YMStreamRef YMConnectionCreateStream(YMConnectionRef connection, YMStringRef name);
-YMAPI void YMConnectionCloseStream(YMConnectionRef connection, YMStreamRef stream);
+YMAddressRef YMAPI YMConnectionGetAddress(YMConnectionRef connection);
+YMStreamRef YMAPI YMConnectionCreateStream(YMConnectionRef connection, YMStringRef name);
+void YMAPI YMConnectionCloseStream(YMConnectionRef connection, YMStreamRef stream);
     
 typedef void (*ym_connection_forward_callback)(YMConnectionRef, YMStreamRef, YMIOResult, uint64_t, void *);
 typedef struct ym_connection_forward_context_t
@@ -35,8 +35,8 @@ typedef struct ym_connection_forward_context_t
     void * context;
 } ym_connection_forward_context_t;
     
-YMAPI bool YMConnectionForwardFile(YMConnectionRef connection, YMFILE fromFile, YMStreamRef toStream, const uint64_t *nBytesPtr, bool sync, ym_connection_forward_context_t *callbackInfo);
-YMAPI bool YMConnectionForwardStream(YMConnectionRef connection, YMStreamRef fromStream, YMFILE toFile, const uint64_t *nBytesPtr, bool sync, ym_connection_forward_context_t *callbackInfo);
+bool YMAPI YMConnectionForwardFile(YMConnectionRef connection, YMFILE fromFile, YMStreamRef toStream, const uint64_t *nBytesPtr, bool sync, ym_connection_forward_context_t *callbackInfo);
+bool YMAPI YMConnectionForwardStream(YMConnectionRef connection, YMStreamRef fromStream, YMFILE toFile, const uint64_t *nBytesPtr, bool sync, ym_connection_forward_context_t *callbackInfo);
 
 #ifdef __cplusplus
 }

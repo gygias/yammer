@@ -25,15 +25,15 @@ typedef void (*ym_connection_new_stream_func)(YMConnectionRef,YMStreamRef,void*)
 typedef void (*ym_connection_stream_closing_func)(YMConnectionRef,YMStreamRef,void*);
 typedef void (*ym_connection_interrupted_func)(YMConnectionRef,void*);
 
-YMAPI YMConnectionRef YMConnectionCreate(YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType);
-YMAPI YMConnectionRef YMConnectionCreateIncoming(YMSOCKET socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType);
-YMAPI void YMConnectionSetCallbacks(YMConnectionRef connection,
+YMConnectionRef YMAPI YMConnectionCreate(YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType);
+YMConnectionRef YMAPI YMConnectionCreateIncoming(YMSOCKET socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType);
+void YMAPI YMConnectionSetCallbacks(YMConnectionRef connection,
                                     ym_connection_new_stream_func newFunc, void *newFuncContext,
                                     ym_connection_stream_closing_func closingFunc, void *closingFuncContext,
                                     ym_connection_interrupted_func interruptedFunc, void *interruptedFuncContext);
-YMAPI bool YMConnectionConnect(YMConnectionRef connection);
+bool YMAPI YMConnectionConnect(YMConnectionRef connection);
 
-YMAPI uint64_t YMConnectionDoSample(YMConnectionRef connection);
-bool YMConnectionClose(YMConnectionRef connection);
+uint64_t YMAPI YMConnectionDoSample(YMConnectionRef connection);
+bool YMAPI YMConnectionClose(YMConnectionRef connection);
 
 #endif /* YMConnectionPriv_h */

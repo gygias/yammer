@@ -10,13 +10,8 @@
 
 #include "YMOpenssl.h"
 
-#include "YMLog.h"
-#undef ymlog_type
 #define ymlog_type YMLogSecurity
-#if ( ymlog_type > ymlog_target )
-#undef ymlog
-#define ymlog(x,...) ;
-#endif
+#include "YMLog.h"
 
 #include <openssl/rsa.h>
 #include <openssl/rand.h> // let's hope this is what the man page means by "the" pseudo-random number generator, despite the reference to "bad" rand(3)

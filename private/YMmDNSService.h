@@ -14,11 +14,11 @@
 
 typedef const struct __ym_mdns_service_t *YMmDNSServiceRef;
 
-YMmDNSServiceRef YMmDNSServiceCreate(YMStringRef type, YMStringRef name, uint16_t port);
+YMmDNSServiceRef YMAPI YMmDNSServiceCreate(YMStringRef type, YMStringRef name, uint16_t port);
 
 // copies the keys/values
-bool YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPair *keyPairs[], size_t nPairs );
-bool YMmDNSServiceStart( YMmDNSServiceRef service );
-bool YMmDNSServiceStop( YMmDNSServiceRef service, bool synchronous );
+bool YMAPI YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPair *keyPairs[], size_t nPairs );
+bool YMAPI YMmDNSServiceStart( YMmDNSServiceRef service );
+bool YMAPI YMmDNSServiceStop( YMmDNSServiceRef service, bool synchronous );
 
 #endif /* YMmDNSService_h */

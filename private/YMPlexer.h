@@ -20,19 +20,19 @@ typedef void (*ym_plexer_interrupted_func)      (YMPlexerRef,void*);
 typedef void (*ym_plexer_new_upstream_func)     (YMPlexerRef,YMStreamRef,void*);
 typedef void (*ym_plexer_stream_closing_func)   (YMPlexerRef,YMStreamRef,void*);
 
-YMPlexerRef YMPlexerCreate(YMStringRef name, YMSecurityProviderRef provider, bool master);
+YMPlexerRef YMAPI YMPlexerCreate(YMStringRef name, YMSecurityProviderRef provider, bool master);
 
 // init
-void YMPlexerSetInterruptedFunc(YMPlexerRef plexer, ym_plexer_interrupted_func func);
-void YMPlexerSetNewIncomingStreamFunc(YMPlexerRef plexer, ym_plexer_new_upstream_func func);
-void YMPlexerSetStreamClosingFunc(YMPlexerRef plexer, ym_plexer_stream_closing_func func);
-void YMPlexerSetCallbackContext(YMPlexerRef plexer, void *context);
+void YMAPI YMPlexerSetInterruptedFunc(YMPlexerRef plexer, ym_plexer_interrupted_func func);
+void YMAPI YMPlexerSetNewIncomingStreamFunc(YMPlexerRef plexer, ym_plexer_new_upstream_func func);
+void YMAPI YMPlexerSetStreamClosingFunc(YMPlexerRef plexer, ym_plexer_stream_closing_func func);
+void YMAPI YMPlexerSetCallbackContext(YMPlexerRef plexer, void *context);
 
-bool YMPlexerStart(YMPlexerRef plexer);
+bool YMAPI YMPlexerStart(YMPlexerRef plexer);
 // closes the file (or files) associated with this plexer
-bool YMPlexerStop(YMPlexerRef plexer);
+bool YMAPI YMPlexerStop(YMPlexerRef plexer);
 
-YMStreamRef YMPlexerCreateStream(YMPlexerRef plexer, YMStringRef name);
-void YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream);
+YMStreamRef YMAPI YMPlexerCreateStream(YMPlexerRef plexer, YMStringRef name);
+void YMAPI YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream);
 
 #endif /* YMPlexer_h */

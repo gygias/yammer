@@ -19,10 +19,10 @@ extern "C" {
 
 typedef const struct __ym_peer_t *YMPeerRef;
 
-YMAPI YMStringRef YMPeerGetName(YMPeerRef peer);
-YMAPI YMDictionaryRef YMPeerGetAddresses(YMPeerRef peer);
-YMAPI uint16_t YMPeerGetPort(YMPeerRef peer);
-YMAPI YMDictionaryRef YMPeerGetCertificates(YMPeerRef peer);
+YMStringRef YMAPI YMPeerGetName(YMPeerRef peer);
+YMDictionaryRef YMAPI YMPeerGetAddresses(YMPeerRef peer);
+uint16_t YMAPI YMPeerGetPort(YMPeerRef peer);
+YMDictionaryRef YMAPI YMPeerGetCertificates(YMPeerRef peer);
 
 #ifdef __cplusplus
 }

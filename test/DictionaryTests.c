@@ -18,7 +18,7 @@
 #define RunFor 5.0
 #define MaxItemLength 2048
 
-void _dictionary_test_proc(void *ctx);
+YM_THREAD_RETURN YM_CALLING_CONVENTION _dictionary_test_proc(YM_THREAD_PARAM ctx);
 
 typedef struct DictionaryTest
 {
@@ -59,7 +59,7 @@ void DictionaryTestRun(ym_test_assert_func assert, const void *context)
     ymlog("YMDictionary test completed after %llu iterations",theTest.completedTests);
 }    
 
-void _dictionary_test_proc(void *ctx)
+YM_THREAD_RETURN YM_CALLING_CONVENTION _dictionary_test_proc(YM_THREAD_PARAM ctx)
 {
     struct DictionaryTest *theTest = ctx;
     
@@ -134,4 +134,6 @@ void _dictionary_test_proc(void *ctx)
     }
     
     YMSemaphoreSignal(theTest->semaphore);
+
+	YM_THREAD_END
 }

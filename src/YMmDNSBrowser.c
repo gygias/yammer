@@ -25,13 +25,8 @@
 #include <ws2tcpip.h>
 #endif
 
-#include "YMLog.h"
-#undef ymlog_type
 #define ymlog_type YMLogmDNS
-#if ( ymlog_type > ymlog_target )
-#undef ymlog
-#define ymlog(x,...) ;
-#endif
+#include "YMLog.h"
 
 typedef struct __ym_mdns_browser_t
 {
@@ -58,8 +53,6 @@ typedef struct __ym_mdns_browser_t
     ym_mdns_service_updated_func serviceUpdated;
     ym_mdns_service_resolved_func serviceResolved;
     void *callbackContext;
-    
-    uint16_t debugExpectedPairs;
 } __ym_mdns_browser_t;
 typedef struct __ym_mdns_browser_t *__YMmDNSBrowserRef;
 
@@ -101,8 +94,7 @@ YMmDNSBrowserRef YMmDNSBrowserCreateWithCallbacks(YMStringRef type,
     YMmDNSBrowserSetServiceResolvedFunc(browser, serviceResolved);
     YMmDNSBrowserSetServiceRemovedFunc(browser, serviceRemoved);
     YMmDNSBrowserSetCallbackContext(browser, context);
-    
-    browser->debugExpectedPairs = UINT16_MAX;
+
     return browser;
 }
 
@@ -551,10 +543,4 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_browser_event_proc(YM_THREAD_PA
     ymlog("mdns[%s] event thread f%d exiting", YMSTR(browser->type), fd);
 
 	YM_THREAD_END
-}
-
-void _YMmDNSBrowserDebugSetExpectedTxtKeyPairs(YMmDNSBrowserRef browser_, uint16_t nPairs)
-{
-    __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)browser_;
-    browser->debugExpectedPairs = nPairs;
 }

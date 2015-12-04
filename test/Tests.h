@@ -13,17 +13,21 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <limits.h>
+#ifndef WIN32
 #include <unistd.h>
+#endif
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 #include <time.h>
 #include <sys/stat.h>
+#ifndef WIN32
 #include <dirent.h>
+#endif
 #include <errno.h>
 
-#import "Yammer.h"
-
+#include "Yammer.h"
+#include "YMLog.h"
 
 //#define     Logging 1
 #ifdef      Logging
@@ -33,16 +37,7 @@
 #endif
 
 #define YammerTests             A_YammerTests
-#define SessionTests            I_SessionTests
 #define CheckStateTest          Z_CheckStateTest
-
-#include "YMLog.h"
-#undef ymlog_type
-#define ymlog_type YMLogDefault
-#if ( ymlog_type > ymlog_target )
-#undef ymlog
-#define ymlog(x,...) ;
-#endif
 
 #define testassert(x,y,...) { theTest->assert(theTest->context,(x),y"\n",##__VA_ARGS__); }
 

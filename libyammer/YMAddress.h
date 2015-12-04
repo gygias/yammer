@@ -25,17 +25,17 @@ typedef enum
     YMAddressIPV6
 } YMAddressType;
 
-YMAPI YMAddressRef YMAddressCreate(const void *addressData, uint32_t length);
-YMAPI YMAddressRef YMAddressCreateLocalHostIPV4(uint16_t port);
-YMAPI YMAddressRef YMAddressCreateWithIPStringAndPort(YMStringRef ipString, uint16_t port);
+YMAddressRef YMAPI YMAddressCreate(const void *addressData, uint32_t length);
+YMAddressRef YMAPI YMAddressCreateLocalHostIPV4(uint16_t port);
+YMAddressRef YMAPI YMAddressCreateWithIPStringAndPort(YMStringRef ipString, uint16_t port);
 
-YMAPI const void *YMAddressGetAddressData(YMAddressRef address);
-YMAPI int YMAddressGetLength(YMAddressRef address);
-YMAPI YMStringRef YMAddressGetDescription(YMAddressRef address);
+const YMAPI void * YMAddressGetAddressData(YMAddressRef address);
+int YMAPI YMAddressGetLength(YMAddressRef address);
+YMStringRef YMAPI YMAddressGetDescription(YMAddressRef address);
 
-YMAPI int YMAddressGetDomain(YMAddressRef address);
-YMAPI int YMAddressGetAddressFamily(YMAddressRef address);
-YMAPI int YMAddressGetDefaultProtocolForAddressFamily(int addressFamily);
+int YMAPI YMAddressGetDomain(YMAddressRef address);
+int YMAPI YMAddressGetAddressFamily(YMAddressRef address);
+int YMAPI YMAddressGetDefaultProtocolForAddressFamily(int addressFamily);
 
 #ifdef __cplusplus
 }

@@ -52,7 +52,7 @@ typedef struct RunEndpointContext
     bool isServer;
 } RunEndpointContext;
 
-void _RunEndpoint(struct RunEndpointContext *context);
+YM_THREAD_RETURN YM_CALLING_CONVENTION _RunEndpoint(YM_THREAD_PARAM ctx);
 void _SendAMessage(struct TLSTest *theTest, YMTLSProviderRef tls, uint8_t *message, uint16_t messageLen);
 uint8_t *_ReceiveAMessage(struct TLSTest *theTest, YMTLSProviderRef tls, uint16_t *outLen);
 
@@ -84,8 +84,8 @@ void _TestTLS1(struct TLSTest *theTest)
     YMLocalSocketPairRef localSocketPair = YMLocalSocketPairCreate(sockName, false);
     YMRelease(sockName);
     testassert(localSocketPair,"socket pair didn't initialize");
-    int serverSocket = YMLocalSocketPairGetA(localSocketPair);
-    int clientSocket = YMLocalSocketPairGetB(localSocketPair);
+    YMSOCKET serverSocket = YMLocalSocketPairGetA(localSocketPair);
+    YMSOCKET clientSocket = YMLocalSocketPairGetB(localSocketPair);
     
     testassert(serverSocket>=0,"server socket is bogus");
     testassert(clientSocket>=0,"client socket is bogus");
@@ -93,12 +93,14 @@ void _TestTLS1(struct TLSTest *theTest)
     bool serverFirst = arc4random_uniform(2);
     const char *testBuffer = "moshi moshi";
     ssize_t testLen = (ssize_t)strlen(testBuffer) + 1;
-    ssize_t testResult = write(serverFirst?serverSocket:clientSocket, testBuffer, testLen);
-    testassert(testResult==testLen,"failed to write test message: %d (%s)",errno,strerror(errno));
-    char testIncoming[testLen];
-    testResult = read(serverFirst?clientSocket:serverSocket, testIncoming, testLen);
-    testassert(testResult==testLen,"failed to receive test message: %d (%s)",errno,strerror(errno));
-    testassert(strcmp(testBuffer,testIncoming)==0,"received test message does not match");
+	ssize_t aWrite;
+	YM_WRITE_SOCKET(serverFirst?serverSocket:clientSocket, testBuffer, testLen);
+    testassert(aWrite==testLen,"failed to write test message: %d (%s)",errno,strerror(errno));
+    char testIncoming[32];
+    ssize_t aRead;
+	YM_READ_SOCKET(serverFirst?clientSocket:serverSocket, testIncoming, testLen);
+    testassert(aRead==testLen,"failed to receive test message: %d (%s)",errno,strerror(errno));
+    testassert(strncmp(testBuffer,testIncoming,aRead)==0,"received test message does not match");
     
     YMTLSProviderRef localProvider = YMTLSProviderCreateWithSocket(localIsServer ? serverSocket : clientSocket, localIsServer);
     testassert(localProvider,"local provider didn't initialize");
@@ -109,13 +111,13 @@ void _TestTLS1(struct TLSTest *theTest)
     YMTLSProviderRef theClient = localIsServer?remoteProvider:localProvider;
     
     struct RunEndpointContext serverContext = { theTest, theServer, true };
-    YMThreadRef serverThread = YMThreadCreate(NULL, (void (*)(void *))_RunEndpoint, &serverContext);
+    YMThreadRef serverThread = YMThreadCreate(NULL, (ym_thread_entry)_RunEndpoint, &serverContext);
     YMThreadStart(serverThread);
     
     sleep(2); // xxx let server reach accept()
     
     struct RunEndpointContext clientContext = { theTest, theClient, false };
-    YMThreadRef clientThread = YMThreadCreate(NULL, (void (*)(void *))_RunEndpoint, &clientContext);
+    YMThreadRef clientThread = YMThreadCreate(NULL, (ym_thread_entry)_RunEndpoint, &clientContext);
     YMThreadStart(clientThread);
     
 #if TLSTestTimeBased
@@ -148,8 +150,9 @@ void _TestTLS1(struct TLSTest *theTest)
 const char *testMessage = "security is important. put in the advanced technology. technology consultants international. please check. thanks.";
 const char *testResponse = "creative technologist? or technology creative? foodie. quirky. here is a picture of my half-eaten food. ask me about my background in typesetting.";
 
-void _RunEndpoint(struct RunEndpointContext *context)
+YM_THREAD_RETURN YM_CALLING_CONVENTION _RunEndpoint(YM_THREAD_PARAM ctx)
 {
+	struct RunEndpointContext *context = ctx;
     struct TLSTest *theTest = context->theTest;
     YMTLSProviderRef tls = context->tls;
     bool isServer = context->isServer;
@@ -171,7 +174,7 @@ void _RunEndpoint(struct RunEndpointContext *context)
         else
         {
             outgoingMessage = (uint8_t *)testMessage;
-            outgoingMessageLen = strlen(testMessage);
+            outgoingMessageLen = (uint16_t)strlen(testMessage);
         }
         
         if ( isServer )
@@ -212,6 +215,8 @@ void _RunEndpoint(struct RunEndpointContext *context)
     
     ymlog("run %s exiting...",isServer?"server":"client");
     YMSemaphoreSignal(theTest->threadExitSemaphore);
+
+	YM_THREAD_END
 }
 
 void _SendAMessage(__unused struct TLSTest *theTest, YMTLSProviderRef tls, uint8_t *message, uint16_t messageLen)

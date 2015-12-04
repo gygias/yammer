@@ -19,13 +19,8 @@
 #include "YMAddress.h"
 #include "YMUtilities.h"
 
-#include "YMLog.h"
-#undef ymlog_type
 #define ymlog_type YMLogSession
-#if ( ymlog_type > ymlog_target )
-#undef ymlog
-#define ymlog(x,...) ;
-#endif
+#include "YMLog.h"
 
 #ifndef WIN32
 # if defined(RPI)
@@ -475,7 +470,7 @@ bool YMSessionStartAdvertising(YMSessionRef session_, YMStringRef name)
     if ( aResult != 0 )
     {
         ymerr("session[%s]: error: failed to listen for server start",YMSTR(session->logDescription));
-		int result, error; char *errorStr;
+		int result, error; const char *errorStr;
         YM_CLOSE_SOCKET(socket);
         goto rewind_fail;
     }
@@ -539,7 +534,7 @@ bool YMSessionStartAdvertising(YMSessionRef session_, YMStringRef name)
 rewind_fail:
     if ( socket >= 0 )
 	{
-		int result, error; char *errorStr;
+		int result, error; const char *errorStr;
         YM_CLOSE_SOCKET(socket);
 	}
     session->ipv4ListenSocket = NULL_SOCKET;
@@ -565,7 +560,7 @@ bool YMSessionStopAdvertising(YMSessionRef session_)
     __YMSessionRef session = (__YMSessionRef)session_;
     session->acceptThreadExitFlag = true;
     bool okay = true;
-	int result, error; char *errorStr;
+	int result, error; const char *errorStr;
     if ( session->ipv4ListenSocket >= 0 )
     {
 		YM_CLOSE_SOCKET(session->ipv4ListenSocket);

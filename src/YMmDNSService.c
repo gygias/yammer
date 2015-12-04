@@ -23,13 +23,8 @@
 
 #include <dns_sd.h>
 
-#include "YMLog.h"
-#undef ymlog_type
 #define ymlog_type YMLogmDNS
-#if ( ymlog_type > ymlog_target )
-#undef ymlog
-#define ymlog(x,...) ;
-#endif
+#include "YMLog.h"
 
 typedef struct __ym_mdns_service_t
 {

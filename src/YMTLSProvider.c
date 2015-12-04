@@ -26,17 +26,12 @@
 #include <pthread.h>
 #endif
 
-#include "YMLog.h"
-#undef ymlog_type
 #define ymlog_type YMLogSecurity
-#if ( ymlog_type > ymlog_target )
-#undef ymlog
-#define ymlog(x,...) ;
-#endif
+#include "YMLog.h"
 
 static YMLockRef *gYMTLSLocks = NULL;
 //static YMLockRef gYMTLSLocks[CRYPTO_NUM_LOCKS*sizeof(YMLockRef)];
-void __ym_tls_lock_callback(int mode, int type, __unused const char *file, __unused int line);
+void __ym_tls_lock_callback(int mode, int type, const char *file, int line);
 
 #define YMTLSProviderVerifyDepth 0
 

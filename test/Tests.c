@@ -8,6 +8,10 @@
 
 #include "Tests.h"
 
+#ifdef WIN32
+#include "arc4random.h"
+#endif
+
 char *YMRandomASCIIStringWithMaxLength(uint16_t maxLength, bool for_mDNSServiceName, bool for_txtKey)
 {
     uint8_t randomLength = (uint8_t)arc4random_uniform(maxLength + 1 + 1);

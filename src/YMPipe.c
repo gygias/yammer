@@ -10,13 +10,8 @@
 #include "YMPipePriv.h"
 #include "YMUtilities.h"
 
-#include "YMLog.h"
-#undef ymlog_type
 #define ymlog_type YMLogIO
-#if ( ymlog_type > ymlog_target )
-#undef ymlog
-#define ymlog(x,...) ;
-#endif
+#include "YMLog.h"
 
 typedef struct __ym_pipe_t
 {
@@ -32,30 +27,20 @@ void __YMPipeCloseOutputFile(YMPipeRef pipe_);
 void __YMPipeCloseFile(__YMPipeRef pipe, YMFILE *fdPtr);
 
 YMPipeRef YMPipeCreate(YMStringRef name)
-{
-    __YMPipeRef aPipe = (__YMPipeRef)_YMAlloc(_YMPipeTypeID,sizeof(struct __ym_pipe_t));
-    
-    aPipe->name = name ? YMRetain(name) : YMSTRC("*");
-    aPipe->inFd = NULL_FILE;
-    aPipe->outFd = NULL_FILE;
-    
+{   
     uint64_t iter = 1;
 	YMFILE fds[2];
-#ifndef WIN32
-    while ( pipe(fds) == -1 )
+    while ( ! YM_CREATE_PIPE(fds) )
     {
+#ifndef WIN32
         if ( errno == EFAULT )
         {
             ymerr("pipe[%s]: error: invalid address space",YMSTR(name));
-            YMRelease(aPipe);
             return NULL;
         }
-		usleep(10000);
-#else
-	while ( 0 == CreatePipe(&fds[0], &fds[1], NULL, 0) )
-	{
-		Sleep(100);
 #endif
+		usleep(10000);
+
         if ( iter )
         {
             iter++;
@@ -71,7 +56,11 @@ YMPipeRef YMPipeCreate(YMStringRef name)
     int openFiles = YMGetNumberOfOpenFilesForCurrentProcess();
 	ymsoftassert(openFiles<TOO_MANY_FILES, "too many open files");
 #endif
-    
+
+	__YMPipeRef aPipe = (__YMPipeRef)_YMAlloc(_YMPipeTypeID, sizeof(struct __ym_pipe_t));
+
+	aPipe->name = name ? YMRetain(name) : YMSTRC("*");
+
     aPipe->outFd = fds[0];
     aPipe->inFd = fds[1];
     
@@ -126,7 +115,7 @@ void __YMPipeCloseFile(__YMPipeRef pipe, YMFILE *fdPtr)
     if ( fd != NULL_FILE )
     {
         int result, error = 0;
-        char *errorStr = NULL;
+        const char *errorStr = NULL;
         
         ymlog("   pipe[%s]: closing f%d",YMSTR(pipe->name),fd);
 		YM_CLOSE_FILE(fd);

@@ -9,9 +9,10 @@
 #ifndef Yammer_h
 #define Yammer_h
 
-#include <sys/types.h>
-#include <stdbool.h>
-#include <stdint.h>
+#ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
 
 #include <libyammer/YMBase.h>
 #include <libyammer/YMString.h>

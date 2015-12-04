@@ -62,9 +62,9 @@ typedef struct PlexerTest
 } PlexerTest;
 
 void _DoManyRoundTripsTest(struct PlexerTest *);
-void _init_local_plexer_proc(ym_thread_dispatch_ref dispatch);
-void _handle_remote_stream(void *ctx_);
-void _RunLocalPlexer(void *ctx);
+void YM_CALLING_CONVENTION _init_local_plexer_proc(ym_thread_dispatch_ref dispatch);
+YM_THREAD_RETURN YM_CALLING_CONVENTION _handle_remote_stream(YM_THREAD_PARAM);
+YM_THREAD_RETURN YM_CALLING_CONVENTION _RunLocalPlexer(YM_THREAD_PARAM);
 void _SendMessage(struct PlexerTest *theTest, YMStreamRef stream, uint8_t *message, uint16_t length);
 uint8_t *_ReceiveMessage(struct PlexerTest *theTest, YMStreamRef stream, uint16_t *outLen);
 
@@ -90,13 +90,13 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     YMStringRef aName = YMSTRC("test-network-sim-pipe-in");
     YMPipeRef networkSimPipeIn = YMPipeCreate(aName);
     YMRelease(aName);
-    int writeToRemote = YMPipeGetInputFile(networkSimPipeIn);
-    int readFromLocal = YMPipeGetOutputFile(networkSimPipeIn);
+    YMFILE writeToRemote = YMPipeGetInputFile(networkSimPipeIn);
+    YMFILE readFromLocal = YMPipeGetOutputFile(networkSimPipeIn);
     aName = YMSTRC("test-network-sim-pipe-out");
     YMPipeRef networkSimPipeOut = YMPipeCreate(aName);
     YMRelease(aName);
-    int writeToLocal = YMPipeGetInputFile(networkSimPipeOut);
-    int readFromRemote = YMPipeGetOutputFile(networkSimPipeOut);
+    YMFILE writeToLocal = YMPipeGetInputFile(networkSimPipeOut);
+    YMFILE readFromRemote = YMPipeGetOutputFile(networkSimPipeOut);
     
     bool localIsMaster = arc4random_uniform(2);
     ymlog("plexer test using pipes: L(%s)-if%d-of%d <-> if%d-of%d R(%s)",localIsMaster?"M":"S",readFromRemote,writeToRemote,readFromLocal,writeToLocal,localIsMaster?"S":"M");
@@ -135,7 +135,7 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     YMDictionaryRef testThreads = YMDictionaryCreate();
     while (nSpawnConcurrentStreams--)
     {
-        YMThreadRef aThread = YMThreadCreate(NULL, _RunLocalPlexer, theTest);
+        YMThreadRef aThread = YMThreadCreate(NULL, (ym_thread_entry)_RunLocalPlexer, theTest);
         YMRetain(theTest->localPlexer);
         YMRetain(theTest->plexerTest1Lock);
         YMRetain(theTest->lastMessageWrittenByStreamID);
@@ -183,16 +183,16 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
           PlexerTest1NewStreamPerRoundTrip?"stream":"round-trip");
 }
 
-void _init_local_plexer_proc(ym_thread_dispatch_ref dispatch)
+void YM_CALLING_CONVENTION _init_local_plexer_proc(ym_thread_dispatch_ref dispatch)
 {
     struct PlexerTest *theTest = dispatch->context;
     bool okay = YMPlexerStart(theTest->localPlexer);
     testassert(okay,"master did not start");
 }
 
-void _RunLocalPlexer(void *ctx)
+YM_THREAD_RETURN YM_CALLING_CONVENTION _RunLocalPlexer(YM_THREAD_PARAM ctx_)
 {
-    struct PlexerTest *theTest = ctx;
+    struct PlexerTest *theTest = ctx_;
     YMPlexerRef plexer = theTest->localPlexer;
     
     YMStreamRef aStream = NULL;
@@ -221,7 +221,7 @@ void _RunLocalPlexer(void *ctx)
         else
         {
             outgoingMessage = (uint8_t *)testLocalMessage;
-            outgoingMessageLen = staticMessageLen + 1;
+            outgoingMessageLen = (uint16_t)staticMessageLen + 1;
         }
         
         bool protectTheList = ( PlexerTest1Threads > 1 );
@@ -243,7 +243,7 @@ void _RunLocalPlexer(void *ctx)
         if ( theTest->timeBasedTimeOver )
         {
             YMPlexerCloseStream(plexer, aStream);
-            return;
+			YM_THREAD_END
         }
         if ( protectTheList )
             YMLockLock(theTest->plexerTest1Lock);
@@ -270,6 +270,8 @@ void _RunLocalPlexer(void *ctx)
     YMRelease(plexer);
     YMRelease(theTest->plexerTest1Lock);
     YMRelease(theTest->lastMessageWrittenByStreamID);
+
+	YM_THREAD_END
 }
 
 
@@ -367,7 +369,7 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *cont
     YMThreadStart(thread);
 }
 
-void _handle_remote_stream(void *ctx_)
+YM_THREAD_RETURN YM_CALLING_CONVENTION _handle_remote_stream(YM_THREAD_PARAM ctx_)
 {
     struct HandleStreamContext *ctx = ctx_;
     struct PlexerTest *theTest = ctx->theTest;
@@ -381,7 +383,7 @@ void _handle_remote_stream(void *ctx_)
         uint16_t incomingMessageLen;
         uint8_t *incomingMessage = _ReceiveMessage(theTest, stream, &incomingMessageLen);
         if ( theTest->timeBasedTimeOver )
-            return;
+			YM_THREAD_END
         
         if ( protectTheList )
             YMLockLock(theTest->plexerTest1Lock);
@@ -397,7 +399,7 @@ void _handle_remote_stream(void *ctx_)
             outgoingMessage = YMRandomDataWithMaxLength(PlexerTest1RandomMessageMaxLength, &outgoingMessageLen);
         else {
             outgoingMessage = (void*)testRemoteResponse;
-            outgoingMessageLen = strlen(testRemoteResponse) + 1;
+            outgoingMessageLen = (uint16_t)strlen(testRemoteResponse) + 1;
         }
     
         if ( protectTheList )
@@ -420,6 +422,8 @@ void _handle_remote_stream(void *ctx_)
     
     YMRelease(stream);
     free(ctx);
+
+	YM_THREAD_END
 }
 
 void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *context)

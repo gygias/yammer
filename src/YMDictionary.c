@@ -10,8 +10,6 @@
 
 #include "YMUtilities.h"
 
-#undef ymlog_type
-#define ymlog_type YMLogDefault
 #include "YMLog.h"
 
 #ifdef DEBUG

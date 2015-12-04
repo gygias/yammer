@@ -42,17 +42,17 @@ typedef struct _ym_stream_user_info_t
 typedef struct _ym_stream_user_info_t *ym_stream_user_info_ref;
 typedef void (*_ym_stream_free_user_info_func)(YMStreamRef);
 
-YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_ref userInfo, _ym_stream_free_user_info_func callback);
+YMStreamRef YMAPI _YMStreamCreate(YMStringRef name, ym_stream_user_info_ref userInfo, _ym_stream_free_user_info_func callback);
 typedef void (*_ym_stream_data_available_func)(YMStreamRef,uint32_t,void *);
-void _YMStreamSetDataAvailableCallback(YMStreamRef stream, _ym_stream_data_available_func, void *ctx);
+void YMAPI _YMStreamSetDataAvailableCallback(YMStreamRef stream, _ym_stream_data_available_func, void *ctx);
 
-YMIOResult _YMStreamReadDown(YMStreamRef stream, void *buffer, uint32_t length);
-YMIOResult _YMStreamWriteUp(YMStreamRef stream, const void *buffer, uint32_t length);
+YMIOResult YMAPI _YMStreamReadDown(YMStreamRef stream, void *buffer, uint32_t length);
+YMIOResult YMAPI _YMStreamWriteUp(YMStreamRef stream, const void *buffer, uint32_t length);
 
-void _YMStreamCloseWriteUp(YMStreamRef stream);
-void _YMStreamSendClose(YMStreamRef stream);
+void YMAPI _YMStreamCloseWriteUp(YMStreamRef stream);
+void YMAPI _YMStreamSendClose(YMStreamRef stream);
 
-ym_stream_user_info_ref _YMStreamGetUserInfo(YMStreamRef);
-YMStringRef _YMStreamGetName(YMStreamRef stream);
+ym_stream_user_info_ref YMAPI _YMStreamGetUserInfo(YMStreamRef);
+YMStringRef YMAPI _YMStreamGetName(YMStreamRef stream);
 
 #endif /* YMStreamPriv_h */

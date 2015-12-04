@@ -11,9 +11,9 @@
 
 typedef const struct __ym_pipe_t *YMPipeRef;
 
-YMPipeRef YMPipeCreate(YMStringRef name);
+YMPipeRef YMAPI YMPipeCreate(YMStringRef name);
 
-YMFILE YMPipeGetInputFile(YMPipeRef pipe);
-YMFILE YMPipeGetOutputFile(YMPipeRef pipe);
+YMFILE YMAPI YMPipeGetInputFile(YMPipeRef pipe);
+YMFILE YMAPI YMPipeGetOutputFile(YMPipeRef pipe);
 
 #endif /* YMPipe_h */

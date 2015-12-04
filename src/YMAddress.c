@@ -15,12 +15,6 @@
 #include "YMUtilities.h"
 
 #include "YMLog.h"
-#undef ymlog_type
-#define ymlog_type YMLogDefault
-#if ( ymlog_type > ymlog_target )
-#undef ymlog
-#define ymlog(x,...) ;
-#endif
 
 #ifndef WIN32
 #include <sys/socket.h>

@@ -238,7 +238,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\private\yammer.pch">
+    <None Include="..\private\yammerpch.h">
       <Filter>private</Filter>
     </None>
   </ItemGroup>

@@ -99,7 +99,6 @@ void _TestmDNSCreateDiscoverResolve(struct mDNSTest *theTest)
     // i had these as separate functions, but apparently "self" is a new object for each -test* method, which isn't what we need here
     theTest->browser = YMmDNSBrowserCreateWithCallbacks(serviceType, test_service_appeared, test_service_updated, test_service_resolved, test_service_removed, theTest);
     YMRelease(serviceType);
-    _YMmDNSBrowserDebugSetExpectedTxtKeyPairs(theTest->browser,theTest->nTestKeyPairs);
     okay = YMmDNSBrowserStart(theTest->browser);
     testassert(okay,"YMmDNSBrowserStartBrowsing failed");
     
@@ -121,7 +120,8 @@ void _TestmDNSCreateDiscoverResolve(struct mDNSTest *theTest)
                 testassert(false, "timed out waiting for %s",name);
                 return;
             }
-            usleep(10000);
+	
+			usleep(10000);
         }
         ymlog("%s happened",name);
     }
@@ -155,15 +155,15 @@ YMmDNSTxtRecordKeyPair ** _MakeTxtRecordKeyPairs(uint16_t *inOutnKeypairs)
         keyPairs[idx]->key = YMSTRC(randomKey);//"test-key";
         
         size_t keyLen = strlen(randomKey);
-        remaining -= keyLen;
+        remaining -= (uint16_t)keyLen;
         
         // as far as i can tell, value can be empty
-        uint8_t valueLenMax = ( UINT8_MAX - keyLen - testKeyPairReserved );
+        uint8_t valueLenMax = (uint8_t)( UINT8_MAX - keyLen - testKeyPairReserved );
         uint16_t aValueLenMax = ( valueLenMax > remaining ) ? remaining : valueLenMax;
         uint16_t valueLen;
         const uint8_t *value_data = YMRandomDataWithMaxLength(aValueLenMax, &valueLen);
         keyPairs[idx]->value = value_data;
-        keyPairs[idx]->valueLen = valueLen;
+        keyPairs[idx]->valueLen = (uint8_t)valueLen;
         
         remaining -= valueLen;
         
@@ -178,7 +178,7 @@ YMmDNSTxtRecordKeyPair ** _MakeTxtRecordKeyPairs(uint16_t *inOutnKeypairs)
     }
     
     NoisyTestLog(@"made txt record length %zu out of requested %zu (blob size %zu)",actualSize,requestedSize,debugBlobSize);
-    *inOutnKeypairs = actualSize;
+    *inOutnKeypairs = (uint16_t)actualSize;
     
     return keyPairs;
 }

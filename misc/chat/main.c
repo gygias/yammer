@@ -75,11 +75,7 @@ int main(int argc, const char * argv[]) {
     }
         
     int longTime = 999999999;
-#ifndef WIN32
     sleep(longTime);
-#else
-	Sleep(longTime*1000);
-#endif
     
     return 0;
 }

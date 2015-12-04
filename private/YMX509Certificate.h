@@ -13,8 +13,8 @@
 
 typedef const struct __ym_x509_certificate_t *YMX509CertificateRef;
 
-YMX509CertificateRef YMX509CertificateCreate(YMRSAKeyPairRef);
+YMX509CertificateRef YMAPI YMX509CertificateCreate(YMRSAKeyPairRef);
 
-size_t YMX509CertificateGetPublicKeyData(void *buffer);
+size_t YMAPI YMX509CertificateGetPublicKeyData(void *buffer);
 
 #endif /* YMX509Certificate_h */

@@ -15,13 +15,8 @@
 #include "YMUtilities.h"
 #include "YMThread.h"
 
-#include "YMLog.h"
-#undef ymlog_type
 #define ymlog_type YMLogConnection
-#if ( ymlog_type > ymlog_target )
-#undef ymlog
-#define ymlog(x,...) ;
-#endif
+#include "YMLog.h"
 
 #define YM_CON_DESC (connection->address ? YMSTR(YMAddressGetDescription(connection->address)) : "*")
 
@@ -199,7 +194,7 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     if ( result != 0 )
     {
         ymerr("connection[%s]: error: connect(%s): %d (%s)",YM_CON_DESC,YMSTR(YMAddressGetDescription(connection->address)),errno,strerror(errno));
-		int error; char *errorStr;
+		int error; const char *errorStr;
         YM_CLOSE_SOCKET(newSocket);
         return false;
     }

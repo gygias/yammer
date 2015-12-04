@@ -12,6 +12,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+    
+#include <sys/types.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 #if defined(_MACOS) || defined(RPI)
 #define YM_VARGS_SENTINEL_REQUIRED __attribute__((sentinel(0)))
@@ -30,11 +34,12 @@ _Pragma("GCC diagnostic pop")
 #endif
 
 #ifdef WIN32
-# ifndef YMAPI
+# ifdef LIBYAMMER_EXPORTS
+# define YMAPI __declspec( dllexport )
+# else
 # define YMAPI __declspec( dllimport )
 # endif
 #define YMFILE HANDLE
-#define YMSOCKET SOCKET
 #define __printflike(x,y)
 #define YM_VARGS_SENTINEL_REQUIRED
 #define YM_WPPUSH
@@ -43,23 +48,22 @@ _Pragma("GCC diagnostic pop")
 #else
 #define YMAPI
 #define YMFILE int
-#define YMSOCKET YMFILE
 #endif
 
 typedef const void *YMTypeRef;
 typedef char YMTypeID;
 
-YMAPI YMTypeRef YMRetain(YMTypeRef object);
-YMAPI YMTypeRef YMAutorelease(YMTypeRef object);
+YMTypeRef YMAPI YMRetain(YMTypeRef object);
+YMTypeRef YMAPI YMAutorelease(YMTypeRef object);
 #ifdef DEBUG
 #define YM_RELEASE_RETURN_TYPE bool
 #else
 #define YM_RELEASE_RETURN_TYPE void
 #endif
-YMAPI YM_RELEASE_RETURN_TYPE YMRelease(YMTypeRef object);
+YM_RELEASE_RETURN_TYPE YMAPI YMRelease(YMTypeRef object);
 
-YMAPI void YMSelfLock(YMTypeRef object);
-YMAPI void YMSelfUnlock(YMTypeRef object);
+void YMAPI YMSelfLock(YMTypeRef object);
+void YMAPI YMSelfUnlock(YMTypeRef object);
 
 typedef enum
 {
@@ -68,7 +72,7 @@ typedef enum
     YMIOError = -1
 } YMIOResult;
 
-YMAPI void YMFreeGlobalResources();
+void YMAPI YMFreeGlobalResources();
 
 #ifdef __cplusplus
 }

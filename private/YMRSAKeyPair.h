@@ -11,11 +11,10 @@
 
 typedef const struct __ym_rsa_keypair_t *YMRSAKeyPairRef;
 
-YMRSAKeyPairRef YMRSAKeyPairCreate();
-YMRSAKeyPairRef YMRSAKeyPairCreateWithModuloSize(int moduloBits, int publicExponent);
+YMRSAKeyPairRef YMAPI YMRSAKeyPairCreate();
+YMRSAKeyPairRef YMAPI YMRSAKeyPairCreateWithModuloSize(int moduloBits, int publicExponent);
 
-bool YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair); // blocking
-
-void *YMRSAKeyPairGetRSA(YMRSAKeyPairRef keyPair); // meh
+bool YMAPI YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair); // blocking
+YMAPI void * YMRSAKeyPairGetRSA(YMRSAKeyPairRef keyPair); // meh
 
 #endif /* YMRSAKeyPair_h */

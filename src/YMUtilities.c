@@ -12,13 +12,8 @@
 
 #include "YMLock.h"
 
-#include "YMLog.h"
-#undef ymlog_type
 #define ymlog_type YMLogIO // this file isn't very clearly purposed
-#if ( ymlog_type > ymlog_target )
-#undef ymlog
-#define ymlog(x,...) ;
-#endif
+#include "YMLog.h"
 
 #if defined(_MACOS) || defined(RPI)
 #include <netinet/in.h>
@@ -238,7 +233,7 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
     catch_continue:
         if ( aSocket > 0 )
 		{
-			int result, error; char *errorStr;
+			int result, error; const char *errorStr;
             YM_CLOSE_SOCKET(aSocket);
 		}
     }

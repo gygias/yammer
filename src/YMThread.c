@@ -23,13 +23,8 @@
 #define YM_THREAD_TYPE HANDLE
 #endif
 
-#include "YMLog.h"
-#undef ymlog_type
 #define ymlog_type YMLogThread
-#if ( ymlog_type > ymlog_target )
-#undef ymlog
-#define ymlog(x,...) ;
-#endif
+#include "YMLog.h"
 
 typedef uint64_t YMThreadDispatchID;
 typedef uint64_t YMThreadDispatchThreadID;

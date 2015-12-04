@@ -9,6 +9,6 @@
 #ifndef YMPipePriv_h
 #define YMPipePriv_h
 
-void _YMPipeCloseInputFile(YMPipeRef pipe);
+void YMAPI _YMPipeCloseInputFile(YMPipeRef pipe);
 
 #endif /* YMPipePriv_h */

@@ -1,3 +1,5 @@
+- generalize copy file / recursive delete dir into utilities, or something
+- __YMRetain(obj,off) optimization
 - server session's port order is backwards
 - match plexer buffer / max i/o to connection mtu?
 - __YMX509CertificateCreateX509 is misinterpreting errors from various openssl 'namespaces'

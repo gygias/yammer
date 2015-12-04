@@ -16,13 +16,8 @@
 #include "YMUtilities.h"
 #include "YMSemaphore.h"
 
-#include "YMLog.h"
-#undef ymlog_type
 #define ymlog_type YMLogStream
-#if ( ymlog_type > ymlog_target )
-#undef ymlog
-#define ymlog(x,...) ;
-#endif
+#include "YMLog.h"
 
 //#define LOG_STREAM_LIFECYCLE
 #ifdef LOG_STREAM_LIFECYCLE

@@ -11,13 +11,8 @@
 
 #include "YMUtilities.h"
 
-#include "YMLog.h"
-#undef ymlog_type
 #define ymlog_type YMLogSecurity
-#if ( ymlog_type > ymlog_target )
-#undef ymlog
-#define ymlog(x,...) ;
-#endif
+#include "YMLog.h"
 
 bool YMNoSecurityInit(__YMSecurityProviderRef provider);
 bool YMNoSecurityRead(__YMSecurityProviderRef provider,uint8_t*,size_t);
@@ -97,7 +92,7 @@ bool YMNoSecurityClose(__unused __YMSecurityProviderRef provider_)
 {
     __YMSecurityProviderRef provider = (__YMSecurityProviderRef)provider_;
     int result = 0, error = 0;
-    char *errorStr = NULL;
+    const char *errorStr = NULL;
     if ( provider->readFile != NULL_FILE )
         YM_CLOSE_FILE(provider->readFile);
     if ( provider->writeFile != NULL_FILE && provider->writeFile != provider->readFile )

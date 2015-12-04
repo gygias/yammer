@@ -11,10 +11,10 @@
 
 typedef struct __YMSemaphore *YMSemaphoreRef;
 
-YMSemaphoreRef YMSemaphoreCreate(int initialValue);
-YMSemaphoreRef YMSemaphoreCreateWithName(YMStringRef name, int initialValue);
+YMSemaphoreRef YMAPI YMSemaphoreCreate(int initialValue);
+YMSemaphoreRef YMAPI YMSemaphoreCreateWithName(YMStringRef name, int initialValue);
 
-void YMSemaphoreWait(YMSemaphoreRef semaphore);
-void YMSemaphoreSignal(YMSemaphoreRef semaphore);
+void YMAPI YMSemaphoreWait(YMSemaphoreRef semaphore);
+void YMAPI YMSemaphoreSignal(YMSemaphoreRef semaphore);
 
 #endif /* YMSemaphore_h */

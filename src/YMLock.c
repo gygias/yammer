@@ -10,13 +10,8 @@
 
 #include "YMUtilities.h"
 
-#include "YMLog.h"
-#undef ymlog_type
 #define ymlog_type YMLogThreadSync
-#if ( ymlog_type > ymlog_target )
-#undef ymlog
-#define ymlog(x,...) ;
-#endif
+#include "YMLog.h"
 
 typedef struct __ym_lock
 {
@@ -85,12 +80,6 @@ void _YMLockFree(YMTypeRef object)
         ymerr("warning: cannot destroy mutex (%s), something may deadlock", YMSTR(lock->name));
     
     YMRelease(lock->name);
-}
-
-MUTEX_PTR_TYPE _YMLockGetMutex(YMLockRef lock_)
-{
-    __YMLockRef lock = (__YMLockRef)lock_;    
-    return lock->mutex;
 }
 
 #ifdef __cplusplus

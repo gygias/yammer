@@ -9,15 +9,17 @@
 #ifndef YMLocalSocketPair_h
 #define YMLocalSocketPair_h
 
+#include "YMBase.h"
+
 typedef const struct __ym_local_socket_pair_t *YMLocalSocketPairRef;
 
-YMLocalSocketPairRef YMLocalSocketPairCreate(YMStringRef name, bool moreComing);
+YMLocalSocketPairRef YMAPI YMLocalSocketPairCreate(YMStringRef name, bool moreComing);
 
 // if previous calls to YMLocalSocketPairCreate said 'moreComing', this function can be used to
 // free associated resources. it is not thread-safe (with itself or with YMLocalSocketPairCreate).
-void YMLocalSocketPairStop();
+void YMAPI YMLocalSocketPairStop();
 
-int YMLocalSocketPairGetA(YMLocalSocketPairRef pair);
-int YMLocalSocketPairGetB(YMLocalSocketPairRef pair);
+YMSOCKET YMAPI YMLocalSocketPairGetA(YMLocalSocketPairRef pair);
+YMSOCKET YMAPI YMLocalSocketPairGetB(YMLocalSocketPairRef pair);
 
 #endif /* YMLocalSocketPair_h */

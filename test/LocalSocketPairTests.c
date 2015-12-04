@@ -8,7 +8,7 @@
 
 #include "LocalSocketPairTests.h"
 
-#import "YMLocalSocketPair.h"
+#include "YMLocalSocketPair.h"
 
 typedef struct LocalSocketPairTest
 {
@@ -82,8 +82,8 @@ void _TestSpawnOneMore(struct LocalSocketPairTest *theTest)
     YMLocalSocketPairRef oneMorePair = YMLocalSocketPairCreate(name, false);
     YMRelease(name);
     
-    int socketA = YMLocalSocketPairGetA(oneMorePair);
-    int socketB = YMLocalSocketPairGetB(oneMorePair);
+    YMSOCKET socketA = YMLocalSocketPairGetA(oneMorePair);
+    YMSOCKET socketB = YMLocalSocketPairGetB(oneMorePair);
     testassert(socketA>=0&&socketB>=0,"sockets < 0");
     
     YMRelease(oneMorePair);

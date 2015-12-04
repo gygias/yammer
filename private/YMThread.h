@@ -22,7 +22,7 @@ typedef struct ym_thread_dispatch_t *ym_thread_dispatch_ref;
 #define YM_THREAD_RETURN void
 #define YM_CALLING_CONVENTION
 #define YM_THREAD_PARAM void *
-#define YM_THREAD_END
+#define YM_THREAD_END return;
 #else
 //typedef DWORD(WINAPI *PTHREAD_START_ROUTINE)(
 //	LPVOID lpThreadParameter
@@ -39,8 +39,8 @@ typedef YM_THREAD_RETURN(YM_CALLING_CONVENTION *ym_thread_entry)(YM_THREAD_PARAM
 // function pointers for YMThreadDispatchUserInfo
 typedef ym_thread_dispatch_func ym_thread_dispatch_dealloc;
 
-YMThreadRef YMThreadCreate(YMStringRef name, ym_thread_entry entryPoint, const void *context);
-YMThreadRef YMThreadDispatchCreate(YMStringRef name);
+YMThreadRef YMAPI YMThreadCreate(YMStringRef name, ym_thread_entry entryPoint, const void *context);
+YMThreadRef YMAPI YMThreadDispatchCreate(YMStringRef name);
 
 void YMThreadSetContext(YMThreadRef thread, void *context);
 
@@ -54,7 +54,7 @@ typedef struct ym_thread_dispatch_t
     YMStringRef description; // optional, assigns a name that will be included in logging from YMThreadDispatch
 } _ym_thread_dispatch_t;
 
-void YMThreadDispatchDispatch(YMThreadRef thread, struct ym_thread_dispatch_t dispatch);
+void YMAPI YMThreadDispatchDispatch(YMThreadRef thread, struct ym_thread_dispatch_t dispatch);
 
 typedef void (*ym_dispatch_forward_file_callback)(void *, YMIOResult, uint64_t);
 typedef struct _ym_thread_forward_file_context_t
@@ -70,11 +70,11 @@ typedef struct _ym_thread_forward_file_context_t *_ym_thread_forward_file_contex
 // want to be able to leave stream open, forward file doesn't imply close after completion
 // need event based way to either notify user when forward is complete, or 'close when done' in sync with plexer's list of streams
 // should the client 'forward' api be on connection, so it can ConnectionCloseStream either on callback or after sync method?
-bool YMThreadDispatchForwardFile(YMFILE fromFile, YMStreamRef toStream, const uint64_t *nBytesPtr, bool sync, _ym_thread_forward_file_context_ref callbackInfo);
-bool YMThreadDispatchForwardStream(YMStreamRef fromStream, YMFILE toFile, const uint64_t *nBytesPtr, bool sync, _ym_thread_forward_file_context_ref callbackInfo);
-void YMThreadDispatchJoin(YMThreadRef thread_);
+bool YMAPI YMThreadDispatchForwardFile(YMFILE fromFile, YMStreamRef toStream, const uint64_t *nBytesPtr, bool sync, _ym_thread_forward_file_context_ref callbackInfo);
+bool YMAPI YMThreadDispatchForwardStream(YMStreamRef fromStream, YMFILE toFile, const uint64_t *nBytesPtr, bool sync, _ym_thread_forward_file_context_ref callbackInfo);
+void YMAPI YMThreadDispatchJoin(YMThreadRef thread_);
 
-bool YMThreadStart(YMThreadRef thread);
-bool YMThreadJoin(YMThreadRef thread);
+bool YMAPI YMThreadStart(YMThreadRef thread);
+bool YMAPI YMThreadJoin(YMThreadRef thread);
 
 #endif /* YMThread_h */

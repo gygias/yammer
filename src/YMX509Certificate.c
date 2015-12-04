@@ -15,13 +15,8 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-#include "YMLog.h"
-#undef ymlog_type
 #define ymlog_type YMLogSecurity
-#if ( ymlog_type > ymlog_target )
-#undef ymlog
-#define ymlog(x,...) ;
-#endif
+#include "YMLog.h"
 
 typedef struct __ym_x509_certificate_t
 {

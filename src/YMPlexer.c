@@ -16,13 +16,8 @@
 #include "YMLock.h"
 #include "YMThread.h"
 
-#include "YMLog.h"
-#undef ymlog_type
 #define ymlog_type YMLogPlexer
-#if ( ymlog_type > ymlog_target )
-#undef ymlog
-#define ymlog(x,...) ;
-#endif
+#include "YMLog.h"
 
 #ifdef USE_FTIME
 #include <sys/timeb.h>
@@ -412,17 +407,10 @@ bool YMPlexerStop(YMPlexerRef plexer_)
 
 #pragma mark internal
 
-#ifndef WIN32
 YM_ONCE_FUNC(__YMRegisterSigpipe,
 {
     signal(SIGPIPE,__ym_sigpipe_handler);
 })
-#else
-YM_ONCE_FUNC(__YMRegisterSigpipe,
-{
-	ymerr("*** sigpipe win32 ***");
-})
-#endif
 
 void __ym_sigpipe_handler (__unused int signum)
 {

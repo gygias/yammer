@@ -41,16 +41,13 @@ typedef enum
 
 typedef const struct __ym_lock *YMLockRef;
 
-YMLockRef YMLockCreate();
-YMLockRef YMLockCreateWithOptions(YMLockOptions options);
-YMLockRef YMLockCreateWithOptionsAndName(YMLockOptions options, YMStringRef name);
+YMLockRef YMAPI YMLockCreate();
+YMLockRef YMAPI YMLockCreateWithOptions(YMLockOptions options);
+YMLockRef YMAPI YMLockCreateWithOptionsAndName(YMLockOptions options, YMStringRef name);
 
 // avoid 'try lock'
-void YMLockLock(YMLockRef lock);
-void YMLockUnlock(YMLockRef lock);
-
-// for YMSemaphore
-MUTEX_PTR_TYPE _YMLockGetMutex(YMLockRef lock);
+void YMAPI YMLockLock(YMLockRef lock);
+void YMAPI YMLockUnlock(YMLockRef lock);
 
 #ifdef __cplusplus
 }

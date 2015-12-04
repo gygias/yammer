@@ -11,8 +11,6 @@
 #include <stdarg.h>
 
 #include "YMLog.h"
-#undef ymlog_type
-#define ymlog_type YMLogDefault
 
 typedef struct __ym_string
 {

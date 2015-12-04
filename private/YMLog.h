@@ -12,12 +12,13 @@
 #ifndef ymlog_target
 #define ymlog_target ( YMLogDefault )
 // Token pasting of ',' and __VA_ARGS__ is a GNU extension
+#endif
+
 YM_WPPUSH
 #define ymlog(x,...) if ( ymlog_type & ymlog_target ) __YMLogType(ymlog_target,(x),##__VA_ARGS__)
 // it might be nice if this postpended errno/strerror (or had a designated version for cases that errno is relevant)
 #define ymerr(x,...) __YMLogType(YMLogError,(x),##__VA_ARGS__)
 YM_WPOP
-#endif
 
 #ifndef YMLog_h
 #define YMLog_h
@@ -39,6 +40,6 @@ typedef enum
     YMLogEverything = 0xFFFF
 } YMLogLevel;
 
-extern void __YMLogType( int level, char* format, ... ) __printflike(2, 3);
+extern YMAPI void __YMLogType( int level, char* format, ... ) __printflike(2, 3);
 
 #endif /* YMLog_h */
