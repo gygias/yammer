@@ -14,6 +14,8 @@
 #include "YMSecurityProvider.h"
 #include "YMStream.h"
 
+YM_EXTERN_C_PUSH
+
 typedef const struct __ym_plexer_t *YMPlexerRef; // CF defines const, how to shadow writeable struct?
 
 typedef void (*ym_plexer_interrupted_func)      (YMPlexerRef,void*);
@@ -34,5 +36,7 @@ bool YMAPI YMPlexerStop(YMPlexerRef plexer);
 
 YMStreamRef YMAPI YMPlexerCreateStream(YMPlexerRef plexer, YMStringRef name);
 void YMAPI YMPlexerCloseStream(YMPlexerRef plexer, YMStreamRef stream);
+
+YM_EXTERN_C_POP
 
 #endif /* YMPlexer_h */

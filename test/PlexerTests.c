@@ -17,6 +17,8 @@
 #include "YMSemaphore.h"
 #include "YMDictionary.h"
 
+YM_EXTERN_C_PUSH
+
 #define     PlexerTest1Threads 8
 #define     PlexerTest1NewStreamPerRoundTrip true
 #define     PlexerTest1RoundTripsPerThread 8
@@ -454,3 +456,5 @@ void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *
         }
     }
 }
+
+YM_EXTERN_C_POP

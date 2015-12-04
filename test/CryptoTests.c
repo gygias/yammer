@@ -11,6 +11,8 @@
 #include "YMRSAKeyPair.h"
 #include "YMX509Certificate.h"
 
+YM_EXTERN_C_PUSH
+
 typedef struct CryptoTest
 {
     ym_test_assert_func assert;
@@ -46,3 +48,5 @@ void _X509GenerationTestRun(struct CryptoTest *theTest)
     YMRelease(cert);
     YMRelease(keyPair);
 }
+
+YM_EXTERN_C_POP

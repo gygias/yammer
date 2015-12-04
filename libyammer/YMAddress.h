@@ -11,11 +11,9 @@
 #ifndef YMAddress_h
 #define YMAddress_h
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <libyammer/YMBase.h>
+
+YM_EXTERN_C_PUSH
 
 typedef struct __YMAddressRef *YMAddressRef;
 
@@ -37,8 +35,6 @@ int YMAPI YMAddressGetDomain(YMAddressRef address);
 int YMAPI YMAddressGetAddressFamily(YMAddressRef address);
 int YMAPI YMAddressGetDefaultProtocolForAddressFamily(int addressFamily);
 
-#ifdef __cplusplus
-}
-#endif
+YM_EXTERN_C_POP
 
 #endif /* YMAddress_h */

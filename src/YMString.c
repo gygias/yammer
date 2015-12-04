@@ -12,6 +12,8 @@
 
 #include "YMLog.h"
 
+YM_EXTERN_C_PUSH
+
 typedef struct __ym_string
 {
     _YMType _type;
@@ -276,3 +278,5 @@ bool YMStringEquals(YMStringRef stringA, YMStringRef stringB)
 {
     return ( 0 == strcmp(YMSTR(stringA),YMSTR(stringB)) );
 }
+
+YM_EXTERN_C_POP

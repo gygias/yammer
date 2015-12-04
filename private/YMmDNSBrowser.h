@@ -11,6 +11,8 @@
 
 #include "YMmDNS.h"
 
+YM_EXTERN_C_PUSH
+
 typedef const struct __ym_mdns_browser_t *YMmDNSBrowserRef;
 
 // callback definitions
@@ -44,5 +46,7 @@ bool YMAPI YMmDNSBrowserStart(YMmDNSBrowserRef browser);
 bool YMAPI YMmDNSBrowserStop(YMmDNSBrowserRef browser);
 
 bool YMAPI YMmDNSBrowserResolve(YMmDNSBrowserRef browser, YMStringRef serviceName);
+
+YM_EXTERN_C_POP
 
 #endif /* YMmDNSBrowser_h */

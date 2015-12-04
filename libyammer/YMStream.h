@@ -9,9 +9,7 @@
 #ifndef YMStream_h
 #define YMStream_h
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+YM_EXTERN_C_PUSH
 
 #include <libyammer/YMBase.h>
 
@@ -22,8 +20,6 @@ YMAPI YMIOResult YMStreamReadUp(YMStreamRef stream_, void *buffer, uint16_t leng
 YMAPI YMIOResult YMStreamReadFromFile(YMStreamRef stream, YMFILE file, uint64_t *inBytes, uint64_t *outBytes);
 YMAPI YMIOResult YMStreamWriteToFile(YMStreamRef stream, YMFILE file, uint64_t *inBytes, uint64_t *outBytes);
 
-#ifdef __cplusplus
-}
-#endif
+YM_EXTERN_C_POP
 
 #endif /* YMStream_h */

@@ -11,6 +11,8 @@
 
 #include "YMPeer.h"
 
+YM_EXTERN_C_PUSH
+
 YMPeerRef _YMPeerCreateWithAddress(YMAddressRef address);
 YMPeerRef _YMPeerCreate(YMStringRef name, YMDictionaryRef addresses, YMDictionaryRef certificates);
 
@@ -18,5 +20,7 @@ void _YMPeerSetName(YMPeerRef peer, YMStringRef name);
 void _YMPeerSetAddresses(YMPeerRef peer, YMDictionaryRef addresses);
 void _YMPeerSetPort(YMPeerRef peer, uint16_t port);
 void _YMPeerSetCertificates(YMPeerRef peer, YMDictionaryRef certificates);
+
+YM_EXTERN_C_POP
 
 #endif /* YMPeerPriv_h */

@@ -18,6 +18,8 @@
 #define ymlog_type YMLogSecurity
 #include "YMLog.h"
 
+YM_EXTERN_C_PUSH
+
 typedef struct __ym_x509_certificate_t
 {
     _YMType _type;
@@ -222,3 +224,5 @@ X509 *_YMX509CertificateGetX509(YMX509CertificateRef cert_)
     __YMX509CertificateRef cert = (__YMX509CertificateRef)cert_;
     return cert->x509;
 }
+
+YM_EXTERN_C_POP

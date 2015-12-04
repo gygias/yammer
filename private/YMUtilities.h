@@ -29,6 +29,8 @@
 #define MIN_OF(type) \
 (((type)(1LLU<<((sizeof(type)<<3)-1)) < (type)1) ? (long long int)((~0LLU)-((1LLU<<((sizeof(type)<<3)-1))-1LLU)) : 0LL)
 
+YM_EXTERN_C_PUSH
+
 typedef enum
 {
     LessThan = -1,
@@ -62,5 +64,7 @@ void YMUtilitiesFreeGlobals();
 #if defined(WIN32) || defined(_YOLO_DONT_TELL_PROFESSOR)
 int gettimeofday(struct timeval * tp, struct timezone * tzp);
 #endif
+
+YM_EXTERN_C_POP
 
 #endif /* YMUtilities_h */

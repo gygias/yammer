@@ -12,6 +12,8 @@
 #include "YMBase.h"
 #include "YMmDNS.h"
 
+YM_EXTERN_C_PUSH
+
 typedef const struct __ym_mdns_service_t *YMmDNSServiceRef;
 
 YMmDNSServiceRef YMAPI YMmDNSServiceCreate(YMStringRef type, YMStringRef name, uint16_t port);
@@ -20,5 +22,7 @@ YMmDNSServiceRef YMAPI YMmDNSServiceCreate(YMStringRef type, YMStringRef name, u
 bool YMAPI YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPair *keyPairs[], size_t nPairs );
 bool YMAPI YMmDNSServiceStart( YMmDNSServiceRef service );
 bool YMAPI YMmDNSServiceStop( YMmDNSServiceRef service, bool synchronous );
+
+YM_EXTERN_C_POP
 
 #endif /* YMmDNSService_h */

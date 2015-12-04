@@ -9,6 +9,8 @@
 #ifndef YMSecurityProviderInternal_h
 #define YMSecurityProviderInternal_h
 
+YM_EXTERN_C_PUSH
+
 typedef struct __ym_security_provider_t *__YMSecurityProviderRef;
 
 typedef bool (*ym_security_init_func)(__YMSecurityProviderRef provider);
@@ -27,5 +29,7 @@ typedef struct __ym_security_provider_t
     ym_security_write_func  writeFunc;
     ym_security_close_func  closeFunc;
 } __ym_security_provider_t;
+
+YM_EXTERN_C_POP
 
 #endif /* YMSecurityProviderInternal_h */

@@ -9,6 +9,10 @@
 #ifndef YMPipePriv_h
 #define YMPipePriv_h
 
+YM_EXTERN_C_PUSH
+
 void YMAPI _YMPipeCloseInputFile(YMPipeRef pipe);
+
+YM_EXTERN_C_POP
 
 #endif /* YMPipePriv_h */

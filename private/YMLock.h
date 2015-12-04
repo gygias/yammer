@@ -9,10 +9,6 @@
 #ifndef YMLock_h
 #define YMLock_h
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifndef WIN32
 # if defined(RPI)
 # define __USE_UNIX98
@@ -24,6 +20,8 @@ extern "C" {
 #define MUTEX_TYPE HANDLE
 #define MUTEX_PTR_TYPE MUTEX_TYPE
 #endif
+
+YM_EXTERN_C_PUSH
 
 typedef enum
 {
@@ -49,8 +47,6 @@ YMLockRef YMAPI YMLockCreateWithOptionsAndName(YMLockOptions options, YMStringRe
 void YMAPI YMLockLock(YMLockRef lock);
 void YMAPI YMLockUnlock(YMLockRef lock);
 
-#ifdef __cplusplus
-}
-#endif
+YM_EXTERN_C_POP
 
 #endif /* YMLock_h */

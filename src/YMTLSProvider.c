@@ -29,6 +29,8 @@
 #define ymlog_type YMLogSecurity
 #include "YMLog.h"
 
+YM_EXTERN_C_PUSH
+
 static YMLockRef *gYMTLSLocks = NULL;
 //static YMLockRef gYMTLSLocks[CRYPTO_NUM_LOCKS*sizeof(YMLockRef)];
 void __ym_tls_lock_callback(int mode, int type, const char *file, int line);
@@ -661,3 +663,5 @@ bool __YMTLSProviderClose(__YMSecurityProviderRef provider)
 //    ym_tls_free,
 //    ym_tls_callback_ctrl,
 //};
+
+YM_EXTERN_C_POP

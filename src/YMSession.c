@@ -34,6 +34,8 @@
 #include <ws2tcpip.h>
 #endif
 
+YM_EXTERN_C_PUSH
+
 typedef struct __ym_session_t
 {
     _YMType _type;
@@ -917,3 +919,5 @@ void __ym_mdns_service_resolved_func(__unused YMmDNSBrowserRef browser, bool suc
         abort();
     }
 }
+
+YM_EXTERN_C_POP

@@ -181,8 +181,6 @@
 		637816C41BF684D300BF79E2 /* YMPlexerPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMPlexerPriv.h; path = private/YMPlexerPriv.h; sourceTree = "<group>"; };
 		637816C51BF68B8F00BF79E2 /* YMString.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMString.c; path = src/YMString.c; sourceTree = "<group>"; };
 		637816C61BF68B8F00BF79E2 /* YMString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMString.h; path = libyammer/YMString.h; sourceTree = "<group>"; };
-		637816C91BF6FF3400BF79E2 /* YMLockPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMLockPriv.h; path = private/YMLockPriv.h; sourceTree = "<group>"; };
-		637816CA1BF6FFF800BF79E2 /* YMStringPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMStringPriv.h; path = private/YMStringPriv.h; sourceTree = "<group>"; };
 		637E3D5B1BF262EE00D702ED /* YMX509Certificate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMX509Certificate.c; path = src/YMX509Certificate.c; sourceTree = "<group>"; };
 		637E3D5C1BF262EE00D702ED /* YMX509Certificate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMX509Certificate.h; path = private/YMX509Certificate.h; sourceTree = "<group>"; };
 		637E3D5F1BF2680B00D702ED /* YMOpenssl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMOpenssl.h; path = private/YMOpenssl.h; sourceTree = "<group>"; };
@@ -365,7 +363,6 @@
 			isa = PBXGroup;
 			children = (
 				6332A4BB1BF134DD004BB764 /* yammerpch.h */,
-				637816CA1BF6FFF800BF79E2 /* YMStringPriv.h */,
 				63225D631BE90A6400C28F05 /* YMSecurityProvider.h */,
 				637E3D621BF2D12100D702ED /* YMSecurityProviderInternal.h */,
 				6307F77D1BECA44A009C64CD /* YMStreamPriv.h */,
@@ -402,7 +399,6 @@
 				63225D681BE9184000C28F05 /* YMUtilities.h */,
 				63225D671BE9184000C28F05 /* YMUtilities.c */,
 				63476A431BEAF4DB00D10081 /* YMLock.h */,
-				637816C91BF6FF3400BF79E2 /* YMLockPriv.h */,
 				63476A421BEAF4DB00D10081 /* YMLock.c */,
 				63476A4A1BEB074C00D10081 /* YMLinkedList.h */,
 				63476A491BEB074C00D10081 /* YMLinkedList.c */,

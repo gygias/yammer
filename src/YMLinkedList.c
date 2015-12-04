@@ -10,6 +10,8 @@
 
 #include "YMLog.h"
 
+YM_EXTERN_C_PUSH
+
 typedef struct _YMLinkedListItem
 {
     void *representedItem;
@@ -116,3 +118,5 @@ size_t YMLinkedListGetCount(YMLinkedListRef list_)
     __YMLinkedListRef list = (__YMLinkedListRef)list_;
     return list->count;
 }
+
+YM_EXTERN_C_POP

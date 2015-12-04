@@ -11,6 +11,8 @@
 #include "YMmDNSBrowser.h"
 #include "YMmDNSService.h"
 
+YM_EXTERN_C_PUSH
+
 typedef struct mDNSTest
 {
     ym_test_assert_func assert;
@@ -278,3 +280,5 @@ void test_service_removed(YMmDNSBrowserRef browser, YMStringRef serviceName, voi
         theTest->waitingOnDisappearance = false;
     }
 }
+
+YM_EXTERN_C_POP

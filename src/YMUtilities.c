@@ -37,9 +37,7 @@
 #include <VersionHelpers.h> // IsWindows*
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+YM_EXTERN_C_PUSH
 
 const char *YMGetCurrentTimeString(char *buf, size_t bufLen)
 {
@@ -476,3 +474,5 @@ int gettimeofday(struct timeval * tp, struct timezone * tzp)
 	return 0;
 }
 #endif
+
+YM_EXTERN_C_POP

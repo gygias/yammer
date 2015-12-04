@@ -28,6 +28,8 @@
 #define ymlog_type YMLogmDNS
 #include "YMLog.h"
 
+YM_EXTERN_C_PUSH
+
 typedef struct __ym_mdns_browser_t
 {
     _YMType _type;
@@ -544,3 +546,5 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_browser_event_proc(YM_THREAD_PA
 
 	YM_THREAD_END
 }
+
+YM_EXTERN_C_POP

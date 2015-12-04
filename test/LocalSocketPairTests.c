@@ -10,6 +10,8 @@
 
 #include "YMLocalSocketPair.h"
 
+YM_EXTERN_C_PUSH
+
 typedef struct LocalSocketPairTest
 {
     ym_test_assert_func assert;
@@ -88,3 +90,5 @@ void _TestSpawnOneMore(struct LocalSocketPairTest *theTest)
     
     YMRelease(oneMorePair);
 }
+
+YM_EXTERN_C_POP

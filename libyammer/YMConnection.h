@@ -9,9 +9,7 @@
 #ifndef YMConnection_h
 #define YMConnection_h
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+YM_EXTERN_C_PUSH
 
 #include <libyammer/YMBase.h>
 
@@ -38,8 +36,6 @@ typedef struct ym_connection_forward_context_t
 bool YMAPI YMConnectionForwardFile(YMConnectionRef connection, YMFILE fromFile, YMStreamRef toStream, const uint64_t *nBytesPtr, bool sync, ym_connection_forward_context_t *callbackInfo);
 bool YMAPI YMConnectionForwardStream(YMConnectionRef connection, YMStreamRef fromStream, YMFILE toFile, const uint64_t *nBytesPtr, bool sync, ym_connection_forward_context_t *callbackInfo);
 
-#ifdef __cplusplus
-}
-#endif
+YM_EXTERN_C_POP
 
 #endif /* YMConnection_h */

@@ -9,16 +9,14 @@
 #ifndef YMSession_h
 #define YMSession_h
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <libyammer/YMBase.h>
 
 #include <libyammer/YMString.h>
 #include <libyammer/YMDictionary.h>
 #include <libyammer/YMPeer.h>
 #include <libyammer/YMConnection.h>
+
+YM_EXTERN_C_PUSH
 
 typedef const struct __ym_session_t *YMSessionRef;
 
@@ -61,8 +59,6 @@ bool YMAPI YMSessionCloseAllConnections(YMSessionRef session);
 YMConnectionRef YMAPI YMSessionGetDefaultConnection(YMSessionRef session);
 YMDictionaryRef YMAPI YMSessionGetConnections(YMSessionRef session);
 
-#ifdef __cplusplus
-}
-#endif
+YM_EXTERN_C_POP
 
 #endif /* YMSession_h */

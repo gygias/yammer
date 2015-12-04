@@ -29,6 +29,8 @@
 
 #define NOT_CONNECTED ( ( connection->socket == NULL_SOCKET ) && ! connection->isConnected )
 
+YM_EXTERN_C_PUSH
+
 typedef struct __ym_connection_t
 {
     _YMType _type;
@@ -408,3 +410,5 @@ void ym_connection_interrupted_proc(__unused YMPlexerRef plexer, void *context)
     __YMConnectionRef connection = (__YMConnectionRef)context;
     connection->interruptedFunc(connection, connection->interruptedFuncContext);
 }
+
+YM_EXTERN_C_POP

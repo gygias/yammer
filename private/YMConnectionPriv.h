@@ -9,6 +9,8 @@
 #ifndef YMConnectionPriv_h
 #define YMConnectionPriv_h
 
+YM_EXTERN_C_PUSH
+
 // "private" vs internal to allow for connection-level unit tests
 typedef enum
 {
@@ -35,5 +37,7 @@ bool YMAPI YMConnectionConnect(YMConnectionRef connection);
 
 uint64_t YMAPI YMConnectionDoSample(YMConnectionRef connection);
 bool YMAPI YMConnectionClose(YMConnectionRef connection);
+
+YM_EXTERN_C_POP
 
 #endif /* YMConnectionPriv_h */

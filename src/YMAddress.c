@@ -30,9 +30,7 @@
 //typedef unsigned __int32 socklen_t;
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+YM_EXTERN_C_PUSH
 
 #define YM_IPV4_LEN sizeof(struct sockaddr_in)
 #define YM_IPV6_LEN sizeof(struct sockaddr_in6)
@@ -233,6 +231,4 @@ int YMAddressGetDefaultProtocolForAddressFamily(int addressFamily)
     return -1;
 }
 
-#ifdef __cplusplus
-}
-#endif
+YM_EXTERN_C_POP

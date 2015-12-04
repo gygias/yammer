@@ -14,6 +14,8 @@
 #include "YMLocalSocketPair.h"
 #include "YMThread.h"
 
+YM_EXTERN_C_PUSH
+
 #define TLSTestRoundTrips 5
 #define TLSTestMessageRoundTrips 1000
 #define TLSTestRandomMessages true
@@ -239,3 +241,5 @@ uint8_t *_ReceiveAMessage(struct TLSTest *theTest, YMTLSProviderRef tls, uint16_
     *outLen = length;
     return buffer;
 }
+
+YM_EXTERN_C_POP

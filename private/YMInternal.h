@@ -54,6 +54,8 @@
 
 #define YM_TYPE_RESERVED (128 - sizeof(YMTypeID))
 
+YM_EXTERN_C_PUSH
+
 typedef struct _ym_type
 {
     YMTypeID __type;
@@ -90,5 +92,6 @@ typedef bool (*ym_write_func)(int,const uint8_t*,size_t);
 
 #define YM_STREAM_INFO(x) ((ym_plexer_stream_user_info_ref)_YMStreamGetUserInfo(x))
 
+YM_EXTERN_C_POP
 
 #endif /* YMInternal_h */

@@ -10,6 +10,8 @@
 
 #include "YMLog.h"
 
+YM_EXTERN_C_PUSH
+
 YMTypeID _YMAddressTypeID = 'a';
 YMTypeID _YMmDNSBrowserTypeID = 'b';
 YMTypeID _YMConnectionTypeID = 'c';
@@ -193,3 +195,5 @@ void YMFreeGlobalResources()
     YMTLSProviderFreeGlobals();
 	YMUtilitiesFreeGlobals();
 }
+
+YM_EXTERN_C_POP

@@ -21,6 +21,8 @@
 #include "dirent.h"
 #endif
 
+YM_EXTERN_C_PUSH
+
 uint64_t gSomeLength = 5678900;
 #define FAKE_DELAY_MAX 3
 
@@ -763,3 +765,5 @@ void _ym_session_stream_closing_func(YMSessionRef session, YMConnectionRef conne
     testassert(connection,"streamClosing connection");
     testassert(stream,"streamClosing stream");
 }
+
+YM_EXTERN_C_POP

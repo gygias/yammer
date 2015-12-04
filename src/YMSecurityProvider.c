@@ -14,6 +14,8 @@
 #define ymlog_type YMLogSecurity
 #include "YMLog.h"
 
+YM_EXTERN_C_PUSH
+
 bool YMNoSecurityInit(__YMSecurityProviderRef provider);
 bool YMNoSecurityRead(__YMSecurityProviderRef provider,uint8_t*,size_t);
 bool YMNoSecurityWrite(__YMSecurityProviderRef provider,const uint8_t*,size_t);
@@ -99,3 +101,5 @@ bool YMNoSecurityClose(__unused __YMSecurityProviderRef provider_)
 		YM_CLOSE_FILE(provider->writeFile);
     return ( result == 0 );
 }
+
+YM_EXTERN_C_POP

@@ -26,6 +26,8 @@
 #define ymlog_type YMLogThread
 #include "YMLog.h"
 
+YM_EXTERN_C_PUSH
+
 typedef uint64_t YMThreadDispatchID;
 typedef uint64_t YMThreadDispatchThreadID;
 
@@ -507,3 +509,5 @@ YMIOResult __ym_thread_dispatch_forward_file_proc(void *ctx_)
     free(ctx);
     return result;
 }
+
+YM_EXTERN_C_POP

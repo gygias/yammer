@@ -12,6 +12,8 @@
 
 #include "YMLog.h"
 
+YM_EXTERN_C_PUSH
+
 #ifdef DEBUG
 #define CHECK_CONSISTENCY { if ( ( dict->head == NULL ) ^ ( dict->count == 0 ) ) { abort(); } }
 #else
@@ -292,3 +294,5 @@ _YMDictionaryItemRef _YMDictionaryCopyItem(_YMDictionaryItemRef item)
     itemCopy->next = item->next;
     return itemCopy;
 }
+
+YM_EXTERN_C_POP

@@ -11,10 +11,14 @@
 
 #include "YMRSAKeyPair.h"
 
+YM_EXTERN_C_PUSH
+
 typedef const struct __ym_x509_certificate_t *YMX509CertificateRef;
 
 YMX509CertificateRef YMAPI YMX509CertificateCreate(YMRSAKeyPairRef);
 
 size_t YMAPI YMX509CertificateGetPublicKeyData(void *buffer);
+
+YM_EXTERN_C_POP
 
 #endif /* YMX509Certificate_h */

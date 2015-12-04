@@ -6,6 +6,9 @@
 //  Copyright © 2015 combobulated. All rights reserved.
 //
 
+#ifndef YMLog_h
+#define YMLog_h
+
 #ifndef ymlog_type
 #define ymlog_type YMLogDefault
 #endif
@@ -20,8 +23,7 @@ YM_WPPUSH
 #define ymerr(x,...) __YMLogType(YMLogError,(x),##__VA_ARGS__)
 YM_WPOP
 
-#ifndef YMLog_h
-#define YMLog_h
+YM_EXTERN_C_PUSH
 
 typedef enum
 {
@@ -41,5 +43,7 @@ typedef enum
 } YMLogLevel;
 
 extern YMAPI void __YMLogType( int level, char* format, ... ) __printflike(2, 3);
+
+YM_EXTERN_C_POP
 
 #endif /* YMLog_h */

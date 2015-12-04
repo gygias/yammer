@@ -9,9 +9,13 @@
 #ifndef YMOpenssl_h
 #define YMOpenssl_h
 
+YM_EXTERN_C_PUSH
+
 // defining these might be more confusing than it's worth
 // meanings of 1/0/-1 are sporadic
 #define openssl_success 1
 #define openssl_fail 0
+
+YM_EXTERN_C_POP
 
 #endif /* YMOpenssl_h */

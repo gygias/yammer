@@ -11,6 +11,8 @@
 
 #include "YMStream.h"
 
+YM_EXTERN_C_PUSH
+
 typedef int32_t _YMStreamCommandType;
 typedef uint64_t _YMStreamBoundType;
 
@@ -54,5 +56,7 @@ void YMAPI _YMStreamSendClose(YMStreamRef stream);
 
 ym_stream_user_info_ref YMAPI _YMStreamGetUserInfo(YMStreamRef);
 YMStringRef YMAPI _YMStreamGetName(YMStreamRef stream);
+
+YM_EXTERN_C_POP
 
 #endif /* YMStreamPriv_h */

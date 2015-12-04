@@ -39,6 +39,8 @@
 #define YammerTests             A_YammerTests
 #define CheckStateTest          Z_CheckStateTest
 
+YM_EXTERN_C_PUSH
+
 #define testassert(x,y,...) { theTest->assert(theTest->context,(x),y"\n",##__VA_ARGS__); }
 
 typedef void (*ym_test_assert_func)(const void *ctx, bool exp, const char *fmt, ...);
@@ -46,5 +48,7 @@ typedef bool (*ym_test_diff_func)(const void *ctx, const char *path1, const char
 
 char *YMRandomASCIIStringWithMaxLength(uint16_t maxLength, bool for_mDNSServiceName, bool for_txtKey);
 uint8_t *YMRandomDataWithMaxLength(uint16_t length, uint16_t *outLength);
+
+YM_EXTERN_C_POP
 
 #endif /* Tests_h */

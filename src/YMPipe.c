@@ -13,6 +13,8 @@
 #define ymlog_type YMLogIO
 #include "YMLog.h"
 
+YM_EXTERN_C_PUSH
+
 typedef struct __ym_pipe_t
 {
     _YMType _type;
@@ -126,5 +128,6 @@ void __YMPipeCloseFile(__YMPipeRef pipe, YMFILE *fdPtr)
             //abort(); plexer
         }
     }
-    
 }
+
+YM_EXTERN_C_POP

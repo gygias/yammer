@@ -12,6 +12,8 @@
 #include "arc4random.h"
 #endif
 
+YM_EXTERN_C_PUSH
+
 char *YMRandomASCIIStringWithMaxLength(uint16_t maxLength, bool for_mDNSServiceName, bool for_txtKey)
 {
     uint8_t randomLength = (uint8_t)arc4random_uniform(maxLength + 1 + 1);
@@ -52,3 +54,5 @@ uint8_t *YMRandomDataWithMaxLength(uint16_t length, uint16_t *outLength)
     
     return randomData;
 }
+
+YM_EXTERN_C_POP

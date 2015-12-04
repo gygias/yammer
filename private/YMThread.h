@@ -11,6 +11,8 @@
 
 #include "YMStream.h"
 
+YM_EXTERN_C_PUSH
+
 typedef const struct __ym_thread_t *YMThreadRef;
 
 typedef void (*ym_void_voidp_func)(void *);
@@ -76,5 +78,7 @@ void YMAPI YMThreadDispatchJoin(YMThreadRef thread_);
 
 bool YMAPI YMThreadStart(YMThreadRef thread);
 bool YMAPI YMThreadJoin(YMThreadRef thread);
+
+YM_EXTERN_C_POP
 
 #endif /* YMThread_h */

@@ -12,6 +12,8 @@
 #define mDNS_SERVICE_NAME_LENGTH_MAX 63
 #define mDNS_SERVICE_NAME_LENGTH_MIN 1
 
+YM_EXTERN_C_PUSH
+
 typedef struct _YMmDNSTxtRecordKeyPair
 {
     YMStringRef key;
@@ -54,5 +56,7 @@ void YMAPI _YMmDNSTxtKeyPairsFree(YMmDNSTxtRecordKeyPair **keyPairList, size_t s
 
 YMAPI unsigned char  *_YMmDNSTxtBlobCreate(YMmDNSTxtRecordKeyPair **keyPairList, uint16_t *inSizeOutLength);
 void YMAPI _YMmDNSServiceListFree(YMmDNSServiceList *serviceList); // xxx
+
+YM_EXTERN_C_POP
 
 #endif /* YMmDNS_h */

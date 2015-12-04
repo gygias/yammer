@@ -14,6 +14,8 @@
 #include "YMSemaphore.h"
 #include "YMString.h"
 
+YM_EXTERN_C_PUSH
+
 #define NumberOfThreads 8
 #define RunFor 5.0
 #define MaxItemLength 2048
@@ -137,3 +139,5 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _dictionary_test_proc(YM_THREAD_PARAM ctx
 
 	YM_THREAD_END
 }
+
+YM_EXTERN_C_POP

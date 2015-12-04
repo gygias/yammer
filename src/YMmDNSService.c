@@ -26,6 +26,8 @@
 #define ymlog_type YMLogmDNS
 #include "YMLog.h"
 
+YM_EXTERN_C_PUSH
+
 typedef struct __ym_mdns_service_t
 {
     _YMType _type;
@@ -251,3 +253,5 @@ bool YMmDNSServiceStop( YMmDNSServiceRef service_, bool synchronous )
 //    ymlog("mdns: event thread for %s exiting...",YMSTR(service->name));
 //    YMRelease(service);
 //}
+
+YM_EXTERN_C_POP

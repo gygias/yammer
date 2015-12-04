@@ -26,6 +26,8 @@
 #include "YMUtilities.h" // gettimeofday copy
 #endif
 
+YM_EXTERN_C_PUSH
+
 // it's been a while since crypto 101
 // public key (N,e), N:modulo e:public exponent
 // private key (d)
@@ -226,3 +228,5 @@ void *YMRSAKeyPairGetRSA(YMRSAKeyPairRef keyPair_)
     __YMRSAKeyPairRef keyPair = (__YMRSAKeyPairRef)keyPair_;
     return keyPair->rsa;
 }
+
+YM_EXTERN_C_POP

@@ -35,6 +35,8 @@
 #define YM_SEM_LOG_PREFIX "semaphore[%s,%d,%s]: "
 #define YM_SEM_LOG_DESC YMSTR(semaphore->semName),(int)semaphore->sem,YMSTR(semaphore->userName)
 
+YM_EXTERN_C_PUSH
+
 typedef struct __ym_semaphore
 {
     _YMType _typeID;
@@ -178,3 +180,5 @@ void YMSemaphoreSignal(YMSemaphoreRef semaphore_)
 	}
 	ymlog(YM_SEM_LOG_PREFIX "posted", YM_SEM_LOG_DESC);
 }
+
+YM_EXTERN_C_POP

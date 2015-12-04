@@ -11,6 +11,8 @@
 
 #include "YMBase.h"
 
+YM_EXTERN_C_PUSH
+
 typedef const struct __ym_local_socket_pair_t *YMLocalSocketPairRef;
 
 YMLocalSocketPairRef YMAPI YMLocalSocketPairCreate(YMStringRef name, bool moreComing);
@@ -21,5 +23,7 @@ void YMAPI YMLocalSocketPairStop();
 
 YMSOCKET YMAPI YMLocalSocketPairGetA(YMLocalSocketPairRef pair);
 YMSOCKET YMAPI YMLocalSocketPairGetB(YMLocalSocketPairRef pair);
+
+YM_EXTERN_C_POP
 
 #endif /* YMLocalSocketPair_h */

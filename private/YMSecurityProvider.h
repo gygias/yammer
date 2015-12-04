@@ -9,6 +9,8 @@
 #ifndef YMSecurityProvider_h
 #define YMSecurityProvider_h
 
+YM_EXTERN_C_PUSH
+
 typedef const struct __ym_security_provider_t *YMSecurityProviderRef;
 
 YMSecurityProviderRef YMAPI YMSecurityProviderCreateWithSocket(YMSOCKET fd);
@@ -18,5 +20,7 @@ bool YMAPI YMSecurityProviderInit(YMSecurityProviderRef provider);
 bool YMAPI YMSecurityProviderRead(YMSecurityProviderRef provider, uint8_t *buffer, size_t bytes);
 bool YMAPI YMSecurityProviderWrite(YMSecurityProviderRef provider, const uint8_t *buffer, size_t byte);
 bool YMAPI YMSecurityProviderClose(YMSecurityProviderRef provider);
+
+YM_EXTERN_C_POP
 
 #endif /* YMSecurityProvider_h */

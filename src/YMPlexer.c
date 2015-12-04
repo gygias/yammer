@@ -38,6 +38,8 @@
 #undef ymlog_type
 #define ymlog_type YMLogPlexer
 
+YM_EXTERN_C_PUSH
+
 #define CHECK_REMOVE_RELEASE(local,streamID,remove) {   \
                                                 YMLockLock(plexer->interruptionLock); bool _interrupted = ! plexer->active; YMLockUnlock(plexer->interruptionLock); \
                                                 if ( ! _interrupted ) { \
@@ -1082,3 +1084,4 @@ void YM_CALLING_CONVENTION __ym_plexer_notify_interrupted(ym_thread_dispatch_ref
     //YMRelease(dispatch->description); // done by ThreadDispatch
 }
 
+YM_EXTERN_C_POP

@@ -9,9 +9,7 @@
 #ifndef YMDictionary_h
 #define YMDictionary_h
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+YM_EXTERN_C_PUSH
 
 #include <libyammer/YMBase.h>
 
@@ -44,8 +42,6 @@ YMDictionaryEnumRef YMAPI YMDictionaryEnumeratorGetNext(YMDictionaryEnumRef aEnu
 // call only if cancelling incomplete enumeration, if GetNext returns NULL there is nothing more for the caller to do.
 void YMAPI YMDictionaryEnumeratorEnd(YMDictionaryEnumRef aEnum);
 
-#ifdef __cplusplus
-}
-#endif
+YM_EXTERN_C_POP
 
 #endif /* YMDictionary_h */

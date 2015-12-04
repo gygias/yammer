@@ -9,6 +9,8 @@
 #ifndef YMLinkedList_h
 #define YMLinkedList_h
 
+YM_EXTERN_C_PUSH
+
 typedef const struct __ym_linked_list_t *YMLinkedListRef;
 
 YMLinkedListRef YMLinkedListCreate();
@@ -20,5 +22,7 @@ void *YMLinkedListGetItem(YMLinkedListRef list, ym_linked_list_identifier_func);
 void *YMLinkedListRemove(YMLinkedListRef list, ym_linked_list_identifier_func);
 
 size_t YMLinkedListGetCount(YMLinkedListRef list);
+
+YM_EXTERN_C_POP
 
 #endif /* YMLinkedList_h */

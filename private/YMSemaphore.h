@@ -9,6 +9,8 @@
 #ifndef YMSemaphore_h
 #define YMSemaphore_h
 
+YM_EXTERN_C_PUSH
+
 typedef struct __YMSemaphore *YMSemaphoreRef;
 
 YMSemaphoreRef YMAPI YMSemaphoreCreate(int initialValue);
@@ -16,5 +18,7 @@ YMSemaphoreRef YMAPI YMSemaphoreCreateWithName(YMStringRef name, int initialValu
 
 void YMAPI YMSemaphoreWait(YMSemaphoreRef semaphore);
 void YMAPI YMSemaphoreSignal(YMSemaphoreRef semaphore);
+
+YM_EXTERN_C_POP
 
 #endif /* YMSemaphore_h */

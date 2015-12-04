@@ -8,6 +8,8 @@
 
 #include "YMPeer.h"
 
+YM_EXTERN_C_PUSH
+
 typedef struct __ym_peer_t
 {
     _YMType _type;
@@ -124,3 +126,5 @@ void _YMPeerSetCertificates(YMPeerRef peer_, YMDictionaryRef certificates)
     __YMPeerRef peer = (__YMPeerRef)peer_;
     peer->certificates = YMRetain(certificates);
 }
+
+YM_EXTERN_C_POP

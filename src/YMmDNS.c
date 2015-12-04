@@ -45,6 +45,8 @@
 #define ymlog_type YMLogmDNS
 #include "YMLog.h"
 
+YM_EXTERN_C_PUSH
+
 void _YMmDNSServiceListFree(YMmDNSServiceList *serviceList)
 {
     YMmDNSServiceList *listIter = serviceList;
@@ -289,3 +291,5 @@ unsigned char  *_YMmDNSTxtBlobCreate(YMmDNSTxtRecordKeyPair **keyPairList, uint1
     
     return txtBlob;
 }
+
+YM_EXTERN_C_POP

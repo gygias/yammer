@@ -16,7 +16,7 @@
 #include <winsock2.h>
 #endif
 
-#endif /* YMTLSProvider_h */
+YM_EXTERN_C_PUSH
 
 typedef const struct __ym_tls_provider_t *YMTLSProviderRef;
 
@@ -35,3 +35,7 @@ void YMAPI YMTLSProviderSetLocalCertsFunc(YMTLSProviderRef tls, ym_tls_provider_
 void YMAPI YMTLSProviderSetAcceptPeerCertsFunc(YMTLSProviderRef tls, ym_tls_provider_should_accept func, void *context);
 
 void YMAPI YMTLSProviderFreeGlobals();
+
+YM_EXTERN_C_POP
+
+#endif /* YMTLSProvider_h */

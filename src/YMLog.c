@@ -17,6 +17,8 @@
 #include <pthread.h>
 #endif
 
+YM_EXTERN_C_PUSH
+
 void YMLog( char* format, ... ) __printflike(1, 2);
 
 static YMLockRef gYMLogLock = NULL;
@@ -54,3 +56,5 @@ void __YMLogType( int level, char* format, ... )
     }
     YMLockUnlock(gYMLogLock);
 }
+
+YM_EXTERN_C_POP

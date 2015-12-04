@@ -31,7 +31,7 @@
 		      + strlen ((ptr)->sun_path))
 #endif
 
-//#ifndef WIN32 // only used by the os x unit tests atm
+YM_EXTERN_C_PUSH
 
 typedef struct __ym_local_socket_pair_t
 {
@@ -338,6 +338,4 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_local_socket_accept_proc(__unused YM
 	YM_THREAD_END
 }
 
-//#else // not WIN32
-//void _YMLocalSocketPairFree(YMTypeRef object) {}
-//#endif
+YM_EXTERN_C_POP

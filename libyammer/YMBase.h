@@ -8,14 +8,20 @@
 
 #ifndef YMBase_h
 #define YMBase_h
-
-#ifdef __cplusplus
-extern "C" {
-#endif
     
 #include <sys/types.h>
 #include <stdbool.h>
 #include <stdint.h>
+
+#ifdef __cplusplus
+#define YM_EXTERN_C_PUSH    extern "C" {
+#define YM_EXTERN_C_POP     }
+#else
+#define YM_EXTERN_C_PUSH
+#define YM_EXTERN_C_POP
+#endif
+
+YM_EXTERN_C_PUSH
 
 #if defined(_MACOS) || defined(RPI)
 #define YM_VARGS_SENTINEL_REQUIRED __attribute__((sentinel(0)))
@@ -74,8 +80,6 @@ typedef enum
 
 void YMAPI YMFreeGlobalResources();
 
-#ifdef __cplusplus
-}
-#endif
+YM_EXTERN_C_POP
 
 #endif /* YMBase_h */

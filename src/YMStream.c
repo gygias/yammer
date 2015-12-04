@@ -33,6 +33,8 @@
 #define LOG_STREAM_LIFECYCLE(x) ;
 #endif
 
+YM_EXTERN_C_PUSH
+
 typedef struct __ym_stream_t
 {
     _YMType _type;
@@ -433,3 +435,5 @@ YMStringRef _YMStreamGetName(YMStreamRef stream_)
     __YMStreamRef stream = (__YMStreamRef)stream_;
     return stream->name;
 }
+
+YM_EXTERN_C_POP

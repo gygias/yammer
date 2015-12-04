@@ -9,9 +9,7 @@
 #ifndef YMString_h
 #define YMString_h
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+YM_EXTERN_C_PUSH
 
 #include <libyammer/YMBase.h>
 
@@ -40,8 +38,6 @@ bool YMAPI YMStringEquals(YMStringRef stringA, YMStringRef stringB);
 #define YMSTRCF(x,...) YMStringCreateWithFormat((x),##__VA_ARGS__,NULL)
 #define YMLEN(x) YMStringGetLength(x)
 
-#ifdef __cplusplus
-}
-#endif
+YM_EXTERN_C_POP
 
 #endif /* YMString_h */

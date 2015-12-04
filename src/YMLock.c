@@ -23,9 +23,7 @@ typedef struct __ym_lock
 typedef struct __ym_lock __YMLock;
 typedef __YMLock *__YMLockRef;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+YM_EXTERN_C_PUSH
 
 YMLockRef YMLockCreate()
 {
@@ -82,6 +80,4 @@ void _YMLockFree(YMTypeRef object)
     YMRelease(lock->name);
 }
 
-#ifdef __cplusplus
-}
-#endif
+YM_EXTERN_C_POP
