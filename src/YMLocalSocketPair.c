@@ -59,8 +59,8 @@ static YMStringRef gYMLocalSocketPairName = NULL;
 static YMSemaphoreRef gYMLocalSocketSemaphore = NULL; // thread ready & each 'accepted'
 static bool gYMLocalSocketPairAcceptKeepListening = false;
 static bool gYMLocalSocketThreadEnd = false; // sadly not quite the same as 'keep listening'
-static YMSOCKET gYMLocalSocketListenSocket = -1;
-static YMSOCKET gYMLocalSocketPairAcceptedLast = -1;
+static YMSOCKET gYMLocalSocketListenSocket = NULL_SOCKET;
+static YMSOCKET gYMLocalSocketPairAcceptedLast = NULL_SOCKET;
 
 void YMLocalSocketPairStop()
 {
@@ -73,10 +73,10 @@ void YMLocalSocketPairStop()
         YM_CLOSE_SOCKET(gYMLocalSocketListenSocket);
         if ( result != 0 )
             ymerr("local-socket: warning: failed to close listen socket: %d (%s)",errno,strerror(errno));
-        gYMLocalSocketListenSocket = -1;
-        
-        YMRelease(gYMLocalSocketSemaphore);
-        gYMLocalSocketSemaphore = NULL;
+        gYMLocalSocketListenSocket = NULL_SOCKET;
+
+        while ( gYMLocalSocketSemaphore ) {}; // avoid free->create race where previous thread holds previous global sem
+
         YMRelease(gYMLocalSocketPairAcceptThread);
         gYMLocalSocketPairAcceptThread = NULL;
         
@@ -310,19 +310,22 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_local_socket_accept_proc(__unused YM
         if ( newClient < 0 )
         {
             if ( ! gYMLocalSocketThreadEnd )
-                ymerr("local-socket[spawn]: error: accept failed: %d: %d (%s)",newClient,errno,strerror(errno));
-            gYMLocalSocketPairAcceptedLast = -1;
+                ymerr("__ym_local_socket_accept_proc: error: accept failed: %d: %d (%s)",newClient,errno,strerror(errno));
+            gYMLocalSocketPairAcceptedLast = NULL_SOCKET;
             break;
         }
         else
             gYMLocalSocketPairAcceptedLast = newClient;
         
-        ymlog("local-socket[spawn-server]: accepted: sf%d",newClient);
+        ymlog("__ym_local_socket_accept_proc: accepted: sf%d",newClient);
         
         YMSemaphoreSignal(gYMLocalSocketSemaphore);
         
         // check flag again in case 'global stop' thing got called on a persistent accept thread
     } while ( gYMLocalSocketPairAcceptKeepListening );
+
+	YMRelease(gYMLocalSocketSemaphore);
+	gYMLocalSocketSemaphore = NULL;
     
     ymlog("__ym_local_socket_accept_proc exiting");
 

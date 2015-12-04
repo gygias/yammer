@@ -32,6 +32,7 @@ void _ym_test_assert_func(const void *ctx, bool exp, const char *fmt, ...)
 		fprintf(stderr, "\n");
 		fflush(stderr);
 
+#define HARD
 #ifdef HARD
 		ymabort("yo");
 #else
@@ -54,13 +55,27 @@ int main()
 {
 	gLock = YMLockCreate();
 
+	ymerr("------ dictionary test start ------");
 	DictionaryTestRun(_ym_test_assert_func, NULL);
+	ymerr("------ dictionary test end ------");
+	ymerr("------ crypto test start ------");
 	CryptoTestRun(_ym_test_assert_func, NULL);
+	ymerr("------ crypto test end ------");
+	ymerr("------ local socket pair test start ------");
 	LocalSocketPairTestRun(_ym_test_assert_func, NULL);
+	ymerr("------ local socket pair test end ------");
+	ymerr("------ mdns test start ------");
 	mDNSTestRun(_ym_test_assert_func, NULL);
+	ymerr("------ mdns test end ------");
+	ymerr("------ tls test start ------");
 	TLSTestRun(_ym_test_assert_func, NULL);
+	ymerr("------ tls test end ------");
+	ymerr("------ plexer test start ------");
 	PlexerTestRun(_ym_test_assert_func, NULL);
+	ymerr("------ plexer test end ------");
+	ymerr("------ session test start ------");
 	SessionTestRun(_ym_test_assert_func, _ym_test_diff_func, NULL);
+	ymerr("------ session test end ------");
 
     return 0;
 }

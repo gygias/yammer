@@ -31,7 +31,7 @@ typedef enum
     YMLockOptionsAll = YMLockRecursive | YMLockErrorCheck
 } YMLockOptions;
 
-#ifdef DEBUG
+#ifdef YMDEBUG
 #define YMInternalLockType YMLockErrorCheck
 #else
 #define YMInternalLockType YMLockNone

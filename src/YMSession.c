@@ -337,7 +337,7 @@ bool YMSessionConnectToPeer(YMSessionRef session_, YMPeerRef peer, bool sync)
     YMDictionaryRef addresses = YMPeerGetAddresses(peer);
     YMDictionaryKey aKey = YMDictionaryGetRandomKey(addresses);
     YMAddressRef address = (YMAddressRef)YMDictionaryGetItem(addresses, aKey);
-    YMConnectionRef newConnection = YMConnectionCreate(address, YMConnectionStream, YMTLS);
+    YMConnectionRef newConnection = YMConnectionCreate(address, YMConnectionStream, YMTLS, true);
     
     __ym_session_connect_async_context_ref context = (__ym_session_connect_async_context_ref)YMALLOC(sizeof(__ym_session_connect_async_context));
     context->session = (__YMSessionRef)YMRetain(session);
@@ -672,7 +672,7 @@ void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(ym_thread_
         goto catch_release;
     }
     
-    newConnection = YMConnectionCreateIncoming(socket, address, YMConnectionStream, YMTLS);
+    newConnection = YMConnectionCreateIncoming(socket, address, YMConnectionStream, YMTLS, true);
     if ( ! newConnection )
     {
         ymlog("session[%s]: failed to create new connection",YMSTR(session->logDescription));

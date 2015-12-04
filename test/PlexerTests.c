@@ -105,7 +105,7 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     ymlog("plexer test using %u threads, %u trips per thread, %s streams per thread, %s messages",PlexerTest1Threads,PlexerTest1RoundTripsPerThread,PlexerTest1NewStreamPerRoundTrip?"new":"one",PlexerTest1RandomMessages?"random":"fixed");
     
     YMStringRef name = YMSTRC("L");
-    YMSecurityProviderRef noSecurity = YMSecurityProviderCreate(readFromRemote, writeToRemote);
+    YMSecurityProviderRef noSecurity = YMSecurityProviderCreate(readFromRemote, writeToRemote, false);
     theTest->localPlexer = YMPlexerCreate(name,noSecurity,localIsMaster);
     YMRelease(noSecurity);
     YMRelease(name);
@@ -115,7 +115,7 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     YMPlexerSetCallbackContext(theTest->localPlexer, theTest);
     
     name = YMSTRC("R");
-    noSecurity = YMSecurityProviderCreate(readFromLocal, writeToLocal);
+    noSecurity = YMSecurityProviderCreate(readFromLocal, writeToLocal, false);
     theTest->fakeRemotePlexer = YMPlexerCreate(name,noSecurity,!localIsMaster);
     YMRelease(noSecurity);
     YMRelease(name);
@@ -169,11 +169,11 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     }
     theTest->awaitingInterrupt = true;
     YMPlexerStop(theTest->closedPlexer);
+    YMRelease(networkSimPipeIn);
     YMSemaphoreWait(theTest->interruptNotificationSem);
     
     YMRelease(theTest->localPlexer);
     YMRelease(theTest->fakeRemotePlexer);
-    YMRelease(networkSimPipeIn);
     YMRelease(networkSimPipeOut);
     YMRelease(theTest->plexerTest1Lock);
     YMRelease(theTest->lastMessageWrittenByStreamID);

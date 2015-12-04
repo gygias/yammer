@@ -126,7 +126,7 @@ YM_RELEASE_RETURN_TYPE YMRelease(YMTypeRef object_)
         YMDestroyMutex(object->__mutex);
         free(object);
     }
-#ifdef DEBUG
+#ifdef YMDEBUG
     return dealloc;
 #endif
 }

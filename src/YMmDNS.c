@@ -152,7 +152,7 @@ void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record, bool floatResolvedInf
     if ( ! floatResolvedInfo ) // allows in-place update of existing service record
     {
         if ( record->addrinfo )
-            free( record->addrinfo );
+			freeaddrinfo( record->addrinfo );
         if ( record->txtRecordKeyPairs )
             _YMmDNSTxtKeyPairsFree( (YMmDNSTxtRecordKeyPair **)record->txtRecordKeyPairs, record->txtRecordKeyPairsSize );
     }

@@ -10,12 +10,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "chat", "chat\chat.vcxproj",
 		{36369923-A198-469B-B41B-65AD607E31C3} = {36369923-A198-469B-B41B-65AD607E31C3}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WinTests", "WinTests\WinTests.vcxproj", "{C844C448-7DCE-4B8A-BA8F-13A374CB4FF5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tests", "tests\tests.vcxproj", "{79C39751-4EE7-4E60-A57D-E5089CCA47FC}"
 	ProjectSection(ProjectDependencies) = postProject
 		{36369923-A198-469B-B41B-65AD607E31C3} = {36369923-A198-469B-B41B-65AD607E31C3}
 	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tests", "tests\tests.vcxproj", "{79C39751-4EE7-4E60-A57D-E5089CCA47FC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,14 +39,6 @@ Global
 		{4F667C61-32E6-4964-B0E3-20819566A015}.Release|x64.Build.0 = Release|x64
 		{4F667C61-32E6-4964-B0E3-20819566A015}.Release|x86.ActiveCfg = Release|Win32
 		{4F667C61-32E6-4964-B0E3-20819566A015}.Release|x86.Build.0 = Release|Win32
-		{C844C448-7DCE-4B8A-BA8F-13A374CB4FF5}.Debug|x64.ActiveCfg = Debug|x64
-		{C844C448-7DCE-4B8A-BA8F-13A374CB4FF5}.Debug|x64.Build.0 = Debug|x64
-		{C844C448-7DCE-4B8A-BA8F-13A374CB4FF5}.Debug|x86.ActiveCfg = Debug|Win32
-		{C844C448-7DCE-4B8A-BA8F-13A374CB4FF5}.Debug|x86.Build.0 = Debug|Win32
-		{C844C448-7DCE-4B8A-BA8F-13A374CB4FF5}.Release|x64.ActiveCfg = Release|x64
-		{C844C448-7DCE-4B8A-BA8F-13A374CB4FF5}.Release|x64.Build.0 = Release|x64
-		{C844C448-7DCE-4B8A-BA8F-13A374CB4FF5}.Release|x86.ActiveCfg = Release|Win32
-		{C844C448-7DCE-4B8A-BA8F-13A374CB4FF5}.Release|x86.Build.0 = Release|Win32
 		{79C39751-4EE7-4E60-A57D-E5089CCA47FC}.Debug|x64.ActiveCfg = Debug|x64
 		{79C39751-4EE7-4E60-A57D-E5089CCA47FC}.Debug|x64.Build.0 = Debug|x64
 		{79C39751-4EE7-4E60-A57D-E5089CCA47FC}.Debug|x86.ActiveCfg = Debug|Win32

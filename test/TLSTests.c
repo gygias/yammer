@@ -104,9 +104,9 @@ void _TestTLS1(struct TLSTest *theTest)
     testassert(aRead==testLen,"failed to receive test message: %d (%s)",errno,strerror(errno));
     testassert(strncmp(testBuffer,testIncoming,aRead)==0,"received test message does not match");
     
-    YMTLSProviderRef localProvider = YMTLSProviderCreateWithSocket(localIsServer ? serverSocket : clientSocket, localIsServer);
+    YMTLSProviderRef localProvider = YMTLSProviderCreateWithSocket(localIsServer ? serverSocket : clientSocket, localIsServer, true);
     testassert(localProvider,"local provider didn't initialize");
-    YMTLSProviderRef remoteProvider = YMTLSProviderCreateWithSocket(localIsServer ? clientSocket : serverSocket, !localIsServer);
+    YMTLSProviderRef remoteProvider = YMTLSProviderCreateWithSocket(localIsServer ? clientSocket : serverSocket, !localIsServer, true);
     testassert(remoteProvider,"remote provider didn't initialize");
     
     YMTLSProviderRef theServer = localIsServer?localProvider:remoteProvider;

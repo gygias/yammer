@@ -34,14 +34,14 @@ void LocalSocketPairTestRun(ym_test_assert_func assert, const void *context)
 void _TestSpawnFirst(struct LocalSocketPairTest *theTest)
 {
     YMStringRef name = YMSTRC("first");
-    YMLocalSocketPairRef oneMorePair = YMLocalSocketPairCreate(name, false);
+    YMLocalSocketPairRef aPair = YMLocalSocketPairCreate(name, false);
     YMRelease(name);
     
-    int socketA = YMLocalSocketPairGetA(oneMorePair);
-    int socketB = YMLocalSocketPairGetB(oneMorePair);
+    int socketA = YMLocalSocketPairGetA(aPair);
+    int socketB = YMLocalSocketPairGetB(aPair);
     testassert(socketA>=0&&socketB>=0,"sockets < 0");
     
-    YMRelease(oneMorePair);
+    YMRelease(aPair);
 }
 
 void _TestSpawnManyStopThenSpawnAnother(struct LocalSocketPairTest *theTest)
@@ -51,7 +51,7 @@ void _TestSpawnManyStopThenSpawnAnother(struct LocalSocketPairTest *theTest)
     for ( int i = 0; i < nPairs; i++ )
     {
         YMStringRef name = YMSTRCF("test-socket-%d",i);
-        YMLocalSocketPairRef aPair = YMLocalSocketPairCreate(name, ( i < nPairs - 1 ));
+        YMLocalSocketPairRef aPair = YMLocalSocketPairCreate(name, ( i < nPairs ));
         YMRelease(name);
         
         testassert(aPair,"pair null");

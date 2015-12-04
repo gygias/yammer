@@ -93,7 +93,7 @@ YMSemaphoreRef __YMSemaphoreCreate(YMStringRef name, int initialValue)
     semaphore->semName = YMStringCreateWithFormat("ym-%u",thisIndex,NULL);
     if ( gYMSemaphoreIndex == 0 )
         ymerr(YM_SEM_LOG_PREFIX "warning: semaphore name index reset",YM_SEM_LOG_DESC);
-    ymlog("semaphore[%s,%s]: created",YMSTR(semaphore->semName),YMSTR(semaphore->userName));
+    ymlog(YM_SEM_LOG_PREFIX "created",YM_SEM_LOG_DESC);
     YMLockUnlock(gYMSemaphoreIndexLock);
 
 #ifndef WIN32
@@ -129,7 +129,7 @@ try_again:;
 void _YMSemaphoreFree(YMTypeRef object)
 {
     __YMSemaphoreRef semaphore = (__YMSemaphoreRef)object;
-    ymlog("semaphore[%s,%s]: deallocating",YMSTR(semaphore->semName),YMSTR(semaphore->userName));
+    ymlog(YM_SEM_LOG_PREFIX "deallocating",YM_SEM_LOG_DESC);
     
     int result, error = 0;
     const char *errorStr = NULL;
@@ -156,8 +156,7 @@ void YMSemaphoreWait(YMSemaphoreRef semaphore_)
         {
             retry = YM_RETRY_SEMAPHORE;
             ymerr(YM_SEM_LOG_PREFIX "sem_wait failed%s: %d (%s)", YM_SEM_LOG_DESC, retry ? ", retrying" : "", errno, strerror(errno));
-            if (!retry)
-                ymassert(false,"sem_wait");
+            ymassert(retry,"sem_wait");
         }
         else
             break;
@@ -173,11 +172,8 @@ void YMSemaphoreSignal(YMSemaphoreRef semaphore_)
 	int result, error = 0;
 	const char *errorStr = NULL;
 	YM_POST_SEMAPHORE(semaphore);
-	if ( result != 0 )
-	{
-		ymerr(YM_SEM_LOG_PREFIX "fatal: sem_post failed: %d (%s)", YM_SEM_LOG_DESC, errno, strerror(errno));
-		abort();
-	}
+	ymassert(result==0, YM_SEM_LOG_PREFIX "fatal: sem_post failed: %d (%s)", YM_SEM_LOG_DESC, errno, strerror(errno));
+	
 	ymlog(YM_SEM_LOG_PREFIX "posted", YM_SEM_LOG_DESC);
 }
 

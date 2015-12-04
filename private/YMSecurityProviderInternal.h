@@ -24,6 +24,7 @@ typedef struct __ym_security_provider_t
     
 	YMFILE readFile;
 	YMFILE writeFile;
+    bool closeWhenDone;
     ym_security_init_func   initFunc;
     ym_security_read_func   readFunc;
     ym_security_write_func  writeFunc;

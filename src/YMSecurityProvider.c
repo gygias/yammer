@@ -21,12 +21,12 @@ bool YMNoSecurityRead(__YMSecurityProviderRef provider,uint8_t*,size_t);
 bool YMNoSecurityWrite(__YMSecurityProviderRef provider,const uint8_t*,size_t);
 bool YMNoSecurityClose(__YMSecurityProviderRef provider);
 
-YMSecurityProviderRef YMSecurityProviderCreateWithSocket(YMSOCKET fd)
+YMSecurityProviderRef YMSecurityProviderCreateWithSocket(YMSOCKET fd, bool closeWhenDone)
 {
-    return YMSecurityProviderCreate((YMFILE)fd, (YMFILE)fd);
+    return YMSecurityProviderCreate((YMFILE)fd, (YMFILE)fd, closeWhenDone);
 }
 
-YMSecurityProviderRef YMSecurityProviderCreate(YMFILE readFile, YMFILE writeFile)
+YMSecurityProviderRef YMSecurityProviderCreate(YMFILE readFile, YMFILE writeFile, bool closeWhenDone)
 {    
     __YMSecurityProviderRef provider = (__YMSecurityProviderRef)_YMAlloc(_YMSecurityProviderTypeID,sizeof(struct __ym_security_provider_t));
     provider->initFunc = YMNoSecurityInit;
@@ -36,6 +36,7 @@ YMSecurityProviderRef YMSecurityProviderCreate(YMFILE readFile, YMFILE writeFile
     provider->closeFunc = YMNoSecurityClose;
     provider->readFile = readFile;
     provider->writeFile = writeFile;
+    provider->closeWhenDone = closeWhenDone;
     return provider;
 }
 
@@ -82,23 +83,26 @@ bool YMNoSecurityInit(__unused __YMSecurityProviderRef provider)
 
 bool YMNoSecurityRead(__YMSecurityProviderRef provider, uint8_t *buffer, size_t bytes)
 {
-    return YMReadFull(provider->readFile, buffer, bytes, NULL);
+    return ( YMIOSuccess == YMReadFull(provider->readFile, buffer, bytes, NULL) );
 }
 
 bool YMNoSecurityWrite(__YMSecurityProviderRef provider, const uint8_t *buffer, size_t bytes)
 {
-    return YMWriteFull(provider->writeFile, buffer, bytes, NULL);
+    return ( YMIOSuccess == YMWriteFull(provider->writeFile, buffer, bytes, NULL) );
 }
 
-bool YMNoSecurityClose(__unused __YMSecurityProviderRef provider_)
+bool YMNoSecurityClose(__YMSecurityProviderRef provider_)
 {
     __YMSecurityProviderRef provider = (__YMSecurityProviderRef)provider_;
     int result = 0, error = 0;
     const char *errorStr = NULL;
-    if ( provider->readFile != NULL_FILE )
-        YM_CLOSE_FILE(provider->readFile);
-    if ( provider->writeFile != NULL_FILE && provider->writeFile != provider->readFile )
-		YM_CLOSE_FILE(provider->writeFile);
+    if ( provider->closeWhenDone )
+    {
+        if ( provider->readFile != NULL_FILE )
+            YM_CLOSE_FILE(provider->readFile);
+        if ( provider->writeFile != NULL_FILE && provider->writeFile != provider->readFile )
+            YM_CLOSE_FILE(provider->writeFile);
+    }
     return ( result == 0 );
 }
 

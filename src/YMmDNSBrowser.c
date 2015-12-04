@@ -113,8 +113,8 @@ void _YMmDNSBrowserFree(YMTypeRef object)
         YMRelease(browser->enumerateEventThread)
 #endif
         
-    if ( browser->browseServiceRef )
-        free(browser->browseServiceRef);
+    //if ( browser->browseServiceRef ) // released by event thread
+    //    free(browser->browseServiceRef);
     if ( browser->browseEventThread )
         YMRelease(browser->browseEventThread);
     
@@ -206,9 +206,7 @@ bool YMmDNSBrowserStart(YMmDNSBrowserRef browser_)
     if ( browser->browsing )
         return false;
     browser->browsing = true;
-    
-    if ( browser->browseServiceRef )
-        free( browser->browseServiceRef );
+
     browser->browseServiceRef = (DNSServiceRef *)calloc( 1, sizeof(DNSServiceRef) );
     
     DNSServiceErrorType result = DNSServiceBrowse(browser->browseServiceRef, // DNSServiceRef
@@ -226,7 +224,7 @@ bool YMmDNSBrowserStart(YMmDNSBrowserRef browser_)
     }
     
     YMStringRef threadName = YMSTRCF("mdns-browse-%s",YMSTR(browser->type));
-    browser->browseEventThread = YMThreadCreate(threadName, __ym_mdns_browser_event_proc, browser);
+    browser->browseEventThread = YMThreadCreate(threadName, __ym_mdns_browser_event_proc, YMRetain(browser));
     YMRelease(threadName);
     
     bool okay = YMThreadStart(browser->browseEventThread);
@@ -237,13 +235,23 @@ bool YMmDNSBrowserStart(YMmDNSBrowserRef browser_)
 bool YMmDNSBrowserStop(YMmDNSBrowserRef browser_)
 {
     __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)browser_;
+
+	if ( ! browser->browsing )
+		return false;
     
     if ( browser->browseServiceRef )
     {
-        DNSServiceRefDeallocate(*(browser->browseServiceRef));
-        free(browser->browseServiceRef); // not sure this is right
-        browser->browseServiceRef = NULL;
+        int fd  = DNSServiceRefSockFD(*(browser->browseServiceRef));
+        int result, error; char *errorStr;
+        YM_CLOSE_SOCKET(fd);
+        ymassert(result==0,"close service ref fd");
+        //DNSServiceRefDeallocate(*(browser->browseServiceRef));
+        //free(browser->browseServiceRef); // let the thread deallocate this on its way out, cheap way to avoid synchronization
+        //browser->browseServiceRef = NULL;
     }
+
+	browser->browsing = false;
+
     return true;
 }
 
@@ -493,7 +501,8 @@ catch_callback_and_release:
 YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_browser_event_proc(YM_THREAD_PARAM ctx)
 {
     __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)ctx;
-    int fd  = DNSServiceRefSockFD(*(browser->browseServiceRef));
+	DNSServiceRef *serviceRef = browser->browseServiceRef;
+    int fd  = DNSServiceRefSockFD(*(serviceRef));
     
     ymlog("mdns[%s]: event thread f%d entered", YMSTR(browser->type), fd);
     
@@ -523,7 +532,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_browser_event_proc(YM_THREAD_PA
             DNSServiceErrorType err = kDNSServiceErr_NoError;
             if (FD_ISSET(fd , &readfds))
             {
-                err = DNSServiceProcessResult(*(browser->browseServiceRef));
+                err = DNSServiceProcessResult(*(serviceRef));
             }
             if (err != kDNSServiceErr_NoError)
             {
@@ -543,6 +552,10 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_browser_event_proc(YM_THREAD_PA
     }
     
     ymlog("mdns[%s] event thread f%d exiting", YMSTR(browser->type), fd);
+    
+    DNSServiceRefDeallocate(*(serviceRef));
+	free(serviceRef);
+	YMRelease(browser);
 
 	YM_THREAD_END
 }

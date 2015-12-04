@@ -138,7 +138,7 @@ bool YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair_)
     //pthread_once(&gYMRSAKeyPairSeedOnce, _YMRSAKeyPairSeed);
     __YMRSAKeyPairSeed();
     
-#ifdef YM_DEBUG_INFO
+#ifdef YMDEBUG
     struct timeval then;
     int timeResult = gettimeofday(&then,NULL);
 #endif
@@ -170,7 +170,7 @@ bool YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair_)
         goto catch_return;
     }
     
-#ifdef YM_DEBUG_INFO
+#ifdef YMDEBUG
     struct timeval now;
     if ( timeResult == 0 )
     {
@@ -197,7 +197,7 @@ catch_return:
 
 void __YMRSAKeyPairSeed()
 {
-#ifdef YM_DEBUG_INFO
+#ifdef YMDEBUG
     struct timeval then;
     int timeResult = gettimeofday(&then,NULL);
 #endif
@@ -210,7 +210,7 @@ void __YMRSAKeyPairSeed()
         iters++;
     } while ( RAND_status() == 0 ); // all the solar flares
     
-#ifdef YM_DEBUG_INFO
+#ifdef YMDEBUG
     struct timeval now;
     if ( timeResult == 0 )
     {

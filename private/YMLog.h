@@ -13,7 +13,7 @@
 #define ymlog_type YMLogDefault
 #endif
 #ifndef ymlog_target
-#define ymlog_target ( YMLogDefault )
+#define ymlog_target ( YMLogEverything )
 // Token pasting of ',' and __VA_ARGS__ is a GNU extension
 #endif
 
@@ -42,7 +42,7 @@ typedef enum
     YMLogEverything = 0xFFFF
 } YMLogLevel;
 
-extern YMAPI void __YMLogType( int level, char* format, ... ) __printflike(2, 3);
+void YMAPI __YMLogType( int level, char* format, ... ) __printflike(2, 3);
 
 YM_EXTERN_C_POP
 

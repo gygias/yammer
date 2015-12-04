@@ -61,7 +61,7 @@ typedef char YMTypeID;
 
 YMTypeRef YMAPI YMRetain(YMTypeRef object);
 YMTypeRef YMAPI YMAutorelease(YMTypeRef object);
-#ifdef DEBUG
+#ifdef YMDEBUG
 #define YM_RELEASE_RETURN_TYPE bool
 #else
 #define YM_RELEASE_RETURN_TYPE void

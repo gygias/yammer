@@ -98,16 +98,16 @@ YM_ONCE_FUNC(__YMTLSInit,
 })
 
 // designated initializer
-YMTLSProviderRef __YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isWrappingSocket, bool isServer);
+YMTLSProviderRef __YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isWrappingSocket, bool isServer, bool closeWhenDone);
 
-YMTLSProviderRef YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isServer)
+YMTLSProviderRef YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isServer, bool closeWhenDone)
 {
-    return __YMTLSProviderCreateWithSocket(socket, false, isServer);
+    return __YMTLSProviderCreateWithSocket(socket, false, isServer, closeWhenDone);
 }
 
 YM_ONCE_OBJ gYMInitTLSOnce = YM_ONCE_INIT;
 
-YMTLSProviderRef __YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isWrappingSocket, bool isServer)
+YMTLSProviderRef __YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isWrappingSocket, bool isServer, bool closeWhenDone)
 {
 	YM_ONCE_DO(gYMInitTLSOnce,__YMTLSInit);
     
@@ -125,6 +125,7 @@ YMTLSProviderRef __YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isWrappin
     
     tls->_common.readFile = (YMFILE)socket;
     tls->_common.writeFile = (YMFILE)socket;
+    tls->_common.closeWhenDone = closeWhenDone;
     tls->isWrappingSocket = isWrappingSocket;
     tls->isServer = isServer;
     tls->usingGeneratedCert = false;
@@ -493,7 +494,7 @@ bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
     // assuming whatever memory was allocated here gets free'd in SSL_CTX_free
     
     //tls->bio = BIO_new(&ym_bio_methods);
-    tls->bio = BIO_new_socket((YMSOCKET)tls->_common.readFile, BIO_NOCLOSE);
+    tls->bio = BIO_new_socket((YMSOCKET)tls->_common.readFile, tls->_common.closeWhenDone ? 0 : BIO_NOCLOSE);
     if ( ! tls->bio )
     {
         sslError = ERR_get_error();
@@ -578,11 +579,7 @@ bool __YMTLSProviderWrite(__YMSecurityProviderRef provider, const uint8_t *buffe
 {
     __YMTLSProviderRef tls = (__YMTLSProviderRef)provider;
     
-    if ( bytes > INT32_MAX )
-    {
-        ymerr("tls[%d]: error: fix thy internal errors!",tls->isServer );
-        abort();
-    }
+    ymassert(bytes <= INT32_MAX,"tls[%d]: error: fix thy internal errors!",tls->isServer );
     
     int result = SSL_write(tls->ssl, buffer, (int)bytes);
     

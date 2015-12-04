@@ -40,6 +40,7 @@ typedef struct __ym_connection_t
     YMAddressRef address;
     YMConnectionType type;
     YMConnectionSecurityType securityType;
+    bool closeWhenDone;
     
     ym_connection_new_stream_func newFunc;
     void *newFuncContext;
@@ -71,21 +72,21 @@ void ym_connection_new_stream_proc(YMPlexerRef plexer, YMStreamRef stream, void 
 void ym_connection_stream_closing_proc(YMPlexerRef plexer, YMStreamRef stream, void *context);
 void ym_connection_interrupted_proc(YMPlexerRef plexer, void *context);
 
-__YMConnectionRef __YMConnectionCreate(bool isIncoming, YMSOCKET socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType);
+__YMConnectionRef __YMConnectionCreate(bool isIncoming, YMSOCKET socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType, bool closeWhenDone);
 bool __YMConnectionDestroy(__YMConnectionRef connection);
 bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, bool asServer);
 
 bool __YMConnectionForward(YMConnectionRef connection, bool toFile, YMStreamRef stream, YMFILE file, const uint64_t *nBytesPtr, bool sync, ym_connection_forward_context_t*);
 void _ym_connection_forward_callback_proc(void *context, YMIOResult result, uint64_t bytesForwarded);
 
-YMConnectionRef YMConnectionCreate(YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType)
+YMConnectionRef YMConnectionCreate(YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType, bool closeWhenDone)
 {
-    return __YMConnectionCreate(false, NULL_SOCKET, address, type, securityType);
+    return __YMConnectionCreate(false, NULL_SOCKET, address, type, securityType, closeWhenDone);
 }
 
-YMConnectionRef YMConnectionCreateIncoming(YMSOCKET socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType)
+YMConnectionRef YMConnectionCreateIncoming(YMSOCKET socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType, bool closeWhenDone)
 {
-    __YMConnectionRef connection = __YMConnectionCreate(true, socket, address, type, securityType);
+    __YMConnectionRef connection = __YMConnectionCreate(true, socket, address, type, securityType, closeWhenDone);
     bool commonInitOK = __YMConnectionInitCommon(connection, socket, true);
     if ( ! commonInitOK )
     {
@@ -96,7 +97,7 @@ YMConnectionRef YMConnectionCreateIncoming(YMSOCKET socket, YMAddressRef address
     return connection;
 }
 
-__YMConnectionRef __YMConnectionCreate(bool isIncoming, YMSOCKET socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType)
+__YMConnectionRef __YMConnectionCreate(bool isIncoming, YMSOCKET socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType, bool closeWhenDone)
 {
     if ( type < __YMConnectionTypeMin || type > __YMConnectionTypeMax )
         return NULL;
@@ -112,6 +113,7 @@ __YMConnectionRef __YMConnectionCreate(bool isIncoming, YMSOCKET socket, YMAddre
     connection->address = (YMAddressRef)YMRetain(address);
     connection->type = type;
     connection->securityType = securityType;
+    connection->closeWhenDone = closeWhenDone;
     
     connection->newFunc = NULL;
     connection->newFuncContext = NULL;
@@ -220,10 +222,10 @@ bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, 
     switch( connection->securityType )
     {
         case YMInsecure:
-            security = YMSecurityProviderCreateWithSocket(newSocket);
+            security = YMSecurityProviderCreateWithSocket(newSocket, connection->closeWhenDone);
             break;
         case YMTLS:
-            security = (YMSecurityProviderRef)YMTLSProviderCreateWithSocket(newSocket, asServer);
+            security = (YMSecurityProviderRef)YMTLSProviderCreateWithSocket(newSocket, asServer, connection->closeWhenDone);
             break;
         default:
             ymerr("connection[%s]: unknown security type",YM_CON_DESC);

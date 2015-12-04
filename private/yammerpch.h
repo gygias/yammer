@@ -11,8 +11,6 @@
 
 #if defined(DEBUG) || defined(_DEBUG)
 #define YMDEBUG 1
-#else
-#undef YMDEBUG
 #endif
 
 #define YM_TOKEN_STR(x) #x
@@ -83,11 +81,21 @@
 #include "YMBase.h"
 #include "YMInternal.h"
 
-#ifdef DEBUG
-#include <malloc/malloc.h>
-#define YM_DEBUG_ASSERT_MALLOC(x) { if ( ( x != NULL) && ( malloc_size(x) <= 0 ) ) { ymerr("debug: malloc didn't allocate this address: %p",(x)); abort(); } }
+#ifdef YMDEBUG
+# ifndef WIN32
+#  include <malloc/malloc.h>
+# else
+#  include <malloc.h>
+#  ifdef WIN32
+#   define malloc_size _msize
+#  elif defined(RPI)
+#  define malloc_size malloc_usable_size
+#  endif
+# endif
+
+#define YM_DEBUG_ASSERT_MALLOC(x) ymassert(( (x) != NULL )&&( malloc_size((void *)x) > 0 ),"debug: malloc didn't allocate this address: %p",(x))
 #define YM_INSANE_CHUNK_SIZE 65535
-#define YM_DEBUG_CHUNK_SIZE(x) { if ( ( (x) == 0 ) || ( (x) > YM_INSANE_CHUNK_SIZE ) ) { ymerr("debug: chunk length not sane: %u",(x)); abort(); } }
+#define YM_DEBUG_CHUNK_SIZE(x) ymassert(( (x) != 0 )&&( (x) <= YM_INSANE_CHUNK_SIZE ),"debug: chunk length not sane: %u",(x));
 #else
 #define YM_DEBUG_ASSERT_MALLOC(x) ;
 #define YM_DEBUG_CHUNK_SIZE(x) ;
@@ -171,8 +179,8 @@
                                     if ( ! __ch ) { result = -1; error = (int)GetLastError(); errorStr = GENERIC_WERROR_STR; } \
                                     else { result = 0; error = 0; errorStr = NULL; } }
 	#define YM_CREATE_PIPE(fds)		( 0 != CreatePipe(&fds[0],&fds[1],NULL,0) )
-	#define sleep(x) Sleep(((DWORD)x)/1000)
-	#define usleep(x) Sleep((DWORD)(x)*1000)
+	#define sleep(x) Sleep(((DWORD)x)*1000)
+	#define usleep(x) Sleep((DWORD)(x)/1000)
 	#define signal(x,y) ymerr("*** sigpipe win32 ***")
 	#define strerror(x) "(strerror win32)"
 #endif

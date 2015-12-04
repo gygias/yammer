@@ -652,7 +652,7 @@ YMStreamRef __YMPlexerRetainReadyStream(__YMPlexerRef plexer)
         YMLockUnlock(aLock);
     }
     
-    YM_DEBUG_ASSERT_MALLOC(oldestStream);
+    if ( oldestStream ) YM_DEBUG_ASSERT_MALLOC(oldestStream);
     return oldestStream;
 }
 
