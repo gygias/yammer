@@ -19,10 +19,15 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <pthread.h>
+#define LOCAL_SOCKET_PROTOCOL PF_UNSPEC
+#define LOCAL_SOCKET_DOMAIN AF_LOCAL
 #else
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#define PF_LOCAL PF_UNIX
+#define LOCAL_SOCKET_PROTOCOL IPPROTO_TCP
+#define LOCAL_SOCKET_DOMAIN AF_INET
+#define LOCAL_SOCKET_ADDR 0x7f000001
+#define LOCAL_SOCKET_PORT 6969 // fixme use YMReservePort
 #endif
 #include <stddef.h> // offsetof
 
@@ -118,11 +123,11 @@ YMLocalSocketPairRef YMLocalSocketPairCreate(YMStringRef name, bool moreComing)
         ymlog("local-socket[%s]: error: name is required",YMSTR(name));
         return NULL;
     }
-    
-    if ( ! gYMLocalSocketSemaphore )
-        __YMLocalSocketPairInitOnce();
 
 	YMNetworkingInit();
+
+    if ( ! gYMLocalSocketSemaphore )
+        __YMLocalSocketPairInitOnce();
     
     // now that thread is going to accept [once more], flag this
     gYMLocalSocketPairAcceptKeepListening = moreComing;
@@ -189,23 +194,14 @@ void _YMLocalSocketPairFree(YMTypeRef object)
     YMRelease(pair->socketName);
 }
 
-// lifted from http://www.gnu.org/software/libc/manual/html_node/Local-Socket-Example.html
-#ifndef WIN32
-#define LOCAL_SOCKET_DOMAIN PF_LOCAL
-#else
-#define LOCAL_SOCKET_DOMAIN PF_INET
-#define LOCAL_SOCKET_ADDR 0x7f000001
-#define LOCAL_SOCKET_PORT 6969 // fixme use YMReservePort
-#endif
-
 int __YMLocalSocketPairCreateClient()
 {
-    YMSOCKET sock = socket(LOCAL_SOCKET_DOMAIN, SOCK_STREAM, PF_UNSPEC/* IP, /etc/sockets man 5 protocols*/);
-    if ( sock < 0 )
-    {
-        ymerr("local-socket[new-client]: socket failed: %d (%s)",errno,strerror(errno));
-        return -1;
-    }
+    YMSOCKET sock = socket(LOCAL_SOCKET_DOMAIN, SOCK_STREAM, LOCAL_SOCKET_PROTOCOL/* IP, /etc/sockets man 5 protocols*/);
+#ifndef WIN32
+	ymassert(sock>=0,"local-socket[new-client]: socket failed: %d (%s)",errno,strerror(errno));
+#else
+	ymassert(sock!=INVALID_SOCKET, "local-socket[new-client]: socket failed: %x", GetLastError());
+#endif
     
     int yes = 1;
     int result = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const void *)&yes, sizeof(yes));
@@ -243,30 +239,26 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_local_socket_accept_proc(__unused YM
 {
     ymlog("__ym_local_socket_accept_proc entered");
     
-    int listenSocket = -1;
+    YMSOCKET listenSocket = -1;
     YMStringRef socketName = NULL;
     
     uint16_t nameSuffixIter = 0;
         
     name_retry:;
         
-    if ( nameSuffixIter == UINT16_MAX )
-    {
-        ymerr("local-socket[spawn-server]: fatal: unable to choose available name");
-        abort();
-    }
+    ymassert(nameSuffixIter<UINT16_MAX,"local-socket[spawn-server]: fatal: unable to choose available name");
     
     if ( socketName )
         YMRelease(socketName);
     
     socketName = YMStringCreateWithFormat("%s:%u",__YMLocalSocketPairNameBase,nameSuffixIter,NULL);
     
-    listenSocket = socket(PF_LOCAL, SOCK_STREAM, PF_UNSPEC /* /etc/sockets man 5 protocols*/);
-    if ( listenSocket < 0 )
-    {
-        ymerr("local-socket[spawn-server]: fatal: socket failed (listen): %d (%s)",errno,strerror(errno));
-        abort();
-    }
+    listenSocket = socket(LOCAL_SOCKET_DOMAIN, SOCK_STREAM, LOCAL_SOCKET_PROTOCOL /* /etc/sockets man 5 protocols*/);
+#ifndef WIN32
+    ymassert(listenSocket>=0,"local-socket[spawn-server]: fatal: socket failed (listen): %d (%s)",errno,strerror(errno));
+#else
+	ymassert(listenSocket!=INVALID_SOCKET,"local-socket[spawn-server]: fatal: socket failed (listen): %x",GetLastError());
+#endif
     
     int yes = 1;
     int result = setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, (const void *)&yes, sizeof(yes));
@@ -298,8 +290,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_local_socket_accept_proc(__unused YM
             nameSuffixIter++;
             goto name_retry;
         }
-        ymerr("local-socket[spawn-server]: fatal: bind failed: %d (%s)",errno,strerror(errno));
-        abort();
+        ymabort("local-socket[spawn-server]: fatal: bind failed: %d (%s)",errno,strerror(errno));
     }
     
 	result = listen(listenSocket, 1);

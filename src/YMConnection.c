@@ -174,11 +174,11 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     //struct protoent *ppe = getprotobyname("tcp");
     
 	YMSOCKET newSocket = socket(domain, type, protocol);
-    if ( newSocket < 0 )
-    {
-        ymerr("connection: socket(%s) failed: %d (%s)",YM_CON_DESC,errno,strerror(errno));
-        return false;
-    }
+#ifndef WIN32
+    ymassert(newSocket>=0,"connection[%s]: socket failed: %d (%s)",YM_CON_DESC,errno,strerror(errno));
+#else
+	ymassert(newSocket!=INVALID_SOCKET, "connection[%s]: socket failed: %x",YM_CON_DESC,GetLastError());
+#endif
     
     int yes = 1;
     int result = setsockopt(newSocket, SOL_SOCKET, SO_REUSEADDR, (const void *)&yes, sizeof(yes));

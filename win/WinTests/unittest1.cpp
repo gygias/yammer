@@ -10,11 +10,25 @@
 #include "PlexerTests.h"
 #include "SessionTests.h"
 
+#include <stdarg.h>
+
 //using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 void _ym_test_assert_func(const void *ctx, bool exp, const char *fmt, ...)
 {
-	ymabort("yo");
+	if ( ! exp )
+	{
+		va_list args;
+		va_start(args, fmt);
+		vfprintf(stderr, fmt, args);
+		va_end(args);
+
+
+		fprintf(stderr, "\n");
+		fflush(stderr);
+
+		ymabort("yo");
+	}
 }
 
 bool _ym_test_diff_func(const void *ctx, const char *path1, const char *path2, bool recursive, YMDictionaryRef exceptions)
@@ -31,7 +45,13 @@ namespace WinTests
 		
 		void TestMethod1() //TEST_METHOD(TestMethod1)
 		{
-			DictionaryTestRun(_ym_test_assert_func, _ym_test_diff_func);
+			DictionaryTestRun(_ym_test_assert_func, this);
+			CryptoTestRun(_ym_test_assert_func, this);
+			LocalSocketPairTestRun(_ym_test_assert_func, this);
+			mDNSTestRun(_ym_test_assert_func, this);
+			TLSTestRun(_ym_test_assert_func, this);
+			PlexerTestRun(_ym_test_assert_func, this);
+			SessionTestRun(_ym_test_assert_func, _ym_test_diff_func, this);
 		}
 	};
 }

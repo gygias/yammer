@@ -203,8 +203,12 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
         thePort = aPort++;
         
         int domain = ipv4 ? PF_INET : PF_INET6;
-        int aResult = socket(domain, SOCK_STREAM, IPPROTO_TCP);
+        YMSOCKET aResult = socket(domain, SOCK_STREAM, IPPROTO_TCP);
+#ifndef WIN32
         if ( aResult < 0 )
+#else
+		if ( aResult == INVALID_SOCKET )
+#endif
             goto catch_continue;
         
         aSocket = aResult;
