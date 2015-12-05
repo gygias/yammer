@@ -20,7 +20,7 @@ YM_EXTERN_C_PUSH
 
 typedef const struct __ym_tls_provider_t *YMTLSProviderRef;
 
-YMTLSProviderRef YMAPI YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isServer, bool closeWhenDone);
+YMTLSProviderRef YMAPI YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isServer);
 
 // callbacks
 // returns a malloc'd list of local certificates to be used for identification.

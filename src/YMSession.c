@@ -559,10 +559,11 @@ rewind_fail:
 
 bool YMSessionStopAdvertising(YMSessionRef session_)
 {
+    YM_IO_BOILERPLATE
+    
     __YMSessionRef session = (__YMSessionRef)session_;
     session->acceptThreadExitFlag = true;
     bool okay = true;
-	int result, error; const char *errorStr;
     if ( session->ipv4ListenSocket >= 0 )
     {
 		YM_CLOSE_SOCKET(session->ipv4ListenSocket);

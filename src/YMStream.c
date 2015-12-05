@@ -277,7 +277,9 @@ YMIOResult __YMStreamForward(__YMStreamRef stream, YMFILE file, bool fromFileToS
         
         if ( fromFileToStream )
         {
-            aResult = YMReadFull(file, buffer, aDesiredLength, (size_t *)&aActualLength);
+			size_t actual = 0;
+            aResult = YMReadFull(file, buffer, aDesiredLength, &actual);
+			aActualLength = (uint16_t)actual;
             ymsoftassert(aResult==YMIOSuccess&&aActualLength==aDesiredLength||aResult==YMIOEOF,"read user forward file");
         }
         else // stream to file

@@ -21,12 +21,12 @@ bool YMNoSecurityRead(__YMSecurityProviderRef provider,uint8_t*,size_t);
 bool YMNoSecurityWrite(__YMSecurityProviderRef provider,const uint8_t*,size_t);
 bool YMNoSecurityClose(__YMSecurityProviderRef provider);
 
-YMSecurityProviderRef YMSecurityProviderCreateWithSocket(YMSOCKET fd, bool closeWhenDone)
+YMSecurityProviderRef YMSecurityProviderCreateWithSocket(YMSOCKET fd)
 {
-    return YMSecurityProviderCreate((YMFILE)fd, (YMFILE)fd, closeWhenDone);
+    return YMSecurityProviderCreate((YMFILE)fd, (YMFILE)fd);
 }
 
-YMSecurityProviderRef YMSecurityProviderCreate(YMFILE readFile, YMFILE writeFile, bool closeWhenDone)
+YMSecurityProviderRef YMSecurityProviderCreate(YMFILE readFile, YMFILE writeFile)
 {    
     __YMSecurityProviderRef provider = (__YMSecurityProviderRef)_YMAlloc(_YMSecurityProviderTypeID,sizeof(struct __ym_security_provider_t));
     provider->initFunc = YMNoSecurityInit;
@@ -36,7 +36,6 @@ YMSecurityProviderRef YMSecurityProviderCreate(YMFILE readFile, YMFILE writeFile
     provider->closeFunc = YMNoSecurityClose;
     provider->readFile = readFile;
     provider->writeFile = writeFile;
-    provider->closeWhenDone = closeWhenDone;
     return provider;
 }
 
@@ -91,19 +90,9 @@ bool YMNoSecurityWrite(__YMSecurityProviderRef provider, const uint8_t *buffer, 
     return ( YMIOSuccess == YMWriteFull(provider->writeFile, buffer, bytes, NULL) );
 }
 
-bool YMNoSecurityClose(__YMSecurityProviderRef provider_)
+bool YMNoSecurityClose(__unused __YMSecurityProviderRef provider_)
 {
-    __YMSecurityProviderRef provider = (__YMSecurityProviderRef)provider_;
-    int result = 0, error = 0;
-    const char *errorStr = NULL;
-    if ( provider->closeWhenDone )
-    {
-        if ( provider->readFile != NULL_FILE )
-            YM_CLOSE_FILE(provider->readFile);
-        if ( provider->writeFile != NULL_FILE && provider->writeFile != provider->readFile )
-            YM_CLOSE_FILE(provider->writeFile);
-    }
-    return ( result == 0 );
+    return true;
 }
 
 YM_EXTERN_C_POP

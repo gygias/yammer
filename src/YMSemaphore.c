@@ -151,7 +151,7 @@ void YMSemaphoreWait(YMSemaphoreRef semaphore_)
     {
         int result, error = 0;
         const char *errorStr = NULL;
-        YM_WAIT_SEMAPHORE(semaphore);
+        YM_WAIT_SEMAPHORE(semaphore->sem);
         if (result != 0)
         {
             retry = YM_RETRY_SEMAPHORE;
@@ -171,7 +171,7 @@ void YMSemaphoreSignal(YMSemaphoreRef semaphore_)
     
 	int result, error = 0;
 	const char *errorStr = NULL;
-	YM_POST_SEMAPHORE(semaphore);
+	YM_POST_SEMAPHORE(semaphore->sem);
 	ymassert(result==0, YM_SEM_LOG_PREFIX "fatal: sem_post failed: %d (%s)", YM_SEM_LOG_DESC, errno, strerror(errno));
 	
 	ymlog(YM_SEM_LOG_PREFIX "posted", YM_SEM_LOG_DESC);

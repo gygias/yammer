@@ -12,6 +12,7 @@
 #include "YMPlexerPriv.h"
 #include "YMStreamPriv.h"
 #include "YMPipe.h"
+#include "YMPipePriv.h"
 #include "YMThread.h"
 #include "YMLock.h"
 #include "YMSemaphore.h"
@@ -89,6 +90,8 @@ void PlexerTestRun(ym_test_assert_func assert, const void *context)
 
 void _DoManyRoundTripsTest(struct PlexerTest *theTest)
 {
+    YM_IO_BOILERPLATE
+    
     YMStringRef aName = YMSTRC("test-network-sim-pipe-in");
     YMPipeRef networkSimPipeIn = YMPipeCreate(aName);
     YMRelease(aName);
@@ -105,7 +108,7 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     ymlog("plexer test using %u threads, %u trips per thread, %s streams per thread, %s messages",PlexerTest1Threads,PlexerTest1RoundTripsPerThread,PlexerTest1NewStreamPerRoundTrip?"new":"one",PlexerTest1RandomMessages?"random":"fixed");
     
     YMStringRef name = YMSTRC("L");
-    YMSecurityProviderRef noSecurity = YMSecurityProviderCreate(readFromRemote, writeToRemote, false);
+    YMSecurityProviderRef noSecurity = YMSecurityProviderCreate(readFromRemote, writeToRemote);
     theTest->localPlexer = YMPlexerCreate(name,noSecurity,localIsMaster);
     YMRelease(noSecurity);
     YMRelease(name);
@@ -115,7 +118,7 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     YMPlexerSetCallbackContext(theTest->localPlexer, theTest);
     
     name = YMSTRC("R");
-    noSecurity = YMSecurityProviderCreate(readFromLocal, writeToLocal, false);
+    noSecurity = YMSecurityProviderCreate(readFromLocal, writeToLocal);
     theTest->fakeRemotePlexer = YMPlexerCreate(name,noSecurity,!localIsMaster);
     YMRelease(noSecurity);
     YMRelease(name);
@@ -168,13 +171,16 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
         theTest->closedPlexer = theTest->fakeRemotePlexer;
     }
     theTest->awaitingInterrupt = true;
-    YMPlexerStop(theTest->closedPlexer);
+    //YMPlexerStop(theTest->closedPlexer);
+    // shouldn't matter which one, but this is important because the 'media' socket is managed by the connection (the opener is the closer).
+    // we're sitting at the level of the connection here and have to close one of the files manually to hang things up.
     YMRelease(networkSimPipeIn);
+    YMRelease(networkSimPipeOut);
+    YMSemaphoreWait(theTest->interruptNotificationSem);
     YMSemaphoreWait(theTest->interruptNotificationSem);
     
     YMRelease(theTest->localPlexer);
     YMRelease(theTest->fakeRemotePlexer);
-    YMRelease(networkSimPipeOut);
     YMRelease(theTest->plexerTest1Lock);
     YMRelease(theTest->lastMessageWrittenByStreamID);
     
@@ -308,7 +314,7 @@ uint8_t *_ReceiveMessage(struct PlexerTest *theTest, YMStreamRef stream, uint16_
 
 void local_plexer_interrupted(YMPlexerRef plexer, void *context)
 {
-    ymlog("%s",__FUNCTION__);
+    ymerr("%s",__FUNCTION__);
     struct PlexerTest *theTest = context;
     testassert(theTest,"local interrupt context");
     testassert(plexer==theTest->localPlexer,"localInterrupted not local");
@@ -342,7 +348,7 @@ void local_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *c
 
 void remote_plexer_interrupted(__unused YMPlexerRef plexer, void *context)
 {
-    ymlog("%s",__FUNCTION__);
+    ymerr("%s",__FUNCTION__);
     struct PlexerTest *theTest = context;
     testassert(theTest,"remote interrupt context");
     testassert(plexer==theTest->fakeRemotePlexer,"remote interrupted not remote");

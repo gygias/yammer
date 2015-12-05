@@ -29,10 +29,14 @@ void __YMPipeCloseOutputFile(YMPipeRef pipe_);
 void __YMPipeCloseFile(__YMPipeRef pipe, YMFILE *fdPtr);
 
 YMPipeRef YMPipeCreate(YMStringRef name)
-{   
+{
+    YM_IO_BOILERPLATE
+    
     uint64_t iter = 1;
 	YMFILE fds[2];
-    while ( ! YM_CREATE_PIPE(fds) )
+    YM_CREATE_PIPE(fds);
+    
+    while ( result != 0 )
     {
 #ifndef WIN32
         if ( errno == EFAULT )
@@ -49,9 +53,12 @@ YMPipeRef YMPipeCreate(YMStringRef name)
             if ( iter > 100 )
                 ymerr("pipe[%s]: warning: new files unavailable for pipe()",YMSTR(name));
         }
+        
+        YM_CREATE_PIPE(fds);
     }
   
-#ifdef YMDEBUG
+#if defined(YMDEBUG) \
+			&& defined(QUANTUM_PROFESSOR)
     // todo this number is based on mac test cases, if open files rises above 200
     // something isn't closing/releasing their streams (in practice doesn't seem to go above 100)
 #define TOO_MANY_FILES 200

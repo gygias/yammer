@@ -101,8 +101,6 @@
 #define YM_DEBUG_CHUNK_SIZE(x) ;
 #endif
 
-
-
 #ifndef WIN32
 	#define YMSOCKET YMFILE
     #define NULL_FILE (-1)
@@ -110,79 +108,76 @@
 	#define READ_FLAG O_RDONLY
 	#define WRITE_FLAG O_WRONLY
 	#define READ_WRITE_FLAG O_RDWR
+
+	#define YM_IO_BOILERPLATE		__unused int result = 0, __unused error = 0; __unused ssize_t aRead = 0, aWrite = 0; __unused const char *errorStr = NULL;
 	
-	#define YM_OPEN_FILE(p,f)				open(p,f,0644)
-	#define YM_OPEN_FILE_2(p,f,m)			open(p,(f)|O_CREAT,m)
-	#define YM_STOMP_FILE(p,f)				open(p,(f)|O_CREAT|O_TRUNC,0644)
-	#define YM_REWIND_FILE(f)				lseek(f,0,SEEK_SET)
-	#define YM_SEEK_FILE(f,o,r)				SetFilePointer(f,o,NULL,r)
-    #define YM_READ_FILE(fd,addr,count)		aRead = read(fd, addr, count);
-    #define YM_WRITE_FILE(fd,addr,count)	aWrite = write(fd,addr,count);
-    #define YM_CLOSE_FILE(fd)				{ result = close(fd); \
-												if ( result != 0 ) { error = errno; errorStr = strerror(error); } \
-												else { error = 0; errorStr = NULL; } }
+	#define YM_OPEN_FILE(p,f)				{ result = open(p,f,0644); if ( result != 0 ) { error = errno; errorStr = strerror(errno); } }
+	#define YM_OPEN_FILE_2(p,f,m)			{ result = open(p,(f)|O_CREAT,m); if ( result != 0 ) { error = errno; errorStr = strerror(errno); } }
+	#define YM_STOMP_FILE(p,f)				{ result = open(p,(f)|O_CREAT|O_TRUNC,0644); if ( result != 0 ) { error = errno; errorStr = strerror(errno); } }
+	#define YM_REWIND_FILE(f)				{ result = (int)lseek(f,0,SEEK_SET); if ( result != 0 ) { error = errno; errorStr = strerror(errno); } }
+	#define YM_SEEK_FILE(f,o,r)				{ result = lseek(f,o,,r); if ( result != 0 ) { error = errno; errorStr = strerror(errno); } }
+    #define YM_READ_FILE(fd,addr,count)		{ aRead = read(fd, addr, count); if ( aRead == -1 ) { error = errno; errorStr = strerror(errno); } }
+    #define YM_WRITE_FILE(fd,addr,count)	{ aWrite = write(fd,addr,count); if ( aRead == -1 ) { error = errno; errorStr = strerror(errno); } }
+    #define YM_CLOSE_FILE(fd)				{ result = close(fd); if ( result != 0 ) { error = errno; errorStr = strerror(error); } }
     #define NULL_SOCKET (-1)
 	#define YM_READ_SOCKET(s,b,l)	YM_READ_FILE(s,b,l)
 	#define YM_WRITE_SOCKET(s,b,l)	YM_WRITE_FILE(s,b,l)
     #define YM_CLOSE_SOCKET(x)		YM_CLOSE_FILE(x)
-    #define YM_WAIT_SEMAPHORE(s)	{ result = sem_wait(s->sem); \
-										if ( result != 0 ) { error = errno; errorStr = strerror(error); } \
-										else { error = 0; errorStr = NULL; } }
-    #define YM_POST_SEMAPHORE(s)	{ result = sem_post(semaphore->sem); \
-										if ( result != 0 ) { error = errno; errorStr = strerror(error); } \
-										else { error = 0; errorStr = NULL; } }
+    #define YM_WAIT_SEMAPHORE(s)	{ result = sem_wait(s); if ( result != 0 ) { error = errno; errorStr = strerror(error); } }
+    #define YM_POST_SEMAPHORE(s)	{ result = sem_post(s); if ( result != 0 ) { error = errno; errorStr = strerror(error); } }
     #define YM_RETRY_SEMAPHORE		( error == EINTR )
-    #define YM_CLOSE_SEMAPHORE(s)	{ result = sem_unlink(YMSTR(s->semName)); \
-										if ( result != 0 ) { error = errno; errorStr = strerror(error); } \
-										else { error = 0; errorStr = NULL; } }
-	#define YM_CREATE_PIPE(fds)		( 0 == pipe(fds) )
+    #define YM_CLOSE_SEMAPHORE(so)	{ result = sem_unlink(YMSTR(so->semName)); if ( result != 0 ) { error = errno; errorStr = strerror(error); } }
+	#define YM_CREATE_PIPE(fds)		{ result = pipe(fds); if ( result != 0 ) { error = errno; errorStr = strerror(error); } }
 #else
 	#define YMSOCKET SOCKET
     #define NULL_FILE ((HANDLE)NULL)
 
-	#define READ_FLAG GENERIC_READ
-	#define WRITE_FLAG GENERIC_WRITE
-	#define READ_WRITE_FLAG ( GENERIC_READ | GENERIC_WRITE )
+	#define READ_FLAG FILE_GENERIC_READ
+	#define WRITE_FLAG FILE_GENERIC_WRITE
+	#define READ_WRITE_FLAG ( READ_FLAG | WRITE_FLAG )
 
 	#ifndef SEEK_CUR
 	# define SEEK_CUR FILE_CURRENT
 	# define SEEK_END FILE_END
 	#endif
+
+	#define YM_IO_BOILERPLATE				__unused int result = 0, __unused error = 0; __unused ssize_t aRead = 0, aWrite = 0; __unused const char *errorStr = NULL;
 	
-	#define YM_OPEN_FILE(p,f)				CreateFileA(p,f,FILE_SHARE_READ,NULL,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL)
+	#define YM_OPEN_FILE(p,f)				{ HANDLE __cfa = CreateFile(p,f,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,NULL,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL); \
+												if ( __cfa == INVALID_HANDLE_VALUE ) { result = -1; error = (int)GetLastError(); errorStr = GENERIC_WERROR_STR; } else result = (int)__cfa; }
 	#define YM_OPEN_FILE_2(p,f,m)			YM_OPEN_FILE(p,f)
-	#define YM_STOMP_FILE(p,f)				CreateFileA(p,f,FILE_SHARE_READ,NULL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL)
+	#define YM_STOMP_FILE(p,f)				{ HANDLE __cfa = CreateFileA(p,f,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,NULL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL); \
+												if ( __cfa == INVALID_HANDLE_VALUE ) { result = -1; error = (int)GetLastError(); errorStr = GENERIC_WERROR_STR; } else result = (int)__cfa; }
 	#define YM_REWIND_FILE(f)				YM_SEEK_FILE(f,0,FILE_BEGIN)
 	#define YM_SEEK_FILE(f,o,r)				{ DWORD __sfp = SetFilePointer(f,o,NULL,r); if ( __sfp == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR ) result = -1; else result = 0; }
-	#define YM_READ_FILE(fd,addr,count)		{ BOOL __rf = ReadFile(fd, addr, count, &aRead, NULL); if ( ! __rf ) { aRead = -1; errno = GetLastError(); } }
-	#define YM_WRITE_FILE(fd,addr,count)	{ BOOL __wf = WriteFile(fd, addr, count, &aWrite, NULL); if ( ! __wf ) { aWrite = -1; errno = GetLastError(); } }
+	#define YM_READ_FILE(fd,addr,count)		{ BOOL __rf = ReadFile(fd, addr, count, &aRead, NULL); \
+												if ( ! __rf ) { \
+													error = GetLastError(); \
+													if ( error == ERROR_HANDLE_EOF ) result = 0; \
+													else result = -1;  } \
+												else if ( aRead == 0 ) result = 0; }
+	#define YM_WRITE_FILE(fd,addr,count)	{ BOOL __wf = WriteFile(fd, addr, count, &aWrite, NULL); if ( ! __wf ) { aWrite = -1; error = GetLastError(); } }
     #define YM_CLOSE_FILE(fd)				{ BOOL __ch = CloseHandle(fd); if ( ! __ch ) result = -1; else result = 0; }
     #define NULL_SOCKET ((SOCKET)NULL)
 	#define GENERIC_WERROR_STR "windows error" // unfortunately the strerror equivalent FormatMessage needs the caller to take ownership, which we don't want to mess with.
 												// we could have our own method with static strings. P.S. ERROR_ARENA_TRASHED
 	#define YM_READ_SOCKET(s,b,l)	aRead = recv(s,b,l,0)
 	#define YM_WRITE_SOCKET(s,b,l)	aWrite = send(s,b,l,0)
-    #define YM_CLOSE_SOCKET(socket) { result = closesocket(socket); \
-                                      if ( result == SOCKET_ERROR ) { result = -1; error = GetLastError(); errorStr = GENERIC_WERROR_STR; } \
-                                      else { result = 0; error = 0; errorStr = NULL; } }
-    #define YM_WAIT_SEMAPHORE(s)	{ DWORD __wfso = WaitForSingleObject(s->sem, INFINITE); \
-									if ( __wfso != WAIT_OBJECT_0 ) { \
-                                        if ( __wfso == WAIT_FAILED ) error = (int)GetLastError(); \
-                                        else error = (int)__wfso; \
-                                        result = -1; errorStr = GENERIC_WERROR_STR; } \
-                                    else { result = 0; error = 0; errorStr = NULL; } }
-    #define YM_POST_SEMAPHORE(s)	{ BOOL __rs = ReleaseSemaphore(s->sem, 1, NULL); \
-                                    if ( ! __rs ) { result = -1; error = GetLastError(); errorStr = GENERIC_WERROR_STR; } \
-                                    else { result = 0; error = 0; errorStr = NULL; } }
+    #define YM_CLOSE_SOCKET(socket) { result = closesocket(socket); if ( result == SOCKET_ERROR ) { result = -1; error = GetLastError(); errorStr = GENERIC_WERROR_STR; } }
+    #define YM_WAIT_SEMAPHORE(s)	{ DWORD __wfso = WaitForSingleObject(s, INFINITE); \
+										if ( __wfso != WAIT_OBJECT_0 ) { \
+											if ( __wfso == WAIT_FAILED ) error = (int)GetLastError(); \
+											else error = (int)__wfso; \
+											result = -1; errorStr = GENERIC_WERROR_STR; } \
+										else result = 0; }
+    #define YM_POST_SEMAPHORE(s)	{ BOOL __rs = ReleaseSemaphore(s, 1, NULL); if ( ! __rs ) { result = -1; error = GetLastError(); errorStr = GENERIC_WERROR_STR; } else result = 0; }
     #define YM_RETRY_SEMAPHORE		false
-    #define YM_CLOSE_SEMAPHORE(s)	{ BOOL __ch = CloseHandle(s->sem); \
-                                    if ( ! __ch ) { result = -1; error = (int)GetLastError(); errorStr = GENERIC_WERROR_STR; } \
-                                    else { result = 0; error = 0; errorStr = NULL; } }
-	#define YM_CREATE_PIPE(fds)		( 0 != CreatePipe(&fds[0],&fds[1],NULL,0) )
+    #define YM_CLOSE_SEMAPHORE(s)	{ BOOL __ch = CloseHandle(s->sem); if ( ! __ch ) { result = -1; error = (int)GetLastError(); errorStr = GENERIC_WERROR_STR; } else result = 0; }
+	#define YM_CREATE_PIPE(fds)		{ BOOL __cp = CreatePipe(&fds[0],&fds[1],NULL,UINT16_MAX); if ( ! __cp) { result = -1; error = (int)GetLastError(); errorStr = GENERIC_WERROR_STR; } else result = 0; }
 	#define sleep(x) Sleep(((DWORD)x)*1000)
 	#define usleep(x) Sleep((DWORD)(x)/1000)
-	#define signal(x,y) ymerr("*** sigpipe win32 ***")
-	#define strerror(x) "(strerror win32)"
+	#define signal(x,y) ymerr("*** sigpipe win32 placeholder ***")
+	#define strerror(x) "strerror win32"
 #endif
 
 #endif /* PrefixHeader_pch */

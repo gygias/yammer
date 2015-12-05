@@ -88,6 +88,7 @@ void _TestmDNSCreateDiscoverResolve(struct mDNSTest *theTest)
     YMStringRef serviceType = YMSTRC(testServiceType);
     YMStringRef serviceName = YMSTRC(theTest->testServiceName);
     theTest->service = YMmDNSServiceCreate(serviceType, serviceName, 5050);
+    testassert(theTest->service,"YMmDNSServiceCreate");
     YMRelease(serviceName);
     
     theTest->nTestKeyPairs = arc4random_uniform(10);
@@ -96,13 +97,13 @@ void _TestmDNSCreateDiscoverResolve(struct mDNSTest *theTest)
     okay = YMmDNSServiceSetTXTRecord(theTest->service, theTest->testKeyPairs, theTest->nTestKeyPairs);
     testassert(okay||theTest->nTestKeyPairs==0,"YMmDNSServiceSetTXTRecord failed");
     okay = YMmDNSServiceStart(theTest->service);
-    testassert(okay,"YMmDNSServiceStart failed");
+    testassert(okay,"YMmDNSServiceStart");
     
     // i had these as separate functions, but apparently "self" is a new object for each -test* method, which isn't what we need here
     theTest->browser = YMmDNSBrowserCreateWithCallbacks(serviceType, test_service_appeared, test_service_updated, test_service_resolved, test_service_removed, theTest);
     YMRelease(serviceType);
     okay = YMmDNSBrowserStart(theTest->browser);
-    testassert(okay,"YMmDNSBrowserStartBrowsing failed");
+    testassert(okay,"YMmDNSBrowserStartBrowsing");
     
     int nSteps = 3;
     intptr_t steps[3][2] = { { (intptr_t)"appearance", (intptr_t)&theTest->waitingOnAppearance },

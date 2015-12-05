@@ -77,12 +77,12 @@ void _TestTLS1(struct TLSTest *theTest)
 {
     bool localIsServer = arc4random_uniform(2);
     
+    YM_IO_BOILERPLATE
+    
     const char *template = "ym-tls-test-%u";
     uint32_t suffix = arc4random();
     
-    YMStringRef sockName = YMSTRCF(template,suffix);
-    testassert(sockName,"ymstring: %s",YMSTR(sockName));
-    
+    YMStringRef sockName = YMSTRCF(template,suffix);    
     YMLocalSocketPairRef localSocketPair = YMLocalSocketPairCreate(sockName, false);
     YMRelease(sockName);
     testassert(localSocketPair,"socket pair didn't initialize");
@@ -95,18 +95,18 @@ void _TestTLS1(struct TLSTest *theTest)
     bool serverFirst = arc4random_uniform(2);
     const char *testBuffer = "moshi moshi";
     ssize_t testLen = (ssize_t)strlen(testBuffer) + 1;
-	ssize_t aWrite;
+	
 	YM_WRITE_SOCKET(serverFirst?serverSocket:clientSocket, testBuffer, testLen);
     testassert(aWrite==testLen,"failed to write test message: %d (%s)",errno,strerror(errno));
     char testIncoming[32];
-    ssize_t aRead;
+    
 	YM_READ_SOCKET(serverFirst?clientSocket:serverSocket, testIncoming, testLen);
     testassert(aRead==testLen,"failed to receive test message: %d (%s)",errno,strerror(errno));
     testassert(strncmp(testBuffer,testIncoming,aRead)==0,"received test message does not match");
     
-    YMTLSProviderRef localProvider = YMTLSProviderCreateWithSocket(localIsServer ? serverSocket : clientSocket, localIsServer, true);
+    YMTLSProviderRef localProvider = YMTLSProviderCreateWithSocket(localIsServer ? serverSocket : clientSocket, localIsServer);
     testassert(localProvider,"local provider didn't initialize");
-    YMTLSProviderRef remoteProvider = YMTLSProviderCreateWithSocket(localIsServer ? clientSocket : serverSocket, !localIsServer, true);
+    YMTLSProviderRef remoteProvider = YMTLSProviderCreateWithSocket(localIsServer ? clientSocket : serverSocket, !localIsServer);
     testassert(remoteProvider,"remote provider didn't initialize");
     
     YMTLSProviderRef theServer = localIsServer?localProvider:remoteProvider;

@@ -830,6 +830,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_upstream_proc(YM_THRE
             YMRelease(theStream);
             break;
         }
+        
         ymlog(" plexer[%s-^,s%u] wrote plex buffer %zub",YMSTR(plexer->name),streamID,chunkLength);
         YMRelease(theStream);
     }
@@ -971,6 +972,8 @@ bool __YMPlexerInterrupt(__YMPlexerRef plexer, bool requested)
     ymerr(" plexer[%s]: interrupted",YMSTR(plexer->name));
     
     YMSecurityProviderClose(plexer->provider);
+    
+    YMSemaphoreSignal(plexer->downstreamReadySemaphore);
 
 	YMTypeRef *listOfLocksAndLists[] = { (YMTypeRef[]) { plexer->localAccessLock, plexer->localStreamsByID },
 		(YMTypeRef[]) { plexer->remoteAccessLock, plexer->remoteStreamsByID } };

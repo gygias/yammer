@@ -98,16 +98,16 @@ YM_ONCE_FUNC(__YMTLSInit,
 })
 
 // designated initializer
-YMTLSProviderRef __YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isWrappingSocket, bool isServer, bool closeWhenDone);
+YMTLSProviderRef __YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isWrappingSocket, bool isServer);
 
-YMTLSProviderRef YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isServer, bool closeWhenDone)
+YMTLSProviderRef YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isServer)
 {
-    return __YMTLSProviderCreateWithSocket(socket, false, isServer, closeWhenDone);
+    return __YMTLSProviderCreateWithSocket(socket, false, isServer);
 }
 
 YM_ONCE_OBJ gYMInitTLSOnce = YM_ONCE_INIT;
 
-YMTLSProviderRef __YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isWrappingSocket, bool isServer, bool closeWhenDone)
+YMTLSProviderRef __YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isWrappingSocket, bool isServer)
 {
 	YM_ONCE_DO(gYMInitTLSOnce,__YMTLSInit);
     
@@ -125,7 +125,6 @@ YMTLSProviderRef __YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isWrappin
     
     tls->_common.readFile = (YMFILE)socket;
     tls->_common.writeFile = (YMFILE)socket;
-    tls->_common.closeWhenDone = closeWhenDone;
     tls->isWrappingSocket = isWrappingSocket;
     tls->isServer = isServer;
     tls->usingGeneratedCert = false;
@@ -494,7 +493,7 @@ bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
     // assuming whatever memory was allocated here gets free'd in SSL_CTX_free
     
     //tls->bio = BIO_new(&ym_bio_methods);
-    tls->bio = BIO_new_socket((YMSOCKET)tls->_common.readFile, tls->_common.closeWhenDone ? 0 : BIO_NOCLOSE);
+    tls->bio = BIO_new_socket((YMSOCKET)tls->_common.readFile, BIO_NOCLOSE);
     if ( ! tls->bio )
     {
         sslError = ERR_get_error();

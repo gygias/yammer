@@ -97,56 +97,59 @@ ComparisonResult YMTimevalCompare(struct timeval *a, struct timeval *b)
 
 YMIOResult YMReadFull(YMFILE fd, uint8_t *buffer, size_t bytes, size_t *outRead)
 {
+    YM_IO_BOILERPLATE
+    
     if ( buffer == NULL || bytes == 0 || fd < 0 )
         return YMIOError; // is this success or failure? :)
     
-    YMIOResult result = YMIOSuccess;
-    
     size_t off = 0;
+    YMIOResult ioResult = YMIOSuccess;
     while ( off < bytes )
     {
-		ssize_t aRead;
         YM_READ_FILE(fd, buffer + off, bytes - off);
         if ( aRead == 0 )
         {
             ymlog("    io: read(f%d, %p + %zu, %zu - %zu) EOF",fd, buffer, off, bytes, off);
-            result = YMIOEOF;
+            ioResult = YMIOEOF;
             break;
         }
         else if ( aRead == -1 )
         {
-            ymerr("    io: read(f%d, %p + %zu, %zu - %zu) failed: %d (%s)",fd, buffer, off, bytes, off, errno, strerror(errno));
-            result = YMIOError;
+            ymerr("    io: read(f%d, %p + %zu, %zu - %zu) failed: %d (%s)",fd, buffer, off, bytes, off, error, errorStr);
+            ioResult = YMIOError;
             break;
         }
         ymlog("    io: read(f%d, %p + %zu, %zu - %zu): %zd",fd, buffer, off, bytes, off, aRead);
         off += aRead;
     }
+    
     if ( outRead )
         *outRead = off;
-    return result;
+    
+    return ioResult;
 }
 
 YMIOResult YMWriteFull(YMFILE fd, const uint8_t *buffer, size_t bytes, size_t *outWritten)
 {
+    YM_IO_BOILERPLATE
+    
     if ( buffer == NULL || bytes == 0 || fd < 0 )
         return YMIOError;
     
-    YMIOResult result = YMIOSuccess;
-    ssize_t aWrite;
     size_t off = 0;
+    YMIOResult ioResult = YMIOSuccess;
     while ( off < bytes )
     {
         YM_WRITE_FILE(fd, buffer + off, bytes - off);
         switch(aWrite)
         {
             case 0:
-                ymerr("    io: write(f%d, %p + %zu, %zu - %zu) failed 0?: %d (%s)",fd, buffer, off, bytes, off, errno, strerror(errno));
+                ymerr("    io: write(f%d, %p + %zu, %zu - %zu) failed 0?: %d (%s)",fd, buffer, off, bytes, off, error, errorStr);
                 abort();
                 //goto catch_fail;
             case -1:
-                ymerr("    io: write(f%d, %p + %zu, %zu - %zu) failed: %d (%s)",fd, buffer, off, bytes, off, errno, strerror(errno));
-                result = YMIOError;
+                ymerr("    io: write(f%d, %p + %zu, %zu - %zu) failed: %d (%s)",fd, buffer, off, bytes, off, error, errorStr);
+                ioResult = YMIOError;
                 goto catch_fail;
             default:
                 ymlog("    io: write(f%d, %p + %zu, %zu - %zu): %zd",fd, buffer, off, bytes, off, aWrite);
@@ -154,10 +157,12 @@ YMIOResult YMWriteFull(YMFILE fd, const uint8_t *buffer, size_t bytes, size_t *o
         }
         off += aWrite;
     }
+    
     if ( outWritten )
         *outWritten = off;
+    
 catch_fail:
-    return result;
+    return ioResult;
 }
     
 #ifdef WIN32
@@ -325,17 +330,18 @@ int YMGetNumberOfOpenFilesForCurrentProcess()
 #ifndef WIN32
 pthread_mutex_t *YMCreateMutexWithOptions(YMLockOptions options)
 {
-    pthread_mutex_t *outMutex = NULL;
-    pthread_mutex_t mutex;
+    pthread_mutex_t *mutex = NULL;
     pthread_mutexattr_t attributes;
-    pthread_mutexattr_t *attributesPtr = &attributes;
+    pthread_mutexattr_t *attributesPtr = NULL;
     
-    int result = pthread_mutexattr_init(attributesPtr);
+    int result = pthread_mutexattr_init(&attributes);
     if ( result != 0 )
     {
         fprintf(stdout,"pthread_mutexattr_init failed: %d (%s)\n", result, strerror(result));
         goto catch_release;
     }
+    
+    attributesPtr = &attributes;
     
     if ( options )
     {
@@ -354,22 +360,18 @@ pthread_mutex_t *YMCreateMutexWithOptions(YMLockOptions options)
         }
     }
     
-    
-    result = pthread_mutex_init(&mutex, attributesPtr);
+    mutex = YMALLOC(sizeof(pthread_mutex_t));
+    result = pthread_mutex_init(mutex, attributesPtr);
     if ( result != 0 )
     {
         fprintf(stdout,"pthread_mutex_init failed: %d (%s)", result, strerror(result));
-        goto catch_release;
+        free(mutex);
     }
-    
-    size_t sizeOfMutex = sizeof(pthread_mutex_t);
-    outMutex = YMALLOC(sizeOfMutex);
-    memcpy(outMutex, &mutex, sizeOfMutex);
     
 catch_release:
     if ( attributesPtr )
         pthread_mutexattr_destroy(attributesPtr);
-    return outMutex;
+    return mutex;
 }
 
 bool YMLockMutex(pthread_mutex_t *mutex)

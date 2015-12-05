@@ -51,9 +51,10 @@ typedef struct __ym_local_socket_pair_t *__YMLocalSocketPairRef;
 
 int __YMLocalSocketPairCreateClient();
 YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_local_socket_accept_proc(YM_THREAD_PARAM);
-void __YMLocalSocketPairInitOnce(void);
+YM_ONCE_DEF(__YMLocalSocketPairInitOnce);
 
-const char *__YMLocalSocketPairNameBase = "ym-lsock";
+static YM_ONCE_OBJ gYMLocalSocketOnce = YM_ONCE_INIT;
+static const char *__YMLocalSocketPairNameBase = "ym-lsock";
 static YMThreadRef gYMLocalSocketPairAcceptThread = NULL;
 static YMStringRef gYMLocalSocketPairName = NULL;
 static YMSemaphoreRef gYMLocalSocketSemaphore = NULL; // thread ready & each 'accepted'
@@ -65,7 +66,7 @@ static YMSOCKET gYMLocalSocketPairAcceptedLast = NULL_SOCKET;
 
 void YMLocalSocketPairStop()
 {
-    if ( gYMLocalSocketListenSocket >= 0 )
+    if ( gYMLocalSocketListenSocket != NULL_SOCKET )
     {
         // flag & signal thread to exit
         gYMLocalSocketPairAcceptKeepListening = false;
@@ -93,10 +94,13 @@ void YMLocalSocketPairStop()
 #endif
         YMRelease(gYMLocalSocketPairName);
         gYMLocalSocketPairName = NULL;
+        
+        YM_ONCE_OBJ onceAgain = YM_ONCE_INIT;
+        memcpy(&gYMLocalSocketOnce,&onceAgain,sizeof(onceAgain));
     }
 }
 
-void __YMLocalSocketPairInitOnce(void)
+YM_ONCE_FUNC(__YMLocalSocketPairInitOnce,
 {
     YMStringRef name = YMSTRC("local-socket-spawn");
     gYMLocalSocketSemaphore = YMSemaphoreCreateWithName(name, 0);
@@ -111,7 +115,7 @@ void __YMLocalSocketPairInitOnce(void)
     ymassert(okay,"local-socket: fatal: failed to start accept thread");
     
     YMSemaphoreWait(gYMLocalSocketSemaphore);
-}
+});
 
 YMLocalSocketPairRef YMLocalSocketPairCreate(YMStringRef name, bool moreComing)
 {
@@ -123,8 +127,7 @@ YMLocalSocketPairRef YMLocalSocketPairCreate(YMStringRef name, bool moreComing)
 
 	YMNetworkingInit();
 
-    if ( ! gYMLocalSocketSemaphore )
-        __YMLocalSocketPairInitOnce();
+    YM_ONCE_DO(gYMLocalSocketOnce,__YMLocalSocketPairInitOnce);
     
     // now that thread is going to accept [once more], flag this
     gYMLocalSocketPairAcceptKeepListening = moreComing;

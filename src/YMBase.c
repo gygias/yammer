@@ -69,16 +69,14 @@ void __YMFree(__YMTypeRef object);
 
 YMTypeRef _YMAlloc(YMTypeID type, size_t size)
 {
-    if ( size < sizeof(_YMType) )
-        ymabort("base: fatal: bad alloc '%c'",type);
+    ymassert(size >= sizeof(_YMType),"base: fatal: bad alloc '%c'",type);
     
     __YMTypeRef object = YMALLOC(size);
     object->__type = type;
     object->__retainCount = 1;
     
     object->__mutex = YMCreateMutexWithOptions(YMLockRecursive);
-    if ( ! object->__mutex )
-        ymabort("base: fatal: create mutex failed");
+    ymassert(object->__mutex,"base: fatal: create mutex failed");
     
     // can't divine a way to escape infinite recursion here
     //YMStringRef name = _YMStringCreateForYMAlloc("ymtype-%p", object, NULL);
@@ -92,8 +90,7 @@ YMTypeRef YMRetain(YMTypeRef object_)
 {
     __YMTypeRef object = (__YMTypeRef)object_;
     YMLockMutex(object->__mutex);
-    if ( object->__retainCount < 1 )
-        ymabort("base: fatal: retain count inconsistent for %p",object);
+    ymassert(object->__retainCount >= 1, "base: fatal: retain count inconsistent for %p",object);
 
     object->__retainCount++;
     YMUnlockMutex(object->__mutex);
@@ -111,8 +108,7 @@ YM_RELEASE_RETURN_TYPE YMRelease(YMTypeRef object_)
     __YMTypeRef object = (__YMTypeRef)object_;
     YMLockMutex(object->__mutex);
     bool dealloc = false;
-    if ( object->__retainCount < 1 )
-        ymabort("base: fatal: something has overreleased %p (%c)",object,object->__type);
+    ymassert(object->__retainCount >= 1, "base: fatal: something has overreleased %p (%c)",object,object->__type);
     
     if ( object->__retainCount-- == 1 )
     {
