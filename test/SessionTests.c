@@ -238,7 +238,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteRandom(YM_THREAD_PARAM ctx_)
     
     uint64_t copyBytes = 0;
     theTest->serverBounding = 
-#if !defined(WIN32) || !defined(FOUND_LARGE_WELL_KNOWN_TEXT_FILE_TO_USE_FOR_THIS_THATS_BIGGER_THAN_5_MEG)
+#if !defined(WIN32) || defined(FOUND_LARGE_WELL_KNOWN_WINDOWS_TEXT_FILE_THATS_BIGGER_THAN_5_MB_TO_USE_FOR_THIS)
 		arc4random_uniform(2);
 #else
 		false;
