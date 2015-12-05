@@ -35,8 +35,8 @@ uint64_t gSomeLength = 5678900;
 #define RandomDestTemplate	"/tmp/ymsessiontest-%s-dest"
 #else
 #define ServerTestFile		"WindowsUpdate.txt"
-#define ServerTestPath		"\\\\Windows\\"
-#define ClientManPath		"\\\\Windows\\inf"
+#define ServerTestPath		"c:\\Windows\\"
+#define ClientManPath		"c:\\Windows\\inf"
 #define OutManDir			"ymsessiontest-inf"
 #define RandomSrcTemplate	"ymsessiontest-%s-orig"
 #define RandomDestTemplate	"ymsessiontest-%s-dest"
@@ -248,17 +248,17 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteRandom(YM_THREAD_PARAM ctx_)
     while(1) {
         size_t toRead = (size_t)(copyBytes ? ( copyBytes < 512 ? copyBytes : 512 ) : 512);
 		YM_READ_FILE(origFd,buff,toRead);
-        testassert(aRead>=0,"aRead");
+        testassert(aRead>=0,"aRead: %d %s",error,errorStr);
         if ( aRead == 0 ) break;
 		YM_WRITE_FILE(theTest->randomSrcFd,buff,aRead);
-        testassert(aRead==aWrite, "aRead!=aWrite");
+        testassert(aRead==aWrite, "aRead!=aWrite: %d %s",error,errorStr);
         if ( copyBytes && copyBytes - aRead == 0 ) break;
         copyBytes -= aRead;
     }
 	YM_CLOSE_FILE(origFd);
-    testassert(result==0, "close orig");
+    testassert(result==0, "close orig: %d %s",error,errorStr);
     YM_REWIND_FILE(theTest->randomSrcFd);
-    testassert(result==0, "rewind src");
+    testassert(result==0, "rewind src: %d %s",error,errorStr);
     
     YMStringRef name = YMSTRCF("test-server-write-%s",ServerTestFile);
     YMStreamRef stream = YMConnectionCreateStream(connection, name);

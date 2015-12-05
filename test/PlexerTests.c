@@ -441,7 +441,7 @@ void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *
     theTest->streamsCompleted++;
     YMLockUnlock(theTest->plexerTest1Lock);
     
-    NoisyTestLog("%s: *********** gPlexerTest1AwaitingCloses %llu->%llu!! *****************",__FUNCTION__,last,theTest->awaitingClosures);
+    NoisyTestLog("%s: gPlexerTest1AwaitingCloses: %llu",__FUNCTION__,theTest->awaitingClosures);
     if ( PlexerTest1TimeBased )
     {
         if ( theTest->streamsCompleted % 10000 == 0 )

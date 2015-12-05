@@ -138,14 +138,10 @@ YMThreadRef YMThreadDispatchCreate(YMStringRef name)
     YMLockLock(gDispatchThreadListLock);
     {
         thread->dispatchThreadID = gDispatchThreadIDNext++;
-        if ( YMDictionaryContains(gDispatchThreadDefsByID, thread->dispatchThreadID) ) // either a bug or pathological
-        {
-            ymerr("thread[%s,dispatch]: fatal: out of dispatch thread ids",YMSTR(thread->name));
-            abort();
-        }
+        ymassert(!YMDictionaryContains(gDispatchThreadDefsByID, thread->dispatchThreadID),"thread[%s,dispatch]: fatal: out of dispatch thread ids",YMSTR(thread->name));
         
         __ym_thread_dispatch_thread_context_ref dispatchThreadDef = (__ym_thread_dispatch_thread_context_ref)YMALLOC(sizeof(struct __ym_thread_dispatch_thread_context_t));
-        dispatchThreadDef->ymThread = thread;
+        dispatchThreadDef->ymThread = (__YMThreadRef)YMRetain(thread);
         dispatchThreadDef->stopFlag = calloc(1, sizeof(bool));
         
         YMDictionaryAdd(gDispatchThreadDefsByID, thread->dispatchThreadID, dispatchThreadDef);
@@ -362,6 +358,8 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_dispatch_dispatch_thread_proc
     // for exit, YMThread signals us after setting stop flag, we signal them back
     // so they know it's safe to deallocate our stuff
     YMSemaphoreSignal(thread->dispatchExitSemaphore);
+	
+	YMRelease(thread);
 
 	YM_THREAD_END
 }

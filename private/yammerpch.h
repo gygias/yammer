@@ -154,8 +154,8 @@
 	#define YM_STOMP_FILE(p,f)				CreateFileA(p,f,FILE_SHARE_READ,NULL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL)
 	#define YM_REWIND_FILE(f)				YM_SEEK_FILE(f,0,FILE_BEGIN)
 	#define YM_SEEK_FILE(f,o,r)				{ DWORD __sfp = SetFilePointer(f,o,NULL,r); if ( __sfp == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR ) result = -1; else result = 0; }
-    #define YM_READ_FILE(fd,addr,count)		{ BOOL __rf = ReadFile(fd, addr, count, &aRead, NULL); if ( ! __rf ) aRead = -1; }
-    #define YM_WRITE_FILE(fd,addr,count)	{ BOOL __wf = WriteFile(fd, addr, count, &aWrite, NULL); if ( ! __wf ) aWrite = -1; }
+	#define YM_READ_FILE(fd,addr,count)		{ BOOL __rf = ReadFile(fd, addr, count, &aRead, NULL); if ( ! __rf ) { aRead = -1; errno = GetLastError(); } }
+	#define YM_WRITE_FILE(fd,addr,count)	{ BOOL __wf = WriteFile(fd, addr, count, &aWrite, NULL); if ( ! __wf ) { aWrite = -1; errno = GetLastError(); } }
     #define YM_CLOSE_FILE(fd)				{ BOOL __ch = CloseHandle(fd); if ( ! __ch ) result = -1; else result = 0; }
     #define NULL_SOCKET ((SOCKET)NULL)
 	#define GENERIC_WERROR_STR "windows error" // unfortunately the strerror equivalent FormatMessage needs the caller to take ownership, which we don't want to mess with.
