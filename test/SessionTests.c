@@ -29,19 +29,19 @@ uint64_t gSomeLength = 5678900;
 #ifndef WIN32
 #define ServerTestFile		"install.log"
 #define ServerTestPath		"/private/var/log/" ServerTestFile
-#define ClientManPath		"/usr/share/man/man2"
-#define OutManDir			"/tmp/ymsessiontest-man"
-#define RandomSrcTemplate	"/tmp/ymsessiontest-%s-orig"
-#define RandomDestTemplate	"/tmp/ymsessiontest-%s-dest"
+#define ClientSparsePath	"/usr/share/man/man2"
+#define OutSparseDir		"/tmp/ymsessiontest-sparse"
+#define LargeSrcTemplate	"/tmp/ymsessiontest-%s-orig"
+#define LargeDestTemplate	"/tmp/ymsessiontest-%s-dest"
 #else
 #include <tchar.h> // gonna have to deal with this shit eventually
 #define ServerTestFile		L"WindowsUpdate.txt"
 #define ServerTestPath		L"c:\\Windows\\WindowsUpdate.log"
-#define ClientManPath		"c:\\Windows\\inf" 
-#define ClientManPathW		L"c:\\Windows\\inf" 
-#define OutManDir			"ymsessiontest-inf"
-#define RandomSrcTemplate	"ymsessiontest-%s-orig"
-#define RandomDestTemplate	"ymsessiontest-%s-dest"
+#define ClientSparsePath	"c:\\Windows\\inf"
+#define ClientSparsePathW	L"c:\\Windows\\inf"
+#define OutSparseDir		"ymsessiontest-inf"
+#define LargeSrcTemplate	"ymsessiontest-%s-orig"
+#define LargeDestTemplate	"ymsessiontest-%s-dest"
 #endif
 
 struct SessionTest
@@ -59,15 +59,15 @@ struct SessionTest
     YMConnectionRef clientConnection;
     bool serverAsync, serverBounding, lastClientAsync, lastClientBounded;
     YMPipeRef middlemanPipe;
-	YMFILE randomSrcFd;
+	YMFILE largeSrcFd;
     uint64_t lastClientFileSize;
-    uint64_t nManPagesToRead;
-    uint64_t nManPagesRead;
+    uint64_t nSparseFilesToRead;
+    uint64_t nSparseFilesRead;
     
     YMDictionaryRef nonRegularFileNames;
     YMStringRef tempServerSrc;
     YMStringRef tempServerDst;
-    YMStringRef tempManDir;
+    YMStringRef tempSparseDir;
     
     YMSemaphoreRef connectSemaphore;
     YMSemaphoreRef threadExitSemaphore;
@@ -83,12 +83,12 @@ typedef struct TestConnectionStream
     YMStreamRef stream;
 } TestConnectionStream;
 
-void _TestSessionWritingDevRandomAndReadingManPages(struct SessionTest *theTest);
-YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteRandom(YM_THREAD_PARAM);
-YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteManPages(YM_THREAD_PARAM);
+void _TestSessionWritingLargeAndReadingSparseFiles(struct SessionTest *theTest);
+YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteLargeFile(YM_THREAD_PARAM);
+YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteSparseFiles(YM_THREAD_PARAM);
 YM_THREAD_RETURN YM_CALLING_CONVENTION _FlushMiddleman(YM_THREAD_PARAM);
-YM_THREAD_RETURN YM_CALLING_CONVENTION  _EatRandom(YM_THREAD_PARAM);
-YM_THREAD_RETURN YM_CALLING_CONVENTION  _EatManPage(YM_THREAD_PARAM);
+YM_THREAD_RETURN YM_CALLING_CONVENTION _EatLargeFile(YM_THREAD_PARAM);
+YM_THREAD_RETURN YM_CALLING_CONVENTION _EatASparseFile(YM_THREAD_PARAM);
 void _AsyncForwardCallback(struct SessionTest *theTest, YMConnectionRef connection, YMStreamRef stream, YMIOResult result, uint64_t bytesWritten, bool isServer);
 
 void SessionTestRun(ym_test_assert_func assert, ym_test_diff_func diff, const void *context)
@@ -96,25 +96,25 @@ void SessionTestRun(ym_test_assert_func assert, ym_test_diff_func diff, const vo
     struct SessionTest theTest = {  assert, diff, context,
                                     NULL, NULL, "_ymtest._tcp", "twitter-cliche",
                                     NULL, NULL, false, false, false, false, NULL, NULL_FILE, 0, UINT64_MAX, 0,
-                                    YMDictionaryCreate(), NULL, NULL, YMSTRC(OutManDir),
+                                    YMDictionaryCreate(), NULL, NULL, YMSTRC(OutSparseDir),
                                     YMSemaphoreCreate(0), YMSemaphoreCreate(0), false };
     
-    _TestSessionWritingDevRandomAndReadingManPages(&theTest);
+    _TestSessionWritingLargeAndReadingSparseFiles(&theTest);
+    ymerr(" Session test finished with %llu sparse files",theTest.nSparseFilesToRead);
     
-    if ( theTest.nonRegularFileNames )
+    while ( YMDictionaryGetCount(theTest.nonRegularFileNames) > 0 )
     {
-        while ( YMDictionaryGetCount(theTest.nonRegularFileNames) > 0 )
-        {
-            void *filename = YMDictionaryRemove(theTest.nonRegularFileNames, YMDictionaryGetRandomKey(theTest.nonRegularFileNames));
-            free(filename);
-        }
-        YMRelease(theTest.nonRegularFileNames);
+        void *filename = YMDictionaryRemove(theTest.nonRegularFileNames, YMDictionaryGetRandomKey(theTest.nonRegularFileNames));
+        free(filename);
     }
+    
+    YMRelease(theTest.nonRegularFileNames);
     if ( theTest.tempServerSrc ) YMRelease(theTest.tempServerSrc);
     if ( theTest.tempServerDst ) YMRelease(theTest.tempServerDst);
-    YMRelease(theTest.tempManDir);
+    YMRelease(theTest.tempSparseDir);
     YMRelease(theTest.connectSemaphore);
     YMRelease(theTest.threadExitSemaphore);
+    
 }
 
 void _server_async_forward_callback(YMConnectionRef connection, YMStreamRef stream, YMIOResult result, uint64_t bytesWritten, void * ctx);
@@ -130,7 +130,7 @@ void _ym_session_interrupted_func(YMSessionRef session, void *context);
 void _ym_session_new_stream_func(YMSessionRef session, YMConnectionRef connection, YMStreamRef stream, void *context);
 void _ym_session_stream_closing_func(YMSessionRef session, YMConnectionRef connection, YMStreamRef stream, void *context);
 
-void _TestSessionWritingDevRandomAndReadingManPages(struct SessionTest *theTest) {
+void _TestSessionWritingLargeAndReadingSparseFiles(struct SessionTest *theTest) {
     
     YMStringRef type = YMSTRC(theTest->testType);
     theTest->serverSession = YMSessionCreate(type);
@@ -161,24 +161,24 @@ void _TestSessionWritingDevRandomAndReadingManPages(struct SessionTest *theTest)
     
 #define RUN_SERVER
 #ifdef RUN_SERVER
-    YMThreadRef serverThread = YMThreadCreate(NULL, _ServerWriteRandom, theTest);
+    YMThreadRef serverThread = YMThreadCreate(NULL, _ServerWriteLargeFile, theTest);
     YMThreadStart(serverThread);
 #endif
 #define CLIENT_TOO // debugging forward-file hang-up
 #ifdef CLIENT_TOO
-    YMThreadRef clientThread = YMThreadCreate(NULL, _ClientWriteManPages, theTest);
+    YMThreadRef clientThread = YMThreadCreate(NULL, _ClientWriteSparseFiles, theTest);
     YMThreadStart(clientThread);
 #endif
     
     // wait for 4 thread exits
 #ifdef RUN_SERVER
-    YMSemaphoreWait(theTest->threadExitSemaphore); // write random
-    YMSemaphoreWait(theTest->threadExitSemaphore); // read random
+    YMSemaphoreWait(theTest->threadExitSemaphore); // write large
+    YMSemaphoreWait(theTest->threadExitSemaphore); // read large
 #endif
 #ifdef CLIENT_TOO
-    YMSemaphoreWait(theTest->threadExitSemaphore); // write man pages
-    //YMSemaphoreWait(theTest->threadExitSemaphore); // read man pages done differently
-    while ( theTest->nManPagesRead < theTest->nManPagesToRead )
+    YMSemaphoreWait(theTest->threadExitSemaphore); // write sparse
+    //YMSemaphoreWait(theTest->threadExitSemaphore); // read sparse done differently
+    while ( theTest->nSparseFilesRead < theTest->nSparseFilesToRead )
         sleep(1);
 #endif
         
@@ -208,12 +208,12 @@ void _TestSessionWritingDevRandomAndReadingManPages(struct SessionTest *theTest)
 #ifdef RUN_SERVER
     ymlog("diffing %s - %s",YMSTR(theTest->tempServerSrc),YMSTR(theTest->tempServerDst));
     diffOK = theTest->diff(theTest->context, YMSTR(theTest->tempServerSrc), YMSTR(theTest->tempServerDst), false, NULL);
-    testassert(diffOK, "diff random");
+    testassert(diffOK, "diff large");
 #endif
 #ifdef CLIENT_TOO
-    ymlog("diffing %s",YMSTR(theTest->tempManDir));
-    diffOK = theTest->diff(theTest->context, "/usr/share/man/man2", YMSTR(theTest->tempManDir), true, theTest->nonRegularFileNames);
-    testassert(diffOK, "diff man");
+    ymlog("diffing %s",YMSTR(theTest->tempSparseDir));
+    diffOK = theTest->diff(theTest->context, "/usr/share/man/man2", YMSTR(theTest->tempSparseDir), true, theTest->nonRegularFileNames);
+    testassert(diffOK, "diff sparse");
 #endif
     
     YMFreeGlobalResources();
@@ -224,20 +224,20 @@ void _TestSessionWritingDevRandomAndReadingManPages(struct SessionTest *theTest)
 #define NAME_MAX 256
 #endif
 
-typedef struct ManPageHeader
+typedef struct SparseFileHeader
 {
     uint64_t len;
     char     name[NAME_MAX+1];
     bool     willBoundDataStream;
-}_ManPageHeader;
+} SparseFileHeader;
 
-#define THXFORMANTEMPLATE "thx 4 man, man!%s"
-typedef struct ManPageThanks
+#define THXFORSPARSETEMPLATE "thx 4 sparse, man!%s"
+typedef struct SparseFileThanks
 {
-    char thx4Man[NAME_MAX+1+15];
-}_ManPageThanks;
+    char thx4Sparse[NAME_MAX+1+15];
+} SparseFileThanks;
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteRandom(YM_THREAD_PARAM ctx_)
+YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteLargeFile(YM_THREAD_PARAM ctx_)
 {
 	struct SessionTest *theTest = ctx_;
 
@@ -248,7 +248,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteRandom(YM_THREAD_PARAM ctx_)
     // todo sometimes this is inexplicably null, yet not in the session by the time the test runs
     testassert(connection,"server connection");
     
-    theTest->tempServerSrc = YMSTRCF(RandomSrcTemplate,ServerTestFile);
+    theTest->tempServerSrc = YMSTRCF(LargeSrcTemplate,ServerTestFile);
     unlink(YMSTR(theTest->tempServerSrc));
     
     uint64_t copyBytes = 0;
@@ -265,22 +265,22 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteRandom(YM_THREAD_PARAM ctx_)
     testassert(result>=0,"open(r) %s: %d %s", ServerTestPath,error,errorStr);
     YMFILE origFd = (YMFILE)result;
     YM_STOMP_FILE(YMSTR(theTest->tempServerSrc), READ_WRITE_FLAG);
-    theTest->randomSrcFd = (YMFILE)result;
-    testassert(theTest->randomSrcFd>=0,"open(rw) %s: %d %s",YMSTR(theTest->tempServerSrc),error,errorStr);
+    theTest->largeSrcFd = (YMFILE)result;
+    testassert(theTest->largeSrcFd>=0,"open(rw) %s: %d %s",YMSTR(theTest->tempServerSrc),error,errorStr);
     uint8_t buff[512];
     while(1) {
         size_t toRead = (size_t)(copyBytes ? ( copyBytes < 512 ? copyBytes : 512 ) : 512);
 		YM_READ_FILE(origFd,buff,toRead);
         testassert(aRead>=0,"aRead: %d %s",error,errorStr);
         if ( aRead == 0 ) break;
-		YM_WRITE_FILE(theTest->randomSrcFd,buff,aRead);
+		YM_WRITE_FILE(theTest->largeSrcFd,buff,aRead);
         testassert(aRead==aWrite, "aRead!=aWrite: %d %s",error,errorStr);
         if ( copyBytes && copyBytes - aRead == 0 ) break;
         copyBytes -= aRead;
     }
 	YM_CLOSE_FILE(origFd);
     testassert(result==0, "close orig: %d %s",error,errorStr);
-    YM_REWIND_FILE(theTest->randomSrcFd);
+    YM_REWIND_FILE(theTest->largeSrcFd);
     testassert(result==0, "rewind src: %d %s",error,errorStr);
     
     YMStringRef name = YMSTRCF("test-server-write-%s",ServerTestFile);
@@ -297,7 +297,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteRandom(YM_THREAD_PARAM ctx_)
         ctx->context = theTest;
     }
     
-    YMFILE forwardReadFd = theTest->randomSrcFd;
+    YMFILE forwardReadFd = theTest->largeSrcFd;
     if ( ! theTest->serverBounding )
     {
         YMStringRef str = YMSTRC("middleman");
@@ -309,7 +309,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteRandom(YM_THREAD_PARAM ctx_)
         YMThreadStart(flushPipeThread);
     }
     
-    ymlog("writing random %sbounded, %ssync from f%d",theTest->serverBounding?"":"un",theTest->serverAsync?"a":"",forwardReadFd);
+    ymerr("writing large file '%s' %sbounded, %ssync from f%d",ServerTestPath,theTest->serverBounding?"":"un",theTest->serverAsync?"a":"",forwardReadFd);
     bool okay = YMConnectionForwardFile(connection, forwardReadFd, stream, theTest->serverBounding ? &gSomeLength : NULL, !theTest->serverAsync, ctx);
     testassert(okay,"server forward file");
     
@@ -320,7 +320,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteRandom(YM_THREAD_PARAM ctx_)
         YMSemaphoreSignal(theTest->threadExitSemaphore);
     }
     
-    ymlog("writing random thread (%sSYNC) exiting",theTest->serverAsync?"A":"");
+    ymlog("writing large file thread (%sSYNC) exiting",theTest->serverAsync?"A":"");
 
 	YM_THREAD_END
 }
@@ -329,7 +329,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _FlushMiddleman(YM_THREAD_PARAM ctx_)
 {
 	struct SessionTest *theTest = ctx_;
 
-    uint32_t writeRandomUnboundedFor = arc4random_uniform(10) + 10;
+    uint32_t writeLargeUnboundedFor = arc4random_uniform(10) + 10;
     YMFILE writeFd = YMPipeGetInputFile(theTest->middlemanPipe);
     unsigned char buf[1024];
     time_t startTime = time(NULL);
@@ -337,15 +337,15 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _FlushMiddleman(YM_THREAD_PARAM ctx_)
 	YM_IO_BOILERPLATE
     
     while(1) {
-		YM_READ_FILE(theTest->randomSrcFd, buf, 1024);
+		YM_READ_FILE(theTest->largeSrcFd, buf, 1024);
         //XCTAssert(aRead==1024,"middleman read");
         
 		YM_WRITE_FILE(writeFd, buf, aRead);
         testassert(aWrite==aRead,"middleman write");
         
-        if ( time(NULL) - startTime > writeRandomUnboundedFor )
+        if ( time(NULL) - startTime > writeLargeUnboundedFor )
         {
-            ymlog("closing random middleman input (f%d)",writeFd);
+            ymlog("closing large middleman input (f%d)",writeFd);
             _YMPipeCloseInputFile(theTest->middlemanPipe);
             break;
         }
@@ -357,7 +357,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _FlushMiddleman(YM_THREAD_PARAM ctx_)
 	YM_THREAD_END
 }
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteManPages(YM_THREAD_PARAM ctx_)
+YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteSparseFiles(YM_THREAD_PARAM ctx_)
 {
 	struct SessionTest *theTest = ctx_;
     YMSessionRef client = theTest->clientSession;
@@ -366,7 +366,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteManPages(YM_THREAD_PARAM ctx_
 	int result, error = 0;
 	const char *errorStr = NULL;
     
-    DIR *dir = opendir(YMSTR(theTest->tempManDir));
+    DIR *dir = opendir(YMSTR(theTest->tempSparseDir));
     struct dirent *dir_ent = NULL;
     if ( dir )
     {
@@ -380,7 +380,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteManPages(YM_THREAD_PARAM ctx_
             
             char *aFile = dir_ent->d_name;
             char fullPath[PATH_MAX];
-            strcpy(fullPath, YMSTR(theTest->tempManDir));
+            strcpy(fullPath, YMSTR(theTest->tempSparseDir));
             strcat(fullPath, "/");
             strcat(fullPath, aFile);
             
@@ -390,24 +390,24 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteManPages(YM_THREAD_PARAM ctx_
         closedir(dir);
     }
     
-    result = rmdir(YMSTR(theTest->tempManDir));
+    result = rmdir(YMSTR(theTest->tempSparseDir));
     testassert(result==0||errno==ENOENT, "rmdir failed %d %s",errno,strerror(errno));
 
 #ifdef WIN32
 	for ( int i = 0; i < 5; i++ )
 	{
 #endif
-		result = mkdir(YMSTR(theTest->tempManDir),0755);
+		result = mkdir(YMSTR(theTest->tempSparseDir),0755);
 #ifdef WIN32
 		if ( result == 0 ) break;
-		ymerr("looping on mkdir %s...",YMSTR(theTest->tempManDir));
+		ymerr("looping on mkdir %s...",YMSTR(theTest->tempSparseDir));
 		sleep(1);
 	}
 #endif
     testassert(result==0, "mkdir failed %d %s",errno,strerror(errno));
     
     uint64_t actuallyWritten = 0;
-    dir = opendir(ClientManPath);
+    dir = opendir(ClientSparsePath);
     testassert(dir, "opendir");
     
     for ( int i = 0 ; ; i++ )
@@ -428,41 +428,41 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteManPages(YM_THREAD_PARAM ctx_
         NoisyTestLog("client sending %s",fullPath);
 
 		char fullPath[PATH_MAX];
-		strcpy(fullPath, ClientManPath);
+		strcpy(fullPath, ClientSparsePath);
 		strcat(fullPath, "/");
 		strcat(fullPath, aFile);
 #ifndef WIN32
 		YM_OPEN_FILE(fullPath, READ_FLAG);
 #else
 		wchar_t wOpenPath[PATH_MAX];
-		wcscpy(wOpenPath, ClientManPathW);
+		wcscpy(wOpenPath, ClientSparsePathW);
 		wcscat(wOpenPath, L"/");
 		wchar_t wAFile[NAME_MAX];
 		mbstowcs(wAFile, aFile, strlen(aFile) + 1);
 		wcscat(wOpenPath, wAFile);
 		YM_OPEN_FILE(wOpenPath, READ_FLAG);
 #endif
-		YMFILE aManFd = (YMFILE)result;
-		testassert(aManFd >= 0, "client file handle %s", fullPath);
+		YMFILE aSparseFd = (YMFILE)result;
+		testassert(aSparseFd >= 0, "client file handle %s", fullPath);
         
         YMStringRef name = YMSTRCF("test-client-write-%s",aFile);
         YMStreamRef stream = YMConnectionCreateStream(connection, name);
         YMRelease(name);
         testassert(stream,"client stream %s",fullPath);
         
-        struct stat manStat;
-        result = stat(fullPath,&manStat);
+        struct stat sparseStat;
+        result = stat(fullPath,&sparseStat);
         testassert(result==0,"stat %s",fullPath);
-        theTest->lastClientFileSize = manStat.st_size; // ???
+        theTest->lastClientFileSize = sparseStat.st_size; // ???
         theTest->lastClientAsync = arc4random_uniform(2); // don't let filehandle go out of scope on the last iter
         theTest->lastClientBounded = arc4random_uniform(2); // also tell remote whether we're bounding the file or pretending we don't know for testing
-        struct ManPageHeader header = { theTest->lastClientFileSize , {0}, theTest->lastClientBounded };
+        struct SparseFileHeader header = { theTest->lastClientFileSize , {0}, theTest->lastClientBounded };
         strncpy(header.name, aFile, NAME_MAX+1);
         YMStreamWriteDown(stream, &header, sizeof(header));
         if ( theTest->stopping )
         {
             YMConnectionCloseStream(connection, stream);
-            YM_CLOSE_FILE(aManFd);
+            YM_CLOSE_FILE(aSparseFd);
             break;
         }
         
@@ -474,44 +474,44 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteManPages(YM_THREAD_PARAM ctx_
             ctx->context = theTest;
         }
         
-        NoisyTestLog("writing man page '%s' %sbounded, %ssync from f%d",aFile,lastClientBounded?"":"un",lastClientAsync?"a":"",aManFd);
-        bool okay = YMConnectionForwardFile(connection, aManFd, stream, theTest->lastClientBounded ? &theTest->lastClientFileSize : NULL, !theTest->lastClientAsync, ctx);
+        ymerr("writing sparse file '%s' %sbounded, %ssync from f%d",aFile,theTest->lastClientBounded?"":"un",theTest->lastClientAsync?"a":"",aSparseFd);
+        bool okay = YMConnectionForwardFile(connection, aSparseFd, stream, theTest->lastClientBounded ? &theTest->lastClientFileSize : NULL, !theTest->lastClientAsync, ctx);
         testassert(okay,"forwardfile failed");
         
-        struct ManPageThanks thx;
+        struct SparseFileThanks thx;
         uint16_t outLength = 0, length = sizeof(thx);
         result = YMStreamReadUp(stream, &thx, length, &outLength);
         if ( theTest->stopping )
         {
             YMConnectionCloseStream(connection, stream);
-            YM_CLOSE_FILE(aManFd);
+            YM_CLOSE_FILE(aSparseFd);
             break;
         }
         testassert(result==YMIOSuccess,"read thx header");
         testassert(length==outLength,"length!=outLength");
-        YMStringRef thxFormatStr = YMSTRCF(THXFORMANTEMPLATE,header.name);
+        YMStringRef thxFormatStr = YMSTRCF(THXFORSPARSETEMPLATE,header.name);
         const char *thxFormat = YMSTR(thxFormatStr);
-        testassert(0==strcmp(thx.thx4Man,thxFormat),"is this how one thx for man? %s",thx.thx4Man);
+        testassert(0==strcmp(thx.thx4Sparse,thxFormat),"is this how one thx for sparse, man? %s",thx.thx4Sparse);
         YMRelease(thxFormatStr);
         
         YMConnectionCloseStream(connection, stream);
-        YM_CLOSE_FILE(aManFd);
+        YM_CLOSE_FILE(aSparseFd);
         
         actuallyWritten++;
-        NoisyTestLog("wrote the %lluth man page",actuallyWritten);
+        NoisyTestLog("wrote the %lluth sparse file",actuallyWritten);
     }
     
     result = closedir(dir);
     testassert(result==0,"close DIR");
     
-    theTest->nManPagesToRead = actuallyWritten;
+    theTest->nSparseFilesToRead = actuallyWritten;
     YMSemaphoreSignal(theTest->threadExitSemaphore);
-    ymlog("write man pages thread exiting");
+    ymlog("write sparse files thread exiting");
 
 	YM_THREAD_END
 }
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION _EatManPage(YM_THREAD_PARAM ctx_)
+YM_THREAD_RETURN YM_CALLING_CONVENTION _EatASparseFile(YM_THREAD_PARAM ctx_)
 {
 	struct TestConnectionStream *ctx = ctx_;
     struct SessionTest *theTest = ctx->theTest;
@@ -522,7 +522,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _EatManPage(YM_THREAD_PARAM ctx_)
     YMConnectionRef connection = ctx->connection;
     YMStreamRef stream = ctx->stream;
     
-    struct ManPageHeader header;
+    struct SparseFileHeader header;
     uint16_t outLength = 0, length = sizeof(header);
     YMIOResult ymResult = YMStreamReadUp(stream, &header, length, &outLength);
     if ( theTest->stopping )
@@ -530,32 +530,32 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _EatManPage(YM_THREAD_PARAM ctx_)
         YMConnectionCloseStream(connection, stream);
         YM_THREAD_END
     }
-    testassert(ymResult==YMIOSuccess&&outLength==length,"read man header");
+    testassert(ymResult==YMIOSuccess&&outLength==length,"read sparse header");
     testassert(strlen(header.name)>0&&strlen(header.name)<=NAME_MAX, "??? %s",header.name);
     uint64_t outBytes = 0;
     
     char filePath[PATH_MAX];
-    strcpy(filePath, YMSTR(theTest->tempManDir));
+    strcpy(filePath, YMSTR(theTest->tempSparseDir));
     strcat(filePath, "/");
     strcat(filePath, header.name);
     
     YM_STOMP_FILE(filePath, READ_WRITE_FLAG);
-    YMFILE manDstFd = (YMFILE)result;
-    testassert(manDstFd>=0,"create '%s' dst %d %s",header.name,errno,strerror(errno))
+    YMFILE sparseDstFd = (YMFILE)result;
+    testassert(sparseDstFd>=0,"create '%s' dst %d %s",header.name,errno,strerror(errno))
     
     uint64_t len64 = header.len;
-    NoisyTestLog("reading man page '%s'[%llu] %sbounded, sync to f%d",header.name,header.len,header.willBoundDataStream?"":"un",manDstFd);
-    ymResult = YMStreamWriteToFile(stream, manDstFd, header.willBoundDataStream ? &len64 : NULL, &outBytes);
-    testassert(ymResult==YMIOSuccess||(!header.willBoundDataStream&&ymResult==YMIOEOF),"eat man result");
-    testassert(outBytes==header.len,"eat man result");
-    NoisyTestLog("_eatManPages: finished: %llu bytes: %s : %s",outBytes,YMSTR(theTest->tempManDir),header.name);
+    ymerr("reading sparse file '%s'[%llu] %sbounded, sync to f%d",header.name,header.len,header.willBoundDataStream?"":"un",sparseDstFd);
+    ymResult = YMStreamWriteToFile(stream, sparseDstFd, header.willBoundDataStream ? &len64 : NULL, &outBytes);
+    testassert(ymResult==YMIOSuccess||(!header.willBoundDataStream&&ymResult==YMIOEOF),"eat sparse result");
+    testassert(outBytes==header.len,"eat sparse result");
+    NoisyTestLog("_eatSparseFiles: finished: %llu bytes: %s : %s",outBytes,YMSTR(theTest->tempSparseDir),header.name);
     
-	YM_CLOSE_FILE(manDstFd);
-    testassert(result==0,"close man dst %s",header.name);
+	YM_CLOSE_FILE(sparseDstFd);
+    testassert(result==0,"close sparse dst %s",header.name);
     
-    struct ManPageThanks thx;
-    YMStringRef thxStr = YMSTRCF(THXFORMANTEMPLATE,header.name);
-    strncpy(thx.thx4Man,YMSTR(thxStr),sizeof(thx.thx4Man));
+    struct SparseFileThanks thx;
+    YMStringRef thxStr = YMSTRCF(THXFORSPARSETEMPLATE,header.name);
+    strncpy(thx.thx4Sparse,YMSTR(thxStr),sizeof(thx.thx4Sparse));
     YMRelease(thxStr);
     YMStreamWriteDown(stream, &thx, sizeof(thx));
     if ( theTest->stopping )
@@ -570,7 +570,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _EatManPage(YM_THREAD_PARAM ctx_)
     // dealloc the session, async clients working on incoming streams might fault doing this
     YMConnectionCloseStream(connection,stream);
     
-    theTest->nManPagesRead++;
+    theTest->nSparseFilesRead++;
     
     YMRelease(connection);
     YMRelease(stream);
@@ -579,7 +579,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _EatManPage(YM_THREAD_PARAM ctx_)
 	YM_THREAD_END
 }
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION _EatRandom(YM_THREAD_PARAM ctx_)
+YM_THREAD_RETURN YM_CALLING_CONVENTION _EatLargeFile(YM_THREAD_PARAM ctx_)
 {
 	struct TestConnectionStream *ctx = ctx_;
     struct SessionTest *theTest = ctx->theTest;
@@ -590,22 +590,22 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _EatRandom(YM_THREAD_PARAM ctx_)
     YMConnectionRef connection = ctx->connection;
     YMStreamRef stream = ctx->stream;
     
-    theTest->tempServerDst = YMSTRCF(RandomDestTemplate,ServerTestFile);
+    theTest->tempServerDst = YMSTRCF(LargeDestTemplate,ServerTestFile);
     result = unlink(YMSTR(theTest->tempServerDst));
-    testassert(result==0||errno==ENOENT,"delete random dst file %d %s",errno,strerror(errno));
+    testassert(result==0||errno==ENOENT,"delete large dst file %d %s",errno,strerror(errno));
     YM_STOMP_FILE(YMSTR(theTest->tempServerDst),WRITE_FLAG);
-    YMFILE randomOutFd = (YMFILE)result;
-    testassert(randomOutFd>=0,"create out file");
+    YMFILE largeOutFd = (YMFILE)result;
+    testassert(largeOutFd>=0,"create out file");
 
     uint64_t outBytes = 0;
-    ymlog("reading random %sbounded...",theTest->serverBounding?"":"un");
-    YMIOResult ymResult = YMStreamWriteToFile(stream, randomOutFd, theTest->serverBounding ? &gSomeLength : NULL, &outBytes);
-    testassert(ymResult!=YMIOError,"eat random result");
-    testassert(!theTest->serverBounding||outBytes==gSomeLength,"eat random outBytes");
-    ymlog("reading random finished: %llu bytes",outBytes);
+    ymerr("reading large %sbounded...",theTest->serverBounding?"":"un");
+    YMIOResult ymResult = YMStreamWriteToFile(stream, largeOutFd, theTest->serverBounding ? &gSomeLength : NULL, &outBytes);
+    testassert(ymResult!=YMIOError,"eat large result");
+    testassert(!theTest->serverBounding||outBytes==gSomeLength,"eat large outBytes");
+    ymerr("reading large finished: %llu bytes",outBytes);
 
-    YM_CLOSE_FILE(randomOutFd);
-    testassert(result==0, "close random out fd %d %s",errno,strerror(errno));
+    YM_CLOSE_FILE(largeOutFd);
+    testassert(result==0, "close large out fd %d %s",errno,strerror(errno));
     
     // todo randomize whether we close here, during streamClosing, after streamClosing, dispatch_after?
     // it's also worth noting that if you [forcibly] interrupt the session and immediately
@@ -614,7 +614,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _EatRandom(YM_THREAD_PARAM ctx_)
     
     YMSemaphoreSignal(theTest->threadExitSemaphore);
     
-    ymlog("eat random exiting");
+    ymlog("eat large exiting");
     
     YMRelease(connection);
     YMRelease(stream);
@@ -652,12 +652,12 @@ void _AsyncForwardCallback(struct SessionTest *theTest, YMConnectionRef connecti
         testassert(bytesWritten==theTest->lastClientFileSize,"lengths don't match");
         
     if ( isServer ) {
-        ymlog("_async_forward_callback (random): %llu",bytesWritten);
+        ymlog("_async_forward_callback (large): %llu",bytesWritten);
     } else
-        NoisyTestLog("_async_forward_callback (man): %llu",bytesWritten);
+        NoisyTestLog("_async_forward_callback (sparse): %llu",bytesWritten);
     
     if ( isServer ) {
-        YMConnectionCloseStream(connection, stream); // client is effectively synchronized by the 'thx for man' writeback
+        YMConnectionCloseStream(connection, stream); // client is effectively synchronized by the 'thx for sparse' writeback
         YMSemaphoreSignal(theTest->threadExitSemaphore);
     }
 }
@@ -799,7 +799,7 @@ void _ym_session_new_stream_func(YMSessionRef session, YMConnectionRef connectio
     ctx->theTest = theTest;
     ctx->connection = YMRetain(connection);
     ctx->stream = YMRetain(stream);
-    YMThreadRef handleThread = YMThreadCreate(NULL, (isServer ? _EatManPage : _EatRandom), ctx);
+    YMThreadRef handleThread = YMThreadCreate(NULL, (isServer ? _EatASparseFile : _EatLargeFile), ctx);
     YMThreadStart(handleThread);
 }
 

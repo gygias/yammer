@@ -89,6 +89,8 @@ void PlexerTestRun(ym_test_assert_func assert, const void *context)
     
     sleep(2); // or add a thread exit semaphore
     
+    ymerr(" PlexerRoundTripsTest finished with %llub in %llub out",theTest.bytesIn,theTest.bytesOut);
+    
     YMRelease(theTest.plexerTest1Lock);
     YMRelease(theTest.interruptNotificationSem);
     

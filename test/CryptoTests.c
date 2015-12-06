@@ -26,6 +26,7 @@ void CryptoTestRun(ym_test_assert_func assert, const void *context)
     struct CryptoTest theTest = { assert, context };
     
     _X509GenerationTestRun(&theTest);
+    ymerr(" _X509GenerationTestRun completed");
 }
 
 void _X509GenerationTestRun(struct CryptoTest *theTest)

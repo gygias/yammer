@@ -56,7 +56,9 @@ void mDNSTestRun(ym_test_assert_func assert, const void *context)
     struct mDNSTest theTest = { assert, context, NULL, NULL, 0, NULL, NULL, true, true, true };
     
     _TestmDNSTxtRecordParsing(&theTest);
+    ymerr(" _TestmDNSTxtRecordParsing completed");
     _TestmDNSCreateDiscoverResolve(&theTest);
+    ymerr(" _TestmDNSCreateDiscoverResolve completed");
     
     free(theTest.testServiceName);
     if ( theTest.testKeyPairs )

@@ -14,12 +14,10 @@
 #endif
 #ifndef ymlog_target
 #define ymlog_target ( YMLogSecurity | YMLogConnection )
-// Token pasting of ',' and __VA_ARGS__ is a GNU extension
 #endif
 
-YM_WPPUSH
+YM_WPPUSH // Token pasting of ',' and __VA_ARGS__ is a GNU extension
 #define ymlog(x,...) if ( ymlog_type & ymlog_target ) __YMLogType(ymlog_target,(x),##__VA_ARGS__)
-// it might be nice if this postpended errno/strerror (or had a designated version for cases that errno is relevant)
 #define ymerr(x,...) __YMLogType(YMLogError,(x),##__VA_ARGS__)
 YM_WPOP
 

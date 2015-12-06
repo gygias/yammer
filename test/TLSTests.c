@@ -70,6 +70,7 @@ void TLSTestRun(ym_test_assert_func assert, const void *context)
     YMRelease(name);
     
     _TestTLS1(&theTest);
+    ymerr(" TLSTest1 completed %llub in %llub out",theTest.bytesIn,theTest.bytesOut);
     
     YMRelease(theTest.stateLock);
     YMRelease(theTest.threadExitSemaphore);
