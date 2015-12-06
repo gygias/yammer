@@ -478,7 +478,7 @@ bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
     }
     
     YMLockLock(gYMTLSExDataLock);
-    YMDictionaryAdd(gYMTLSExDataList, (YMDictionaryKey)tls->ssl, (YMDictionaryValue)(uint64_t)myIdx);
+    YMDictionaryAdd(gYMTLSExDataList, (YMDictionaryKey)tls->ssl, (YMDictionaryValue)(uint64_t)myIdx); // todo CRASH 1
     YMLockUnlock(gYMTLSExDataLock);
     
     // and there's no CTX version of SSL_get_ex_data_X509_STORE_CTX_idx that i can see,

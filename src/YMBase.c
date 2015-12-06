@@ -120,7 +120,7 @@ YM_RELEASE_RETURN_TYPE YMRelease(YMTypeRef object_)
     if ( dealloc )
     {
         __YMFree(object);
-        YMDestroyMutex(object->__mutex);
+        YMDestroyMutex(object->__mutex); // todo CRASH 2
         free(object);
     }
     
