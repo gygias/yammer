@@ -92,7 +92,7 @@ void YMLocalSocketPairStop()
 #if defined(_MACOS) || defined(RPI)
 		char *prefix = "";
 #if defined (_MACOS)
-		prefix = "/tmp/"
+		prefix = "/tmp/";
 #endif
         YMStringRef tmpPath = YMSTRCF("%s%s",prefix,YMSTR(gYMLocalSocketPairName));
         result = unlink(YMSTR(tmpPath));
