@@ -81,7 +81,7 @@ YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*typ
 		int result = getaddrinfo(noProto, NULL, &hints, &addrinfo);
         if ( result != 0 )
         {
-			ymerr("mdns: failed to parse hostname '%s': %d %d (%s)", noProto,result,errno,strerror(errno));
+			ymerr("mdns: failed to parse hostname '%s': %d %d (%s)",noProto,result,gai_strerror(result));
 			goto catch_fail;
 		}
 		free(noProto);
