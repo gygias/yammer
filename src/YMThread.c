@@ -92,7 +92,7 @@ typedef __ym_thread_dispatch_forward_file_async_context *__ym_thread_dispatch_fo
 
 __YMThreadRef __YMThreadInitCommon(YMStringRef name, const void *context);
 void YM_CALLING_CONVENTION __ym_thread_generic_entry_proc(__YMThreadRef theThread);
-YMIOResult __ym_thread_dispatch_forward_file_proc(void *);
+YMIOResult YM_CALLING_CONVENTION __ym_thread_dispatch_forward_file_proc(void *);
 ym_thread_dispatch_ref __YMThreadDispatchCopy(ym_thread_dispatch_ref userDispatchRef);
 __ym_thread_dispatch_thread_context_ref __YMThreadDispatchJoin(__YMThreadRef thread);
 void __YMThreadFreeDispatchContext(__ym_thread_dispatch_context_ref);
@@ -496,7 +496,7 @@ rewind_fail:
     return false;
 }
 
-YMIOResult __ym_thread_dispatch_forward_file_proc(void *ctx_)
+YMIOResult YM_CALLING_CONVENTION __ym_thread_dispatch_forward_file_proc(void *ctx_)
 {
 	__ym_thread_dispatch_forward_file_async_context_ref ctx = (__ym_thread_dispatch_forward_file_async_context_ref)ctx_;
     // todo: tired of defining semi-redundant structs for various tasks in here, should go back and take a look

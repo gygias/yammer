@@ -1,4 +1,4 @@
-- still races between event delivery, member access and MT free'ing session & children, serialize events on main thread?
+- adopt spinlocks where appropriate
 - generalize copy file / recursive delete dir into utilities, or something
 - __YMRetain(obj,off) optimization
 - server session's port order is backwards

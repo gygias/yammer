@@ -63,7 +63,7 @@ void DictionaryTestRun(ym_test_assert_func assert, const void *context)
     YMRelease(theTest.lock);
     YMRelease(theTest.existingKeys);
     
-    ymlog("YMDictionary test completed after %llu iterations",theTest.completedTests);
+    ymerr("YMDictionary test completed after %llu iterations",theTest.completedTests);
 }    
 
 YM_THREAD_RETURN YM_CALLING_CONVENTION _dictionary_test_proc(YM_THREAD_PARAM ctx)

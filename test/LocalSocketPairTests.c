@@ -27,8 +27,11 @@ void LocalSocketPairTestRun(ym_test_assert_func assert, const void *context)
     struct LocalSocketPairTest theTest = { assert, context };
     
     _TestSpawnFirst(&theTest);
+    ymerr(" _TestSpawnFirst completed");
     _TestSpawnManyStopThenSpawnAnother(&theTest);
+    ymerr(" _TestSpawnManyStopThenSpawnAnother completed");
     _TestSpawnOneMore(&theTest);
+    ymerr(" _TestSpawnOneMore completed");
 }
 
 void _TestSpawnFirst(struct LocalSocketPairTest *theTest)
