@@ -66,12 +66,13 @@ static YMSOCKET gYMLocalSocketPairAcceptedLast = NULL_SOCKET;
 
 void YMLocalSocketPairStop()
 {
+	YM_IO_BOILERPLATE
+	
     if ( gYMLocalSocketListenSocket != NULL_SOCKET )
     {
         // flag & signal thread to exit
         gYMLocalSocketPairAcceptKeepListening = false;
         gYMLocalSocketThreadEnd = true;
-        int result, error; const char *errorStr;
         ymlog("local-socket: closing %d",gYMLocalSocketListenSocket);
  #if defined(RPI)
 		result = shutdown(gYMLocalSocketListenSocket,SHUT_RDWR); // on raspian (and from what i read, 'linux') closing the socket will not signal an accept() call
