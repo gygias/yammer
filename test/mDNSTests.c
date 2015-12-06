@@ -69,7 +69,7 @@ void _TestmDNSTxtRecordParsing(struct mDNSTest *theTest)
 {
     for(int i = 0; i < 1000; i++)
     {
-        uint16_t desiredAndActualSize = (size_t)arc4random_uniform(3);
+        uint16_t desiredAndActualSize = (uint16_t)arc4random_uniform(3);
         YMmDNSTxtRecordKeyPair **keyPairList = _MakeTxtRecordKeyPairs(&desiredAndActualSize);
         uint16_t inSizeOutBlobLen = desiredAndActualSize;
         unsigned char *listBlob = _YMmDNSTxtBlobCreate(keyPairList, &inSizeOutBlobLen);
@@ -93,7 +93,7 @@ void _TestmDNSCreateDiscoverResolve(struct mDNSTest *theTest)
     testassert(theTest->service,"YMmDNSServiceCreate");
     YMRelease(serviceName);
     
-    theTest->nTestKeyPairs = arc4random_uniform(10);
+    theTest->nTestKeyPairs = (uint16_t)arc4random_uniform(10);
     theTest->testKeyPairs = _MakeTxtRecordKeyPairs(&theTest->nTestKeyPairs);
     
     okay = YMmDNSServiceSetTXTRecord(theTest->service, theTest->testKeyPairs, theTest->nTestKeyPairs);
@@ -158,7 +158,7 @@ YMmDNSTxtRecordKeyPair ** _MakeTxtRecordKeyPairs(uint16_t *inOutnKeypairs)
         remaining -= testKeyPairReserved; // length char, '=' and zero-length
         
         // The "Name" MUST be at least one character. Strings beginning with an '=' character (i.e. the name is missing) SHOULD be silently ignored.
-        uint8_t aKeyLenMax = ( testKeyMaxLen > remaining ) ? ( remaining - testKeyPairReserved ) : testKeyMaxLen;
+        uint8_t aKeyLenMax = (uint8_t)(( testKeyMaxLen > remaining ) ? ( remaining - testKeyPairReserved ) : testKeyMaxLen);
         char *randomKey = YMRandomASCIIStringWithMaxLength(aKeyLenMax, false, true);
         keyPairs[idx]->key = YMSTRC(randomKey);//"test-key";
         

@@ -85,7 +85,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _dictionary_test_proc(YM_THREAD_PARAM ctx
     
     while (!theTest->endTest)
     {
-        char *random_string = YMRandomASCIIStringWithMaxLength(arc4random_uniform(MaxItemLength), false, false);
+        char *random_string = YMRandomASCIIStringWithMaxLength((uint16_t)arc4random_uniform(MaxItemLength), false, false);
         uint8_t *random_data = YMRandomDataWithMaxLength(MaxItemLength,NULL);
         
         YMLockLock(theTest->lock);

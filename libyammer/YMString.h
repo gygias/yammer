@@ -35,7 +35,9 @@ bool YMAPI YMStringEquals(YMStringRef stringA, YMStringRef stringB);
 
 #define YMSTR(x) YMStringGetCString(x)
 #define YMSTRC(x) YMStringCreateWithCString(x)
+YM_WPPUSH
 #define YMSTRCF(x,...) YMStringCreateWithFormat((x),##__VA_ARGS__,NULL)
+YM_WPOP
 #define YMLEN(x) YMStringGetLength(x)
 
 YM_EXTERN_C_POP

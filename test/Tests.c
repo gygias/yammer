@@ -29,7 +29,7 @@ YM_EXTERN_C_PUSH
 int gFailures = 0;
 YMLockRef gLock = NULL;
 
-void _ym_test_assert_func(const void *ctx, bool exp, const char *fmt, ...)
+void _ym_test_assert_func(__unused const void *ctx, bool exp, const char *fmt, ...)
 {
 	if (!exp)
 	{
@@ -53,15 +53,15 @@ void _ym_test_assert_func(const void *ctx, bool exp, const char *fmt, ...)
 	}
 }
 
-bool _ym_test_diff_func(const void *ctx, const char *path1, const char *path2, bool recursive, YMDictionaryRef exceptions)
+bool _ym_test_diff_func(__unused const void *ctx, __unused const char *path1, __unused const char *path2, __unused bool recursive, __unused YMDictionaryRef exceptions)
 {
 	ymerr("*** diff ***");
 	return true;
 }
 
-#if defined(RPI)
+#if defined(RPI) || defined(MACOS_TEST_TOOL)
 
-int main( int argc, const char *argv[] )
+int main( __unused int argc, __unused const char *argv[] )
 {
 	RunAllTests();
 }

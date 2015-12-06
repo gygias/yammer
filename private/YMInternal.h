@@ -47,8 +47,11 @@
 #ifndef YM_HARD_ASSERT
 #define YM_HARD_ASSERT 1
 #endif
+
+YM_WPPUSH
 #define ymassert(x,y,...) { if (!(x)) { ymerr("hard assert: "y,##__VA_ARGS__); abort(); } }
 #define ymabort(x,...) ymassert(false,x,##__VA_ARGS__)
+YM_WPOP
 
 #define YM_TYPE_RESERVED (128 - sizeof(YMTypeID))
 
