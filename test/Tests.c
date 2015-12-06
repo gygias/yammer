@@ -14,6 +14,85 @@
 
 YM_EXTERN_C_PUSH
 
+#include "CryptoTests.h"
+#include "DictionaryTests.h"
+#include "LocalSocketPairTests.h"
+#include "TLSTests.h"
+#include "mDNSTests.h"
+#include "PlexerTests.h"
+#include "SessionTests.h"
+
+#include "YMLock.h"
+
+#include <stdarg.h>
+
+int gFailures = 0;
+YMLockRef gLock = NULL;
+
+void _ym_test_assert_func(const void *ctx, bool exp, const char *fmt, ...)
+{
+	if (!exp)
+	{
+		va_list args;
+		va_start(args, fmt);
+		vfprintf(stderr, fmt, args);
+		va_end(args);
+
+
+		fprintf(stderr, "\n");
+		fflush(stderr);
+
+#define HARD
+#ifdef HARD
+		ymabort("yo");
+#else
+		YMLockLock(gLock);
+		gFailures++;
+		YMLockUnlock(gLock);
+#endif
+	}
+}
+
+bool _ym_test_diff_func(const void *ctx, const char *path1, const char *path2, bool recursive, YMDictionaryRef exceptions)
+{
+	ymerr("*** diff ***");
+	return true;
+}
+
+#if defined(RPI)
+
+int main( int argc, const char *argv[] )
+{
+	RunAllTests();
+}
+
+#endif
+
+void RunAllTests()
+{
+	ymerr("------ dictionary test start ------");
+	DictionaryTestRun(_ym_test_assert_func, NULL);
+	ymerr("------ dictionary test end ------");
+	ymerr("------ crypto test start ------");
+	CryptoTestRun(_ym_test_assert_func, NULL);
+	ymerr("------ crypto test end ------");
+	ymerr("------ local socket pair test start ------");
+	LocalSocketPairTestRun(_ym_test_assert_func, NULL);
+	ymerr("------ local socket pair test end ------");
+	ymerr("------ mdns test start ------");
+	mDNSTestRun(_ym_test_assert_func, NULL);
+	ymerr("------ mdns test end ------");
+	ymerr("------ tls test start ------");
+	TLSTestRun(_ym_test_assert_func, NULL);
+	ymerr("------ tls test end ------");
+	ymerr("------ plexer test start ------");
+	PlexerTestRun(_ym_test_assert_func, NULL);
+	ymerr("------ plexer test end ------");
+	ymerr("------ session test start ------");
+	SessionTestRun(_ym_test_assert_func, _ym_test_diff_func, NULL);
+	ymerr("------ session test end ------");
+}
+
 char *YMRandomASCIIStringWithMaxLength(uint16_t maxLength, bool for_mDNSServiceName, bool for_txtKey)
 {
     uint8_t randomLength = (uint8_t)arc4random_uniform(maxLength + 1 + 1);

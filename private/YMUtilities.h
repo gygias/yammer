@@ -9,10 +9,6 @@
 #ifndef YMUtilities_h
 #define YMUtilities_h
 
-#if defined(RPI)
-#include <time.h>
-#endif
-
 #define YMMIN(a,b) ( (a<b) ? (a) : (b) )
 #define YMMAX(a,b) ( (a>b) ? (a) : (b) )
 

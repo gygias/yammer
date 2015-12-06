@@ -18,6 +18,7 @@
 #if defined(_MACOS) || defined(RPI)
 #include <netinet/in.h>
 # if defined(RPI)
+# include <sys/resource.h>
 # define __USE_UNIX98
 # endif
 #include <pthread.h>

@@ -47,6 +47,8 @@ YM_EXTERN_C_PUSH
 typedef void (*ym_test_assert_func)(const void *ctx, bool exp, const char *fmt, ...);
 typedef bool (*ym_test_diff_func)(const void *ctx, const char *path1, const char *path2, bool recursive, YMDictionaryRef exceptions);
 
+void RunAllTests();
+
 char *YMRandomASCIIStringWithMaxLength(uint16_t maxLength, bool for_mDNSServiceName, bool for_txtKey);
 uint8_t *YMRandomDataWithMaxLength(uint16_t length, uint16_t *outLength);
 

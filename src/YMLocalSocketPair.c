@@ -85,8 +85,12 @@ void YMLocalSocketPairStop()
         YMRelease(gYMLocalSocketPairAcceptThread);
         gYMLocalSocketPairAcceptThread = NULL;
         
-#ifdef _MACOS
-        YMStringRef tmpPath = YMSTRCF("/tmp/%s",YMSTR(gYMLocalSocketPairName));
+#if defined(_MACOS) || defined(RPI)
+		char *prefix = "";
+#if defined (_MACOS)
+		prefix = "/tmp/"
+#endif
+        YMStringRef tmpPath = YMSTRCF("%s%s",prefix,YMSTR(gYMLocalSocketPairName));
         result = unlink(YMSTR(tmpPath));
         if ( result != 0 )
             ymerr("local-socket[%s]: failed to unlink socket file: %d %s",YMSTR(gYMLocalSocketPairName),errno,strerror(errno));

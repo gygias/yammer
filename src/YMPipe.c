@@ -45,7 +45,7 @@ YMPipeRef YMPipeCreate(YMStringRef name)
             return NULL;
         }
 #endif
-		usleep(10000);
+		sleep(1);
 
         if ( iter )
         {

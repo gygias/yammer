@@ -27,11 +27,12 @@
 
 #if defined(_MACOS) || defined(RPI)
 #include <unistd.h>
+#include <time.h>
+#include <sys/time.h>
 # if defined (RPI)
   typedef __ssize_t ssize_t;
 # include <limits.h>
 # include <sys/types.h>
-# include <sys/time.h>
 # include "arc4random.h"
 # define __USE_BSD
 # endif

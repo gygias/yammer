@@ -126,7 +126,7 @@ void _TestmDNSCreateDiscoverResolve(struct mDNSTest *theTest)
                 return;
             }
 	
-			usleep(10000);
+			sleep(1);
         }
         ymlog("%s happened",name);
     }

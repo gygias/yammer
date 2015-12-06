@@ -164,8 +164,8 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     if ( ! PlexerTest1TimeBased )
     {
         while ( theTest->plexerTest1Running )
-            usleep(50000);
-    }
+			sleep(1);
+	}
     else
     {
         time_t startTime = time(NULL);

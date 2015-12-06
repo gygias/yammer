@@ -14,6 +14,10 @@
 #include "YMLocalSocketPair.h"
 #include "YMThread.h"
 
+#if defined (RPI)
+#include <signal.h>
+#endif
+
 YM_EXTERN_C_PUSH
 
 #define TLSTestRoundTrips 5
