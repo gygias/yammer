@@ -73,12 +73,12 @@ void YMLocalSocketPairStop()
         gYMLocalSocketThreadEnd = true;
         int result, error; const char *errorStr;
         ymlog("local-socket: closing %d",gYMLocalSocketListenSocket);
- #if !defined(RPI)
-        YM_CLOSE_SOCKET(gYMLocalSocketListenSocket);
- #else
+ #if defined(RPI)
 		result = shutdown(gYMLocalSocketListenSocket,SHUT_RDWR); // on raspian (and from what i read, 'linux') closing the socket will not signal an accept() call
+		ymsoftassert(result==0,"local-socket: warning: shutdown(%d) listen failed: %d (%s)",error,errorStr);
  #endif
-        ymsoftassert(result==0,"local-socket: warning: failed to close listen socket: %d (%s)",errno,strerror(errno));
+        YM_CLOSE_SOCKET(gYMLocalSocketListenSocket);
+        ymsoftassert(result==0,"local-socket: warning: close(%d) listen failed: %d (%s)",error,errorStr);
         gYMLocalSocketListenSocket = NULL_SOCKET;
 
         while ( ! gYMLocalSocketThreadExited ) {}; // avoid free->create race where previous thread holds previous global sem
