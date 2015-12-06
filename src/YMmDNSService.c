@@ -92,14 +92,12 @@ void _YMmDNSServiceFree(YMTypeRef object)
     if ( service->name )
         YMRelease(service->name);
     if ( service->txtRecord )
-#ifdef MANUAL_TXT
-        free(service->txtRecord);
-#else
+    {
         TXTRecordDeallocate((TXTRecordRef *)service->txtRecord);
-#endif
+        free(service->txtRecord);
+    }
 }
 
-// todo this should be replaced by the TxtRecord* family in dns_sd.h
 bool YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service_, YMmDNSTxtRecordKeyPair *keyPairs[], size_t nPairs )
 {
     __YMmDNSServiceRef service = (__YMmDNSServiceRef)service_;
@@ -108,12 +106,6 @@ bool YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service_, YMmDNSTxtRecordKeyPai
         return false;
     
     size_t idx;
-#ifdef MANUAL_TXT
-    size_t  offset = 0,
-            bufferSize = 1024;
-    char *buffer = calloc(1,bufferSize),
-            *bufferWalker = buffer; // debugging, delete later
-#endif
     
     TXTRecordRef *txtRecord = (TXTRecordRef *)YMALLOC(sizeof(TXTRecordRef));
     TXTRecordCreate(txtRecord, 0, NULL);
@@ -124,48 +116,10 @@ bool YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service_, YMmDNSTxtRecordKeyPai
         const uint8_t *value = _keyPairs[idx]->value;
         uint8_t valueLen = _keyPairs[idx]->valueLen;
         
-#ifndef MANUAL_TXT
         TXTRecordSetValue(txtRecord, key, valueLen, value);
-#else
-        YMmDNSTxtRecordKeyPair **_keyPairs = (YMmDNSTxtRecordKeyPair **)keyPairs;
-        uint8_t keyLen = strlen(key);
-        uint8_t keyEqualsLen = keyLen + 1;                  // key=
-        uint8_t prefixedKeyEqualsLen = 1 + keyEqualsLen;    // %ckey=
-        uint8_t tupleLen = prefixedKeyEqualsLen + valueLen; // %ckey=value
-        
-        
-        while ( bufferSize - offset < tupleLen )
-        {
-            bufferSize *= 2;
-            buffer = realloc(buffer, bufferSize);
-        }
-        
-        ymlog("writing %dth keypair to %p + %u",idx,buffer,offset);
-//        int written = snprintf(bufferWalker, prefixedKeyEqualsLen + 2, "%c%s=", tupleLen, key);
-//        if ( written != prefixedKeyEqualsLen )
-//        {
-//            ymlog("YMmDNSServiceSetTXTRecord failed to format key '%s'",key);
-//            return false;
-//        }
-        memcpy(buffer + offset, &tupleLen, sizeof(tupleLen));
-        offset += sizeof(tupleLen);
-        memcpy(buffer + offset, key, strlen(key));
-        offset += strlen(key);
-        memcpy(buffer + offset, "=", 1);
-        offset += 1;
-        memcpy(buffer + offset, value, valueLen);
-        offset += valueLen;
-        bufferWalker = buffer + offset;
-#endif
     }
     
-    service->txtRecord =
-#ifdef MANUAL_TXT
-        buffer;
-    service->txtRecordLen = offset;
-#else
-        (uint8_t *)txtRecord;
-#endif
+    service->txtRecord = (uint8_t *)txtRecord;
     
     return true;
 }
@@ -187,13 +141,8 @@ bool YMmDNSServiceStart( YMmDNSServiceRef service_ )
                                                     NULL, // domain
                                                     NULL, // host
                                                     netPort,
-#ifdef MANUAL_TXT
-                                                    service->txtRecordLen,
-                                                    service->txtRecord,
-#else
                                                     txtLength,
                                                     txt,
-#endif
                                                     (DNSServiceRegisterReply)__YMmDNSRegisterCallback, // DNSServiceRegisterReply
                                                     service); // context
     
@@ -208,12 +157,6 @@ bool YMmDNSServiceStart( YMmDNSServiceRef service_ )
     
     service->dnsService = serviceRef;
     service->advertising = true;
-    
-//    YMStringRef threadName = YMStringCreateWithFormat("mdns-event-%s-%s",YMSTR(service->type),YMSTR(service->name),NULL);
-//    YMThreadRef eventThread = YMThreadCreate(threadName, __ym_mdns_service_event_thread, service);
-//    YMRelease(threadName);
-//    
-//    YMThreadStart(eventThread);
 
     ymlog("mdns: published %s/%s:%u",YMSTR(service->type),YMSTR(service->name),(unsigned)service->port);
     return true;
@@ -240,18 +183,5 @@ bool YMmDNSServiceStop( YMmDNSServiceRef service_, bool synchronous )
     ymlog("mdns: browser stopping");
     return okay;
 }
-
-//void __ym_mdns_service_event_thread(void * ctx)
-//{
-//    __YMmDNSServiceRef service = (__YMmDNSServiceRef)ctx;
-//    YMRetain(service);
-//    
-//    ymlog("mdns: event thread for %s entered...",YMSTR(service->name));
-//    while (service->advertising) {
-//        sleep(1);
-//    }
-//    ymlog("mdns: event thread for %s exiting...",YMSTR(service->name));
-//    YMRelease(service);
-//}
 
 YM_EXTERN_C_POP

@@ -36,7 +36,7 @@ typedef struct __ym_thread_t
     _YMType _typeID;
     
     YMStringRef name;
-    ym_thread_entry entryPoint;
+    ym_thread_entry userEntryPoint;
     const void *context;
     YM_THREAD_TYPE pthread;
     
@@ -91,6 +91,7 @@ typedef struct __ym_thread_dispatch_forward_file_async_context_def __ym_thread_d
 typedef __ym_thread_dispatch_forward_file_async_context *__ym_thread_dispatch_forward_file_async_context_ref;
 
 __YMThreadRef __YMThreadInitCommon(YMStringRef name, const void *context);
+void YM_CALLING_CONVENTION __ym_thread_generic_entry_proc(__YMThreadRef theThread);
 YMIOResult __ym_thread_dispatch_forward_file_proc(void *);
 ym_thread_dispatch_ref __YMThreadDispatchCopy(ym_thread_dispatch_ref userDispatchRef);
 __ym_thread_dispatch_thread_context_ref __YMThreadDispatchJoin(__YMThreadRef thread);
@@ -123,7 +124,7 @@ __YMThreadRef __YMThreadInitCommon(YMStringRef name, const void *context)
 YMThreadRef YMThreadCreate(YMStringRef name, ym_thread_entry entryPoint, const void *context)
 {
     __YMThreadRef thread = __YMThreadInitCommon(name, context);
-    thread->entryPoint = entryPoint;
+    thread->userEntryPoint = entryPoint;
     thread->isDispatchThread = false;
     
     return thread;
@@ -132,7 +133,7 @@ YMThreadRef YMThreadCreate(YMStringRef name, ym_thread_entry entryPoint, const v
 YMThreadRef YMThreadDispatchCreate(YMStringRef name)
 {
     __YMThreadRef thread = __YMThreadInitCommon(name, NULL);
-    thread->entryPoint = __ym_thread_dispatch_dispatch_thread_proc;
+    thread->userEntryPoint = __ym_thread_dispatch_dispatch_thread_proc;
     thread->isDispatchThread = true;
     
     YMLockLock(gDispatchThreadListLock);
@@ -174,10 +175,7 @@ void _YMThreadFree(YMTypeRef object)
     
     if ( thread->isDispatchThread )
     {
-        __ym_thread_dispatch_thread_context_ref threadDef = __YMThreadDispatchJoin(thread);
-        
-        free(threadDef->stopFlag);
-        free(threadDef);
+        __YMThreadDispatchJoin(thread); // join if not already done
         
         YMRelease(thread->dispatchListLock);
         YMRelease(thread->dispatchesByID);
@@ -198,17 +196,29 @@ void YMThreadDispatchJoin(YMThreadRef thread_)
 __ym_thread_dispatch_thread_context_ref __YMThreadDispatchJoin(__YMThreadRef thread)
 {
     __ym_thread_dispatch_thread_context_ref threadDef = NULL;
+    
+    bool stopped = false;
     YMLockLock(gDispatchThreadListLock);
     {
-        threadDef = (__ym_thread_dispatch_thread_context_ref)YMDictionaryRemove(gDispatchThreadDefsByID, thread->dispatchThreadID);
-        *(threadDef->stopFlag) = true;
-        ymlog("thread[%s,dispatch,dt%llu]: flagged pthread to exit on ymfree with %p", YMSTR(thread->name), thread->dispatchThreadID,threadDef->stopFlag);
+        if ( YMDictionaryContains(gDispatchThreadDefsByID, thread->dispatchThreadID) )
+        {
+            threadDef = (__ym_thread_dispatch_thread_context_ref)YMDictionaryRemove(gDispatchThreadDefsByID, thread->dispatchThreadID);
+            *(threadDef->stopFlag) = true;
+            stopped = true;
+            ymlog("thread[%s,dispatch,dt%llu]: flagged pthread to exit on ymfree with %p", YMSTR(thread->name), thread->dispatchThreadID,threadDef->stopFlag);
+        }
     }
     YMLockUnlock(gDispatchThreadListLock);
     
-    YMSemaphoreSignal(thread->dispatchSemaphore);
-    YMSemaphoreWait(thread->dispatchExitSemaphore);
-    ymlog("thread[%s,dispatch,dt%llu]: received signal from exiting thread on ymfree", YMSTR(thread->name), thread->dispatchThreadID);
+    if ( stopped )
+    {
+        YMSemaphoreSignal(thread->dispatchSemaphore);
+        YMSemaphoreWait(thread->dispatchExitSemaphore);
+        ymlog("thread[%s,dispatch,dt%llu]: received exit signal from dispatch thread", YMSTR(thread->name), thread->dispatchThreadID);
+        
+        free(threadDef->stopFlag);
+        free(threadDef);
+    }
     
     return threadDef;
 }
@@ -233,16 +243,29 @@ bool YMThreadStart(YMThreadRef thread_)
     
     YM_THREAD_TYPE pthread;
     
+    const void *context = NULL;
+    ym_thread_entry entry = NULL;
+    if ( ! thread->isDispatchThread ) // todo this should be consolidated with dispatch threads' own wrapper context
+    {
+        context = YMRetain(thread);
+        entry = (ym_thread_entry)__ym_thread_generic_entry_proc;
+    }
+    else
+    {
+        context = thread->context;
+        entry = thread->userEntryPoint;
+    }
+    
 #ifndef WIN32
 	int result;
-    if ( ( result = pthread_create(&pthread, NULL, (void *(*)(void *))thread->entryPoint, (void *)thread->context) ) )
+    if ( ( result = pthread_create(&pthread, NULL, (void *(*)(void *))entry, (void *)context) ) )
     {
         ymerr("thread[%s,%s]: error: pthread_create %d %s", YMSTR(thread->name), thread->isDispatchThread?"dispatch":"user", result, strerror(result));
         return false;
     }
 #else
 	DWORD threadId;
-	pthread = CreateThread(NULL, 0, thread->entryPoint, (LPVOID)thread->context, 0, &threadId);
+	pthread = CreateThread(NULL, 0, entry, (LPVOID)context, 0, &threadId);
 	if ( pthread == NULL )
 	{
 		ymerr("thread[%s,%s]: error: CreateThread failed: %x", YMSTR(thread->name), thread->isDispatchThread ? "dispatch" : "user", GetLastError());
@@ -253,6 +276,12 @@ bool YMThreadStart(YMThreadRef thread_)
     ymlog("thread[%s,%s]: created", YMSTR(thread->name), thread->isDispatchThread ? "dispatch" : "user");
     thread->pthread = pthread;
     return true;
+}
+
+void YM_CALLING_CONVENTION __ym_thread_generic_entry_proc(__YMThreadRef theThread)
+{
+    theThread->userEntryPoint((void *)theThread->context);
+    YMRelease(theThread);
 }
 
 bool YMThreadJoin(YMThreadRef thread_)

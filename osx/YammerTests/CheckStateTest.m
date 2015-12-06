@@ -29,7 +29,47 @@
 - (void)testCheckStateTest {
     YMFreeGlobalResources();
     CFRunLoopRunInMode(kCFRunLoopDefaultMode, 2, false);
-    [[NSTask launchedTaskWithLaunchPath:@"/usr/bin/sample" arguments:@[@"-file",@"/dev/stdout",@"xctest",@"1",@"1000"]] waitUntilExit];
+    
+    NSArray *noLibrariesPattern = @[@"-v", @"> /"];
+    [self _runTaskAndGrep:@"/usr/bin/sample" :@[@"-file",@"/dev/stdout",@"xctest",@"1",@"1000"] :noLibrariesPattern :YES :NO];
+    [self _runTaskAndGrep:@"/usr/bin/leaks"
+                         :@[[NSString stringWithFormat:@"%d",[[NSProcessInfo processInfo] processIdentifier]],@"--nocontext"]
+                         :noLibrariesPattern
+                         :NO
+                         :YES];
+}
+
+- (void)_runTaskAndGrep:(NSString *)path :(NSArray *)args :(NSArray *)grepArgs :(BOOL)printOutputOnSuccess :(BOOL)assert
+{
+    NSTask *task = [NSTask new];
+    [task setLaunchPath:path];
+    [task setArguments:args];
+    NSTask *grep = [NSTask new];
+    [grep setLaunchPath:@"/usr/bin/grep"];
+    [grep setArguments:grepArgs];
+    
+    NSPipe *pipe = [NSPipe new];
+    [task setStandardOutput:pipe];
+    [grep setStandardInput:pipe];
+    NSPipe *pipe2 = [NSPipe new];
+    [grep setStandardOutput:pipe2];
+    
+    [task launch];
+    [grep launch];
+    
+    [grep waitUntilExit];
+    
+    BOOL fail = assert && ( [task terminationStatus] != 0 );
+    
+    if ( printOutputOnSuccess || fail )
+    {
+        NSData *output = [[pipe2 fileHandleForReading] readDataToEndOfFile];
+        NSLog(@"%@",[[NSString alloc] initWithData:output encoding:NSUTF8StringEncoding]);
+    }
+    
+    NSLog(@"`%@ %@` returned %d",path,[args componentsJoinedByString:@" "],[task terminationStatus]);
+    
+    XCTAssert(!fail,@"%@ isn't supposed to return that.",path);
 }
 
 @end

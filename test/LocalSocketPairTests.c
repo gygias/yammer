@@ -76,6 +76,7 @@ void _TestSpawnManyStopThenSpawnAnother(struct LocalSocketPairTest *theTest)
     
     // should have been stopped in our last loop iter, but this should be safe to screw up
     YMLocalSocketPairStop();
+    YMRelease(pairs);
 }
 
 void _TestSpawnOneMore(struct LocalSocketPairTest *theTest)

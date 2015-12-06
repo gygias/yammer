@@ -71,6 +71,9 @@ void TLSTestRun(ym_test_assert_func assert, const void *context)
     
     _TestTLS1(&theTest);
     
+    YMRelease(theTest.stateLock);
+    YMRelease(theTest.threadExitSemaphore);
+    if ( theTest.lastMessageSent ) free(theTest.lastMessageSent);
 }
 
 void _TestTLS1(struct TLSTest *theTest)
@@ -113,13 +116,13 @@ void _TestTLS1(struct TLSTest *theTest)
     YMTLSProviderRef theClient = localIsServer?remoteProvider:localProvider;
     
     struct RunEndpointContext serverContext = { theTest, theServer, true };
-    YMThreadRef serverThread = YMThreadCreate(NULL, (ym_thread_entry)_RunEndpoint, &serverContext);
+    YMThreadRef serverThread = YMThreadCreate(NULL, _RunEndpoint, &serverContext);
     YMThreadStart(serverThread);
     
     sleep(2); // xxx let server reach accept()
     
     struct RunEndpointContext clientContext = { theTest, theClient, false };
-    YMThreadRef clientThread = YMThreadCreate(NULL, (ym_thread_entry)_RunEndpoint, &clientContext);
+    YMThreadRef clientThread = YMThreadCreate(NULL, _RunEndpoint, &clientContext);
     YMThreadStart(clientThread);
     
 #if TLSTestTimeBased

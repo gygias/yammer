@@ -106,22 +106,24 @@ YMTypeRef YMAutorelease(YMTypeRef object)
 YM_RELEASE_RETURN_TYPE YMRelease(YMTypeRef object_)
 {
     __YMTypeRef object = (__YMTypeRef)object_;
-    YMLockMutex(object->__mutex);
-    bool dealloc = false;
-    ymassert(object->__retainCount >= 1, "base: fatal: something has overreleased %p (%c)",object,object->__type);
     
-    if ( object->__retainCount-- == 1 )
+    bool dealloc = false;
+    YMLockMutex(object->__mutex);
     {
-        dealloc = true;
-        __YMFree(object);
+        ymassert(object->__retainCount >= 1, "base: fatal: something has overreleased %p (%c)",object,object->__type);
+        
+        if ( object->__retainCount-- == 1 )
+            dealloc = true;
     }
     YMUnlockMutex(object->__mutex);
     
     if ( dealloc )
     {
+        __YMFree(object);
         YMDestroyMutex(object->__mutex);
         free(object);
     }
+    
 #ifdef YMDEBUG
     return dealloc;
 #endif

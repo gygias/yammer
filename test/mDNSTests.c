@@ -132,6 +132,9 @@ void _TestmDNSCreateDiscoverResolve(struct mDNSTest *theTest)
     
     okay = YMmDNSBrowserStop(theTest->browser);
     YMRelease(theTest->browser);
+    theTest->browser = NULL;
+    YMRelease(theTest->service);
+    theTest->service = NULL;
 }
 
 YMmDNSTxtRecordKeyPair ** _MakeTxtRecordKeyPairs(uint16_t *inOutnKeypairs)
@@ -158,6 +161,7 @@ YMmDNSTxtRecordKeyPair ** _MakeTxtRecordKeyPairs(uint16_t *inOutnKeypairs)
         keyPairs[idx]->key = YMSTRC(randomKey);//"test-key";
         
         size_t keyLen = strlen(randomKey);
+        free(randomKey);
         remaining -= (uint16_t)keyLen;
         
         // as far as i can tell, value can be empty

@@ -46,8 +46,10 @@ void DictionaryTestRun(ym_test_assert_func assert, const void *context)
     {
         name = YMSTRCF("DictionaryTest-%d",i);
         threads[i] = YMThreadCreate(name, _dictionary_test_proc, &theTest);
-        YMThreadStart(threads[i]);
         YMRelease(name);
+        
+        YMThreadStart(threads[i]);
+        YMRelease(threads[i]);
     }
     
     sleep(RunFor);
@@ -55,8 +57,11 @@ void DictionaryTestRun(ym_test_assert_func assert, const void *context)
     
     for ( int i = 0; i < NumberOfThreads; i++ )
         YMSemaphoreWait(theTest.semaphore);
-    for ( int i = 0; i < NumberOfThreads; i++ )
-        YMRelease(threads[i]);
+    
+    YMRelease(theTest.dictionary);
+    YMRelease(theTest.semaphore);
+    YMRelease(theTest.lock);
+    YMRelease(theTest.existingKeys);
     
     ymlog("YMDictionary test completed after %llu iterations",theTest.completedTests);
 }    

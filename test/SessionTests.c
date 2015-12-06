@@ -100,6 +100,21 @@ void SessionTestRun(ym_test_assert_func assert, ym_test_diff_func diff, const vo
                                     YMSemaphoreCreate(0), YMSemaphoreCreate(0), false };
     
     _TestSessionWritingDevRandomAndReadingManPages(&theTest);
+    
+    if ( theTest.nonRegularFileNames )
+    {
+        while ( YMDictionaryGetCount(theTest.nonRegularFileNames) > 0 )
+        {
+            void *filename = YMDictionaryRemove(theTest.nonRegularFileNames, YMDictionaryGetRandomKey(theTest.nonRegularFileNames));
+            free(filename);
+        }
+        YMRelease(theTest.nonRegularFileNames);
+    }
+    if ( theTest.tempServerSrc ) YMRelease(theTest.tempServerSrc);
+    if ( theTest.tempServerDst ) YMRelease(theTest.tempServerDst);
+    YMRelease(theTest.tempManDir);
+    YMRelease(theTest.connectSemaphore);
+    YMRelease(theTest.threadExitSemaphore);
 }
 
 void _server_async_forward_callback(YMConnectionRef connection, YMStreamRef stream, YMIOResult result, uint64_t bytesWritten, void * ctx);
@@ -146,12 +161,12 @@ void _TestSessionWritingDevRandomAndReadingManPages(struct SessionTest *theTest)
     
 #define RUN_SERVER
 #ifdef RUN_SERVER
-    YMThreadRef serverThread = YMThreadCreate(NULL, (ym_thread_entry)_ServerWriteRandom, theTest);
+    YMThreadRef serverThread = YMThreadCreate(NULL, _ServerWriteRandom, theTest);
     YMThreadStart(serverThread);
 #endif
 #define CLIENT_TOO // debugging forward-file hang-up
 #ifdef CLIENT_TOO
-    YMThreadRef clientThread = YMThreadCreate(NULL, (ym_thread_entry)_ClientWriteManPages, theTest);
+    YMThreadRef clientThread = YMThreadCreate(NULL, _ClientWriteManPages, theTest);
     YMThreadStart(clientThread);
 #endif
     
@@ -290,7 +305,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteRandom(YM_THREAD_PARAM ctx_)
         YMRelease(str);
         forwardReadFd = YMPipeGetOutputFile(theTest->middlemanPipe);
         
-        YMThreadRef flushPipeThread = YMThreadCreate(NULL, (ym_thread_entry)_FlushMiddleman, theTest);
+        YMThreadRef flushPipeThread = YMThreadCreate(NULL, _FlushMiddleman, theTest);
         YMThreadStart(flushPipeThread);
     }
     
@@ -784,7 +799,7 @@ void _ym_session_new_stream_func(YMSessionRef session, YMConnectionRef connectio
     ctx->theTest = theTest;
     ctx->connection = YMRetain(connection);
     ctx->stream = YMRetain(stream);
-    YMThreadRef handleThread = YMThreadCreate(NULL, (ym_thread_entry)(isServer ? _EatManPage : _EatRandom), ctx);
+    YMThreadRef handleThread = YMThreadCreate(NULL, (isServer ? _EatManPage : _EatRandom), ctx);
     YMThreadStart(handleThread);
 }
 

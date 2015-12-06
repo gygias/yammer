@@ -106,7 +106,7 @@ bool ym_test_diff_proc(const void *ctx, const char *path1, const char *path2, bo
 }
 
 // this is the best way of ordering XCTestCase classes that i could find, at the time
-#define testDictionary          test_B_Dictioanry
+#define testDictionary          test_B_Dictionary
 #define testCrypto              test_C_Crypto
 #define testLocalSocketPair     test_D_LocalSocketPair
 #define testmDNS                test_E_mDNS

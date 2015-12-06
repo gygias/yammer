@@ -47,6 +47,7 @@ void YMAPI YMSessionSetCommonCallbacks(YMSessionRef session, ym_session_connecte
 
 bool YMAPI YMSessionStartAdvertising(YMSessionRef session, YMStringRef name);
 bool YMAPI YMSessionStopAdvertising(YMSessionRef session);
+void YMAPI YMSessionStop(YMSessionRef session);
 
 bool YMAPI YMSessionStartBrowsing(YMSessionRef session);
 YMPeerRef YMAPI YMSessionGetPeerNamed(YMSessionRef session, YMStringRef peerName);

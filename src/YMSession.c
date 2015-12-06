@@ -82,7 +82,7 @@ typedef struct __ym_session_t *__YMSessionRef;
 __YMSessionRef __YMSessionCreateShared(YMStringRef type, bool isServer);
 bool __YMSessionInterrupt(__YMSessionRef session, YMConnectionRef floatConnection);
 bool __YMSessionCloseAllConnections(__YMSessionRef session);
-void __YMSessionAddConnection(YMSessionRef session, YMConnectionRef connection);
+void __YMSessionAddConnection(__YMSessionRef session, YMConnectionRef connection);
 YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_accept_proc(YM_THREAD_PARAM);
 void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(ym_thread_dispatch_ref);
 void YM_CALLING_CONVENTION __ym_session_connect_async_proc(ym_thread_dispatch_ref);
@@ -244,7 +244,7 @@ bool YMSessionStartBrowsing(YMSessionRef session_)
 bool YMSessionStopBrowsing(YMSessionRef session_)
 {
     __YMSessionRef session = (__YMSessionRef)session_;
-
+    
     bool okay = true;
     
     if ( session->browser )
@@ -407,7 +407,7 @@ void YM_CALLING_CONVENTION __ym_session_connect_async_proc(ym_thread_dispatch_re
     ymlog("session[%s]: __ym_session_connect_async_proc exiting: %s",YMSTR(session->logDescription),okay?"success":"fail");
 }
 
-void __YMSessionAddConnection(YMSessionRef session_, YMConnectionRef connection)
+void __YMSessionAddConnection(__YMSessionRef session_, YMConnectionRef connection)
 {
     __YMSessionRef session = (__YMSessionRef)session_;
     
@@ -562,9 +562,10 @@ bool YMSessionStopAdvertising(YMSessionRef session_)
     YM_IO_BOILERPLATE
     
     __YMSessionRef session = (__YMSessionRef)session_;
+    
     session->acceptThreadExitFlag = true;
     bool okay = true;
-    if ( session->ipv4ListenSocket >= 0 )
+    if ( session->ipv4ListenSocket != NULL_SOCKET )
     {
 		YM_CLOSE_SOCKET(session->ipv4ListenSocket);
         if ( result != 0 )
@@ -572,9 +573,9 @@ bool YMSessionStopAdvertising(YMSessionRef session_)
             ymerr("session[%s]: warning: failed to close ipv4 socket: %d %s",YMSTR(session->name),error,errorStr);
             okay = false;
         }
-        session->ipv4ListenSocket = -1;
+        session->ipv4ListenSocket = NULL_SOCKET;
     }
-    if ( session->ipv6ListenSocket >= 0 )
+    if ( session->ipv6ListenSocket != NULL_SOCKET )
     {
         YM_CLOSE_SOCKET(session->ipv6ListenSocket);
         if ( result != 0 )
@@ -582,7 +583,7 @@ bool YMSessionStopAdvertising(YMSessionRef session_)
             ymerr("session[%s]: warning: failed to close ipv6 socket: %d %s",YMSTR(session->name),error,errorStr);
             okay = false;
         }
-        session->ipv6ListenSocket = -1;
+        session->ipv6ListenSocket = NULL_SOCKET;
     }
     
     if ( session->service )
@@ -701,7 +702,7 @@ catch_release:
     free(initCtx);
 }
 
-#pragma mark connected shared
+#pragma mark shared
 
 YMConnectionRef YMSessionGetDefaultConnection(YMSessionRef session_)
 {
@@ -714,6 +715,21 @@ YMDictionaryRef YMSessionGetConnections(YMSessionRef session_)
     __YMSessionRef session = (__YMSessionRef)session_;
     session = NULL;
     return *(YMDictionaryRef *)session; // todo, sync
+}
+
+void YMAPI YMSessionStop(YMSessionRef session)
+{
+    YMLockLock(session->connectionsByAddressLock);
+    {
+        while ( YMDictionaryGetCount(session->connectionsByAddress) )
+        {
+            YMDictionaryKey aKey = YMDictionaryGetRandomKey(session->connectionsByAddress);
+            YMConnectionRef aConnection = (YMConnectionRef)YMDictionaryRemove(session->connectionsByAddress, aKey);
+            YMConnectionClose(aConnection);
+            YMRelease(aConnection);
+        }
+    }
+    YMLockUnlock(session->connectionsByAddressLock);
 }
 
 bool __YMSessionInterrupt(__YMSessionRef session, YMConnectionRef floatConnection)
