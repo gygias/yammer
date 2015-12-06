@@ -806,7 +806,8 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_upstream_proc(YM_THRE
             YMStringRef memberName = YMStringCreateWithFormat("%s-s%u-%s",YMSTR(plexer->name),streamID,YM_TOKEN_STR(__ym_plexer_notify_stream_closing), NULL);
             // close 'read up', so that if client (or forward file) is reading unbounded data it will get signaled
             _YMStreamCloseWriteUp(theStream);
-            __YMPlexerDispatchFunctionWithName(plexer, theStream, plexer->eventDeliveryThread, __ym_plexer_notify_stream_closing, memberName);
+			if ( plexer->closingFunc )
+				__YMPlexerDispatchFunctionWithName(plexer, theStream, plexer->eventDeliveryThread, __ym_plexer_notify_stream_closing, memberName);
             ymlog(" plexer[%s-^,s%u] stream closing (rW%llu,pW%llu,rR%llu,pR%llu)",YMSTR(plexer->name),plexerMessage.streamID,userInfo->rawWritten,userInfo->muxerWritten,userInfo->rawRead,userInfo->muxerRead);
             YMRelease(theStream);
             continue;
@@ -895,7 +896,8 @@ YMStreamRef __YMPlexerRetainOrCreateRemoteStreamWithID(__YMPlexerRef plexer, YMP
                 YMRetain(theStream); // retain for function
                 
                 name = YMStringCreateWithFormat("%s-notify-new-%u",YMSTR(plexer->name),streamID,NULL);
-                __YMPlexerDispatchFunctionWithName(plexer, theStream, plexer->eventDeliveryThread, __ym_plexer_notify_new_stream, name);
+				if ( plexer->newIncomingFunc )
+					__YMPlexerDispatchFunctionWithName(plexer, theStream, plexer->eventDeliveryThread, __ym_plexer_notify_new_stream, name);
             }
         }    
         YMLockUnlock(plexer->remoteAccessLock);
@@ -1003,9 +1005,7 @@ bool __YMPlexerInterrupt(__YMPlexerRef plexer)
     
     // if the client stops us, they don't expect a callback
     if ( plexer->interruptedFunc )
-    {
-        __YMPlexerDispatchFunctionWithName(plexer, NULL, plexer->eventDeliveryThread, __ym_plexer_notify_interrupted, YMSTRC("plexer-interrupted"));
-    }
+		__YMPlexerDispatchFunctionWithName(plexer, NULL, plexer->eventDeliveryThread, __ym_plexer_notify_interrupted, YMSTRC("plexer-interrupted"));
     
 //    // also created on init, so long as we're locking might be redundant
 //    if ( plexer->eventDeliveryThread )

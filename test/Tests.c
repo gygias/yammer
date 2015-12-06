@@ -70,6 +70,8 @@ int main( __unused int argc, __unused const char *argv[] )
 
 void RunAllTests()
 {
+	gLock = YMLockCreate();
+
 	ymerr("------ dictionary test start ------");
 	DictionaryTestRun(_ym_test_assert_func, NULL);
 	ymerr("------ dictionary test end ------");
