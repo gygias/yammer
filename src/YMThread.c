@@ -258,7 +258,7 @@ bool YMThreadStart(YMThreadRef thread_)
     
 #ifndef WIN32
 	int result;
-    if ( ( result = pthread_create(&pthread, NULL, (void *(*)(void *))entry, (void *)context) ) )
+    if ( ( result = pthread_create(&pthread, NULL, (void *(*)(void *))entry, (void *)context) ) ) // todo eagain on pi
     {
         ymerr("thread[%s,%s]: error: pthread_create %d %s", YMSTR(thread->name), thread->isDispatchThread?"dispatch":"user", result, strerror(result));
         return false;

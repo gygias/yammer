@@ -670,7 +670,7 @@ void _ym_session_added_peer_func(YMSessionRef session, YMPeerRef peer, void *con
     
     testassert(theTest,"added context");
     testassert(session==theTest->clientSession,"added session");
-    testassert(0==strcmp(YMSTR(YMPeerGetName(peer)),theTest->testName),"added name");
+    testassert(0==strcmp(YMSTR(YMPeerGetName(peer)),theTest->testName),"added name: %s %s");
     
     if ( theTest->stopping )
         return;
