@@ -50,7 +50,7 @@ const char *YMGetCurrentTimeString(char *buf, size_t bufLen)
     struct tm *now = localtime(&secsSinceEpoch); // um, what? todo
     if ( ! now )
         return NULL;
-    result = strftime(buf, bufLen, "%Y-%m-%d %H:%M:%S", now);
+    result = (int)strftime(buf, bufLen, "%Y-%m-%d %H:%M:%S", now);
     if ( result == 0 )
         return NULL;
     if ( result < (int)bufLen - 3 )
