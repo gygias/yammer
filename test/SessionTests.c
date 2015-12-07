@@ -52,8 +52,8 @@ struct SessionTest
     
     YMSessionRef serverSession;
     YMSessionRef clientSession;
-    const char *testType;
-    const char *testName;
+    YMStringRef testType;
+    YMStringRef testName;
     
     YMConnectionRef serverConnection;
     YMConnectionRef clientConnection;
@@ -93,13 +93,13 @@ void _AsyncForwardCallback(struct SessionTest *theTest, YMConnectionRef connecti
 
 void SessionTestRun(ym_test_assert_func assert, ym_test_diff_func diff, const void *context)
 {
-	YMStringRef testName = YMSTRCF("twitter-cliche:%s", YMRandomASCIIStringWithMaxLength(5, true, false));
     struct SessionTest theTest = {  assert, diff, context,
-                                    NULL, NULL, "_ymtest._tcp", YMSTR(testName),
+                                    NULL, NULL, YMSTRC("_ymtest._tcp"), YMSTRCF("twitter-cliche:%s", YMRandomASCIIStringWithMaxLength(10, true, false)),
                                     NULL, NULL, false, false, false, false, NULL, NULL_FILE, 0, UINT64_MAX, 0,
                                     YMDictionaryCreate(), NULL, NULL, YMSTRC(OutSparseDir),
                                     YMSemaphoreCreate(0), YMSemaphoreCreate(0), false };
     
+    ymerr(" Session test: '%s'",YMSTR(theTest.testName));
     _TestSessionWritingLargeAndReadingSparseFiles(&theTest);
     ymerr(" Session test finished with %llu sparse files",theTest.nSparseFilesToRead);
     
@@ -109,7 +109,8 @@ void SessionTestRun(ym_test_assert_func assert, ym_test_diff_func diff, const vo
         free(filename);
     }
     
-	YMRelease(testName);
+    YMRelease(theTest.testType);
+	YMRelease(theTest.testName);
     YMRelease(theTest.nonRegularFileNames);
     if ( theTest.tempServerSrc ) YMRelease(theTest.tempServerSrc);
     if ( theTest.tempServerDst ) YMRelease(theTest.tempServerDst);
@@ -133,19 +134,15 @@ void _ym_session_stream_closing_func(YMSessionRef session, YMConnectionRef conne
 
 void _TestSessionWritingLargeAndReadingSparseFiles(struct SessionTest *theTest) {
     
-    YMStringRef type = YMSTRC(theTest->testType);
-    theTest->serverSession = YMSessionCreate(type);
+    theTest->serverSession = YMSessionCreate(theTest->testType);
     testassert(theTest->serverSession,"server alloc");
     YMSessionSetCommonCallbacks(theTest->serverSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
     YMSessionSetAdvertisingCallbacks(theTest->serverSession, _ym_session_should_accept_func, theTest);
     
-    YMStringRef name = YMSTRC(theTest->testName);
-    bool started = YMSessionStartAdvertising(theTest->serverSession, name);
-    YMRelease(name);
+    bool started = YMSessionStartAdvertising(theTest->serverSession, theTest->testName);
     testassert(started,"server start");
     
-    theTest->clientSession = YMSessionCreate(type);
-    YMRelease(type);
+    theTest->clientSession = YMSessionCreate(theTest->testType);
     testassert(theTest->clientSession,"client alloc");
     YMSessionSetCommonCallbacks(theTest->clientSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
     YMSessionSetBrowsingCallbacks(theTest->clientSession, _ym_session_added_peer_func, _ym_session_removed_peer_func, _ym_session_resolve_failed_func, _ym_session_resolved_peer_func, _ym_session_connect_failed_func, theTest);
@@ -689,7 +686,7 @@ void _ym_session_removed_peer_func(YMSessionRef session, YMPeerRef peer, void *c
     
     testassert(theTest,"removed context");
     testassert(session==theTest->clientSession,"removed session");
-    testassert(0==strcmp(YMSTR(YMPeerGetName(peer)),theTest->testName),"removed name");
+    testassert(0==strcmp(YMSTR(YMPeerGetName(peer)),YMSTR(theTest->testName)),"removed name");
     testassert(theTest->stopping,"removed");
 }
 
@@ -700,7 +697,7 @@ void _ym_session_resolve_failed_func(YMSessionRef session, YMPeerRef peer, void 
     
     testassert(theTest,"resolveFailed context");
     testassert(session==theTest->clientSession,"resolveFailed session");
-    testassert(0==strcmp(YMSTR(YMPeerGetName(peer)),theTest->testName),"resolveFailed name");
+    testassert(0==strcmp(YMSTR(YMPeerGetName(peer)),YMSTR(theTest->testName)),"resolveFailed name");
     testassert(false,"resolveFailed");
 }
 
@@ -711,7 +708,7 @@ void _ym_session_resolved_peer_func(YMSessionRef session, YMPeerRef peer, void *
     
     testassert(theTest,"resolved context");
     testassert(session==theTest->clientSession,"resolved session");
-    testassert(0==strcmp(YMSTR(YMPeerGetName(peer)),theTest->testName),"resolved name");
+    testassert(0==strcmp(YMSTR(YMPeerGetName(peer)),YMSTR(theTest->testName)),"resolved name");
     testassert(YMPeerGetAddresses(peer),"peer addresses empty");
     
     if ( theTest->stopping )
@@ -740,7 +737,7 @@ void _ym_session_connect_failed_func(YMSessionRef session, YMPeerRef peer, void 
     
     testassert(theTest,"connectFailed context");
     testassert(session==theTest->clientSession,"connectFailed session");
-    testassert(0==strcmp(YMSTR(YMPeerGetName(peer)),theTest->testName),"connectFailed name");
+    testassert(0==strcmp(YMSTR(YMPeerGetName(peer)),YMSTR(theTest->testName)),"connectFailed name");
     testassert(false,"connectFailed");
 }
 

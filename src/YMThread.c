@@ -261,6 +261,9 @@ bool YMThreadStart(YMThreadRef thread_)
     if ( ( result = pthread_create(&pthread, NULL, (void *(*)(void *))entry, (void *)context) ) ) // todo eagain on pi
     {
         ymerr("thread[%s,%s]: error: pthread_create %d %s", YMSTR(thread->name), thread->isDispatchThread?"dispatch":"user", result, strerror(result));
+#if defined(RPI)
+		if ( errno == EAGAIN ) ymerr("rpi thread EAGAIN");
+#endif
         return false;
     }
 #else
