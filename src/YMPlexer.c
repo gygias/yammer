@@ -35,8 +35,8 @@
 
 #define YMPlexerBuiltInVersion ((uint32_t)1)
 
-#undef ymlog_type
 #define ymlog_type YMLogPlexer
+#include "YMLog.h"
 
 YM_EXTERN_C_PUSH
 
