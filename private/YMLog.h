@@ -13,7 +13,7 @@
 #define ymlog_type YMLogDefault
 #endif
 #ifndef ymlog_target
-#define ymlog_target ( YMLogSecurity | YMLogConnection | YMLogmDNS )
+#define ymlog_target ( YMLogSecurity | YMLogConnection | YMLogSession | YMLogmDNS )
 #endif
 
 YM_WPPUSH // Token pasting of ',' and __VA_ARGS__ is a GNU extension

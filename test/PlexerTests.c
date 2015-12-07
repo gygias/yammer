@@ -323,7 +323,10 @@ uint8_t *_ReceiveMessage(struct PlexerTest *theTest, YMStreamRef stream, uint16_
     outLength = 0;
     result = YMStreamReadUp(stream, buffer, length, &outLength);
     if ( theTest->timeBasedTimeOver )
+    {
+        free(buffer);
         return NULL;
+    }
     testassert(outLength==length,"outLength!=length");
     testassert(result==YMIOSuccess,"failed to read buffer");
     

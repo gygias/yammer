@@ -242,8 +242,7 @@ bool YMmDNSBrowserStop(YMmDNSBrowserRef browser_)
     if ( browser->browseServiceRef )
     {
         int fd  = DNSServiceRefSockFD(*(browser->browseServiceRef));
-        int result, error; char *errorStr;
-        YM_CLOSE_SOCKET(fd);
+        int result = shutdown(fd, SHUT_RDWR);
         ymassert(result==0,"close service ref fd");
         //DNSServiceRefDeallocate(*(browser->browseServiceRef));
         //free(browser->browseServiceRef); // let the thread deallocate this on its way out, cheap way to avoid synchronization
