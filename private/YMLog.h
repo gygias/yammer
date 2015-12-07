@@ -15,9 +15,16 @@
 #ifndef ymlog_target
 #define ymlog_target ( YMLogSecurity | YMLogConnection | YMLogSession | YMLogmDNS )
 #endif
+#ifndef ymlog_type_debug
+#define ymlog_type_debug YMLogNothing
+#endif
+#ifndef ymlog_target_debug
+#define ymlog_target_debug YMLogNothing
+#endif
 
 YM_WPPUSH // Token pasting of ',' and __VA_ARGS__ is a GNU extension
 #define ymlog(x,...) if ( ymlog_type & ymlog_target ) __YMLogType(ymlog_target,(x),##__VA_ARGS__)
+#define ymdbg(x,...) if ( ymlog_type_debug & ymlog_target_debug ) __YMLogType(ymlog_type_debug,(x),##__VA_ARGS__)
 #define ymerr(x,...) __YMLogType(YMLogError,(x),##__VA_ARGS__)
 YM_WPOP
 
@@ -25,18 +32,20 @@ YM_EXTERN_C_PUSH
 
 typedef enum
 {
-    YMLogError = 1 << 0,
-    YMLogDefault = 1 << 1,
-    YMLogmDNS = 1 << 2,
-    YMLogSession = 1 << 3,
-    YMLogSecurity = 1 << 4,
-    YMLogConnection = 1 << 5,
-    YMLogThread = 1 << 6,
-    YMLogThreadDispatch = 1 << 7, // todo: time to split out dispatch
-    YMLogPlexer = 1 << 8,
-    YMLogThreadSync = 1 << 9,
-    YMLogStream = 1 << 10,
-    YMLogIO = 1 << 11,
+    YMLogNothing = 0,
+    YMLogError = 1,
+    YMLogDefault = YMLogError << 1,
+    YMLogmDNS = YMLogDefault << 1,
+    YMLogSession = YMLogmDNS << 1,
+    YMLogSecurity = YMLogSession << 1,
+    YMLogConnection = YMLogSecurity << 1,
+    YMLogThread = YMLogConnection << 1,
+    YMLogThreadDebug = YMLogThread << 1,
+    YMLogThreadDispatch = YMLogThreadDebug << 1, // todo: time to split out dispatch
+    YMLogPlexer = YMLogThreadDispatch << 1,
+    YMLogThreadSync = YMLogPlexer << 1,
+    YMLogStream = YMLogThreadSync << 1,
+    YMLogIO = YMLogStream << 1,
     YMLogEverything = 0xFFFF
 } YMLogLevel;
 

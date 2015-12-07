@@ -253,8 +253,7 @@ void _YMPlexerFree(YMPlexerRef plexer_)
     YMRelease(plexer->remoteAccessLock);
     YMRelease(plexer->remoteServiceThread);
     
-    // // free'd (but not null'd) in __Interrupt
-    if ( plexer->eventDeliveryThread )
+    YMThreadDispatchJoin(plexer->eventDeliveryThread);
     YMRelease(plexer->eventDeliveryThread);
     YMRelease(plexer->interruptionLock);
     YMRelease(plexer->downstreamReadySemaphore);
@@ -417,8 +416,10 @@ bool YMPlexerStop(YMPlexerRef plexer_)
     //
     // we can't do this from the common __Interrupt method, because a thread might be the first to report a
     // real error (disconnect), so clients must stop the plexer even after 'interrupted' event before deallocating
+    YMSemaphoreSignal(plexer->downstreamReadySemaphore);
     YMThreadJoin(plexer->localServiceThread);
     YMThreadJoin(plexer->remoteServiceThread);
+    YMThreadDispatchJoin(plexer->eventDeliveryThread);
     
     return interrupted;
 }
@@ -1045,7 +1046,7 @@ void __YMPlexerDispatchFunctionWithName(__YMPlexerRef plexer, YMStreamRef stream
     notifyDef->stream = stream ? YMRetain(stream) : NULL;
     struct ym_thread_dispatch_t dispatch = { function, NULL, true, notifyDef, nameToRelease };
     
-#define YMPLEXER_NO_EVENT_QUEUE // for debugging
+//#define YMPLEXER_NO_EVENT_QUEUE // for debugging
 #ifdef YMPLEXER_NO_EVENT_QUEUE
     __unused const void *silence = targetThread;
     function(&dispatch);

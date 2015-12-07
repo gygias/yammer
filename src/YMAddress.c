@@ -88,7 +88,7 @@ YMAddressRef YMAddressCreate(const void *addressData, uint32_t length)
     {
         int family = isIPV4 ? AF_INET : AF_INET6;
         socklen_t ipLength = isIPV4 ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN;
-        const void *in46_addr = isIPV4 ? (const void *)&((struct sockaddr_in *)addr)->sin_addr : (const void *)&((struct sockaddr_in6 *)addr)->sin6_addr;
+        void *in46_addr = isIPV4 ? (void *)&((struct sockaddr_in *)addr)->sin_addr : (void *)&((struct sockaddr_in6 *)addr)->sin6_addr;
         char ipString[INET6_ADDRSTRLEN];
         
         if ( ! inet_ntop(family, in46_addr, ipString, ipLength) )

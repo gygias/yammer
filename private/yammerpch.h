@@ -44,6 +44,7 @@
 #include <ws2tcpip.h>
 #include "arc4random.h"
 #define bzero ZeroMemory
+#define SHUT_RDWR SD_BOTH
 #endif
 
 #include <string.h>

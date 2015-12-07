@@ -103,6 +103,9 @@ void PlexerTestRun(ym_test_assert_func assert, const void *context)
         free(message);
     }
     YMRelease(theTest.lastMessageWrittenByStreamID);
+    
+    YMThreadDispatchJoin(theTest.dispatchThread);
+    YMRelease(theTest.dispatchThread);
 }
 
 void _DoManyRoundTripsTest(struct PlexerTest *theTest)
@@ -194,9 +197,6 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     
     YMRelease(theTest->localPlexer);
     YMRelease(theTest->fakeRemotePlexer);
-    
-    YMThreadDispatchJoin(theTest->dispatchThread);
-    YMRelease(theTest->dispatchThread);
     
     sleep(2); // let the system settle 3.0 (let threads exit before stack theTest goes out of scope without coordination)
     ymlog("plexer test finished %llu incoming round-trips on %d threads (%d round-trips per %s)",theTest->incomingStreamRoundTrips,

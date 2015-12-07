@@ -69,7 +69,7 @@ struct SessionTest
     YMStringRef tempServerDst;
     YMStringRef tempSparseDir;
     
-    YMSemaphoreRef connectSemaphore;
+    YMSemaphoreRef connectAndAsyncClientCallbackSemaphore;
     YMSemaphoreRef threadExitSemaphore;
     bool stopping;
     
@@ -117,7 +117,7 @@ void SessionTestRun(ym_test_assert_func assert, ym_test_diff_func diff, const vo
     if ( theTest.tempServerSrc ) YMRelease(theTest.tempServerSrc);
     if ( theTest.tempServerDst ) YMRelease(theTest.tempServerDst);
     YMRelease(theTest.tempSparseDir);
-    YMRelease(theTest.connectSemaphore);
+    YMRelease(theTest.connectAndAsyncClientCallbackSemaphore);
     YMRelease(theTest.threadExitSemaphore);
 }
 
@@ -153,8 +153,8 @@ void _TestSessionWritingLargeAndReadingSparseFiles(struct SessionTest *theTest) 
     testassert(started,"client start");
     
     // wait for 2 connects
-    YMSemaphoreWait(theTest->connectSemaphore);
-    YMSemaphoreWait(theTest->connectSemaphore);
+    YMSemaphoreWait(theTest->connectAndAsyncClientCallbackSemaphore);
+    YMSemaphoreWait(theTest->connectAndAsyncClientCallbackSemaphore);
     
     while ( ! YMSessionGetDefaultConnection(theTest->clientSession) || ! YMSessionGetDefaultConnection(theTest->serverSession) )
     { ymlog("spinning for default connection fixme..."); }
@@ -320,7 +320,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteLargeFile(YM_THREAD_PARAM ctx
         YMSemaphoreSignal(theTest->threadExitSemaphore);
     }
     
-    ymlog("writing large file thread (%sSYNC) exiting",theTest->serverAsync?"A":"");
+    ymlog("wrote large file thread (%sSYNC) exiting",theTest->serverAsync?"A":"");
 
 	YM_THREAD_END
 }
@@ -497,6 +497,9 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteSparseFiles(YM_THREAD_PARAM c
         YMConnectionCloseStream(connection, stream);
         YM_CLOSE_FILE(aSparseFd);
         
+        if ( theTest->lastClientAsync )
+            YMSemaphoreWait(theTest->connectAndAsyncClientCallbackSemaphore);
+        
         actuallyWritten++;
         NoisyTestLog("wrote the %lluth sparse file",actuallyWritten);
     }
@@ -546,7 +549,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _EatASparseFile(YM_THREAD_PARAM ctx_)
     ymResult = YMStreamWriteToFile(stream, sparseDstFd, header.willBoundDataStream ? &len64 : NULL, &outBytes);
     testassert(ymResult==YMIOSuccess||(!header.willBoundDataStream&&ymResult==YMIOEOF),"eat sparse result");
     testassert(outBytes==header.len,"eat sparse result");
-    NoisyTestLog("_eatSparseFiles: finished: %llu bytes: %s : %s",outBytes,YMSTR(theTest->tempSparseDir),header.name);
+    ymerr("read sparse file '%s'[%llu] bytes: %s : %s",header.name,outBytes,YMSTR(theTest->tempSparseDir),header.name);
     
 	YM_CLOSE_FILE(sparseDstFd);
     testassert(result==0,"close sparse dst %s",header.name);
@@ -652,7 +655,8 @@ void _AsyncForwardCallback(struct SessionTest *theTest, YMConnectionRef connecti
     if ( isServer ) {
         YMConnectionCloseStream(connection, stream); // client is effectively synchronized by the 'thx for sparse' writeback
         YMSemaphoreSignal(theTest->threadExitSemaphore);
-    }
+    } else
+        YMSemaphoreSignal(theTest->connectAndAsyncClientCallbackSemaphore);
 }
 
 // client, discover->connect
@@ -762,7 +766,7 @@ void _ym_session_connected_func(YMSessionRef session, YMConnectionRef connection
     else
         theTest->serverConnection = connection;
             
-    YMSemaphoreSignal(theTest->connectSemaphore);
+    YMSemaphoreSignal(theTest->connectAndAsyncClientCallbackSemaphore);
 }
 
 void _ym_session_interrupted_func(YMSessionRef session, void *context)

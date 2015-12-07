@@ -30,16 +30,19 @@
     YMFreeGlobalResources();
     CFRunLoopRunInMode(kCFRunLoopDefaultMode, 2, false);
     
-    NSArray *noLibrariesPattern = @[@"-v", @"> /"];
-    [self _runTaskAndGrep:@"/usr/bin/sample" :@[@"-file",@"/dev/stdout",@"xctest",@"1",@"1000"] :noLibrariesPattern :YES :NO];
+    NSArray *magicNoLibrariesPattern = @[@"-v", @"> /"];
+    
+    // TODO today: ensure none of our threads exist in this sample
+    [self _runTaskAndGrep:@"/usr/bin/sample" :@[@"-file",@"/dev/stdout",@"xctest",@"1",@"1000"] :magicNoLibrariesPattern :YES :NO :@[@"_ym_"]];
     [self _runTaskAndGrep:@"/usr/bin/leaks"
                          :@[[NSString stringWithFormat:@"%d",[[NSProcessInfo processInfo] processIdentifier]],@"--nocontext"]
-                         :noLibrariesPattern
+                         :magicNoLibrariesPattern
                          :NO
-                         :YES];
+                         :YES
+                         :nil];
 }
 
-- (void)_runTaskAndGrep:(NSString *)path :(NSArray *)args :(NSArray *)grepArgs :(BOOL)printOutputOnSuccess :(BOOL)assert
+- (void)_runTaskAndGrep:(NSString *)path :(NSArray *)args :(NSArray *)grepArgs :(BOOL)printOutputOnSuccess :(BOOL)assertExitStatus :(NSArray *)assertOutputDoesNotContainStrings
 {
     NSTask *task = [NSTask new];
     [task setLaunchPath:path];
@@ -59,13 +62,25 @@
     
     [grep waitUntilExit];
     
-    BOOL fail = assert && ( [task terminationStatus] != 0 );
+    BOOL fail = assertExitStatus && ( [task terminationStatus] != 0 );
     
-    if ( printOutputOnSuccess || fail )
+    NSData *output = [[pipe2 fileHandleForReading] readDataToEndOfFile];
+    NSString *outputStr = [[NSString alloc] initWithData:output encoding:NSUTF8StringEncoding];
+    
+    if ( ! fail && assertOutputDoesNotContainStrings )
     {
-        NSData *output = [[pipe2 fileHandleForReading] readDataToEndOfFile];
-        NSLog(@"%@",[[NSString alloc] initWithData:output encoding:NSUTF8StringEncoding]);
+        for ( NSString *string in assertOutputDoesNotContainStrings )
+        {
+            fail = ( [outputStr rangeOfString:string].location != NSNotFound );
+            if ( fail )
+            {
+                NSLog(@"output contains '%@'",string);
+                break;
+            }
+        }
     }
+    if ( printOutputOnSuccess || fail )
+        NSLog(@"%@",outputStr);
     
     NSLog(@"`%@ %@` returned %d",path,[args componentsJoinedByString:@" "],[task terminationStatus]);
     

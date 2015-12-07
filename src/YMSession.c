@@ -170,9 +170,15 @@ void _YMSessionFree(YMTypeRef object)
     if ( session->acceptThread )
         YMRelease(session->acceptThread);
     if ( session->initConnectionDispatchThread )
+    {
+        YMThreadDispatchJoin(session->initConnectionDispatchThread);
         YMRelease(session->initConnectionDispatchThread);
+    }
     if ( session->connectDispatchThread )
+    {
+        YMThreadDispatchJoin(session->connectDispatchThread);
         YMRelease(session->connectDispatchThread);
+    }
     
     // shared
     YMRelease(session->type);

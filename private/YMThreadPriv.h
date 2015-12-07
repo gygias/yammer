@@ -13,6 +13,7 @@
 
 YM_EXTERN_C_PUSH
 
+uint64_t _YMThreadGetThreadNumber(YMThreadRef thread_);
 uint64_t _YMThreadGetCurrentThreadNumber();
 
 YM_EXTERN_C_POP
