@@ -407,7 +407,20 @@ bool YMPlexerStop(YMPlexerRef plexer_)
     plexer->interruptedFunc = NULL;
     plexer->newIncomingFunc = NULL;
     plexer->closingFunc = NULL;
-    return __YMPlexerInterrupt(plexer);
+    bool interrupted = __YMPlexerInterrupt(plexer);
+    
+    // once we're stopped (or notified interrupted), we can be deallocated. service threads hold retains on the plexer object,
+    // and x509 certificates embedded in the security provider actually retain a function pointer to
+    // their lock callback, and will call it when the X509 is free'd! that means if the client
+    // stops and immediately releases us on whatever thread, plexer might not be deallocated until
+    // the final service thread actually exits, which in turn depends on Globals Free'd by user (test case).
+    //
+    // we can't do this from the common __Interrupt method, because a thread might be the first to report a
+    // real error (disconnect), so clients must stop the plexer even after 'interrupted' event before deallocating
+    YMThreadJoin(plexer->localServiceThread);
+    YMThreadJoin(plexer->remoteServiceThread);
+    
+    return interrupted;
 }
 
 #pragma mark internal
@@ -564,7 +577,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_downstream_proc(YM_TH
             YM_DEBUG_ASSERT_MALLOC(servicingStream);
             bool okay = __YMPlexerServiceADownstream(plexer, servicingStream);
             YMRelease(servicingStream);
-            if ( ! okay )
+            if ( ! okay || ! plexer->active )
             {
                 if ( __YMPlexerInterrupt(plexer) )
                     ymerr(" plexer[%s-V]: perror: service downstream failed",YMSTR(plexer->name));
@@ -574,6 +587,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_downstream_proc(YM_TH
     }
     
     ymerr(" plexer[%s]: downstream service thread exiting",YMSTR(plexer->name));
+    
     YMRelease(plexer);
 
 	YM_THREAD_END
@@ -703,6 +717,8 @@ bool __YMPlexerServiceADownstream(__YMPlexerRef plexer, YMStreamRef stream)
             chunkLength = 16384;
         
         _YMStreamReadDown(stream, plexer->localPlexBuffer, chunkLength);
+        if ( ! plexer->active )
+            return false;
         ymlog(" plexer[%s-V,s%u]: read stream chunk",YMSTR(plexer->name),streamID);
         
         if ( bytesRemaining - chunkLength > bytesRemaining )
@@ -714,7 +730,7 @@ bool __YMPlexerServiceADownstream(__YMPlexerRef plexer, YMStreamRef stream)
         YMPlexerMessage plexMessage = { chunkLength, streamID };
         size_t plexMessageLen = sizeof(plexMessage);
 		bool okay = YMSecurityProviderWrite(plexer->provider, (uint8_t *)&plexMessage, plexMessageLen);
-        if ( ! okay )
+        if ( ! okay || ! plexer->active )
         {
             ymerr(" plexer[%s-V,s%u]: perror: failed writing plex message size %zub: %d (%s)",YMSTR(plexer->name),streamID,plexMessageLen,errno,strerror(errno));
             return false;
@@ -724,7 +740,7 @@ bool __YMPlexerServiceADownstream(__YMPlexerRef plexer, YMStreamRef stream)
         ymlog(" plexer[%s-V,s%u]: wrote plex header",YMSTR(plexer->name),streamID);
         
 		okay = YMSecurityProviderWrite(plexer->provider, plexer->localPlexBuffer, chunkLength);
-        if ( ! okay )
+        if ( ! okay || ! plexer->active )
         {
             ymerr(" plexer[%s-V,s%u]: perror: failed writing plex buffer %ub: %d (%s)",YMSTR(plexer->name),streamID,plexMessage.command,errno,strerror(errno));
             return false;
@@ -773,7 +789,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_upstream_proc(YM_THRE
         YMPlexerMessage plexerMessage;
         
 		okay = YMSecurityProviderRead(plexer->provider, (uint8_t *)&plexerMessage, sizeof(plexerMessage));
-        if ( ! okay || plexerMessage.command < YMPlexerCommandMin || plexerMessage.command > UINT16_MAX )
+        if ( ! okay || ! plexer->active || plexerMessage.command < YMPlexerCommandMin || plexerMessage.command > UINT16_MAX )
         {
             if ( __YMPlexerInterrupt(plexer) )
                 ymerr(" plexer[%s-^]: perror: failed reading plex header: %d (%s)",YMSTR(plexer->name),errno,strerror(errno));
@@ -791,7 +807,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_upstream_proc(YM_THRE
         
         YMPlexerStreamID streamID = plexerMessage.streamID;
         YMStreamRef theStream = __YMPlexerRetainOrCreateRemoteStreamWithID(plexer, streamID); // todo retain this until this iter is done
-        if ( ! theStream )
+        if ( ! theStream || ! plexer->active )
         {
             if ( __YMPlexerInterrupt(plexer) )
                 ymerr(" plexer[%s-^,s%u]: fatal: stream lookup",YMSTR(plexer->name),streamID);
@@ -816,7 +832,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_upstream_proc(YM_THRE
         ymassert(chunkLength<=UINT16_MAX&&chunkLength!=0,"upstream chuck length");
         
         okay = YMSecurityProviderRead(plexer->provider, plexer->remotePlexBuffer, chunkLength);
-        if ( ! okay )
+        if ( ! okay || ! plexer->active )
         {
             if ( __YMPlexerInterrupt(plexer) )
                 ymerr(" plexer[%s-^,s%u]: perror: failed reading plex buffer of length %zub: %d (%s)",YMSTR(plexer->name),streamID,chunkLength,errno,strerror(errno));
@@ -827,7 +843,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_upstream_proc(YM_THRE
         ymlog(" plexer[%s-^,s%u] read plex buffer %zub",YMSTR(plexer->name),streamID,chunkLength);
         
         YMIOResult result = _YMStreamWriteUp(theStream, plexer->remotePlexBuffer, (uint32_t)chunkLength);
-        if ( result != YMIOSuccess )
+        if ( result != YMIOSuccess || ! plexer->active )
         {
             if ( __YMPlexerInterrupt(plexer) )
                 ymerr(" plexer[%s-^,s%u]: internal fatal: failed writing plex buffer of length %zub: %d (%s)",YMSTR(plexer->name),streamID,chunkLength,errno,strerror(errno));

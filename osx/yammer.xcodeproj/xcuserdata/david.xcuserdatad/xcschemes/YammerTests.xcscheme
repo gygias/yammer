@@ -27,12 +27,32 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "63EEC7551BFB6AA400990ECE"
-            BuildableName = "chat"
-            BlueprintName = "chat"
+            BuildableName = "ymchat"
+            BlueprintName = "ymchat"
             ReferencedContainer = "container:yammer.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <AdditionalOptions>
+         <AdditionalOption
+            key = "MallocStackLogging"
+            value = ""
+            isEnabled = "YES">
+         </AdditionalOption>
+         <AdditionalOption
+            key = "DYLD_INSERT_LIBRARIES"
+            value = "/usr/lib/libgmalloc.dylib"
+            isEnabled = "YES">
+         </AdditionalOption>
+         <AdditionalOption
+            key = "MallocGuardEdges"
+            value = ""
+            isEnabled = "YES">
+         </AdditionalOption>
+         <AdditionalOption
+            key = "MallocScribble"
+            value = ""
+            isEnabled = "YES">
+         </AdditionalOption>
       </AdditionalOptions>
    </TestAction>
    <LaunchAction
@@ -50,12 +70,32 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "63EEC7551BFB6AA400990ECE"
-            BuildableName = "chat"
-            BlueprintName = "chat"
+            BuildableName = "ymchat"
+            BlueprintName = "ymchat"
             ReferencedContainer = "container:yammer.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <AdditionalOptions>
+         <AdditionalOption
+            key = "MallocStackLogging"
+            value = ""
+            isEnabled = "YES">
+         </AdditionalOption>
+         <AdditionalOption
+            key = "DYLD_INSERT_LIBRARIES"
+            value = "/usr/lib/libgmalloc.dylib"
+            isEnabled = "YES">
+         </AdditionalOption>
+         <AdditionalOption
+            key = "MallocGuardEdges"
+            value = ""
+            isEnabled = "YES">
+         </AdditionalOption>
+         <AdditionalOption
+            key = "MallocScribble"
+            value = ""
+            isEnabled = "YES">
+         </AdditionalOption>
       </AdditionalOptions>
    </LaunchAction>
    <ProfileAction
@@ -68,8 +108,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "63EEC7551BFB6AA400990ECE"
-            BuildableName = "chat"
-            BlueprintName = "chat"
+            BuildableName = "ymchat"
+            BlueprintName = "ymchat"
             ReferencedContainer = "container:yammer.xcodeproj">
          </BuildableReference>
       </MacroExpansion>

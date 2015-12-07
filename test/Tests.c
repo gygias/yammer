@@ -63,7 +63,13 @@ bool _ym_test_diff_func(__unused const void *ctx, __unused const char *path1, __
 
 int main( __unused int argc, __unused const char *argv[] )
 {
-	RunAllTests();
+    bool indefinite = argc > 1;
+    
+    do {
+        RunAllTests();
+    } while (indefinite);
+    
+    return 0;
 }
 
 #endif
@@ -98,12 +104,13 @@ void RunAllTests()
 char *YMRandomASCIIStringWithMaxLength(uint16_t maxLength, bool for_mDNSServiceName, bool for_txtKey)
 {
     uint8_t randomLength = (uint8_t)arc4random_uniform(maxLength + 1 + 1);
-    if ( randomLength == 0 ) randomLength = 1 + 1;
-    char *string = malloc(randomLength);
-    uint8_t maxChar = for_mDNSServiceName ? 'z' : 0x7E, minChar = for_mDNSServiceName ? 'a' : 0x20;
-    uint8_t range = maxChar - minChar;
+    if ( randomLength < 2 ) randomLength = 2;
     
+    char *string = malloc(randomLength);
     string[--randomLength] = '\0';
+    
+    uint8_t maxChar = for_mDNSServiceName ? 'z' : 0x7E, minChar = for_mDNSServiceName ? 'a' : 0x20;
+    uint8_t range = maxChar - minChar;    
     while ( randomLength-- )
     {
         char aChar;

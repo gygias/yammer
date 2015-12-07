@@ -93,11 +93,13 @@ void _AsyncForwardCallback(struct SessionTest *theTest, YMConnectionRef connecti
 
 void SessionTestRun(ym_test_assert_func assert, ym_test_diff_func diff, const void *context)
 {
+    char *suffix = YMRandomASCIIStringWithMaxLength(10, true, false);
     struct SessionTest theTest = {  assert, diff, context,
-                                    NULL, NULL, YMSTRC("_ymtest._tcp"), YMSTRCF("twitter-cliche:%s", YMRandomASCIIStringWithMaxLength(10, true, false)),
+                                    NULL, NULL, YMSTRC("_ymtest._tcp"), YMSTRCF("twitter-cliche:%s", suffix),
                                     NULL, NULL, false, false, false, false, NULL, NULL_FILE, 0, UINT64_MAX, 0,
                                     YMDictionaryCreate(), NULL, NULL, YMSTRC(OutSparseDir),
                                     YMSemaphoreCreate(0), YMSemaphoreCreate(0), false };
+    free(suffix);
     
     ymerr(" Session test: '%s'",YMSTR(theTest.testName));
     _TestSessionWritingLargeAndReadingSparseFiles(&theTest);
@@ -524,10 +526,8 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _EatASparseFile(YM_THREAD_PARAM ctx_)
     uint16_t outLength = 0, length = sizeof(header);
     YMIOResult ymResult = YMStreamReadUp(stream, &header, length, &outLength);
     if ( theTest->stopping )
-    {
-        YMConnectionCloseStream(connection, stream);
-        YM_THREAD_END
-    }
+        goto catch_release;
+    
     testassert(ymResult==YMIOSuccess&&outLength==length,"read sparse header");
     testassert(strlen(header.name)>0&&strlen(header.name)<=NAME_MAX, "??? %s",header.name);
     uint64_t outBytes = 0;
@@ -556,13 +556,8 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _EatASparseFile(YM_THREAD_PARAM ctx_)
     strncpy(thx.thx4Sparse,YMSTR(thxStr),sizeof(thx.thx4Sparse));
     YMRelease(thxStr);
     YMStreamWriteDown(stream, &thx, sizeof(thx));
-    if ( theTest->stopping )
-    {
-        YMConnectionCloseStream(connection, stream);
-        
-		YM_THREAD_END
-    }
     
+catch_release:
     // todo randomize whether we close here, during streamClosing, after streamClosing, dispatch_after?
     // it's also worth noting that if you [forcibly] interrupt the session and immediately
     // dealloc the session, async clients working on incoming streams might fault doing this

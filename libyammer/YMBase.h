@@ -23,7 +23,11 @@
 
 YM_EXTERN_C_PUSH
 
-#if defined(_MACOS)// || defined(RPI)
+#if defined(__GNUC__) && !defined(__printflike)
+#define __printflike(x,y) __attribute__ ((format (printf, x, y)))
+#endif
+
+#if defined(__llvm__) || defined(__clang__)
 #define YM_VARGS_SENTINEL_REQUIRED __attribute__((sentinel(0)))
 #define YM_WPUSH \
 			_Pragma("GCC diagnostic push") \
@@ -33,14 +37,16 @@ YM_EXTERN_C_PUSH
 			_Pragma("GCC diagnostic ignored \"-Wpedantic\"")
 #define YM_WPOP \
 			_Pragma("GCC diagnostic pop")
-#else
+#elif defined(_MSC_VER)
+#define YM_VARGS_SENTINEL_REQUIRED
 #define YM_WPPUSH
 #define YM_WPUSH
 #define YM_WPOP
-#endif
-
-#if defined(RPI)
-#define __printflike(x,y) __attribute__ ((format (printf, x, y)))
+# if !defined(__GNUC__)
+# define __printflike(x,y)
+# endif
+#else
+#error unknown compiler
 #endif
 
 #ifdef WIN32
@@ -50,8 +56,6 @@ YM_EXTERN_C_PUSH
 # define YMAPI __declspec( dllimport )
 # endif
 #define YMFILE HANDLE
-#define __printflike(x,y)
-#define YM_VARGS_SENTINEL_REQUIRED
 #else
 #define YMAPI
 #define YMFILE int

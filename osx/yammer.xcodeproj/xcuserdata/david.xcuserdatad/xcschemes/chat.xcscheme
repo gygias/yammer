@@ -15,8 +15,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "63EEC7551BFB6AA400990ECE"
-               BuildableName = "chat"
-               BlueprintName = "chat"
+               BuildableName = "ymchat"
+               BlueprintName = "ymchat"
                ReferencedContainer = "container:yammer.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -33,8 +33,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "63EEC7551BFB6AA400990ECE"
-            BuildableName = "chat"
-            BlueprintName = "chat"
+            BuildableName = "ymchat"
+            BlueprintName = "ymchat"
             ReferencedContainer = "container:yammer.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -56,8 +56,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "63EEC7551BFB6AA400990ECE"
-            BuildableName = "chat"
-            BlueprintName = "chat"
+            BuildableName = "ymchat"
+            BlueprintName = "ymchat"
             ReferencedContainer = "container:yammer.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -85,8 +85,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "63EEC7551BFB6AA400990ECE"
-            BuildableName = "chat"
-            BlueprintName = "chat"
+            BuildableName = "ymchat"
+            BlueprintName = "ymchat"
             ReferencedContainer = "container:yammer.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

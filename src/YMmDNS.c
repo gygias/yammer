@@ -64,7 +64,7 @@ void _YMmDNSServiceListFree(YMmDNSServiceList *serviceList)
 YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*type, const char *domain, bool resolved, const char *hostname,
                                                 uint16_t port, const unsigned char *txtRecord, uint16_t txtLength)
 {   
-	char *noProto = NULL;
+	char *noDomain = NULL;
 	YM_ADDRINFO *addrinfo = NULL;
 	size_t txtSize = 0;
 	YMmDNSTxtRecordKeyPair **txtList = NULL;
@@ -81,26 +81,25 @@ YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*typ
 		// host.local. -> host
 		// THIS SHOULD GO FROM SMALL TO LARGE BUT NOT HOST.LOCAL.?
 		// reverse of the order it's doing here, rpi times out
-		noProto = strdup(hostname);
-		char *one = strstr(noProto,".");
-		one[0] = '\0';
+		noDomain = strdup(hostname);
+		char *one = strstr(noDomain,".");
 		
-		ymlog("mdns: trying to resolve '%s'...",noProto);
-		result = getaddrinfo(noProto, NULL, &hints, &addrinfo);
-		if ( result != 0 )
-		{
-			strcat(noProto,".local");
-			ymlog("mdns: falling back to resolve '%s'...",noProto);
-			result = getaddrinfo(noProto, NULL, &hints, &addrinfo);
+		ymlog("mdns: getting addresses for '%s'...",noDomain);
+		result = getaddrinfo(noDomain, NULL, &hints, &addrinfo);
+		if ( result != 0 && one )
+        {
+            one[0] = '\0';
+			ymlog("mdns: getting fallback addresses for '%s'...",noDomain);
+			result = getaddrinfo(noDomain, NULL, &hints, &addrinfo);
 		}
 		
-		free(noProto);
         if ( result != 0 )
         {
 			ymerr("mdns: failed to parse hostname '%s': %d (%s)",hostname,result,gai_strerror(result));
 			goto catch_fail;
 		}
-			
+        
+        free(noDomain);
     }
     
     if ( txtRecord && txtLength > 1 )
@@ -148,8 +147,8 @@ YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*typ
     return record;
     
 catch_fail:
-    if ( noProto )
-		free(noProto);
+    if ( noDomain )
+		free(noDomain);
 	if ( addrinfo )
 		freeaddrinfo(addrinfo);
 	if ( txtList )

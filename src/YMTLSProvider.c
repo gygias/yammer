@@ -168,6 +168,7 @@ void YMTLSProviderSetAcceptPeerCertsFunc(YMTLSProviderRef tls_, ym_tls_provider_
 void _YMTLSProviderFree(YMTypeRef object)
 {
     __YMTLSProviderRef tls = (__YMTLSProviderRef)object;
+    
     if ( tls->localCertificate )
         YMRelease(tls->localCertificate);
     if ( tls->peerCertificate )

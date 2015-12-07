@@ -76,7 +76,7 @@ YMLockRef gDispatchThreadListLock = NULL;
 // private
 YM_ONCE_DEF(__YMThreadDispatchInit);
 YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_dispatch_dispatch_thread_proc(YM_THREAD_PARAM);
-typedef struct __ym_thread_dispatch_forward_file_async_context_def
+typedef struct __ym_thread_dispatch_forward_file_async_context_t
 {
     __YMThreadRef threadOrNull;
     YMFILE file;
@@ -86,13 +86,14 @@ typedef struct __ym_thread_dispatch_forward_file_async_context_def
     uint64_t nBytes;
     bool sync; // only necessary to free return value
     _ym_thread_forward_file_context_ref callbackInfo;
-} ___ym_thread_dispatch_forward_file_async_def;
-typedef struct __ym_thread_dispatch_forward_file_async_context_def __ym_thread_dispatch_forward_file_async_context;
-typedef __ym_thread_dispatch_forward_file_async_context *__ym_thread_dispatch_forward_file_async_context_ref;
+    
+    YMIOResult result;
+} ___ym_thread_dispatch_forward_file_async_t;
+typedef struct __ym_thread_dispatch_forward_file_async_context_t *__ym_thread_dispatch_forward_file_async_context_ref;
 
 __YMThreadRef __YMThreadInitCommon(YMStringRef name, const void *context);
-void YM_CALLING_CONVENTION __ym_thread_generic_entry_proc(__YMThreadRef theThread);
-YMIOResult YM_CALLING_CONVENTION __ym_thread_dispatch_forward_file_proc(void *);
+YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_generic_entry_proc(YM_THREAD_PARAM theThread);
+YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_dispatch_forward_file_proc(YM_THREAD_PARAM forwardCtx);
 ym_thread_dispatch_ref __YMThreadDispatchCopy(ym_thread_dispatch_ref userDispatchRef);
 __ym_thread_dispatch_thread_context_ref __YMThreadDispatchJoin(__YMThreadRef thread);
 void __YMThreadFreeDispatchContext(__ym_thread_dispatch_context_ref);
@@ -228,18 +229,16 @@ __ym_thread_dispatch_thread_context_ref __YMThreadDispatchJoin(__YMThreadRef thr
 void YMThreadSetContext(YMThreadRef thread_, void *context)
 {
     __YMThreadRef thread = (__YMThreadRef)thread_;
-    if ( thread->didStart )
-    {
-        ymerr("thread[%s]: fatal: cannot set context on a thread that has already started",YMSTR(thread->name));
-        abort();
-    }
-    
+    ymassert(!thread->didStart,"thread[%s]: fatal: cannot set context on a thread that has already started",YMSTR(thread->name));
     thread->context = context;
 }
 
 bool YMThreadStart(YMThreadRef thread_)
 {
     __YMThreadRef thread = (__YMThreadRef)thread_;
+    
+    YMRetain(thread); // handle (normal) thread completing (and finalizing) before this method returns
+    bool okay = false;
     
     YM_THREAD_TYPE pthread;
     
@@ -248,7 +247,7 @@ bool YMThreadStart(YMThreadRef thread_)
     if ( ! thread->isDispatchThread ) // todo this should be consolidated with dispatch threads' own wrapper context
     {
         context = YMRetain(thread);
-        entry = (ym_thread_entry)__ym_thread_generic_entry_proc;
+        entry = __ym_thread_generic_entry_proc;
     }
     else
     {
@@ -258,13 +257,13 @@ bool YMThreadStart(YMThreadRef thread_)
     
 #ifndef WIN32
 	int result;
-    if ( ( result = pthread_create(&pthread, NULL, (void *(*)(void *))entry, (void *)context) ) ) // todo eagain on pi
+    if ( 0 != ( result = pthread_create(&pthread, NULL, entry, (void *)context) ) ) // todo eagain on pi
     {
         ymerr("thread[%s,%s]: error: pthread_create %d %s", YMSTR(thread->name), thread->isDispatchThread?"dispatch":"user", result, strerror(result));
 #if defined(RPI)
 		if ( errno == EAGAIN ) ymerr("rpi thread EAGAIN");
 #endif
-        return false;
+        goto catch_return;
     }
 #else
 	DWORD threadId;
@@ -272,19 +271,27 @@ bool YMThreadStart(YMThreadRef thread_)
 	if ( pthread == NULL )
 	{
 		ymerr("thread[%s,%s]: error: CreateThread failed: %x", YMSTR(thread->name), thread->isDispatchThread ? "dispatch" : "user", GetLastError());
-		return false;
+        goto catch_return;
 	}
 #endif
     
-    ymlog("thread[%s,%s]: created", YMSTR(thread->name), thread->isDispatchThread ? "dispatch" : "user");
+    ymlog("thread[%s,%s]: detached", YMSTR(thread->name), thread->isDispatchThread ? "dispatch" : "user");
+    
     thread->pthread = pthread;
-    return true;
+    okay = true;
+    
+catch_return:
+    YMRelease(thread);
+    return okay;
 }
 
-void YM_CALLING_CONVENTION __ym_thread_generic_entry_proc(__YMThreadRef theThread)
+YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_generic_entry_proc(YM_THREAD_PARAM theThread_)
 {
+    YMThreadRef theThread = theThread_;
     theThread->userEntryPoint((void *)theThread->context);
     YMRelease(theThread);
+    
+    YM_THREAD_END
 }
 
 bool YMThreadJoin(YMThreadRef thread_)
@@ -453,7 +460,7 @@ bool __YMThreadDispatchForward(YMStreamRef stream, YMFILE file, bool toStream, c
     __YMThreadRef forwardingThread = NULL;
     YMStringRef name = NULL;
     
-    __ym_thread_dispatch_forward_file_async_context_ref context = YMALLOC(sizeof(__ym_thread_dispatch_forward_file_async_context));
+    __ym_thread_dispatch_forward_file_async_context_ref context = YMALLOC(sizeof(struct __ym_thread_dispatch_forward_file_async_context_t));
     context->threadOrNull = NULL;
     context->file = file;
     context->stream = YMRetain(stream);
@@ -465,7 +472,9 @@ bool __YMThreadDispatchForward(YMStreamRef stream, YMFILE file, bool toStream, c
     
     if ( sync )
     {
-        YMIOResult result = __ym_thread_dispatch_forward_file_proc(context);
+        __ym_thread_dispatch_forward_file_proc((YM_THREAD_PARAM)context);
+        YMIOResult result = context->result;
+        free(context);
         return ( result == YMIOSuccess || ( ! nBytesPtr && result == YMIOEOF ) );
     }
         
@@ -474,7 +483,7 @@ bool __YMThreadDispatchForward(YMStreamRef stream, YMFILE file, bool toStream, c
     // subsequent forwarding requests, to recycle the thread creation overhead.
     YMPlexerStreamID streamID = YM_STREAM_INFO(stream)->streamID;
     name = YMSTRCF("dispatch-forward-%d%ss%u",file,toStream?"->":"<-",streamID);
-    forwardingThread = (__YMThreadRef)YMThreadCreate(name, (ym_thread_entry)__ym_thread_dispatch_forward_file_proc, context);
+    forwardingThread = (__YMThreadRef)YMThreadCreate(name, __ym_thread_dispatch_forward_file_proc, context);
     YMRelease(name);
     if ( ! forwardingThread )
     {
@@ -482,7 +491,7 @@ bool __YMThreadDispatchForward(YMStreamRef stream, YMFILE file, bool toStream, c
         goto rewind_fail;
     }
     context->threadOrNull = forwardingThread;
-    YMThreadSetContext(forwardingThread, context);
+    
     bool okay = YMThreadStart(forwardingThread);
     if ( ! okay )
     {
@@ -499,7 +508,7 @@ rewind_fail:
     return false;
 }
 
-YMIOResult YM_CALLING_CONVENTION __ym_thread_dispatch_forward_file_proc(void *ctx_)
+YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_dispatch_forward_file_proc(YM_THREAD_PARAM ctx_)
 {
 	__ym_thread_dispatch_forward_file_async_context_ref ctx = (__ym_thread_dispatch_forward_file_async_context_ref)ctx_;
     // todo: tired of defining semi-redundant structs for various tasks in here, should go back and take a look
@@ -536,8 +545,13 @@ YMIOResult YM_CALLING_CONVENTION __ym_thread_dispatch_forward_file_proc(void *ct
     if ( threadOrNull )
         YMRelease(threadOrNull);
     free(ctx->callbackInfo);
-    free(ctx);
-    return result;
+    
+    if ( ! ctx->sync )
+        free(ctx);
+    else
+        ctx->result = result;
+    
+    YM_THREAD_END
 }
 
 YM_EXTERN_C_POP

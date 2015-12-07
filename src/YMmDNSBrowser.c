@@ -466,30 +466,29 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
     YMmDNSServiceRecord *record = NULL;
     if ( okay )
     {
-        // fullname: The full service domain name, in the form <servicename>.<protocol>.<domain>.
-		// e.g. "host._whatever._tcp.local."
-        char *noLocal = strdup(fullname);
-        char *firstDotPtr = strstr(noLocal, ".");
-        if ( ! firstDotPtr )
-        {
-            ymerr("mdns[%s]: don't know how to parse name '%s'",YMSTR(browser->type),fullname);
-            free(noLocal);
-            okay = false;
-            goto catch_callback_and_release;
-        }
-        firstDotPtr[0] = '\0';
-        ymerr("--- %s -> %s",fullname,noLocal);
+		// fullname: "host._whatever._tcp.local."
+        // host: "host.local."
+        char *nameCopy = strdup(fullname);
+        char *one = strstr(nameCopy,".");
+        ymsoftassert(one, "mdns: failed to get service name from full name '%s'",fullname);
+        one[0] = '\0';
         
-        record = _YMmDNSServiceRecordCreate(noLocal, YMSTR(browser->type), "local",
-                                            true, host, port, txtRecord, txtLength);
+        char *hostCopy = strdup(host);
+        size_t len = strlen(hostCopy);
+        if ( hostCopy[len - 1] == '.' )
+            hostCopy[len - 1] = '\0';
+        
+        record = _YMmDNSServiceRecordCreate(nameCopy, YMSTR(browser->type), "local",
+                                            true, hostCopy, port, txtRecord, txtLength);
         if ( record )   
 			record = __YMmDNSBrowserAddOrUpdateService(browser, record);
         else
 			okay = false;
-        free(noLocal);
+        
+        free(nameCopy);
+        free(hostCopy);
     }
     
-catch_callback_and_release:
     if ( browser->serviceResolved )
         browser->serviceResolved((YMmDNSBrowserRef)browser, okay, record, browser->callbackContext);
     

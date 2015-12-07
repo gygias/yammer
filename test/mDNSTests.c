@@ -89,7 +89,7 @@ void _TestmDNSCreateDiscoverResolve(struct mDNSTest *theTest)
     theTest->testServiceName = YMRandomASCIIStringWithMaxLength(mDNS_SERVICE_NAME_LENGTH_MAX - 1, true, false);
     YMStringRef serviceType = YMSTRC(testServiceType);
     YMStringRef serviceName = YMSTRC(theTest->testServiceName);
-    theTest->service = YMmDNSServiceCreate(serviceType, serviceName, 5050);
+    theTest->service = YMmDNSServiceCreate(serviceType, serviceName, 5050); // todo making our own bogus name
     testassert(theTest->service,"YMmDNSServiceCreate");
     YMRelease(serviceName);
     

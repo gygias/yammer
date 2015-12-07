@@ -67,7 +67,7 @@ typedef struct PlexerTest
 
 void _DoManyRoundTripsTest(struct PlexerTest *);
 void YM_CALLING_CONVENTION _init_local_plexer_proc(ym_thread_dispatch_ref dispatch);
-YM_THREAD_RETURN YM_CALLING_CONVENTION _handle_remote_stream(ym_thread_dispatch_ref ctx_);
+void YM_CALLING_CONVENTION _handle_remote_stream(ym_thread_dispatch_ref ctx_);
 YM_THREAD_RETURN YM_CALLING_CONVENTION _RunLocalPlexer(YM_THREAD_PARAM);
 void _SendMessage(struct PlexerTest *theTest, YMStreamRef stream, uint8_t *message, uint16_t length);
 uint8_t *_ReceiveMessage(struct PlexerTest *theTest, YMStreamRef stream, uint16_t *outLen);
@@ -184,11 +184,11 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
         theTest->closedPlexer = theTest->fakeRemotePlexer;
     }
     theTest->awaitingInterrupt = true;
-    //YMPlexerStop(theTest->closedPlexer);
     // shouldn't matter which one, but this is important because the 'media' socket is managed by the connection (the opener is the closer).
     // we're sitting at the level of the connection here and have to close one of the files manually to hang things up.
     YMRelease(networkSimPipeIn);
     YMRelease(networkSimPipeOut);
+    //YMPlexerStop(theTest->closedPlexer);
     YMSemaphoreWait(theTest->interruptNotificationSem);
     YMSemaphoreWait(theTest->interruptNotificationSem);
     
@@ -397,7 +397,7 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *cont
     YMThreadDispatchDispatch(theTest->dispatchThread, dispatchDef);
 }
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION _handle_remote_stream(ym_thread_dispatch_ref ctx_)
+void YM_CALLING_CONVENTION _handle_remote_stream(ym_thread_dispatch_ref ctx_)
 {
     struct HandleStreamContext *ctx = ctx_->context;
     struct PlexerTest *theTest = ctx->theTest;
@@ -413,7 +413,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _handle_remote_stream(ym_thread_dispatch_
         if ( theTest->timeBasedTimeOver )
         {
             if ( incomingMessage ) free(incomingMessage);
-			YM_THREAD_END
+            goto catch_return;
         }
         testassert(incomingMessage,"incoming message");
         
@@ -449,13 +449,13 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _handle_remote_stream(ym_thread_dispatch_
         
         theTest->incomingStreamRoundTrips++;
     }
+catch_return:
     
-    NoisyTestLog("^^^ REMOTE -newStream [%u] exiting (and remoteReleasing)",streamID);
     YMPlexerCloseStream(theTest->fakeRemotePlexer,stream);
     
     YMRelease(stream);
-
-	YM_THREAD_END
+    
+    NoisyTestLog("^^^ REMOTE -newStream [%u] exiting (and remoteReleasing)",streamID);
 }
 
 void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *context)

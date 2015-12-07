@@ -21,10 +21,10 @@ typedef void *(*ym_voidp_voidp_func)(void *);
 typedef struct ym_thread_dispatch_t *ym_thread_dispatch_ref;
 
 #ifndef WIN32
-#define YM_THREAD_RETURN void
+#define YM_THREAD_RETURN void *
 #define YM_CALLING_CONVENTION
 #define YM_THREAD_PARAM void *
-#define YM_THREAD_END return;
+#define YM_THREAD_END return NULL;
 #else
 //typedef DWORD(WINAPI *PTHREAD_START_ROUTINE)(
 //	LPVOID lpThreadParameter
