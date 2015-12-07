@@ -45,17 +45,18 @@ typedef struct __ym_mdns_service_t
 } __ym_mdns_service_t;
 typedef struct __ym_mdns_service_t *__YMmDNSServiceRef;
 
-void __YMmDNSRegisterCallback(__unused DNSServiceRef sdRef,
-                              __unused DNSServiceFlags flags,
-                              __unused DNSServiceErrorType errorCode,
-                              __unused const char *name,
-                              __unused const char *regtype,
-                              __unused const char *domain,
-                              void *context )
+void __ymmdns_register_callback(__unused DNSServiceRef sdRef,
+                                __unused DNSServiceFlags flags,
+                                __unused DNSServiceErrorType errorCode,
+                                __unused const char *name,
+                                __unused const char *regtype,
+                                __unused const char *domain,
+                                void *context )
 {
     __YMmDNSServiceRef service = (__YMmDNSServiceRef)context;
+    ymsoftassert(0==strcmp(regtype,YMSTR(service->type)),"register type: %s",regtype);
+    ymsoftassert(0==strcmp(name,YMSTR(service->name)),"register name: %s",name);
     ymlog("mdns: %s/%s:%u: %d", YMSTR(service->type), YMSTR(service->name), service->port, errorCode);
-    // DNSServiceRefDeallocate?
 }
 
 //void __ym_mdns_service_event_thread(void *);
@@ -143,7 +144,7 @@ bool YMmDNSServiceStart( YMmDNSServiceRef service_ )
                                                     netPort,
                                                     txtLength,
                                                     txt,
-                                                    (DNSServiceRegisterReply)__YMmDNSRegisterCallback, // DNSServiceRegisterReply
+                                                    __ymmdns_register_callback, // DNSServiceRegisterReply
                                                     service); // context
     
     if( result != kDNSServiceErr_NoError )
