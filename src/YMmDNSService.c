@@ -151,7 +151,7 @@ bool YMmDNSServiceStart( YMmDNSServiceRef service_ )
         // on error "the callback is never invoked and the DNSServiceRef is not initialized"
         // leading me to think we free instead of DNSServiceRefDeallocate
         free(serviceRef);
-        ymlog("DNSServiceRegister failed: %d",result);
+        ymlog("mdns: DNSServiceRegister failed: %s/%s:%u: %d",YMSTR(service->type),YMSTR(service->name),(unsigned)service->port,result);
         return false;
     }
     

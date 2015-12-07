@@ -37,7 +37,7 @@ typedef struct mDNSTest
 #if 0 // actually debugging
 #define testTimeout (10 * 60)
 #else
-#define testTimeout 10
+#define testTimeout 60
 #endif
 
 void _TestmDNSTxtRecordParsing(struct mDNSTest *theTest);

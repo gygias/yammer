@@ -68,23 +68,39 @@ YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*typ
 	YM_ADDRINFO *addrinfo = NULL;
 	size_t txtSize = 0;
 	YMmDNSTxtRecordKeyPair **txtList = NULL;
-	
+	struct addrinfo hints = { 0, AF_INET, SOCK_STREAM, 0, 0, NULL, NULL, NULL };
+	int result = 0;
+		
 	if ( ! name || ! type || ! domain )
 		return NULL;
 	
     if ( hostname )
     {
+		ymlog("mdns: creating resolved record from %s/%s/%s -- %s %u [%d]",name,type,domain,hostname,port,txtLength);
+	
 		// host.local. -> host
+		// THIS SHOULD GO FROM SMALL TO LARGE BUT NOT HOST.LOCAL.?
+		// reverse of the order it's doing here, rpi times out
 		noProto = strdup(hostname);
-		noProto[strlen(noProto) - 1] = '\0';
-		struct addrinfo hints = { 0, AF_INET, SOCK_STREAM, 0, 0, NULL, NULL, NULL };
-		int result = getaddrinfo(noProto, NULL, &hints, &addrinfo);
+		char *one = strstr(noProto,".");
+		one[0] = '\0';
+		
+		ymlog("mdns: trying to resolve '%s'...",noProto);
+		result = getaddrinfo(noProto, NULL, &hints, &addrinfo);
+		if ( result != 0 )
+		{
+			strcat(noProto,".local");
+			ymlog("mdns: falling back to resolve '%s'...",noProto);
+			result = getaddrinfo(noProto, NULL, &hints, &addrinfo);
+		}
+		
+		free(noProto);
         if ( result != 0 )
         {
-			ymerr("mdns: failed to parse hostname '%s': %d (%s)",noProto,result,gai_strerror(result));
+			ymerr("mdns: failed to parse hostname '%s': %d (%s)",hostname,result,gai_strerror(result));
 			goto catch_fail;
 		}
-		free(noProto);
+			
     }
     
     if ( txtRecord && txtLength > 1 )

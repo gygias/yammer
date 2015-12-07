@@ -478,6 +478,7 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
             goto catch_callback_and_release;
         }
         firstDotPtr[0] = '\0';
+        ymerr("--- %s -> %s",fullname,noLocal);
         
         record = _YMmDNSServiceRecordCreate(noLocal, YMSTR(browser->type), "local",
                                             true, host, port, txtRecord, txtLength);
