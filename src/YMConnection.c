@@ -199,11 +199,14 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     __unused struct sockaddr_in *addrAsIPV4 = (struct sockaddr_in *)addr;
     __unused struct sockaddr_in6 *addrAsIPV6 = (struct sockaddr_in6 *)addr;
     
+<<<<<<< HEAD
 //#if defined(RPI)
 //	unsigned long rev = htonl(addrAsIPV4->sin_addr.s_addr);
 //	memcpy(&addrAsIPV4->sin_addr.s_addr,&rev,sizeof(rev));
 //#endif
     
+=======
+>>>>>>> 45f4df55d57067cbad2cd33d2681ccc1029fafb3
     result = connect(newSocket, addr, addrLen);
     if ( result != 0 )
     {
