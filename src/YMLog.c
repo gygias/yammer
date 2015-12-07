@@ -42,7 +42,7 @@ void __YMLogType( int level, char* format, ... )
         const char *timeStr = YMGetCurrentTimeString(gTimeFormatBuf, gTimeFormatBufLen);
 		uint64_t threadID = _YMThreadGetCurrentThreadNumber();
 		uint64_t pid =
-#if defined(WIN32)
+#if !defined(WIN32)
 			getpid();
 #else
 			GetCurrentProcessId();
