@@ -22,6 +22,7 @@
 
 #ifndef WIN32
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #else
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -197,6 +198,11 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     socklen_t addrLen = YMAddressGetLength(connection->address);
     __unused struct sockaddr_in *addrAsIPV4 = (struct sockaddr_in *)addr;
     __unused struct sockaddr_in6 *addrAsIPV6 = (struct sockaddr_in6 *)addr;
+    
+#if defined(RPI)
+	unsigned long rev = htonl(addrAsIPV4->sin_addr.s_addr);
+	memcpy(&addrAsIPV4->sin_addr.s_addr,&rev,sizeof(rev));
+#endif
     
     result = connect(newSocket, addr, addrLen);
     if ( result != 0 )
