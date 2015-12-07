@@ -84,27 +84,14 @@ YMAddressRef YMAddressCreate(const void *addressData, uint32_t length)
     memcpy(address->address, addressData, length);
     address->length = length;
     
-    /*if ( type == YMAddressIPV4 || type == YMAddressIPV6 )
+    if ( isIP )
     {
-        struct sockaddr_in *inAddr = (struct sockaddr_in *)address->address;
-        char *ipString = inet_ntoa( inAddr->sin_addr );
-        
-        if ( ! ipString ) // i can't imagine how this would fail short of segfaulting, man isn't specific
-        {
-            //uint32_t ip = ntohl(inAddr->sin_addr.s_addr);
-            uint8_t *ipPtr = (uint8_t *)&inAddr->sin_addr.s_addr;
-            ymerr("address: error: inet_ntoa failed for %u.%u.%u.%u: %d (%s)",ipPtr[0],ipPtr[1],ipPtr[2],ipPtr[4],errno,strerror(errno));
-            goto rewind_fail;
-        }
-        uint16_t hostPort = ntohs(inAddr->sin_port);
-        address->description = YMStringCreateWithFormat("%s:%u",ipString,hostPort,NULL);
-    }
-    else */if ( isIP )
-    {
-        int family = ( isIPV4 ) ? AF_INET : AF_INET6;
+        int family = isIPV4 ? AF_INET : AF_INET6;
         socklen_t ipLength = isIPV4 ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN;
+        const void *in46_addr = isIPV4 ? (const void *)&((struct sockaddr_in *)addr)->sin_addr : (const void *)&((struct sockaddr_in6 *)addr)->sin6_addr;
         char ipString[INET6_ADDRSTRLEN];
-        if ( ! inet_ntop(family, address->address, ipString, ipLength) )
+        
+        if ( ! inet_ntop(family, in46_addr, ipString, ipLength) )
         {
             ymerr("address: error: inet_ntop failed for address length %d",ipLength);
             goto rewind_fail;
