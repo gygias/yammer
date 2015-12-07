@@ -37,7 +37,7 @@ YM_EXTERN_C_PUSH
 			_Pragma("GCC diagnostic ignored \"-Wpedantic\"")
 #define YM_WPOP \
 			_Pragma("GCC diagnostic pop")
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) || defined(RPI)
 #define YM_VARGS_SENTINEL_REQUIRED
 #define YM_WPPUSH
 #define YM_WPUSH
@@ -46,7 +46,7 @@ YM_EXTERN_C_PUSH
 # define __printflike(x,y)
 # endif
 #else
-#error unknown compiler
+#error unknown configuration
 #endif
 
 #ifdef WIN32
