@@ -33,7 +33,7 @@
     NSArray *magicNoLibrariesPattern = @[@"-v", @"> /"];
     
     // TODO today: ensure none of our threads exist in this sample
-    [self _runTaskAndGrep:@"/usr/bin/sample" :@[@"-file",@"/dev/stdout",@"xctest",@"1",@"1000"] :magicNoLibrariesPattern :YES :NO :@[@"_ym_"]];
+    [self _runTaskAndGrep:@"/usr/bin/sample" :@[@"-file",@"/dev/stdout",@"xctest",@"1",@"1000"] :magicNoLibrariesPattern :YES :NO :@[@"ym_"]];
     [self _runTaskAndGrep:@"/usr/bin/leaks"
                          :@[[NSString stringWithFormat:@"%d",[[NSProcessInfo processInfo] processIdentifier]],@"--nocontext"]
                          :magicNoLibrariesPattern
