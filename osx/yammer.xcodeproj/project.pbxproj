@@ -101,6 +101,13 @@
 			remoteGlobalIDString = 63225D411BE9026200C28F05;
 			remoteInfo = yammer;
 		};
+		631F0D421C151BB400C141D4 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 63225D3A1BE9026200C28F05 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 63225D411BE9026200C28F05;
+			remoteInfo = libyammer;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -574,6 +581,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				631F0D431C151BB400C141D4 /* PBXTargetDependency */,
 			);
 			name = test;
 			productName = test;
@@ -769,6 +777,11 @@
 			isa = PBXTargetDependency;
 			target = 63225D411BE9026200C28F05 /* libyammer */;
 			targetProxy = 630A5D061BE96CE9003292EE /* PBXContainerItemProxy */;
+		};
+		631F0D431C151BB400C141D4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 63225D411BE9026200C28F05 /* libyammer */;
+			targetProxy = 631F0D421C151BB400C141D4 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
