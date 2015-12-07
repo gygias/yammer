@@ -49,6 +49,7 @@ typedef struct PlexerTest
     bool plexerTest1Running;
     bool timeBasedTimeOver;
     bool awaitingInterrupt;
+    YMThreadRef dispatchThread;
     
     // for comparing callback contexts
     YMPlexerRef localPlexer;
@@ -66,7 +67,7 @@ typedef struct PlexerTest
 
 void _DoManyRoundTripsTest(struct PlexerTest *);
 void YM_CALLING_CONVENTION _init_local_plexer_proc(ym_thread_dispatch_ref dispatch);
-YM_THREAD_RETURN YM_CALLING_CONVENTION _handle_remote_stream(YM_THREAD_PARAM);
+YM_THREAD_RETURN YM_CALLING_CONVENTION _handle_remote_stream(ym_thread_dispatch_ref ctx_);
 YM_THREAD_RETURN YM_CALLING_CONVENTION _RunLocalPlexer(YM_THREAD_PARAM);
 void _SendMessage(struct PlexerTest *theTest, YMStreamRef stream, uint8_t *message, uint16_t length);
 uint8_t *_ReceiveMessage(struct PlexerTest *theTest, YMStreamRef stream, uint16_t *outLen);
@@ -82,8 +83,10 @@ void PlexerTestRun(ym_test_assert_func assert, const void *context)
 {
     struct PlexerTest theTest = { assert, context,
                                 0, YMLockCreate(), true, false, false,
+                                YMThreadDispatchCreate(NULL),
                                 NULL, NULL, NULL, YMSemaphoreCreate(0),
                                 0, 0, 0, 0, YMDictionaryCreate() };
+	YMThreadStart(theTest.dispatchThread);
     
     _DoManyRoundTripsTest(&theTest);
     
@@ -141,11 +144,8 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     YMPlexerSetStreamClosingFunc(theTest->fakeRemotePlexer, remote_plexer_stream_closing);
     YMPlexerSetCallbackContext(theTest->fakeRemotePlexer, theTest);
     
-    YMThreadRef dispatchThread = YMThreadDispatchCreate(NULL);
-    YMThreadStart(dispatchThread);
-    
     struct ym_thread_dispatch_t dispatch = { _init_local_plexer_proc, NULL, false, theTest, NULL };
-    YMThreadDispatchDispatch(dispatchThread, dispatch);
+    YMThreadDispatchDispatch(theTest->dispatchThread, dispatch);
     
     bool okay = YMPlexerStart(theTest->fakeRemotePlexer);
     testassert(okay,"slave did not start");
@@ -195,8 +195,8 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     YMRelease(theTest->localPlexer);
     YMRelease(theTest->fakeRemotePlexer);
     
-    YMThreadDispatchJoin(dispatchThread);
-    YMRelease(dispatchThread);
+    YMThreadDispatchJoin(theTest->dispatchThread);
+    YMRelease(theTest->dispatchThread);
     
     sleep(2); // let the system settle 3.0 (let threads exit before stack theTest goes out of scope without coordination)
     ymlog("plexer test finished %llu incoming round-trips on %d threads (%d round-trips per %s)",theTest->incomingStreamRoundTrips,
@@ -392,19 +392,18 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *cont
     struct HandleStreamContext *hContext = malloc(sizeof(struct HandleStreamContext));
     hContext->theTest = theTest;
     hContext->stream = YMRetain(stream);
-    YMThreadRef thread = YMThreadCreate(NULL, _handle_remote_stream, hContext);
-    YMThreadStart(thread);
-    YMRelease(thread);
+    
+    struct ym_thread_dispatch_t dispatchDef = { _handle_remote_stream, NULL, true, hContext, NULL };
+    YMThreadDispatchDispatch(theTest->dispatchThread, dispatchDef);
 }
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION _handle_remote_stream(YM_THREAD_PARAM ctx_)
+YM_THREAD_RETURN YM_CALLING_CONVENTION _handle_remote_stream(ym_thread_dispatch_ref ctx_)
 {
-    struct HandleStreamContext *ctx = ctx_;
+    struct HandleStreamContext *ctx = ctx_->context;
     struct PlexerTest *theTest = ctx->theTest;
     YMStreamRef stream = ctx->stream;
     YMPlexerStreamID streamID = ((ym_plexer_stream_user_info_ref)_YMStreamGetUserInfo(stream))->streamID;
     bool protectTheList = ( PlexerTest1Threads > 1 );
-    free(ctx);
     
     unsigned iterations = PlexerTest1NewStreamPerRoundTrip ? 1 : PlexerTest1RoundTripsPerThread;
     for ( unsigned idx = 0; idx < iterations; idx++ )
