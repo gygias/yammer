@@ -169,6 +169,11 @@ void _YMTLSProviderFree(YMTypeRef object)
 {
     __YMTLSProviderRef tls = (__YMTLSProviderRef)object;
     
+    YMLockLock(gYMTLSExDataLock);
+    if ( YMDictionaryContains(gYMTLSExDataList, (YMDictionaryKey)tls->ssl) )
+        YMDictionaryRemove(gYMTLSExDataList, (YMDictionaryKey)tls->ssl);
+    YMLockUnlock(gYMTLSExDataLock);
+    
     if ( tls->localCertificate )
         YMRelease(tls->localCertificate);
     if ( tls->peerCertificate )
@@ -479,7 +484,7 @@ bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
     }
     
     YMLockLock(gYMTLSExDataLock);
-    YMDictionaryAdd(gYMTLSExDataList, (YMDictionaryKey)tls->ssl, (YMDictionaryValue)(uint64_t)myIdx); // todo CRASH 1
+        YMDictionaryAdd(gYMTLSExDataList, (YMDictionaryKey)tls->ssl, (YMDictionaryValue)(uint64_t)myIdx); // todo CRASH 1
     YMLockUnlock(gYMTLSExDataLock);
     
     // and there's no CTX version of SSL_get_ex_data_X509_STORE_CTX_idx that i can see,
