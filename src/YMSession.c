@@ -886,6 +886,7 @@ void __ym_mdns_service_resolved_func(__unused YMmDNSBrowserRef browser, bool suc
             {
                 found = true;
                 peer = (YMPeerRef)myEnum->value;
+                break;
             }
             
             myEnum = YMDictionaryEnumeratorGetNext(myEnum);
