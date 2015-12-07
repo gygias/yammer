@@ -42,7 +42,7 @@ YM_EXTERN_C_PUSH
 #define YM_WPPUSH
 #define YM_WPUSH
 #define YM_WPOP
-# if !defined(__GNUC__)
+# if !defined(__printflike)
 # define __printflike(x,y)
 # endif
 #else

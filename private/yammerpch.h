@@ -52,10 +52,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#if defined(_MACOS) || defined(RPI)
-#define YM_VARGS_SENTINEL_REQUIRED __attribute__((sentinel(0)))
-#endif
-
 #if defined(WIN32)
 #define ssize_t SSIZE_T
 #define typeof decltype
@@ -68,13 +64,6 @@
 
 #if defined(WIN32) || defined(RPI)
 #define __unused
-#endif
-
-#if defined(RPI)
-#define __printflike(x,y) __attribute__ ((format (printf, x, y)))
-#elif defined(WIN32)
-#define YM_VARGS_SENTINEL_REQUIRED
-#define __printflike(x,y)
 #endif
 
 #define YM_VERSION 1
