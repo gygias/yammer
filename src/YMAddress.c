@@ -84,7 +84,7 @@ YMAddressRef YMAddressCreate(const void *addressData, uint32_t length)
     memcpy(address->address, addressData, length);
     address->length = length;
     
-    if ( type == YMAddressIPV4 || type == YMAddressIPV6 )
+    /*if ( type == YMAddressIPV4 || type == YMAddressIPV6 )
     {
         struct sockaddr_in *inAddr = (struct sockaddr_in *)address->address;
         char *ipString = inet_ntoa( inAddr->sin_addr );
@@ -99,7 +99,7 @@ YMAddressRef YMAddressCreate(const void *addressData, uint32_t length)
         uint16_t hostPort = ntohs(inAddr->sin_port);
         address->description = YMStringCreateWithFormat("%s:%u",ipString,hostPort,NULL);
     }
-    else if ( isIP )
+    else */if ( isIP )
     {
         int family = ( isIPV4 ) ? AF_INET : AF_INET6;
         socklen_t ipLength = isIPV4 ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN;
