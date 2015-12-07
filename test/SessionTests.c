@@ -663,15 +663,14 @@ void _ym_session_added_peer_func(YMSessionRef session, YMPeerRef peer, void *con
     
     testassert(theTest,"added context");
     testassert(session==theTest->clientSession,"added session");
-    //testassert(0==strcmp(YMSTR(YMPeerGetName(peer)),theTest->testName),"added name: %s %s", YMSTR(YMPeerGetName(peer)), theTest->testName);
     
     if ( theTest->stopping )
         return;
     
-//    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(arc4random_uniform(FAKE_DELAY_MAX) * NSEC_PER_SEC)), dispatch_get_global_queue(0, 0), ^{
-        ymlog("resolving %s",YMSTR(YMPeerGetName(peer)));
+    if ( YMStringEquals(YMPeerGetName(peer), theTest->testName) ) {
+        ymerr("resolving %s",YMSTR(YMPeerGetName(peer)));
         YMSessionResolvePeer(session, peer);
-//    });
+    }
 }
 
 void _ym_session_removed_peer_func(YMSessionRef session, YMPeerRef peer, void *context)
@@ -703,7 +702,7 @@ void _ym_session_resolved_peer_func(YMSessionRef session, YMPeerRef peer, void *
     
     testassert(theTest,"resolved context");
     testassert(session==theTest->clientSession,"resolved session");
-    testassert(0==strcmp(YMSTR(YMPeerGetName(peer)),YMSTR(theTest->testName)),"resolved name");
+    testassert(0==strcmp(YMSTR(YMPeerGetName(peer)),YMSTR(theTest->testName)),"resolved name %s != %s",YMSTR(YMPeerGetName(peer)),YMSTR(theTest->testName));
     testassert(YMPeerGetAddresses(peer),"peer addresses empty");
     
     if ( theTest->stopping )
