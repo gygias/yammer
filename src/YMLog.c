@@ -41,11 +41,18 @@ void __YMLogType( int level, char* format, ... )
     {
         const char *timeStr = YMGetCurrentTimeString(gTimeFormatBuf, gTimeFormatBufLen);
 		uint64_t threadID = _YMThreadGetCurrentThreadNumber();
+		uint64_t pid =
+#if defined(WIN32)
+			getpid();
+#else
+			GetCurrentProcessId();
+#endif
 
 		FILE *file = (level == YMLogError) ? stderr : stdout;
 
-        if ( timeStr )
-            fprintf(file,"%s yammer[%llu]: ",timeStr,threadID);
+		if (timeStr)
+			fprintf(file, "%s ", timeStr);
+		fprintf(file,"yammer[%llu:%llu]: ",pid,threadID);
         
         va_list args;
         va_start(args,format);

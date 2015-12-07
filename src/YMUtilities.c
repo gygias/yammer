@@ -43,15 +43,18 @@ YM_EXTERN_C_PUSH
 const char *YMGetCurrentTimeString(char *buf, size_t bufLen)
 {
     struct timeval epoch = {0,0};
-    gettimeofday(&epoch, NULL);
-    struct tm *now = localtime((const time_t *)&epoch.tv_sec); // um, what? todo
+    int result = gettimeofday(&epoch, NULL);
+	if ( result != 0 )
+		return NULL;
+	const time_t secsSinceEpoch = epoch.tv_sec;
+    struct tm *now = localtime(&secsSinceEpoch); // um, what? todo
     if ( ! now )
         return NULL;
-    size_t result = strftime(buf, bufLen, "%Y-%m-%d %H:%M:%S", now);
+    result = strftime(buf, bufLen, "%Y-%m-%d %H:%M:%S", now);
     if ( result == 0 )
         return NULL;
-    if ( result < bufLen - 3 )
-        snprintf(buf, bufLen - result, "%s.%03d",buf,epoch.tv_usec%1000);
+    if ( result < (int)bufLen - 3 )
+        snprintf(buf, bufLen - result, "%s.%03d",buf,epoch.tv_usec/1000);
     return buf;
 }
 
