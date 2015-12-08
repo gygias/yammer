@@ -79,10 +79,9 @@ void RunAllTests()
 {
     gLock = YMLockCreate();
     
-    while(1) {
     ymerr("------ task test start ------");
     TaskTestRun(_ym_test_assert_func, NULL);
-        ymerr("------ task test end ------"); }
+    ymerr("------ task test end ------");
 	ymerr("------ dictionary test start ------");
 	DictionaryTestRun(_ym_test_assert_func, NULL);
 	ymerr("------ dictionary test end ------");
