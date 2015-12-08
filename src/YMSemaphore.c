@@ -22,7 +22,7 @@
 #include <semaphore.h>
 #endif
 
-#if defined(RPI)
+#if defined(YMLINUX)
 #include <sys/stat.h>
 #endif
 

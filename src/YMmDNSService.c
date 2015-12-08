@@ -13,7 +13,7 @@
 
 #ifndef WIN32
 #include <sys/socket.h>
-# if defined(RPI)
+# if defined(YMLINUX)
 # include <netinet/in.h>
 # endif
 #else

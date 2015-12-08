@@ -25,11 +25,11 @@
 
 #include <stdio.h>
 
-#if defined(_MACOS) || defined(RPI)
+#if defined(YMMACOS) || defined(YMLINUX)
 #include <unistd.h>
 #include <time.h>
 #include <sys/time.h>
-# if defined (RPI)
+# if defined (YMLINUX)
   typedef __ssize_t ssize_t;
 # include <limits.h>
 # include <sys/types.h>
@@ -63,7 +63,7 @@
 #define rmdir _rmdir // ( ( RemoveDirectory(x) == 0 ) ? -1 : 0 )
 #endif
 
-#if defined(WIN32) || defined(RPI)
+#if defined(WIN32) || defined(YMLINUX)
 #define __unused
 #endif
 
@@ -79,7 +79,7 @@
 #  include <malloc.h>
 #  ifdef WIN32
 #   define malloc_size _msize
-#  elif defined(RPI)
+#  elif defined(YMLINUX)
 #  define malloc_size malloc_usable_size
 #  endif
 # endif

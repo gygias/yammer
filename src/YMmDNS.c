@@ -9,7 +9,7 @@
 #include "YMmDNS.h"
 
 #ifndef WIN32
-# if defined(RPI)
+# if defined(YMLINUX)
 # define __USE_POSIX
 # endif
 #include <netdb.h>

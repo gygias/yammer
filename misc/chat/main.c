@@ -12,7 +12,7 @@
 #ifndef WIN32
 #include <unistd.h>
 #include <pthread.h>
-# if defined(RPI)
+# if defined(YMLINUX)
 # include <signal.h>
 # endif
 #else

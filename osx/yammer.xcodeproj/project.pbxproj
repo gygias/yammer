@@ -208,6 +208,7 @@
 		63476A4E1BEB159C00D10081 /* YMDictionary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMDictionary.h; path = libyammer/YMDictionary.h; sourceTree = "<group>"; };
 		63476A511BEB319000D10081 /* YMSemaphore.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMSemaphore.c; path = src/YMSemaphore.c; sourceTree = "<group>"; };
 		63476A521BEB319000D10081 /* YMSemaphore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMSemaphore.h; path = private/YMSemaphore.h; sourceTree = "<group>"; };
+		634A87491C17A4DB00C7CA99 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; name = Makefile; path = ../linux/Makefile; sourceTree = "<group>"; };
 		637816C31BF680A700BF79E2 /* YMInternal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMInternal.h; path = private/YMInternal.h; sourceTree = "<group>"; };
 		637816C41BF684D300BF79E2 /* YMPlexerPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMPlexerPriv.h; path = private/YMPlexerPriv.h; sourceTree = "<group>"; };
 		637816C51BF68B8F00BF79E2 /* YMString.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMString.c; path = src/YMString.c; sourceTree = "<group>"; };
@@ -348,6 +349,7 @@
 				63DD2E051C0F7C4200D822D1 /* tests */,
 				630A5D011BE96CE9003292EE /* YammerTests */,
 				63312D031BFAF9E600039336 /* chat */,
+				634A87481C17A4C600C7CA99 /* linux */,
 				63957E8D1C137ADE00960961 /* win */,
 				63225D431BE9026200C28F05 /* Products */,
 			);
@@ -464,6 +466,14 @@
 			);
 			name = Private;
 			path = ..;
+			sourceTree = "<group>";
+		};
+		634A87481C17A4C600C7CA99 /* linux */ = {
+			isa = PBXGroup;
+			children = (
+				634A87491C17A4DB00C7CA99 /* Makefile */,
+			);
+			name = linux;
 			sourceTree = "<group>";
 		};
 		63957E8D1C137ADE00960961 /* win */ = {
@@ -952,7 +962,7 @@
 					"DEBUG=1",
 					"$(inherited)",
 				);
-				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = _MACOS;
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = YMMACOS;
 				GCC_TREAT_INCOMPATIBLE_POINTER_TYPE_WARNINGS_AS_ERRORS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
@@ -1010,7 +1020,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = _MACOS;
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = YMMACOS;
 				GCC_TREAT_INCOMPATIBLE_POINTER_TYPE_WARNINGS_AS_ERRORS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;

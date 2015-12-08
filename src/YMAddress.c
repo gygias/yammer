@@ -19,7 +19,7 @@
 #ifndef WIN32
 #include <sys/socket.h>
 #include <netinet/in.h> // protocols
-# if defined (RPI)
+# if defined (YMLINUX)
 # define __USE_MISC
 # endif
 #include <arpa/inet.h>
@@ -121,7 +121,7 @@ YMAddressRef YMAddressCreateLocalHostIPV4(uint16_t port)
     newAddr->sin_family = AF_INET;
     newAddr->sin_addr.s_addr = localhost;
     newAddr->sin_port = htons(port);
-#ifdef _MACOS
+#ifdef YMMACOS
     newAddr->sin_len = length;
 #endif
     
@@ -143,7 +143,7 @@ YMAddressRef YMAddressCreateWithIPStringAndPort(YMStringRef ipString, uint16_t p
     struct sockaddr_in sinAddr;
     bzero(&sinAddr, sizeof(sinAddr));
 	socklen_t addrLen = sizeof(struct sockaddr_in);
-#ifdef _MACOS
+#ifdef YMMACOS
     sinAddr.sin_len = (uint8_t)addrLen;
 #endif
     sinAddr.sin_family = AF_INET;

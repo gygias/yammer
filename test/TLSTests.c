@@ -14,7 +14,7 @@
 #include "YMLocalSocketPair.h"
 #include "YMThread.h"
 
-#if defined (RPI)
+#if defined (YMLINUX)
 #include <signal.h>
 #endif
 

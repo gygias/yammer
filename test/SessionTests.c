@@ -27,7 +27,7 @@ uint64_t gSomeLength = 5678900;
 #define FAKE_DELAY_MAX 3
 
 #ifndef WIN32
-# if defined(_MACOS)
+# if defined(YMMACOS)
 # define ServerTestFile		"install.log"
 # define ServerTestPath		"/private/var/log/" ServerTestFile
 # else
@@ -266,7 +266,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteLargeFile(YM_THREAD_PARAM ctx
     
     uint64_t copyBytes = 0;
     theTest->serverBounding = 
-#if !defined(WIN32) && !defined(RPI) || defined(FOUND_LARGE_WELL_KNOWN_WINDOWS_TEXT_FILE_THATS_BIGGER_THAN_5_MB_TO_USE_FOR_THIS)
+#if !defined(WIN32) && !defined(YMLINUX) || defined(FOUND_LARGE_WELL_KNOWN_WINDOWS_TEXT_FILE_THATS_BIGGER_THAN_5_MB_TO_USE_FOR_THIS)
 		arc4random_uniform(2);
 #else
 		false;

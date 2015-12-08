@@ -71,7 +71,7 @@ void YMDictionaryAdd(YMDictionaryRef dict_, YMDictionaryKey key, YMDictionaryVal
     CHECK_CONSISTENCY
     
     YM_WPPUSH
-#ifdef _MACOS
+#ifdef YMMACOS
     bool full = ( dict->count == MAX_OF(typeof(dict->count)) );
 #else
 	bool full = ( dict->count == ULONG_MAX );

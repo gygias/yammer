@@ -18,7 +18,7 @@ CLANG=clang
 CC=$(GCC)
 INC=-I../ -I../private -I../libyammer
 PT=-pthread
-DEFS=-DRPI
+DEFS=-DYMLINUX
 DBG=-ggdb3
 FLG=-include ../private/yammerpch.h -std=c99 $(DEFS) $(PT) -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast
 

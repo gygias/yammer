@@ -37,9 +37,9 @@ void TaskTestRun(ym_test_assert_func assert, const void *context)
 
 void _TaskUsrBinTrueRun(struct TaskTest *theTest)
 {
-#if defined(_MACOS)
+#if defined(YMMACOS)
 #define SomeTruePath "/usr/bin/true"
-#elif defined(RPI)
+#elif defined(YMLINUX)
 #define SomeTruePath "/bin/true"
 #else
 #error implement me
@@ -68,9 +68,9 @@ void _TaskCatSomeLogRun(struct TaskTest *theTest)
 {
     YMStringRef path = YMSTRC("/bin/cat");
     YMArrayRef args = YMArrayCreate();
-#if defined(_MACOS)
+#if defined(YMMACOS)
 #define SomeLogPath "/var/log/install.log"
-#elif defined(RPI)
+#elif defined(YMLINUX)
 #define SomeLogPath "/var/log/syslog"
 #else
 #error implement me

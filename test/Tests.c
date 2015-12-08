@@ -60,7 +60,7 @@ bool _ym_test_diff_func(__unused const void *ctx, __unused const char *path1, __
 	return true;
 }
 
-#if defined(RPI) || defined(MACOS_TEST_TOOL)
+#if defined(YMLINUX) || defined(MACOS_TEST_TOOL)
 
 int main( __unused int argc, __unused const char *argv[] )
 {

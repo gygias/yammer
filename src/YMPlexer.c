@@ -27,7 +27,7 @@
 #include <sys/select.h>
 #include <sys/time.h>
 #include <pthread.h> // explicit for sigpipe
-# if defined (RPI)
+# if defined (YMLINUX)
 # include <signal.h>
 # endif
 #else

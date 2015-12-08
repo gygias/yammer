@@ -10,7 +10,7 @@
 #define YMLock_h
 
 #ifndef WIN32
-# if defined(RPI)
+# if defined(YMLINUX)
 # define __USE_UNIX98
 # endif
 #include <pthread.h>

@@ -11,7 +11,7 @@
 #include "YMPipePriv.h"
 #include "YMThread.h"
 
-#if defined(RPI)
+#if defined(YMLINUX)
 #include <sys/wait.h>
 #endif
 

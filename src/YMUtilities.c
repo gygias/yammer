@@ -15,14 +15,14 @@
 #define ymlog_type YMLogIO // this file isn't very clearly purposed
 #include "YMLog.h"
 
-#if defined(_MACOS) || defined(RPI)
+#if defined(YMMACOS) || defined(YMLINUX)
 #include <netinet/in.h>
-# if defined(RPI)
+# if defined(YMLINUX)
 # include <sys/resource.h>
 # define __USE_UNIX98
 # endif
 #include <pthread.h>
-# if defined (_MACOS)
+# if defined (YMMACOS)
 # include <sys/time.h>
 # define YM_PORT_MAX IPPORT_HILASTAUTO
 # else
@@ -71,7 +71,7 @@ void YMGetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time)
 {
 	YM_WPPUSH
     
-#ifdef _MACOS
+#ifdef YMMACOS
     time->tv_sec = MAX_OF(typeof(time->tv_sec));
 	time->tv_usec = MAX_OF(typeof(time->tv_usec));
 #else
@@ -199,7 +199,7 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
     uint8_t length = ipv4 ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6);
     struct sockaddr *addr = YMALLOC(length);
     addr->sa_family = ipv4 ? AF_INET : AF_INET6;
-#if defined(_MACOS)
+#if defined(YMMACOS)
     addr->sa_len = length;
 #endif
     if ( ipv4 )

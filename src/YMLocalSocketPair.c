@@ -31,7 +31,7 @@
 #endif
 #include <stddef.h> // offsetof
 
-#if defined(RPI) // __USE_MISC /usr/include/arm-linux-gnueabihf/sys/un.h
+#if defined(YMLINUX) // __USE_MISC /usr/include/arm-linux-gnueabihf/sys/un.h
 # define SUN_LEN(ptr) ((size_t) (((struct sockaddr_un *) 0)->sun_path)	      \
 		      + strlen ((ptr)->sun_path))
 #endif
@@ -74,7 +74,7 @@ void YMLocalSocketPairStop()
         gYMLocalSocketPairAcceptKeepListening = false;
         gYMLocalSocketThreadEnd = true;
         ymlog("local-socket: closing %d",gYMLocalSocketListenSocket);
- #if defined(RPI)
+ #if defined(YMLINUX)
 		result = shutdown(gYMLocalSocketListenSocket,SHUT_RDWR); // on raspian (and from what i read, 'linux') closing the socket will not signal an accept() call
 		ymsoftassert(result==0,"local-socket: warning: shutdown(%d) listen failed: %d (%s)",(int)gYMLocalSocketListenSocket,error,errorStr);
  #endif
@@ -90,9 +90,9 @@ void YMLocalSocketPairStop()
         YMRelease(gYMLocalSocketPairAcceptThread);
         gYMLocalSocketPairAcceptThread = NULL;
         
-#if defined(_MACOS) || defined(RPI)
+#if defined(YMMACOS) || defined(YMLINUX)
 		char *prefix = "";
-//#if defined (_MACOS) // it seems i was confused by XCTest setting cwd to /tmp
+//#if defined (YMMACOS) // it seems i was confused by XCTest setting cwd to /tmp
 //		prefix = "/tmp/";
 //#endif
         YMStringRef tmpPath = YMSTRCF("%s%s",prefix,YMSTR(gYMLocalSocketPairName));

@@ -23,7 +23,7 @@
 #include "YMLog.h"
 
 #ifndef WIN32
-# if defined(RPI)
+# if defined(YMLINUX)
 # define __USE_POSIX
 # include <sys/socket.h>
 # endif
