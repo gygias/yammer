@@ -126,7 +126,7 @@ void __YMPipeCloseFile(__YMPipeRef pipe, YMFILE *fdPtr)
         int result, error = 0;
         const char *errorStr = NULL;
         
-        ymerr("   pipe[%s]: closing f%d",YMSTR(pipe->name),fd);
+        ymlog("   pipe[%s]: closing f%d",YMSTR(pipe->name),fd);
 		YM_CLOSE_FILE(fd);
 
         if ( result != 0 )

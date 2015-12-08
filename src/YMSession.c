@@ -811,7 +811,7 @@ void __ym_session_connection_interrupted_proc(YMConnectionRef connection, void *
     
     bool isDefault = ( connection == session->defaultConnection );
     
-    ymerr("session[%s]: connection interrupted: %s",YMSTR(session->logDescription),YMSTR(YMAddressGetDescription(YMConnectionGetAddress(connection))));
+	    ymerr("session[%s]: connection interrupted: %s",YMSTR(session->logDescription),YMSTR(YMAddressGetDescription(YMConnectionGetAddress(connection))));
     
     if ( isDefault )
     {
