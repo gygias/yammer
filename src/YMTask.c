@@ -91,7 +91,7 @@ bool YMTaskLaunch(YMTaskRef task_)
         int64_t argsSize = task->args ? YMArrayGetCount(task->args) : 0;
         ymerr("task[%s]: execv %lld args...",YMSTR(task->path),argsSize);
         
-        const char **args = malloc(argsSize*sizeof(char *) + 1);
+        const char **args = malloc((argsSize + 1)*sizeof(char *));
         args[0] = YMSTR(task->path);
         for(int64_t i = 1; i < argsSize + 1; i++) {
             args[i] = YMArrayGet(task->args, i - 1);
