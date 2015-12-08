@@ -13,7 +13,7 @@
 #define ymlog_type YMLogDefault
 #endif
 #ifndef ymlog_target
-#define ymlog_target ( YMLogSecurity | YMLogConnection | YMLogmDNS )
+#define ymlog_target ( YMLogSecurity | YMLogConnection | YMLogSession | YMLogmDNS )
 #endif
 #ifndef ymlog_type_debug
 #define ymlog_type_debug YMLogNothing

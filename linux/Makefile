@@ -26,7 +26,7 @@ LLIBS=-lssl -lcrypto -ldns_sd
 DLIBS=-L. -lyammer
 
 
-all: $(OUT) $(TGT) test chat
+all: $(OUT) $(TGT) ymtest ymchat
 
 clean:
 	rm -r "$(OUT)"
@@ -39,14 +39,14 @@ $(LTGT): $(LOBJ)
 
 %.o: ../src/%.c
 	$(CC) -c $< -o $(OUT)/$@ $(INC) $(FLG) $(DBG)
-	
+
 %.o: ../test/%.c
 	$(CC) -c $< -o $(OUT)/$@ $(INC) $(FLG) $(DBG)
-	
-test: $(LTGT) $(TOBJ)
+
+ymtest: $(LTGT) $(TOBJ)
 	cd $(OUT) ;	$(CC) -o $@ $(PT) $(TDEP) $(DLIBS) $(DBG)
 
-chat: $(LTGT) chat.o
+ymchat: $(LTGT) chat.o
 	cd $(OUT) ; $(CC) -o $@ $(PT) chat.o $(DLIBS) $(DBG)
 
 chat.o:
