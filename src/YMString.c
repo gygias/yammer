@@ -24,27 +24,6 @@ typedef struct __ym_string
 typedef struct __ym_string __YMString;
 typedef __YMString *__YMStringRef;
 
-// this torturous thing is so that we have one implementation, as far as i know you can't 'forward' vargs to another function call
-#define __YMStringCreateFormat \
-                        va_list formatArgs2,formatArgs; \
-                        va_start(formatArgs2,format); \
-                        va_copy(formatArgs,formatArgs2); \
-                        int length = vsnprintf(NULL, 0, format, formatArgs2) + 1; \
-                        \
-                        char *newStr = NULL; \
-                        if ( length == 0 ) \
-                            newStr = ""; \
-                        else if ( length < 0 ) \
-                            ymerr("snprintf failed on format: %s", format); \
-                        else \
-                        { \
-                            newStr = (char *)YMALLOC(length); \
-                            vsnprintf(newStr, length, format, formatArgs); \
-                            va_end(formatArgs); \
-                        } \
-                         \
-                        va_end(formatArgs2); \
-
 YMStringRef __YMStringCreate(const char *allocdString, size_t length);
 
 YMStringRef YMStringCreate()
@@ -87,7 +66,23 @@ YMStringRef YMStringCreateByAppendingString(YMStringRef base, YMStringRef append
 
 YMStringRef YMStringCreateWithFormat(const char *format,...)
 {
-    __YMStringCreateFormat;
+    va_list formatArgs2,formatArgs;
+    va_start(formatArgs2,format);
+    va_copy(formatArgs,formatArgs2);
+    int length = vsnprintf(NULL, 0, format, formatArgs2) + 1;
+    
+    char *newStr = NULL;
+    if ( length == 0 )
+        newStr = "";
+    else if ( length < 0 )
+        ymerr("snprintf failed on format: %s", format);
+    else
+    {
+        newStr = (char *)YMALLOC(length);
+        vsnprintf(newStr, length, format, formatArgs);
+        va_end(formatArgs);
+    }    
+    va_end(formatArgs2);
     return __YMStringCreate(newStr, length - 1);
 }
 

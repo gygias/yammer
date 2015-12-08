@@ -146,7 +146,12 @@ void YMTaskWait(YMTaskRef task_)
     do {
         result = waitpid(task->childPid, &stat_loc, 0);
     } while ( result != task->childPid );
-    ymlog("task[%s]: p%d exited with %d", YMSTR(task->path), task->childPid, stat_loc);
+    if ( WIFEXITED(result) )
+        ymlog("task[%s]: p%d exited with %d", YMSTR(task->path), task->childPid, stat_loc)
+    else if ( WIFSIGNALED(result) )
+        ymlog("task[%s]: p%d exited abnormally with %d", YMSTR(task->path), task->childPid, stat_loc)
+    else
+        ymlog("task[%s]: p%d unknown exit status %d", YMSTR(task->path), task->childPid, stat_loc)
     task->result = stat_loc;
     task->exited = true;
 }
