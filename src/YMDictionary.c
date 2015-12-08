@@ -295,4 +295,19 @@ _YMDictionaryItemRef _YMDictionaryCopyItem(_YMDictionaryItemRef item)
     return itemCopy;
 }
 
+void _YMDictionaryShift(YMDictionaryRef dict_, int64_t baseIdx)
+{
+    __YMDictionaryRef dict = (__YMDictionaryRef)dict_;
+    CHECK_CONSISTENCY
+    
+    _YMDictionaryItemRef iter = dict->head;
+    
+    while ( iter )
+    {
+        if ( iter->key >= (uint64_t)baseIdx )
+            iter->key++;
+        iter = iter->next;
+    }
+}
+
 YM_EXTERN_C_POP

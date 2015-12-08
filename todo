@@ -1,3 +1,4 @@
+- YM_ONCE_DEF-like macro for generic thread boilerplate
 - shared dispatch queues
 - adopt spinlocks where appropriate
 - generalize copy file / recursive delete dir into utilities, or something

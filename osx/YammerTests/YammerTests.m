@@ -8,6 +8,7 @@
 
 #import <XCTest/XCTest.h>
 
+#import "TaskTests.h"
 #import "DictionaryTests.h"
 #import "CryptoTests.h"
 #import "LocalSocketPairTests.h"
@@ -106,13 +107,19 @@ bool ym_test_diff_proc(const void *ctx, const char *path1, const char *path2, bo
 }
 
 // this is the best way of ordering XCTestCase classes that i could find, at the time
-#define testDictionary          test_B_Dictionary
-#define testCrypto              test_C_Crypto
-#define testLocalSocketPair     test_D_LocalSocketPair
-#define testmDNS                test_E_mDNS
-#define testTLS                 test_F_TLS
-#define testPlexer              test_G_Plexer
-#define testSession             test_H_Session
+#define testTask                test_B_Task
+#define testDictionary          test_C_Dictionary
+#define testCrypto              test_D_Crypto
+#define testLocalSocketPair     test_E_LocalSocketPair
+#define testmDNS                test_F_mDNS
+#define testTLS                 test_G_TLS
+#define testPlexer              test_H_Plexer
+#define testSession             test_I_Session
+
+- (void)testTask {
+    const void *SELF = (__bridge const void *)(self);
+    TaskTestRun(ym_test_assert_proc, SELF);
+}
 
 - (void)testDictionary {
     const void *SELF = (__bridge const void *)(self);

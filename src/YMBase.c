@@ -13,8 +13,10 @@
 YM_EXTERN_C_PUSH
 
 YMTypeID _YMAddressTypeID = 'a';
+YMTypeID _YMArrayTypeID = 'A';
 YMTypeID _YMmDNSBrowserTypeID = 'b';
 YMTypeID _YMConnectionTypeID = 'c';
+YMTypeID _YMTaskTypeID = 'f';
 YMTypeID _YMPipeTypeID = 'i';
 YMTypeID _YMLockTypeID = 'k';
 YMTypeID _YMRSAKeyPairTypeID = 'K';
@@ -53,6 +55,8 @@ extern void _YMLocalSocketPairFree(YMTypeRef);
 extern void _YMAddressFree(YMTypeRef);
 extern void _YMPeerFree(YMTypeRef);
 extern void _YMStringFree(YMTypeRef);
+extern void _YMTaskFree(YMTypeRef);
+extern void _YMArrayFree(YMTypeRef);
 
 typedef struct __ym_type
 {
@@ -172,6 +176,10 @@ void __YMFree(__YMTypeRef object)
         _YMPeerFree(object);
     else if ( type == _YMStringTypeID )
         _YMStringFree(object);
+    else if ( type == _YMTaskTypeID )
+        _YMTaskFree(object);
+    else if ( type == _YMArrayTypeID )
+        _YMArrayFree(object);
     else
         ymabort("base: fatal: free type unknown %c",type);
 }

@@ -14,6 +14,7 @@
 
 YM_EXTERN_C_PUSH
 
+#include "TaskTests.h"
 #include "CryptoTests.h"
 #include "DictionaryTests.h"
 #include "LocalSocketPairTests.h"
@@ -76,8 +77,11 @@ int main( __unused int argc, __unused const char *argv[] )
 
 void RunAllTests()
 {
-	gLock = YMLockCreate();
-
+    gLock = YMLockCreate();
+    
+    ymerr("------ task test start ------");
+    TaskTestRun(_ym_test_assert_func, NULL);
+    ymerr("------ task test end ------");
 	ymerr("------ dictionary test start ------");
 	DictionaryTestRun(_ym_test_assert_func, NULL);
 	ymerr("------ dictionary test end ------");

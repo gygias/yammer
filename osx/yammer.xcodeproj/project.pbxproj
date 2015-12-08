@@ -76,6 +76,10 @@
 		637E3D5E1BF262EE00D702ED /* YMX509Certificate.h in Headers */ = {isa = PBXBuildFile; fileRef = 637E3D5C1BF262EE00D702ED /* YMX509Certificate.h */; };
 		638E1D661C098AF900BA2FA4 /* libcrypto.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 638E1D651C098AF900BA2FA4 /* libcrypto.tbd */; };
 		63957E8F1C137AFB00960961 /* dirent.h in Headers */ = {isa = PBXBuildFile; fileRef = 63957E8E1C137AFB00960961 /* dirent.h */; };
+		63BA70A21C17493600210D2E /* YMTask.c in Sources */ = {isa = PBXBuildFile; fileRef = 63BA70A11C17493600210D2E /* YMTask.c */; };
+		63BA70A51C174A9900210D2E /* YMArray.c in Sources */ = {isa = PBXBuildFile; fileRef = 63BA70A41C174A9900210D2E /* YMArray.c */; };
+		63BA70AA1C17612600210D2E /* TaskTests.c in Sources */ = {isa = PBXBuildFile; fileRef = 63BA70A81C17612600210D2E /* TaskTests.c */; };
+		63BA70AB1C17612600210D2E /* TaskTests.c in Sources */ = {isa = PBXBuildFile; fileRef = 63BA70A81C17612600210D2E /* TaskTests.c */; };
 		63BD75CE1BF3F0E700D01F70 /* YMLocalSocketPair.c in Sources */ = {isa = PBXBuildFile; fileRef = 63BD75CC1BF3F0E700D01F70 /* YMLocalSocketPair.c */; };
 		63BD75CF1BF3F0E700D01F70 /* YMLocalSocketPair.h in Headers */ = {isa = PBXBuildFile; fileRef = 63BD75CD1BF3F0E700D01F70 /* YMLocalSocketPair.h */; };
 		63DD2E081C0F7D2D00D822D1 /* DictionaryTests.c in Sources */ = {isa = PBXBuildFile; fileRef = 63DD2E061C0F7D2D00D822D1 /* DictionaryTests.c */; };
@@ -216,6 +220,13 @@
 		63957E8E1C137AFB00960961 /* dirent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dirent.h; path = ../win/dirent.h; sourceTree = "<group>"; };
 		63957E901C137B1B00960961 /* tests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = tests.cpp; path = ../win/tests/tests.cpp; sourceTree = "<group>"; };
 		63A40EF81BEC239C0085ABD0 /* YMThreadPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMThreadPriv.h; path = private/YMThreadPriv.h; sourceTree = "<group>"; };
+		63BA70A11C17493600210D2E /* YMTask.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMTask.c; path = src/YMTask.c; sourceTree = "<group>"; };
+		63BA70A31C17494700210D2E /* YMTask.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMTask.h; path = private/YMTask.h; sourceTree = "<group>"; };
+		63BA70A41C174A9900210D2E /* YMArray.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMArray.c; path = src/YMArray.c; sourceTree = "<group>"; };
+		63BA70A61C174AA700210D2E /* YMArray.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMArray.h; path = private/YMArray.h; sourceTree = "<group>"; };
+		63BA70A71C17522400210D2E /* YMDictionaryPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMDictionaryPriv.h; path = private/YMDictionaryPriv.h; sourceTree = "<group>"; };
+		63BA70A81C17612600210D2E /* TaskTests.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = TaskTests.c; sourceTree = "<group>"; };
+		63BA70A91C17612600210D2E /* TaskTests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TaskTests.h; sourceTree = "<group>"; };
 		63BD75CC1BF3F0E700D01F70 /* YMLocalSocketPair.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMLocalSocketPair.c; path = src/YMLocalSocketPair.c; sourceTree = "<group>"; };
 		63BD75CD1BF3F0E700D01F70 /* YMLocalSocketPair.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMLocalSocketPair.h; path = private/YMLocalSocketPair.h; sourceTree = "<group>"; };
 		63DD2E061C0F7D2D00D822D1 /* DictionaryTests.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = DictionaryTests.c; path = ../test/DictionaryTests.c; sourceTree = "<group>"; };
@@ -406,6 +417,7 @@
 				637E3D621BF2D12100D702ED /* YMSecurityProviderInternal.h */,
 				6307F77D1BECA44A009C64CD /* YMStreamPriv.h */,
 				63344DDD1BF935730049712F /* YMConnectionPriv.h */,
+				63BA70A71C17522400210D2E /* YMDictionaryPriv.h */,
 				63225D621BE90A6400C28F05 /* YMSecurityProvider.c */,
 				630A5CE81BE93BEF003292EE /* YMTLSProvider.h */,
 				630A5CE71BE93BEF003292EE /* YMTLSProvider.c */,
@@ -445,6 +457,10 @@
 				63476A511BEB319000D10081 /* YMSemaphore.c */,
 				63BD75CD1BF3F0E700D01F70 /* YMLocalSocketPair.h */,
 				63BD75CC1BF3F0E700D01F70 /* YMLocalSocketPair.c */,
+				63BA70A31C17494700210D2E /* YMTask.h */,
+				63BA70A11C17493600210D2E /* YMTask.c */,
+				63BA70A61C174AA700210D2E /* YMArray.h */,
+				63BA70A41C174A9900210D2E /* YMArray.c */,
 			);
 			name = Private;
 			path = ..;
@@ -478,6 +494,8 @@
 				63DD2E1A1C0FC0F600D822D1 /* PlexerTests.c */,
 				63DD2E1E1C0FE41F00D822D1 /* SessionTests.h */,
 				63DD2E1D1C0FE41F00D822D1 /* SessionTests.c */,
+				63BA70A91C17612600210D2E /* TaskTests.h */,
+				63BA70A81C17612600210D2E /* TaskTests.c */,
 			);
 			name = tests;
 			path = ../test;
@@ -700,6 +718,7 @@
 				63DD2E1C1C0FC0F600D822D1 /* PlexerTests.c in Sources */,
 				63DD2E191C0FB45D00D822D1 /* TLSTests.c in Sources */,
 				63DD2E101C0F988700D822D1 /* CryptoTests.c in Sources */,
+				63BA70AA1C17612600210D2E /* TaskTests.c in Sources */,
 				63028B0F1C013D120075B6AC /* CheckStateTest.m in Sources */,
 				63DD2E1F1C0FE41F00D822D1 /* SessionTests.c in Sources */,
 			);
@@ -725,6 +744,7 @@
 				631F0D3B1C141F1700C141D4 /* DictionaryTests.c in Sources */,
 				631F0D3C1C141F1700C141D4 /* LocalSocketPairTests.c in Sources */,
 				631F0D3D1C141F1700C141D4 /* mDNSTests.c in Sources */,
+				63BA70AB1C17612600210D2E /* TaskTests.c in Sources */,
 				631F0D3E1C141F1700C141D4 /* TLSTests.c in Sources */,
 				631F0D3F1C141F1700C141D4 /* PlexerTests.c in Sources */,
 				631F0D401C141F1700C141D4 /* SessionTests.c in Sources */,
@@ -744,6 +764,7 @@
 				63FD5B5A1BF1899800174824 /* YMRSAKeyPair.c in Sources */,
 				6335CAC51BF480DC00412CC9 /* YMPeer.c in Sources */,
 				630A5D161BE9777C003292EE /* YMmDNSBrowser.c in Sources */,
+				63BA70A51C174A9900210D2E /* YMArray.c in Sources */,
 				63225D691BE9184000C28F05 /* YMUtilities.c in Sources */,
 				63476A531BEB319000D10081 /* YMSemaphore.c in Sources */,
 				63476A441BEAF4DB00D10081 /* YMLock.c in Sources */,
@@ -757,6 +778,7 @@
 				630A5CF61BE9518A003292EE /* YMSession.c in Sources */,
 				630A5CE91BE93BEF003292EE /* YMTLSProvider.c in Sources */,
 				63225D641BE90A6400C28F05 /* YMSecurityProvider.c in Sources */,
+				63BA70A21C17493600210D2E /* YMTask.c in Sources */,
 				63476A4F1BEB159C00D10081 /* YMDictionary.c in Sources */,
 				63225D5C1BE9092500C28F05 /* YMStream.c in Sources */,
 			);

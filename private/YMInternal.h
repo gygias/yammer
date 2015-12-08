@@ -87,6 +87,8 @@ extern YMTypeID _YMLocalSocketPairTypeID;
 extern YMTypeID _YMAddressTypeID;
 extern YMTypeID _YMPeerTypeID;
 extern YMTypeID _YMStringTypeID;
+extern YMTypeID _YMTaskTypeID;
+extern YMTypeID _YMArrayTypeID;
 
 typedef bool (*ym_read_func)(int,const uint8_t*,size_t);
 typedef bool (*ym_write_func)(int,const uint8_t*,size_t);

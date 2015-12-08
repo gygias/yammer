@@ -11,6 +11,8 @@
 
 YM_EXTERN_C_PUSH
 
+#include "YMPipe.h"
+
 void YMAPI _YMPipeCloseInputFile(YMPipeRef pipe);
 
 YM_EXTERN_C_POP
