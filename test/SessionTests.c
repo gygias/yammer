@@ -64,6 +64,8 @@ struct SessionTest
     uint64_t nSparseFilesToRead;
     uint64_t nSparseFilesRead;
     
+    YMThreadRef incomingDispatch;
+    
     YMDictionaryRef nonRegularFileNames;
     YMStringRef tempServerSrc;
     YMStringRef tempServerDst;
@@ -87,8 +89,8 @@ void _TestSessionWritingLargeAndReadingSparseFiles(struct SessionTest *theTest);
 YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteLargeFile(YM_THREAD_PARAM);
 YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteSparseFiles(YM_THREAD_PARAM);
 YM_THREAD_RETURN YM_CALLING_CONVENTION _FlushMiddleman(YM_THREAD_PARAM);
-YM_THREAD_RETURN YM_CALLING_CONVENTION _EatLargeFile(YM_THREAD_PARAM);
-YM_THREAD_RETURN YM_CALLING_CONVENTION _EatASparseFile(YM_THREAD_PARAM);
+void YM_CALLING_CONVENTION _EatLargeFile(ym_thread_dispatch_ref);
+void YM_CALLING_CONVENTION _EatASparseFile(ym_thread_dispatch_ref);
 void _AsyncForwardCallback(struct SessionTest *theTest, YMConnectionRef connection, YMStreamRef stream, YMIOResult result, uint64_t bytesWritten, bool isServer);
 
 void SessionTestRun(ym_test_assert_func assert, ym_test_diff_func diff, const void *context)
@@ -97,9 +99,12 @@ void SessionTestRun(ym_test_assert_func assert, ym_test_diff_func diff, const vo
     struct SessionTest theTest = {  assert, diff, context,
                                     NULL, NULL, YMSTRC("_ymtest._tcp"), YMSTRCF("twitter-cliche:%s", suffix),
                                     NULL, NULL, false, false, false, false, NULL, NULL_FILE, 0, UINT64_MAX, 0,
+                                    YMThreadDispatchCreate(NULL),
                                     YMDictionaryCreate(), NULL, NULL, YMSTRC(OutSparseDir),
                                     YMSemaphoreCreate(0), YMSemaphoreCreate(0), false };
     free(suffix);
+    
+    YMThreadStart(theTest.incomingDispatch);
     
     ymerr(" Session test: '%s'",YMSTR(theTest.testName));
     _TestSessionWritingLargeAndReadingSparseFiles(&theTest);
@@ -119,6 +124,9 @@ void SessionTestRun(ym_test_assert_func assert, ym_test_diff_func diff, const vo
     YMRelease(theTest.tempSparseDir);
     YMRelease(theTest.connectAndAsyncClientCallbackSemaphore);
     YMRelease(theTest.threadExitSemaphore);
+    
+    //YMThreadJoin(theTest.incomingDispatch);
+    YMRelease(theTest.incomingDispatch);
 }
 
 void _server_async_forward_callback(YMConnectionRef connection, YMStreamRef stream, YMIOResult result, uint64_t bytesWritten, void * ctx);
@@ -514,9 +522,9 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteSparseFiles(YM_THREAD_PARAM c
 	YM_THREAD_END
 }
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION _EatASparseFile(YM_THREAD_PARAM ctx_)
+void YM_CALLING_CONVENTION _EatASparseFile(ym_thread_dispatch_ref ctx_)
 {
-	struct TestConnectionStream *ctx = ctx_;
+	struct TestConnectionStream *ctx = ctx_->context;
     struct SessionTest *theTest = ctx->theTest;
 
 	int result, error = 0;
@@ -570,14 +578,12 @@ catch_release:
     
     YMRelease(connection);
     YMRelease(stream);
-    free(ctx);
-
-	YM_THREAD_END
+    //free(ctx);
 }
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION _EatLargeFile(YM_THREAD_PARAM ctx_)
+void YM_CALLING_CONVENTION _EatLargeFile(ym_thread_dispatch_ref ctx_)
 {
-	struct TestConnectionStream *ctx = ctx_;
+	struct TestConnectionStream *ctx = ctx_->context;
     struct SessionTest *theTest = ctx->theTest;
 
 	int result, error = 0;
@@ -614,9 +620,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _EatLargeFile(YM_THREAD_PARAM ctx_)
     
     YMRelease(connection);
     YMRelease(stream);
-    free(ctx);
-
-	YM_THREAD_END
+    //free(ctx);
 }
 
 void _server_async_forward_callback(YMConnectionRef connection, YMStreamRef stream, YMIOResult result, uint64_t bytesWritten, void * ctx)
@@ -795,8 +799,9 @@ void _ym_session_new_stream_func(YMSessionRef session, YMConnectionRef connectio
     ctx->theTest = theTest;
     ctx->connection = YMRetain(connection);
     ctx->stream = YMRetain(stream);
-    YMThreadRef handleThread = YMThreadCreate(NULL, (isServer ? _EatASparseFile : _EatLargeFile), ctx);
-    YMThreadStart(handleThread);
+    
+    struct ym_thread_dispatch_t dispatch = { (isServer ? _EatASparseFile : _EatLargeFile), NULL, true, ctx, NULL };
+    YMThreadDispatchDispatch(theTest->incomingDispatch, dispatch);
 }
 
 void _ym_session_stream_closing_func(YMSessionRef session, YMConnectionRef connection, YMStreamRef stream, void *context)

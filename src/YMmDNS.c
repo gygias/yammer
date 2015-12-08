@@ -100,6 +100,7 @@ YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*typ
 		}
         
         free(noDomain);
+        noDomain = NULL;
     }
     
     if ( txtRecord && txtLength > 1 )
@@ -289,6 +290,9 @@ unsigned char  *_YMmDNSTxtBlobCreate(YMmDNSTxtRecordKeyPair **keyPairList, uint1
     }
     
     *inSizeOutLength = (uint16_t)blobSize;
+    
+    if ( blobSize == 0 )
+        return NULL;
     
     unsigned char *txtBlob = YMALLOC(blobSize);
     size_t off = 0;

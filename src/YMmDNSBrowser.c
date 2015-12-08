@@ -343,7 +343,6 @@ YMmDNSServiceRecord *__YMmDNSBrowserAddOrUpdateService(__YMmDNSBrowserRef browse
     }
     
     // add
-    aListItem = browser->serviceList;
     YMmDNSServiceList *newItem = (YMmDNSServiceList *)YMALLOC(sizeof(YMmDNSServiceList));
     newItem->service = record;
     newItem->next = browser->serviceList;

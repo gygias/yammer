@@ -611,7 +611,6 @@ YMStreamRef __YMPlexerRetainReadyStream(__YMPlexerRef plexer)
     YMTypeRef *list[] = { (YMTypeRef[]) { plexer->localAccessLock, plexer->localStreamsByID },
         (YMTypeRef[]) { plexer->remoteAccessLock, plexer->remoteStreamsByID } };
     
-    int streamIdx;
     int listIdx = 0;
     for( ; listIdx < __YMListMax; listIdx++ )
     {
@@ -620,7 +619,6 @@ YMStreamRef __YMPlexerRetainReadyStream(__YMPlexerRef plexer)
         
         YMLockLock(aLock);
         {
-            streamIdx = 0;
             YMDictionaryEnumRef aStreamsEnum = YMDictionaryEnumeratorBegin(aStreamsById);
             YMDictionaryEnumRef aStreamsEnumPrev = NULL;
             while ( aStreamsEnum )

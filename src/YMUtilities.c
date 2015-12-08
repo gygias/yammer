@@ -370,6 +370,7 @@ pthread_mutex_t *YMCreateMutexWithOptions(YMLockOptions options)
     {
         fprintf(stdout,"pthread_mutex_init failed: %d (%s)", result, strerror(result));
         free(mutex);
+        mutex = NULL;
     }
     
 catch_release:
