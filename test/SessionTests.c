@@ -27,8 +27,13 @@ uint64_t gSomeLength = 5678900;
 #define FAKE_DELAY_MAX 3
 
 #ifndef WIN32
-#define ServerTestFile		"install.log"
-#define ServerTestPath		"/private/var/log/" ServerTestFile
+# if defined(_MACOS)
+# define ServerTestFile		"install.log"
+# define ServerTestPath		"/private/var/log/" ServerTestFile
+# else
+# define ServerTestFile          "syslog"
+# define ServerTestPath          "/var/log/" ServerTestFile
+# endif
 #define ClientSparsePath	"/usr/share/man/man2"
 #define OutSparseDir		"/tmp/ymsessiontest-sparse"
 #define LargeSrcTemplate	"/tmp/ymsessiontest-%s-orig"
@@ -261,7 +266,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteLargeFile(YM_THREAD_PARAM ctx
     
     uint64_t copyBytes = 0;
     theTest->serverBounding = 
-#if !defined(WIN32) || defined(FOUND_LARGE_WELL_KNOWN_WINDOWS_TEXT_FILE_THATS_BIGGER_THAN_5_MB_TO_USE_FOR_THIS)
+#if !defined(WIN32) && !defined(RPI) || defined(FOUND_LARGE_WELL_KNOWN_WINDOWS_TEXT_FILE_THATS_BIGGER_THAN_5_MB_TO_USE_FOR_THIS)
 		arc4random_uniform(2);
 #else
 		false;
