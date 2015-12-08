@@ -88,21 +88,25 @@ bool YMTaskLaunch(YMTaskRef task_)
             YMRelease(task->outputPipe); // closes in and out
         }
         
-        int64_t argsSize = task->args ? YMArrayGetCount(task->args) : 0;
-        ymerr("task[%s]: execv %lld args...",YMSTR(task->path),argsSize);
+        int64_t nArgs = task->args ? YMArrayGetCount(task->args) : 0;
+        ymerr("task[%s]: execv %lld args...",YMSTR(task->path),nArgs);
         
-        const char **args = malloc((argsSize + 1)*sizeof(char *));
-        args[0] = YMSTR(task->path);
-        for(int64_t i = 1; i < argsSize + 1; i++) {
-            args[i] = YMArrayGet(task->args, i - 1);
-            ymerr("arg[%lld]: %s",i,args[i]);
+        int64_t argvSize = nArgs + 2;
+        const char **argv = malloc(argvSize*sizeof(char *));
+        
+        argv[0] = YMSTR(task->path);
+        argv[argvSize - 1] = NULL;
+        
+        for(int64_t i = 0; i < nArgs; i++) {
+            argv[i + 1] = YMArrayGet(task->args, i);
+            ymerr("arg[%lld]: %s",i + 1,argv[i + 1]);
         }
-        execv(args[0], (char * const *)args);
+        execv(argv[0], (char * const *)argv);
         ymerr("task[%s]: execv failed: %d %s",YMSTR(task->path),errno,strerror(errno));
         exit(EXIT_FAILURE);
     }
     
-    ymlog("task[%s]: forked: %d",YMSTR(task->path) ,pid);
+    ymlog("task[%s]: forked: p%d",YMSTR(task->path) ,pid);
     task->childPid = pid;
     
     return true;
@@ -116,6 +120,7 @@ void YMTaskWait(YMTaskRef task_)
     do {
         result = waitpid(task->childPid, &stat_loc, 0);
     } while ( result != task->childPid );
+    ymlog("task[%s]: p%d exited with %d", YMSTR(task->path), task->childPid, stat_loc);
     task->result = stat_loc;
     task->exited = true;
 }
