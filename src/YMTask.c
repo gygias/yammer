@@ -91,7 +91,6 @@ bool YMTaskLaunch(YMTaskRef task_)
         task->outputPipe = YMPipeCreate(NULL);
         ymlog("task[%s]: output pipe %d -> %d",YMSTR(task->path),YMPipeGetInputFile(task->outputPipe),YMPipeGetOutputFile(task->outputPipe));
         task->outputThread = YMThreadCreate(task->path, __ym_task_read_output_proc, YMRetain(task));
-        YMThreadStart(task->outputThread);
     }
     
     YM_ONCE_DO(gYMTaskOnce, __YMTaskRegisterAtfork);
@@ -130,6 +129,9 @@ bool YMTaskLaunch(YMTaskRef task_)
         exit(EXIT_FAILURE);
     }
     _YMLogUnlock();
+    
+    if ( task->save )
+        YMThreadStart(task->outputThread);
     
     ymlog("task[%s]: forked: p%d",YMSTR(task->path) ,pid);
     task->childPid = pid;
