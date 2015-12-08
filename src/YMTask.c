@@ -103,7 +103,6 @@ bool YMTaskLaunch(YMTaskRef task_)
         _YMLogUnlock();
         
         int64_t nArgs = task->args ? YMArrayGetCount(task->args) : 0;
-        fprintf(stderr,"task[%s]: execv %lld args...",YMSTR(task->path),nArgs);
         
         int64_t argvSize = nArgs + 2;
         const char **argv = malloc(argvSize*sizeof(char *));
