@@ -3,12 +3,13 @@ OUT=out
 LSRC=YMAddress.c YMBase.c YMConnection.c YMDictionary.c YMLinkedList.c YMLocalSocketPair.c YMLock.c YMLog.c YMmDNS.c \
 				 YMmDNSBrowser.c YMmDNSService.c YMPeer.c YMPipe.c YMPlexer.c YMRSAKeyPair.c YMSecurityProvider.c \
 				 YMSemaphore.c YMSession.c YMStream.c YMString.c YMThread.c YMTLSProvider.c YMUtilities.c \
-				 YMX509Certificate.c arc4random.c
+				 YMX509Certificate.c YMTask.c YMArray.c arc4random.c
 LOBJ=$(LSRC:%.c=%.o)
 LDEP=$(LOBJ:%.o=$(OUT)/%.o)
 LTGT=libyammer.a
 
-TSRC=CryptoTests.c DictionaryTests.c LocalSocketPairTests.c mDNSTests.c PlexerTests.c SessionTests.c Tests.c TLSTests.c
+TSRC=CryptoTests.c DictionaryTests.c LocalSocketPairTests.c mDNSTests.c PlexerTests.c SessionTests.c Tests.c TLSTests.c \
+	TaskTests.c
 TOBJ=$(TSRC:%.c=%.o)
 TDEP=$(TOBJ:%.o=%.o)
 

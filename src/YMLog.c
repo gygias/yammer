@@ -27,9 +27,7 @@ static char *gTimeFormatBuf = NULL;
 
 YM_ONCE_FUNC(__YMLogInit,
 {
-    YMStringRef name = YMSTRC("ymlog");
-    gYMLogLock = YMLockCreateWithOptionsAndName(YMLockRecursive,name);
-    YMRelease(name);
+    gYMLogLock = YMLockCreate();
     gTimeFormatBuf = YMALLOC(gTimeFormatBufLen);
 })
 
@@ -65,5 +63,8 @@ void __YMLogType( int level, char* format, ... )
     }
     YMLockUnlock(gYMLogLock);
 }
+
+void _YMLogLock() { YMLockLock(gYMLogLock); }
+void _YMLogUnlock() { YMLockUnlock(gYMLogLock); }
 
 YM_EXTERN_C_POP

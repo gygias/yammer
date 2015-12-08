@@ -37,7 +37,15 @@ void TaskTestRun(ym_test_assert_func assert, const void *context)
 
 void _TaskUsrBinTrueRun(struct TaskTest *theTest)
 {
-    YMStringRef path = YMSTRC("/usr/bin/true");
+#if defined(_MACOS)
+#define SomeTruePath "/usr/bin/true"
+#elif defined(RPI)
+#define SomeTruePath "/bin/true"
+#else
+#error implement me
+#endif
+    
+    YMStringRef path = YMSTRC(SomeTruePath);
     YMArrayRef args = NULL;
     
     YMTaskRef task = YMTaskCreate(path, args, false);
@@ -50,7 +58,7 @@ void _TaskUsrBinTrueRun(struct TaskTest *theTest)
     
     uint32_t len = 0;
     unsigned char *output = YMTaskGetOutput(task, &len);
-    testassert(!output&&len==0,"true output");
+    testassert(!output&&len==0,"true output exists");
     
     YMRelease(path);
     YMRelease(task);
@@ -60,7 +68,14 @@ void _TaskCatSomeLogRun(struct TaskTest *theTest)
 {
     YMStringRef path = YMSTRC("/bin/cat");
     YMArrayRef args = YMArrayCreate();
-    YMArrayAdd(args, "/var/log/install.log");
+#if defined(_MACOS)
+#define SomeLogPath "/var/log/install.log"
+#elif defined(RPI)
+#define SomeLogPath "/var/log/syslog"
+#else
+#error implement me
+#endif
+    YMArrayAdd(args, SomeLogPath);
     
     YMTaskRef task = YMTaskCreate(path, args, true);
     testassert(task, "create task");
@@ -74,7 +89,7 @@ void _TaskCatSomeLogRun(struct TaskTest *theTest)
     unsigned char *output = YMTaskGetOutput(task, &len);
     testassert(output&&len>0,"output");
     
-    ymlog("%s",output);
+    ymlog(">>>>> %s output:\n%s\n<<<<< %s output",YMSTR(path),output,YMSTR(path));
     
     YMRelease(args);
     YMRelease(path);
@@ -100,7 +115,7 @@ void _TaskOpensslRun(struct TaskTest *theTest)
     unsigned char *output = YMTaskGetOutput(task, &len);
     testassert(output&&len>0,"openssl output");
     
-    ymlog("%s",output);
+    ymlog(">>>>> %s output:\n%s\n<<<<< %s output",YMSTR(path),output,YMSTR(path));
     
     YMRelease(args);
     YMRelease(path);

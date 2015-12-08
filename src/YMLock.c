@@ -54,9 +54,7 @@ void YMLockLock(YMLockRef lock_)
     __YMLockRef lock = (__YMLockRef)lock_;
     
     bool okay = YMLockMutex(lock->mutex);
-    
-    if ( ! okay )
-        ymabort("fatal: failed to lock mutex");
+    ymassert(okay,"fatal: failed to lock mutex");
 }
 
 void YMLockUnlock(YMLockRef lock_)
@@ -64,9 +62,7 @@ void YMLockUnlock(YMLockRef lock_)
     __YMLockRef lock = (__YMLockRef)lock_;
     
     bool okay = YMUnlockMutex(lock->mutex);
-    
-    if ( ! okay )
-        abort();
+    ymassert(okay,"fatal: mutex unlock failed: %p",lock->mutex);
 }
 
 void _YMLockFree(YMTypeRef object)

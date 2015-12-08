@@ -51,6 +51,9 @@ typedef enum
 
 void YMAPI __YMLogType( int level, char* format, ... ) __printflike(2, 3);
 
+void _YMLogLock();
+void _YMLogUnlock();
+
 YM_EXTERN_C_POP
 
 #endif /* YMLog_h */

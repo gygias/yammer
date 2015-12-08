@@ -341,7 +341,7 @@ pthread_mutex_t *YMCreateMutexWithOptions(YMLockOptions options)
     int result = pthread_mutexattr_init(&attributes);
     if ( result != 0 )
     {
-        fprintf(stdout,"pthread_mutexattr_init failed: %d (%s)\n", result, strerror(result));
+        fprintf(stderr,"pthread_mutexattr_init failed: %d (%s)\n", result, strerror(result));
         goto catch_release;
     }
     
@@ -357,7 +357,7 @@ pthread_mutex_t *YMCreateMutexWithOptions(YMLockOptions options)
                 result = pthread_mutexattr_settype(attributesPtr, optionsList[i+1]);
                 if ( result != 0 )
                 {
-                    fprintf(stdout,"pthread_mutexattr_settype failed: %d (%s)\n", result, strerror(result));
+                    fprintf(stderr,"pthread_mutexattr_settype failed: %d (%s)\n", result, strerror(result));
                     goto catch_release;
                 }
             }
@@ -368,7 +368,7 @@ pthread_mutex_t *YMCreateMutexWithOptions(YMLockOptions options)
     result = pthread_mutex_init(mutex, attributesPtr);
     if ( result != 0 )
     {
-        fprintf(stdout,"pthread_mutex_init failed: %d (%s)", result, strerror(result));
+        fprintf(stderr,"pthread_mutex_init failed: %d (%s)\n", result, strerror(result));
         free(mutex);
         mutex = NULL;
     }
@@ -388,15 +388,15 @@ bool YMLockMutex(pthread_mutex_t *mutex)
         case 0:
             break;
         case EDEADLK:
-            ymerr("mutex: error: %p EDEADLK", mutex);
+            fprintf(stderr,"mutex: error: %p EDEADLK\n", mutex);
             okay = false;
             break;
         case EINVAL:
-            ymerr("mutex: error: %p EINVAL", mutex);
+            fprintf(stderr,"mutex: error: %p EINVAL\n", mutex);
             okay = false;
             break;
         default:
-            ymerr("mutex: error: %p unknown error", mutex);
+            fprintf(stderr,"mutex: error: %p unknown error\n", mutex);
             break;
     }
     
@@ -412,15 +412,15 @@ bool YMUnlockMutex(pthread_mutex_t *mutex)
         case 0:
             break;
         case EPERM:
-            ymerr("mutex: error: unlocking thread doesn't hold %p", mutex);
+            fprintf(stderr,"mutex: error: unlocking thread doesn't hold %p\n", mutex);
             okay = false;
             break;
         case EINVAL:
-            ymerr("mutex: error: unlock EINVAL %p", mutex);
+            fprintf(stderr,"mutex: error: unlock EINVAL %p\n", mutex);
             okay = false;
             break;
         default:
-            ymerr("mutex: error: unknown %p", mutex);
+            fprintf(stderr,"mutex: error: unknown %p\n", mutex);
             break;
     }
     
@@ -430,6 +430,7 @@ bool YMUnlockMutex(pthread_mutex_t *mutex)
 bool YMDestroyMutex(pthread_mutex_t *mutex)
 {
     int result = pthread_mutex_destroy(mutex);
+    if ( result != 0 ) fprintf(stderr,"mutex: failed to destroy mutex: %d %s\n",errno,strerror(errno));
     free(mutex);
     return ( result == 0 );
 }
