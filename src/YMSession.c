@@ -859,7 +859,7 @@ void __ym_mdns_service_removed_func(__unused YMmDNSBrowserRef browser, YMStringR
             myEnum = YMDictionaryEnumeratorGetNext(myEnum);
         }
         YMDictionaryEnumeratorEnd(myEnum);
-
+        
 		ymsoftassert(found, "session[%s]: notified of removal of unknown peer: %s", YMSTR(session->logDescription), YMSTR(name));
         
         if ( found )

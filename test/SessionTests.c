@@ -474,7 +474,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteSparseFiles(YM_THREAD_PARAM c
             ctx->context = theTest;
         }
         
-        ymerr("writing sparse file '%s' %sbounded, %ssync from f%d",aFile,theTest->lastClientBounded?"":"un",theTest->lastClientAsync?"a":"",aSparseFd);
+        ymlog("writing sparse file '%s' %sbounded, %ssync from f%d",aFile,theTest->lastClientBounded?"":"un",theTest->lastClientAsync?"a":"",aSparseFd);
         bool okay = YMConnectionForwardFile(connection, aSparseFd, stream, theTest->lastClientBounded ? &theTest->lastClientFileSize : NULL, !theTest->lastClientAsync, ctx);
         testassert(okay,"forwardfile failed");
         
@@ -545,11 +545,11 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _EatASparseFile(YM_THREAD_PARAM ctx_)
     testassert(sparseDstFd>=0,"create '%s' dst %d %s",header.name,errno,strerror(errno))
     
     uint64_t len64 = header.len;
-    ymerr("reading sparse file '%s'[%llu] %sbounded, sync to f%d",header.name,header.len,header.willBoundDataStream?"":"un",sparseDstFd);
+    ymlog("reading sparse file '%s'[%llu] %sbounded, sync to f%d",header.name,header.len,header.willBoundDataStream?"":"un",sparseDstFd);
     ymResult = YMStreamWriteToFile(stream, sparseDstFd, header.willBoundDataStream ? &len64 : NULL, &outBytes);
     testassert(ymResult==YMIOSuccess||(!header.willBoundDataStream&&ymResult==YMIOEOF),"eat sparse result");
     testassert(outBytes==header.len,"eat sparse result");
-    ymerr("read sparse file '%s'[%llu] bytes: %s : %s",header.name,outBytes,YMSTR(theTest->tempSparseDir),header.name);
+    ymlog("read sparse file '%s'[%llu] bytes: %s : %s",header.name,outBytes,YMSTR(theTest->tempSparseDir),header.name);
     
 	YM_CLOSE_FILE(sparseDstFd);
     testassert(result==0,"close sparse dst %s",header.name);

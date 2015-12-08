@@ -186,35 +186,35 @@ void _YMTLSProviderFree(YMTypeRef object)
 
 void YMTLSProviderFreeGlobals()
 {
-    if ( gYMTLSExDataList )
-    {
-        YMRelease(gYMTLSExDataList);
-        gYMTLSExDataList = NULL;
-    }
-    if ( gYMTLSExDataLock )
-    {
-        YMRelease(gYMTLSExDataLock);
-        gYMTLSExDataLock = NULL;
-    }
-    
-    if ( gYMTLSLocks )
-    {
-        for( int i = 0; i < CRYPTO_num_locks(); i++ )
-        {
-            YMLockRef aLock = gYMTLSLocks[i];
-            if ( aLock )
-                YMRelease(aLock);
-        }
-        free((void *)gYMTLSLocks);
-        gYMTLSLocks = NULL;
-    }
-    
-    
-	CRYPTO_THREADID_set_callback(NULL);
-    CRYPTO_set_locking_callback(NULL);
-    
-	YM_ONCE_OBJ onceAgain = YM_ONCE_INIT;
-	memcpy(&gYMInitTLSOnce, &onceAgain, sizeof(onceAgain));
+//    if ( gYMTLSExDataList )
+//    {
+//        YMRelease(gYMTLSExDataList);
+//        gYMTLSExDataList = NULL;
+//    }
+////    if ( gYMTLSExDataLock )
+////    {
+////        YMRelease(gYMTLSExDataLock);
+////        gYMTLSExDataLock = NULL;
+////    }
+//    
+//    if ( gYMTLSLocks )
+//    {
+//        for( int i = 0; i < CRYPTO_num_locks(); i++ )
+//        {
+//            YMLockRef aLock = gYMTLSLocks[i];
+//            if ( aLock )
+//                YMRelease(aLock);
+//        }
+//        free((void *)gYMTLSLocks);
+//        gYMTLSLocks = NULL;
+//    }
+//    
+//    
+//	CRYPTO_THREADID_set_callback(NULL);
+//    CRYPTO_set_locking_callback(NULL);
+//    
+//	YM_ONCE_OBJ onceAgain = YM_ONCE_INIT;
+//	memcpy(&gYMInitTLSOnce, &onceAgain, sizeof(onceAgain));
 }
 
 void __ym_tls_lock_callback(int mode, int type, __unused const char *file, __unused int line)

@@ -40,6 +40,7 @@ typedef struct __ym_thread_t
     ym_thread_entry userEntryPoint;
     const void *context;
     YM_THREAD_TYPE pthread;
+    YMDictionaryRef threadDict;
     
     // thread state
     bool didStart;
@@ -54,6 +55,8 @@ typedef struct __ym_thread_t
     YMLockRef dispatchListLock;
 } __ym_thread_t;
 typedef struct __ym_thread_t *__YMThreadRef;
+
+#define YMThreadDictThreadIDKey "thread-id"
 
 // dispatch stuff
 typedef struct __ym_thread_dispatch_thread_context_t
@@ -93,9 +96,9 @@ typedef struct __ym_thread_dispatch_forward_file_async_context_t
 typedef struct __ym_thread_dispatch_forward_file_async_context_t *__ym_thread_dispatch_forward_file_async_context_ref;
 
 __YMThreadRef __YMThreadInitCommon(YMStringRef name, const void *context);
+void __YMThreadInitThreadDict(__YMThreadRef thread);
 YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_generic_entry_proc(YM_THREAD_PARAM theThread);
 YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_dispatch_forward_file_proc(YM_THREAD_PARAM forwardCtx);
-uint64_t __YMThreadGetThreadNumber(YM_THREAD_TYPE pthread);
 ym_thread_dispatch_ref __YMThreadDispatchCopy(ym_thread_dispatch_ref userDispatchRef);
 __ym_thread_dispatch_thread_context_ref __YMThreadDispatchJoin(__YMThreadRef thread);
 void __YMThreadFreeDispatchContext(__ym_thread_dispatch_context_ref);
@@ -118,6 +121,7 @@ __YMThreadRef __YMThreadInitCommon(YMStringRef name, const void *context)
     thread->name = name ? YMRetain(name) : YMSTRC("*");
     thread->context = context;
     thread->pthread = (YM_THREAD_TYPE)NULL;
+    thread->threadDict = YMDictionaryCreate();
     
     thread->didStart = false;
     
@@ -187,6 +191,8 @@ void _YMThreadFree(YMTypeRef object)
     }
     // todo is there anything we should reasonably do to user threads here?
     
+    if ( thread->threadDict )
+        YMRelease(thread->threadDict);
     YMRelease(thread->name);
 }
 
@@ -292,7 +298,10 @@ catch_return:
 
 YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_generic_entry_proc(YM_THREAD_PARAM theThread_)
 {
-    YMThreadRef theThread = theThread_;
+    __YMThreadRef theThread = theThread_;
+    
+    __YMThreadInitThreadDict(theThread);
+    
     ymlog("thread[%s,generic] entered",YMSTR(theThread->name));
     theThread->userEntryPoint((void *)theThread->context);
     ymlog("thread[%s,generic] exiting",YMSTR(theThread->name));
@@ -301,9 +310,18 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_generic_entry_proc(YM_THREAD_
     YM_THREAD_END
 }
 
+void __YMThreadInitThreadDict(__YMThreadRef thread)
+{
+    YMDictionaryAdd(thread->threadDict, (YMDictionaryKey)YMThreadDictThreadIDKey, (YMDictionaryValue)_YMThreadGetCurrentThreadNumber());
+}
+
 bool YMThreadJoin(YMThreadRef thread_)
 {
     __YMThreadRef thread = (__YMThreadRef)thread_;
+    
+    if ( _YMThreadGetCurrentThreadNumber() == _YMThreadGetThreadNumber(thread) )
+        return false;
+        
 #ifndef WIN32
     int result = pthread_join(thread->pthread, NULL);
     if ( result != 0 )
@@ -360,27 +378,31 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_dispatch_dispatch_thread_proc
 {
     __ym_thread_dispatch_thread_context_ref context = (__ym_thread_dispatch_thread_context_ref)ctx;
     __YMThreadRef thread = context->ymThread;
+    
+    __YMThreadInitThreadDict(thread);
+    
     bool *stopFlag = context->stopFlag;
+    __unused YMThreadDispatchID aDispatchID = -1;
+    __ym_thread_dispatch_context_ref aDispatch = NULL;
     ymlog("thread[%s,dispatch,dt%llu,p%llu]: entered", YMSTR(thread->name), thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber());
     
-    while ( ! *stopFlag )
+    while ( true )
     {
         ymdbg("thread[%s,dispatch,dt%llu,p%llu]: begin dispatch loop", YMSTR(thread->name), thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber());
         YMSemaphoreWait(thread->dispatchSemaphore);
         
-        // check if we were signaled to exit
-        if ( *stopFlag )
-        {
-            ymlog("thread[%s,dispatch,dt%llu,p%llu]: woke for exit", YMSTR(thread->name), thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber());
-            break;
-        }
-        
-        ymdbg("thread[%s,dispatch,dt%llu,p%llu]: woke for a dispatch", YMSTR(thread->name), thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber());
-        
-        __unused YMThreadDispatchID aDispatchID = -1;
-        __ym_thread_dispatch_context_ref aDispatch = NULL;
         YMLockLock(thread->dispatchListLock);
         {
+            // check if we were signaled to exit
+            if ( *stopFlag && ( YMDictionaryGetCount(thread->dispatchesByID) == 0 ) )
+            {
+                ymlog("thread[%s,dispatch,dt%llu,p%llu]: woke for exit", YMSTR(thread->name), thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber());
+                YMLockUnlock(thread->dispatchListLock);
+                break;
+            }
+            
+            ymdbg("thread[%s,dispatch,dt%llu,p%llu]: woke for a dispatch", YMSTR(thread->name), thread->dispatchThreadID, _YMThreadGetCurrentThreadNumber());
+            
             // todo this should be in order
             YMDictionaryKey randomKey = YMDictionaryGetRandomKey(thread->dispatchesByID);
             aDispatch = (__ym_thread_dispatch_context_ref)YMDictionaryRemove(thread->dispatchesByID,randomKey);
@@ -440,34 +462,23 @@ void __YMThreadFreeDispatchContext(__ym_thread_dispatch_context_ref dispatchCont
 uint64_t _YMThreadGetCurrentThreadNumber()
 {
     YM_THREAD_TYPE pthread;
+    
 #if defined(WIN32)
 	pthread = GetCurrentThread();
 #else
 	pthread = pthread_self();
 #endif
     
-    return __YMThreadGetThreadNumber(pthread);
+    return (uint64_t)pthread;
 }
 
 uint64_t _YMThreadGetThreadNumber(YMThreadRef thread_)
 {
     __YMThreadRef thread = (__YMThreadRef)thread_;
-    return __YMThreadGetThreadNumber(thread->pthread);
-}
-
-uint64_t __YMThreadGetThreadNumber(YM_THREAD_TYPE pthread)
-{
-#ifdef _MACOS
-    uint64_t threadId = 0;
-    pthread_threadid_np(pthread, &threadId);
+    
+    while ( ! YMDictionaryContains(thread->threadDict, (YMDictionaryKey)YMThreadDictThreadIDKey) ) {}
+    uint64_t threadId = (uint64_t)YMDictionaryGetItem(thread->threadDict, (YMDictionaryKey)YMThreadDictThreadIDKey);
     return threadId;
-#elif defined(WIN32)
-    return (uint64_t)GetThreadId(pthread);
-#elif defined(RPI)
-    return gettid();
-#else
-#error __YMThreadGetThreadNumber doesn't know what to do on this platform
-#endif
 }
 
 bool YMThreadDispatchForwardFile(YMFILE fromFile, YMStreamRef toStream, const uint64_t *nBytesPtr, bool sync, _ym_thread_forward_file_context_ref callbackInfo)

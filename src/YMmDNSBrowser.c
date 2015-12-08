@@ -417,8 +417,10 @@ static void DNSSD_API __ym_mdns_browse_callback(__unused DNSServiceRef serviceRe
                                                 void *context)
 {
     
-    ymlog("__ym_mdns_browse_callback: %s/%s.%s:?: if: %u flags: %04x", type, name, domain, ifIdx, result);
     __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)context;
+    
+    ymlog("__ym_mdns_browse_callback: %s/%s.%s:?: r: %d if: %u flags: %04x", type, name, domain, result, ifIdx, flags);
+    
     if ( result != kDNSServiceErr_NoError )
     {
         ymerr("mDNS[%s]: error: browse callback: %d", YMSTR(browser->type), result);

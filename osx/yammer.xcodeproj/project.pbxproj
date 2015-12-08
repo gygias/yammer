@@ -236,7 +236,7 @@
 		63DD2E1D1C0FE41F00D822D1 /* SessionTests.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = SessionTests.c; path = ../test/SessionTests.c; sourceTree = "<group>"; };
 		63DD2E1E1C0FE41F00D822D1 /* SessionTests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SessionTests.h; path = ../test/SessionTests.h; sourceTree = "<group>"; };
 		63DDCB311BFB68AA009F91CD /* main.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = main.c; sourceTree = "<group>"; };
-		63EEC7561BFB6AA400990ECE /* chat */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = chat; sourceTree = BUILT_PRODUCTS_DIR; };
+		63EEC7561BFB6AA400990ECE /* ymchat */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ymchat; sourceTree = BUILT_PRODUCTS_DIR; };
 		63FD5B581BF1899800174824 /* YMRSAKeyPair.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMRSAKeyPair.c; path = src/YMRSAKeyPair.c; sourceTree = "<group>"; };
 		63FD5B591BF1899800174824 /* YMRSAKeyPair.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMRSAKeyPair.h; path = private/YMRSAKeyPair.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -347,7 +347,7 @@
 			children = (
 				63225D421BE9026200C28F05 /* libyammer.dylib */,
 				630A5D001BE96CE9003292EE /* YammerTests.xctest */,
-				63EEC7561BFB6AA400990ECE /* chat */,
+				63EEC7561BFB6AA400990ECE /* ymchat */,
 				631916311BFCFF13001475FC /* Yammer.framework */,
 				631F0D321C141EE500C141D4 /* ymtest */,
 			);
@@ -619,7 +619,7 @@
 			);
 			name = ymchat;
 			productName = chat;
-			productReference = 63EEC7561BFB6AA400990ECE /* chat */;
+			productReference = 63EEC7561BFB6AA400990ECE /* ymchat */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
