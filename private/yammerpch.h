@@ -26,25 +26,25 @@
 #include <stdio.h>
 
 #if defined(YMMACOS) || defined(YMLINUX)
-#include <unistd.h>
-#include <time.h>
-#include <sys/time.h>
+# include <unistd.h>
+# include <time.h>
+# include <sys/time.h>
 # if defined (YMLINUX)
-  typedef __ssize_t ssize_t;
-# include <limits.h>
-# include <sys/types.h>
-# include "arc4random.h"
-# define __USE_BSD
+   typedef __ssize_t ssize_t;
+#  include <limits.h>
+#  include <sys/types.h>
+#  include "arc4random.h"
+#  define __USE_BSD
 # endif
 #elif defined(WIN32)
-#define _WINSOCKAPI_
-#include <windows.h>
-#define _WINSOCK_DEPRECATED_NO_WARNINGS // todo, gethostbyname
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include "arc4random.h"
-#define bzero ZeroMemory
-#define SHUT_RDWR SD_BOTH
+# define _WINSOCKAPI_
+# include <windows.h>
+# define _WINSOCK_DEPRECATED_NO_WARNINGS // todo, gethostbyname
+# include <winsock2.h>
+# include <ws2tcpip.h>
+# include "arc4random.h"
+# define bzero ZeroMemory
+# define SHUT_RDWR SD_BOTH
 #endif
 
 #include <string.h>
@@ -54,17 +54,17 @@
 #include <stdint.h>
 
 #if defined(WIN32)
-#define ssize_t SSIZE_T
-#define typeof decltype
-#include <direct.h>
-#define strdup _strdup
-#define unlink _unlink
-#define mkdir(p,m) _mkdir(p)
-#define rmdir _rmdir // ( ( RemoveDirectory(x) == 0 ) ? -1 : 0 )
+# define ssize_t SSIZE_T
+# define typeof decltype
+# include <direct.h>
+# define strdup _strdup
+# define unlink _unlink
+# define mkdir(p,m) _mkdir(p)
+# define rmdir _rmdir // ( ( RemoveDirectory(x) == 0 ) ? -1 : 0 )
 #endif
 
 #if defined(WIN32) || defined(YMLINUX)
-#define __unused
+# define __unused
 #endif
 
 #define YM_VERSION 1
@@ -83,13 +83,12 @@
 #  define malloc_size malloc_usable_size
 #  endif
 # endif
-
-#define YM_DEBUG_ASSERT_MALLOC(x) ymassert(( (x) != NULL )&&( malloc_size((void *)x) > 0 ),"debug: malloc didn't allocate this address: %p",(x))
-#define YM_INSANE_CHUNK_SIZE 65535
-#define YM_DEBUG_CHUNK_SIZE(x) ymassert(( (x) != 0 )&&( (x) <= YM_INSANE_CHUNK_SIZE ),"debug: chunk length not sane: %u",(x));
+# define YM_DEBUG_ASSERT_MALLOC(x) ymassert(( (x) != NULL )&&( malloc_size((void *)x) > 0 ),"debug: malloc didn't allocate this address: %p",(x))
+# define YM_INSANE_CHUNK_SIZE 65535
+# define YM_DEBUG_CHUNK_SIZE(x) ymassert(( (x) != 0 )&&( (x) <= YM_INSANE_CHUNK_SIZE ),"debug: chunk length not sane: %u",(x));
 #else
-#define YM_DEBUG_ASSERT_MALLOC(x) ;
-#define YM_DEBUG_CHUNK_SIZE(x) ;
+# define YM_DEBUG_ASSERT_MALLOC(x) ;
+# define YM_DEBUG_CHUNK_SIZE(x) ;
 #endif
 
 #ifndef WIN32

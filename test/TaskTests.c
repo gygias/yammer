@@ -38,13 +38,13 @@ void TaskTestRun(ym_test_assert_func assert, const void *context)
 void _TaskUsrBinTrueRun(struct TaskTest *theTest)
 {
 #if defined(YMMACOS)
-#define SomeTruePath "/usr/bin/true"
+# define SomeTruePath "/usr/bin/true"
 #elif defined(YMLINUX)
-#define SomeTruePath "/bin/true"
+# define SomeTruePath "/bin/true"
 #elif defined(YMWIN32)
-#define SomeTruePath "c:\\Windows\\System32\\getmac.exe"
+# define SomeTruePath "c:\\Windows\\System32\\getmac.exe"
 #else
-#error implement me
+# error implement me
 #endif
     
     YMStringRef path = YMSTRC(SomeTruePath);
@@ -69,17 +69,17 @@ void _TaskUsrBinTrueRun(struct TaskTest *theTest)
 void _TaskCatSomeLogRun(struct TaskTest *theTest)
 {
 #if defined(YMMACOS) || defined(YMLINUX)
-#define SomeCatPath "/bin/cat"
+# define SomeCatPath "/bin/cat"
 # if defined(YMMACOS)
 #  define SomeLogPath "/var/log/install.log"
 # elif defined(YMLINUX)
 #  define SomeLogPath "/var/log/syslog"
 # endif
 #elif defined(YMWIN32)
-#define SomeCatPath "c:\\Windows\\System32\\cmd"
-#define SomeLogPath "/c \"type c:\\Windows\\WindowsUpdate.log\""
+# define SomeCatPath "c:\\Windows\\System32\\cmd"
+# define SomeLogPath "/c \"type c:\\Windows\\WindowsUpdate.log\""
 #else
-#error implement me
+# error implement me
 #endif
 
     YMStringRef path = YMSTRC(SomeCatPath);

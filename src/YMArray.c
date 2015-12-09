@@ -13,6 +13,8 @@
 #define ymlog_type YMLogDefault
 #include "YMLog.h"
 
+YM_EXTERN_C_PUSH
+
 typedef struct __ym_array_t
 {
     _YMType _type;
@@ -121,3 +123,5 @@ void YMAPI YMArrayRemoveObject(YMArrayRef array_, const void *value)
     ymassert(idx!=NULL_INDEX,"array does not contain object %p",value);
     YMDictionaryRemove(array->dict, idx);
 }
+
+YM_EXTERN_C_POP

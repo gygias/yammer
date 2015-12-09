@@ -17,7 +17,7 @@ YM_EXTERN_C_PUSH
 #include <libyammer/YMAddress.h>
 
 #ifdef WIN32
-#include <winsock2.h>
+# include <winsock2.h>
 #endif
 
 typedef const struct __ym_connection_t *YMConnectionRef;

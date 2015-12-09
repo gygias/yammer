@@ -20,6 +20,8 @@
 #define ymlog_type YMLogDefault
 #include "YMLog.h"
 
+YM_EXTERN_C_PUSH
+
 typedef struct __ym_task_t
 {
     _YMType _type;
@@ -321,3 +323,5 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_task_read_output_proc(YM_THREAD_PARA
     
     YM_THREAD_END
 }
+
+YM_EXTERN_C_POP
