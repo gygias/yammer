@@ -10,6 +10,7 @@
 
 #include "YMPlexer.h"
 #include "YMPlexerPriv.h"
+#include "YMLocalSocketPair.h"
 #include "YMStreamPriv.h"
 #include "YMPipe.h"
 #include "YMPipePriv.h"
@@ -112,23 +113,16 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
 {
     YM_IO_BOILERPLATE
     
-    YMStringRef aName = YMSTRC("test-network-sim-pipe-in");
-    YMPipeRef networkSimPipeIn = YMPipeCreate(aName);
-    YMRelease(aName);
-    YMFILE writeToRemote = YMPipeGetInputFile(networkSimPipeIn);
-    YMFILE readFromLocal = YMPipeGetOutputFile(networkSimPipeIn);
-    aName = YMSTRC("test-network-sim-pipe-out");
-    YMPipeRef networkSimPipeOut = YMPipeCreate(aName);
-    YMRelease(aName);
-    YMFILE writeToLocal = YMPipeGetInputFile(networkSimPipeOut);
-    YMFILE readFromRemote = YMPipeGetOutputFile(networkSimPipeOut);
+    YMLocalSocketPairRef socketPair = YMLocalSocketPairCreate(NULL, false);
+    int socketA = YMLocalSocketPairGetA(socketPair);
+    int socketB = YMLocalSocketPairGetB(socketPair);
     
     bool localIsMaster = arc4random_uniform(2);
-    ymlog("plexer test using pipes: L(%s)-if%d-of%d <-> if%d-of%d R(%s)",localIsMaster?"M":"S",readFromRemote,writeToRemote,readFromLocal,writeToLocal,localIsMaster?"S":"M");
+    ymlog("plexer test using pipes: L(%s)-s%d <-> s%d R(%s)",localIsMaster?"M":"S",socketA,socketB,localIsMaster?"S":"M");
     ymlog("plexer test using %u threads, %u trips per thread, %s streams per thread, %s messages",PlexerTest1Threads,PlexerTest1RoundTripsPerThread,PlexerTest1NewStreamPerRoundTrip?"new":"one",PlexerTest1RandomMessages?"random":"fixed");
     
     YMStringRef name = YMSTRC("L");
-    YMSecurityProviderRef noSecurity = YMSecurityProviderCreate(readFromRemote, writeToRemote);
+    YMSecurityProviderRef noSecurity = YMSecurityProviderCreate(socketA, socketA);
     theTest->localPlexer = YMPlexerCreate(name,noSecurity,localIsMaster);
     YMRelease(noSecurity);
     YMRelease(name);
@@ -138,7 +132,7 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     YMPlexerSetCallbackContext(theTest->localPlexer, theTest);
     
     name = YMSTRC("R");
-    noSecurity = YMSecurityProviderCreate(readFromLocal, writeToLocal);
+    noSecurity = YMSecurityProviderCreate(socketB, socketB);
     theTest->fakeRemotePlexer = YMPlexerCreate(name,noSecurity,!localIsMaster);
     YMRelease(noSecurity);
     YMRelease(name);
@@ -187,11 +181,13 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
         theTest->closedPlexer = theTest->fakeRemotePlexer;
     }
     theTest->awaitingInterrupt = true;
-    // shouldn't matter which one, but this is important because the 'media' socket is managed by the connection (the opener is the closer).
-    // we're sitting at the level of the connection here and have to close one of the files manually to hang things up.
-    YMRelease(networkSimPipeIn);
-    YMRelease(networkSimPipeOut);
-    //YMPlexerStop(theTest->closedPlexer);
+    
+    // this used to be done with 2 YMPipes, and the 'interruption' was simulated by releasing (and close-in-dealloc'ing) those pipes.
+    // this was problematic because if a service thread wasn't within a provider read/write, the fd would quickly get recycled
+    // into something else (generally a new incoming stream on one side), and the service thread would get deadlocked on a valid
+    // but different fd.
+    YMLocalSocketPairShutdown(socketPair);
+    
     YMSemaphoreWait(theTest->interruptNotificationSem);
     YMSemaphoreWait(theTest->interruptNotificationSem);
     

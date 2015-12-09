@@ -23,6 +23,7 @@ void YMAPI YMLocalSocketPairStop();
 
 YMSOCKET YMAPI YMLocalSocketPairGetA(YMLocalSocketPairRef pair);
 YMSOCKET YMAPI YMLocalSocketPairGetB(YMLocalSocketPairRef pair);
+bool YMAPI YMLocalSocketPairShutdown(YMLocalSocketPairRef pair);
 
 YM_EXTERN_C_POP
 

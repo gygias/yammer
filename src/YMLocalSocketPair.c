@@ -14,6 +14,9 @@
 
 #define ymlog_type YMLogIO
 #include "YMLog.h"
+#define YM_LOG_PRE "local-socket[%s]"
+#define YM_LOG_DSC YMSTR(pair->userName)
+#define YM_LOG_DSCG "&"
 
 #ifndef WIN32
 # include <sys/socket.h>
@@ -47,6 +50,7 @@ typedef struct __ym_local_socket_pair_t
     YMStringRef userName;
     YMSOCKET socketA;
 	YMSOCKET socketB;
+    bool shutdown;
 } __ym_local_socket_pair_t;
 typedef struct __ym_local_socket_pair_t *__YMLocalSocketPairRef;
 
@@ -77,10 +81,10 @@ void YMLocalSocketPairStop()
         ymlog("local-socket: closing %d",gYMLocalSocketListenSocket);
  #if defined(YMLINUX)
 		result = shutdown(gYMLocalSocketListenSocket,SHUT_RDWR); // on raspian (and from what i read, 'linux') closing the socket will not signal an accept() call
-		ymsoftassert(result==0,"local-socket: warning: shutdown(%d) listen failed: %d (%s)",(int)gYMLocalSocketListenSocket,error,errorStr);
+		ymsoftassert(result==0,YM_LOG_PRE "warning: shutdown(%d) listen failed: %d (%s)",YM_LOG_DSCG,(int)gYMLocalSocketListenSocket,error,errorStr);
  #endif
         YM_CLOSE_SOCKET(gYMLocalSocketListenSocket);
-        ymsoftassert(result==0,"local-socket: warning: close(%d) listen failed: %d (%s)",(int)gYMLocalSocketListenSocket,error,errorStr);
+        ymsoftassert(result==0,YM_LOG_PRE "warning: close(%d) listen failed: %d (%s)",YM_LOG_DSCG,(int)gYMLocalSocketListenSocket,error,errorStr);
         gYMLocalSocketListenSocket = NULL_SOCKET;
 
         while ( ! gYMLocalSocketThreadExited ) {}; // avoid free->create race where previous thread holds previous global sem
@@ -99,7 +103,7 @@ void YMLocalSocketPairStop()
         YMStringRef tmpPath = YMSTRCF("%s%s",prefix,YMSTR(gYMLocalSocketPairName));
         result = unlink(YMSTR(tmpPath));
         if ( result != 0 )
-            ymerr("local-socket[%s]: failed to unlink socket file: %d %s",YMSTR(gYMLocalSocketPairName),errno,strerror(errno));
+            ymerr(YM_LOG_PRE "failed to unlink socket file '%s': %d %s",YM_LOG_DSCG,YMSTR(gYMLocalSocketPairName),errno,strerror(errno));
         YMRelease(tmpPath);
 #endif
         YMRelease(gYMLocalSocketPairName);
@@ -122,20 +126,16 @@ YM_ONCE_FUNC(__YMLocalSocketPairInitOnce,
     gYMLocalSocketThreadEnd = false;
     gYMLocalSocketThreadExited = false;
     bool okay = YMThreadStart(gYMLocalSocketPairAcceptThread);
-    ymassert(okay,"local-socket: fatal: failed to start accept thread");
+    ymassert(okay,YM_LOG_PRE "fatal: failed to start accept thread",YM_LOG_DSCG);
     
     YMSemaphoreWait(gYMLocalSocketSemaphore);
 });
 
 YMLocalSocketPairRef YMLocalSocketPairCreate(YMStringRef name, bool moreComing)
 {
-    if ( ! name )
-    {
-        ymlog("local-socket[%s]: error: name is required",YMSTR(name));
-        return NULL;
-    }
-
-	YMNetworkingInit();
+    YMNetworkingInit();
+    
+    const char *name_str = name ? YMSTR(name) : "*";
 
     YM_ONCE_DO(gYMLocalSocketOnce,__YMLocalSocketPairInitOnce);
     
@@ -145,7 +145,7 @@ YMLocalSocketPairRef YMLocalSocketPairCreate(YMStringRef name, bool moreComing)
     int clientSocket = __YMLocalSocketPairCreateClient();
     if ( clientSocket < 0 )
     {
-        ymerr("local-socket[%s]: error: failed to create client socket",YMSTR(name));
+        ymerr(YM_LOG_PRE "error: failed to create client socket",name_str);
         return NULL;
     }
     
@@ -154,16 +154,17 @@ YMLocalSocketPairRef YMLocalSocketPairCreate(YMStringRef name, bool moreComing)
     int serverSocket = gYMLocalSocketPairAcceptedLast;
     if ( serverSocket < 0 )
     {
-        ymerr("local-socket[%s]: error: failed to create server socket",YMSTR(name));
+        ymerr(YM_LOG_PRE "error: failed to create server socket",name_str);
         return NULL;
     }
     
     __YMLocalSocketPairRef pair = (__YMLocalSocketPairRef)_YMAlloc(_YMLocalSocketPairTypeID,sizeof(struct __ym_local_socket_pair_t));
     
-    pair->userName = YMSTRCF("ls:%s:sf%d<->cf%d",YMSTR(name),serverSocket,clientSocket);
+    pair->userName = YMSTRCF("ls:%s:sf%d<->cf%d",name_str,serverSocket,clientSocket);
     pair->socketName = YMRetain(gYMLocalSocketPairName);
     pair->socketA = serverSocket;
     pair->socketB = clientSocket;
+    pair->shutdown = false;
     
     if ( ! moreComing )
         YMLocalSocketPairStop(); // eat your own dogfood
@@ -182,6 +183,22 @@ YMSOCKET YMLocalSocketPairGetB(YMLocalSocketPairRef pair_)
     return pair->socketB;
 }
 
+bool YMAPI YMLocalSocketPairShutdown(YMLocalSocketPairRef pair_)
+{
+    __YMLocalSocketPairRef pair = (__YMLocalSocketPairRef)pair_;
+    
+    bool okay = false;
+    if ( ! pair->shutdown )
+    {
+        ymlog(YM_LOG_PRE "shutting down",YM_LOG_DSC);
+        int result = shutdown(pair->socketA, SHUT_RDWR);
+        okay = ( result == 0 );
+        shutdown(pair->socketB, SHUT_RDWR);
+        okay = okay && ( result == 0 );
+    }
+    return okay;
+}
+
 void _YMLocalSocketPairFree(YMTypeRef object)
 {
     __YMLocalSocketPairRef pair = (__YMLocalSocketPairRef)object;
@@ -190,13 +207,13 @@ void _YMLocalSocketPairFree(YMTypeRef object)
     YM_CLOSE_SOCKET(pair->socketA);
     if ( result != 0 )
     {
-        ymerr("local-socket[%s]: close failed (%d): %d (%s)",YMSTR(pair->userName),result,errno,strerror(errno));
+        ymerr(YM_LOG_PRE "close failed (%d): %d (%s)",YM_LOG_DSC,result,errno,strerror(errno));
         abort();
     }
     YM_CLOSE_SOCKET(pair->socketB);
     if ( result != 0 )
     {
-        ymerr("local-socket[%s]: close failed (%d): %d (%s)",YMSTR(pair->userName),result,errno,strerror(errno));
+        ymerr(YM_LOG_PRE "close failed (%d): %d (%s)",YM_LOG_DSC,result,errno,strerror(errno));
         abort();
     }
     
@@ -208,15 +225,15 @@ int __YMLocalSocketPairCreateClient()
 {
     YMSOCKET sock = socket(LOCAL_SOCKET_DOMAIN, SOCK_STREAM, LOCAL_SOCKET_PROTOCOL/* IP, /etc/sockets man 5 protocols*/);
 #ifndef WIN32
-	ymassert(sock>=0,"local-socket[new-client]: socket failed: %d (%s)",errno,strerror(errno));
+	ymassert(sock>=0,YM_LOG_PRE "socket failed: %d (%s)",YM_LOG_DSCG,errno,strerror(errno));
 #else
-	ymassert(sock!=INVALID_SOCKET, "local-socket[new-client]: socket failed: %x", GetLastError());
+	ymassert(sock!=INVALID_SOCKET,YM_LOG_PRE "socket failed: %x", YM_LOG_DSCG, GetLastError());
 #endif
     
     int yes = 1;
     int result = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const void *)&yes, sizeof(yes));
     if ( result != 0 )
-        ymerr("local-socket[new-client]: warning: setsockopt failed on %d: %d: %d (%s)",sock,result,errno,strerror(errno));
+        ymerr(YM_LOG_PRE "warning: setsockopt failed on %d: %d: %d (%s)",YM_LOG_DSCG,sock,result,errno,strerror(errno));
     
     /* Bind a name to the socket. */
 #ifndef WIN32
@@ -234,20 +251,20 @@ int __YMLocalSocketPairCreateClient()
     result = connect(sock, (struct sockaddr *) &sockName, size);
     if ( result != 0 )
     {
-        ymerr("local-socket[new-client]: connect failed: %d: %d (%s)",result,errno,strerror(errno));
+        ymerr(YM_LOG_PRE "connect failed: %d: %d (%s)",YM_LOG_DSCG,result,errno,strerror(errno));
 		int error; const char *errorStr;
         YM_CLOSE_SOCKET(sock);
         return -1;
     }
     
-    ymlog("local-socket[new-client]: connected: sf%d",sock);
+    ymlog(YM_LOG_PRE "connected: sf%d",YM_LOG_DSCG,sock);
     
     return sock;
 }
 
 YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_local_socket_accept_proc(__unused YM_THREAD_PARAM ctx)
 {
-    ymlog("__ym_local_socket_accept_proc entered");
+    ymlog(YM_LOG_PRE "__ym_local_socket_accept_proc entered", YM_LOG_DSCG);
     
     YMSOCKET listenSocket = -1;
     YMStringRef socketName = NULL;
@@ -256,7 +273,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_local_socket_accept_proc(__unused YM
         
     name_retry:;
         
-    ymassert(nameSuffixIter<UINT16_MAX,"local-socket[spawn-server]: fatal: unable to choose available name");
+    ymassert(nameSuffixIter<UINT16_MAX,YM_LOG_PRE "fatal: unable to choose available name",YM_LOG_DSCG);
     
     if ( socketName )
         YMRelease(socketName);
@@ -265,15 +282,15 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_local_socket_accept_proc(__unused YM
     
     listenSocket = socket(LOCAL_SOCKET_DOMAIN, SOCK_STREAM, LOCAL_SOCKET_PROTOCOL /* /etc/sockets man 5 protocols*/);
 #ifndef WIN32
-    ymassert(listenSocket>=0,"local-socket[spawn-server]: fatal: socket failed (listen): %d (%s)",errno,strerror(errno));
+    ymassert(listenSocket>=0,YM_LOG_PRE "fatal: socket failed (listen): %d (%s)",YM_LOG_DSCG,errno,strerror(errno));
 #else
-	ymassert(listenSocket!=INVALID_SOCKET,"local-socket[spawn-server]: fatal: socket failed (listen): %x",GetLastError());
+	ymassert(listenSocket!=INVALID_SOCKET,YM_LOG_PRE "fatal: socket failed (listen): %x",YM_LOG_DSCG,GetLastError());
 #endif
     
     int yes = 1;
     int result = setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, (const void *)&yes, sizeof(yes));
     if (result != 0 )
-        ymerr("local-socket[spawn-server]: warning: setsockopt failed on sf%d: %d: %d (%s)",listenSocket,result,errno,strerror(errno));
+        ymerr(YM_LOG_PRE "warning: setsockopt failed on sf%d: %d: %d (%s)",YM_LOG_DSCG,listenSocket,result,errno,strerror(errno));
     
     /* Bind a name to the socket. */
 #ifndef WIN32
@@ -296,25 +313,25 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_local_socket_accept_proc(__unused YM
         YM_CLOSE_SOCKET(listenSocket);
         if ( bindErrno == EADDRINUSE )
         {
-            ymerr("local-socket[spawn-server]: %s in use, retrying",YMSTR(socketName));
+            ymerr(YM_LOG_PRE "%s in use, retrying",YM_LOG_DSCG,YMSTR(socketName));
             nameSuffixIter++;
             goto name_retry;
         }
-        ymabort("local-socket[spawn-server]: fatal: bind failed: %d (%s)",errno,strerror(errno));
+        ymabort(YM_LOG_PRE "fatal: bind failed: %d (%s)",YM_LOG_DSCG,errno,strerror(errno));
     }
     
 	result = listen(listenSocket, 1);
     if (result != 0 )
-		ymabort("local-socket[spawn-server]: listen failed: %d (%s)", errno, strerror(errno));
+		ymabort(YM_LOG_PRE "listen failed: %d (%s)", YM_LOG_DSCG, errno, strerror(errno));
     
     gYMLocalSocketListenSocket = listenSocket;
     gYMLocalSocketPairName = socketName;
-    ymlog("local-socket[spawn-server]: listening on %s:%d",YMSTR(socketName),listenSocket);
+    ymlog(YM_LOG_PRE "listening on %s:%d",YM_LOG_DSCG,YMSTR(socketName),listenSocket);
     YMSemaphoreSignal(gYMLocalSocketSemaphore); // signal InitOnce
     
     do
     {
-        ymlog("__ym_local_socket_accept_proc accepting...");
+        ymlog(YM_LOG_PRE "__ym_local_socket_accept_proc accepting...",YM_LOG_DSCG);
         
         int newClient = accept(listenSocket, (struct sockaddr *) &sockName, &size);
         if ( newClient < 0 )
@@ -327,14 +344,14 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_local_socket_accept_proc(__unused YM
         else
             gYMLocalSocketPairAcceptedLast = newClient;
         
-        ymlog("__ym_local_socket_accept_proc: accepted: sf%d",newClient);
+        ymlog(YM_LOG_PRE "__ym_local_socket_accept_proc: accepted: sf%d",YM_LOG_DSCG,newClient);
         
         YMSemaphoreSignal(gYMLocalSocketSemaphore);
         
         // check flag again in case 'global stop' thing got called on a persistent accept thread
     } while ( gYMLocalSocketPairAcceptKeepListening );
     
-    ymlog("__ym_local_socket_accept_proc exiting");
+    ymlog(YM_LOG_PRE "__ym_local_socket_accept_proc exiting",YM_LOG_DSCG);
     
     gYMLocalSocketThreadExited = true;
 
