@@ -15,9 +15,9 @@
 YM_EXTERN_C_PUSH
 
 #ifdef YMDEBUG
-#define CHECK_CONSISTENCY { if ( ( dict->head == NULL ) ^ ( dict->count == 0 ) ) { abort(); } }
+# define CHECK_CONSISTENCY { if ( ( dict->head == NULL ) ^ ( dict->count == 0 ) ) { abort(); } }
 #else
-#define CHECK_CONSISTENCY
+# define CHECK_CONSISTENCY
 #endif
 
 typedef struct __YMDictionaryItem

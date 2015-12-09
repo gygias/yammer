@@ -16,26 +16,26 @@
 #include "YMLog.h"
 
 #if defined(YMMACOS) || defined(YMLINUX)
-#include <netinet/in.h>
+# include <netinet/in.h>
 # if defined(YMLINUX)
-# include <sys/resource.h>
-# define __USE_UNIX98
+#  include <sys/resource.h>
+#  define __USE_UNIX98
 # endif
-#include <pthread.h>
+# include <pthread.h>
 # if defined (YMMACOS)
-# include <sys/time.h>
-# define YM_PORT_MAX IPPORT_HILASTAUTO
+#  include <sys/time.h>
+#  define YM_PORT_MAX IPPORT_HILASTAUTO
 # else
-# define YM_PORT_MAX 65535
+#  define YM_PORT_MAX 65535
 # endif
 #elif defined(WIN32)
-#define YM_PORT_MAX IPPORT_DYNAMIC_MAX
-#include <Winsock2.h>
-#include <Ws2tcpip.h>
-#include <time.h>
-#include <Winternl.h> // NtQuery
-#include <Processthreadsapi.h> // GetCurrentProcessId
-#include <VersionHelpers.h> // IsWindows*
+# define YM_PORT_MAX IPPORT_DYNAMIC_MAX
+# include <Winsock2.h>
+# include <Ws2tcpip.h>
+# include <time.h>
+# include <Winternl.h> // NtQuery
+# include <Processthreadsapi.h> // GetCurrentProcessId
+# include <VersionHelpers.h> // IsWindows*
 #endif
 
 YM_EXTERN_C_PUSH

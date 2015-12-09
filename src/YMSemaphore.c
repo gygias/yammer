@@ -17,19 +17,19 @@
 #include <fcntl.h>
 //#define PTHREAD_SEMAPHORE
 #ifdef PTHREAD_SEMAPHORE
-#include <pthread.h>
+# include <pthread.h>
 #elif !defined(WIN32)
-#include <semaphore.h>
+# include <semaphore.h>
 #endif
 
 #if defined(YMLINUX)
-#include <sys/stat.h>
+# include <sys/stat.h>
 #endif
 
 #ifndef WIN32
-#define YM_SEMAPHORE_TYPE sem_t
+# define YM_SEMAPHORE_TYPE sem_t
 #else
-#define YM_SEMAPHORE_TYPE HANDLE
+# define YM_SEMAPHORE_TYPE HANDLE
 #endif
 
 #define YM_SEM_LOG_PREFIX "semaphore[%s,%d,%s]: "

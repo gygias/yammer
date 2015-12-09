@@ -21,11 +21,11 @@
 #define YM_CON_DESC (connection->address ? YMSTR(YMAddressGetDescription(connection->address)) : "*")
 
 #ifndef WIN32
-#include <sys/socket.h>
-#include <arpa/inet.h>
+# include <sys/socket.h>
+# include <arpa/inet.h>
 #else
-#include <winsock2.h>
-#include <ws2tcpip.h>
+# include <winsock2.h>
+# include <ws2tcpip.h>
 #endif
 
 #define NOT_CONNECTED ( ( connection->socket == NULL_SOCKET ) && ! connection->isConnected )

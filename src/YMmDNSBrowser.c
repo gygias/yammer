@@ -16,13 +16,13 @@
 
 #ifndef WIN32
 # if defined(YMLINUX)
-# define __USE_POSIX
-# include <netinet/in.h>
+#  define __USE_POSIX
+#  include <netinet/in.h>
 # endif
-#include <netdb.h>
+# include <netdb.h>
 #else
-#include <winsock2.h>
-#include <ws2tcpip.h>
+# include <winsock2.h>
+# include <ws2tcpip.h>
 #endif
 
 #define ymlog_type YMLogmDNS

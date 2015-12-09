@@ -22,16 +22,16 @@
 #define ymlog_type YMLogSession
 #include "YMLog.h"
 
-#ifndef WIN32
+#if !defined(WIN32)
 # if defined(YMLINUX)
-# define __USE_POSIX
-# include <sys/socket.h>
+#  define __USE_POSIX
+#  include <sys/socket.h>
 # endif
-#include <netinet/in.h>
-#include <netdb.h> // struct hostent
+# include <netinet/in.h>
+# include <netdb.h> // struct hostent
 #else
-#include <winsock2.h>
-#include <ws2tcpip.h>
+# include <winsock2.h>
+# include <ws2tcpip.h>
 #endif
 
 YM_EXTERN_C_PUSH

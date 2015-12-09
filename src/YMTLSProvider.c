@@ -22,8 +22,9 @@
 #include <sys/stat.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+
 #ifndef WIN32
-#include <pthread.h>
+# include <pthread.h>
 #endif
 
 #define ymlog_type YMLogSecurity

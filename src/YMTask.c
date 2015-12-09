@@ -12,9 +12,9 @@
 #include "YMThread.h"
 
 #if defined(YMLINUX)
-#include <sys/wait.h>
+# include <sys/wait.h>
 #elif defined(YMWIN32)
-#define pid_t int32_t
+# define pid_t int32_t
 #endif
 
 #define ymlog_type YMLogDefault

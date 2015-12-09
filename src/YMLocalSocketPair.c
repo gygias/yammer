@@ -16,19 +16,20 @@
 #include "YMLog.h"
 
 #ifndef WIN32
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <pthread.h>
-#define LOCAL_SOCKET_PROTOCOL PF_UNSPEC
-#define LOCAL_SOCKET_DOMAIN AF_LOCAL
+# include <sys/socket.h>
+# include <sys/un.h>
+# include <pthread.h>
+# define LOCAL_SOCKET_PROTOCOL PF_UNSPEC
+# define LOCAL_SOCKET_DOMAIN AF_LOCAL
 #else
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#define LOCAL_SOCKET_PROTOCOL IPPROTO_TCP
-#define LOCAL_SOCKET_DOMAIN AF_INET
-#define LOCAL_SOCKET_ADDR 0x7f000001
-#define LOCAL_SOCKET_PORT 6969 // fixme use YMReservePort
+# include <winsock2.h>
+# include <ws2tcpip.h>
+# define LOCAL_SOCKET_PROTOCOL IPPROTO_TCP
+# define LOCAL_SOCKET_DOMAIN AF_INET
+# define LOCAL_SOCKET_ADDR 0x7f000001
+# define LOCAL_SOCKET_PORT 6969 // fixme use YMReservePort
 #endif
+
 #include <stddef.h> // offsetof
 
 #if defined(YMLINUX) // __USE_MISC /usr/include/arm-linux-gnueabihf/sys/un.h

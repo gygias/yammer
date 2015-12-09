@@ -10,13 +10,13 @@
 
 #ifndef WIN32
 # if defined(YMLINUX)
-# define __USE_POSIX
+#  define __USE_POSIX
 # endif
-#include <netdb.h>
+# include <netdb.h>
 #else
-#define _WINSOCK_DEPRECATED_NO_WARNINGS // todo, gethostbyname
-#include <winsock2.h>
-#include <ws2tcpip.h>
+# define _WINSOCK_DEPRECATED_NO_WARNINGS // todo, gethostbyname
+# include <winsock2.h>
+# include <ws2tcpip.h>
 #endif
 
 //#include <dns_sd.h>

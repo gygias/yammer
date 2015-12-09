@@ -12,13 +12,13 @@
 #include "YMThread.h"
 
 #ifndef WIN32
-#include <sys/socket.h>
+# include <sys/socket.h>
 # if defined(YMLINUX)
-# include <netinet/in.h>
+#  include <netinet/in.h>
 # endif
 #else
-#include <winsock2.h>
-#include <ws2tcpip.h>
+# include <winsock2.h>
+# include <ws2tcpip.h>
 #endif
 
 #include <dns_sd.h>

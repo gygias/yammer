@@ -10,16 +10,19 @@
 #define YMLog_h
 
 #ifndef ymlog_type
-#define ymlog_type YMLogDefault
+# define ymlog_type YMLogDefault
 #endif
+
 #ifndef ymlog_target
-#define ymlog_target ( YMLogDefault | YMLogSecurity | YMLogConnection | YMLogSession | YMLogmDNS )
+# define ymlog_target ( YMLogDefault | YMLogSecurity | YMLogConnection | YMLogSession | YMLogmDNS )
 #endif
+
 #ifndef ymlog_type_debug
-#define ymlog_type_debug YMLogNothing
+# define ymlog_type_debug YMLogNothing
 #endif
+
 #ifndef ymlog_target_debug
-#define ymlog_target_debug YMLogNothing
+# define ymlog_target_debug YMLogNothing
 #endif
 
 YM_WPPUSH // Token pasting of ',' and __VA_ARGS__ is a GNU extension

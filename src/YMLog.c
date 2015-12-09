@@ -14,7 +14,7 @@
 
 #include <stdarg.h>
 #ifndef WIN32
-#include <pthread.h>
+# include <pthread.h>
 #endif
 
 YM_EXTERN_C_PUSH

@@ -11,14 +11,14 @@
 
 #ifndef WIN32
 # if defined(YMLINUX)
-# define __USE_UNIX98
+#  define __USE_UNIX98
 # endif
-#include <pthread.h>
-#define MUTEX_TYPE pthread_mutex_t
-#define MUTEX_PTR_TYPE MUTEX_TYPE *
+# include <pthread.h>
+# define MUTEX_TYPE pthread_mutex_t
+# define MUTEX_PTR_TYPE MUTEX_TYPE *
 #else
-#define MUTEX_TYPE HANDLE
-#define MUTEX_PTR_TYPE MUTEX_TYPE
+# define MUTEX_TYPE HANDLE
+# define MUTEX_PTR_TYPE MUTEX_TYPE
 #endif
 
 YM_EXTERN_C_PUSH

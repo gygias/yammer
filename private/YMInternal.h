@@ -15,37 +15,38 @@
 
 #define YM_USE_CALLOC
 #ifdef YM_USE_CALLOC
-#define YMALLOC(x) calloc(1,(x))
+# define YMALLOC(x) calloc(1,(x))
 #else
-#define YMALLOC(x) malloc(x)
+# define YMALLOC(x) malloc(x)
 #endif
 
 #ifndef WIN32
-#define YM_ONCE_OBJ pthread_once_t
-#define YM_ONCE_INIT PTHREAD_ONCE_INIT
-#define YM_ONCE_DEF(x) void x()
-#define YM_ONCE_FUNC(x,y) void x() { y; }
-#define YM_ONCE_DO(o,f) pthread_once(&o,f);
-#define YM_ONCE_DO_LOCAL(f) { static YM_ONCE_OBJ gLocalInitOnce = YM_ONCE_INIT; YM_ONCE_DO(gLocalInitOnce,f); }
+# define YM_ONCE_OBJ pthread_once_t
+# define YM_ONCE_INIT PTHREAD_ONCE_INIT
+# define YM_ONCE_DEF(x) void x()
+# define YM_ONCE_FUNC(x,y) void x() { y; }
+# define YM_ONCE_DO(o,f) pthread_once(&o,f);
+# define YM_ONCE_DO_LOCAL(f) { static YM_ONCE_OBJ gLocalInitOnce = YM_ONCE_INIT; YM_ONCE_DO(gLocalInitOnce,f); }
 #else
-#define YM_ONCE_OBJ INIT_ONCE
-#define YM_ONCE_INIT INIT_ONCE_STATIC_INIT
-#define YM_ONCE_DEF(x) BOOL CALLBACK x(YM_ONCE_OBJ *InitOnce, PVOID Parameter, PVOID *Context)
-#define YM_ONCE_FUNC(x,y) BOOL CALLBACK x(YM_ONCE_OBJ *InitOnce, PVOID Parameter, PVOID *Context) { { y } return true; }
-#define YM_ONCE_DO(o,f) InitOnceExecuteOnce(&o, f, NULL, NULL);
-#define YM_ONCE_DO2(o,f,p,c) InitOnceExecuteOnce(&o, f, p, c);
-#define YM_ONCE_DO_LOCAL(f) { static YM_ONCE_OBJ gLocalInitOnce = YM_ONCE_INIT; YM_ONCE_DO(gLocalInitOnce,f); }
-#define YM_ONCE_DO_LOCAL2(f,p,c) { static YM_ONCE_OBJ gLocalInitOnce = YM_ONCE_INIT; YM_ONCE_DO2(gLocalInitOnce,f,p,c); }
+# define YM_ONCE_OBJ INIT_ONCE
+# define YM_ONCE_INIT INIT_ONCE_STATIC_INIT
+# define YM_ONCE_DEF(x) BOOL CALLBACK x(YM_ONCE_OBJ *InitOnce, PVOID Parameter, PVOID *Context)
+# define YM_ONCE_FUNC(x,y) BOOL CALLBACK x(YM_ONCE_OBJ *InitOnce, PVOID Parameter, PVOID *Context) { { y } return true; }
+# define YM_ONCE_DO(o,f) InitOnceExecuteOnce(&o, f, NULL, NULL);
+# define YM_ONCE_DO2(o,f,p,c) InitOnceExecuteOnce(&o, f, p, c);
+# define YM_ONCE_DO_LOCAL(f) { static YM_ONCE_OBJ gLocalInitOnce = YM_ONCE_INIT; YM_ONCE_DO(gLocalInitOnce,f); }
+# define YM_ONCE_DO_LOCAL2(f,p,c) { static YM_ONCE_OBJ gLocalInitOnce = YM_ONCE_INIT; YM_ONCE_DO2(gLocalInitOnce,f,p,c); }
 #endif
 
 #ifndef YM_SOFT_ASSERTS
-#define YM_SOFT_ASSERTS 1
+# define YM_SOFT_ASSERTS 1
 #endif
+
 #define ymsoftassert(x,y,...) _ymsoftassert(YM_SOFT_ASSERTS,x,y,##__VA_ARGS__)
 #define _ymsoftassert(z,x,y,...) { if (!(x)) { ymerr("soft assert: "y,##__VA_ARGS__); if (z) abort(); } }
 
 #ifndef YM_HARD_ASSERT
-#define YM_HARD_ASSERT 1
+# define YM_HARD_ASSERT 1
 #endif
 
 YM_WPPUSH

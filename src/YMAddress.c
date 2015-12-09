@@ -16,18 +16,18 @@
 
 #include "YMLog.h"
 
-#ifndef WIN32
-#include <sys/socket.h>
-#include <netinet/in.h> // protocols
+#if !defined(WIN32)
+# include <sys/socket.h>
+# include <netinet/in.h> // protocols
 # if defined (YMLINUX)
-# define __USE_MISC
+#  define __USE_MISC
 # endif
-#include <arpa/inet.h>
+# include <arpa/inet.h>
 #else
-#define _WINSOCK_DEPRECATED_NO_WARNINGS // todo, inet_ntoa
-#include <winsock2.h>
-#include <ws2tcpip.h>
-//typedef unsigned __int32 socklen_t;
+# define _WINSOCK_DEPRECATED_NO_WARNINGS // todo, inet_ntoa
+# include <winsock2.h>
+# include <ws2tcpip.h>
+// typedef unsigned __int32 socklen_t;
 #endif
 
 YM_EXTERN_C_PUSH

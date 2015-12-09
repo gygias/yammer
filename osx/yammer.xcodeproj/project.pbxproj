@@ -345,12 +345,12 @@
 				6334656B1C029A84007343B1 /* todo */,
 				631916461BFD069A001475FC /* libyammer */,
 				631916321BFCFF13001475FC /* Yammer */,
-				63225D9C1BE9314100C28F05 /* Dependencies */,
-				63DD2E051C0F7C4200D822D1 /* tests */,
+				63DD2E051C0F7C4200D822D1 /* test */,
 				630A5D011BE96CE9003292EE /* YammerTests */,
 				63312D031BFAF9E600039336 /* chat */,
 				634A87481C17A4C600C7CA99 /* linux */,
 				63957E8D1C137ADE00960961 /* win */,
+				63225D9C1BE9314100C28F05 /* Dependencies */,
 				63225D431BE9026200C28F05 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -485,7 +485,7 @@
 			name = win;
 			sourceTree = "<group>";
 		};
-		63DD2E051C0F7C4200D822D1 /* tests */ = {
+		63DD2E051C0F7C4200D822D1 /* test */ = {
 			isa = PBXGroup;
 			children = (
 				63DD2E091C0F7D6C00D822D1 /* Tests.h */,
@@ -507,7 +507,7 @@
 				63BA70A91C17612600210D2E /* TaskTests.h */,
 				63BA70A81C17612600210D2E /* TaskTests.c */,
 			);
-			name = tests;
+			name = test;
 			path = ../test;
 			sourceTree = SOURCE_ROOT;
 		};

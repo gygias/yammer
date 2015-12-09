@@ -17,10 +17,10 @@
 #include "YMPlexerPriv.h"
 
 #ifndef WIN32
-#include <pthread.h>
-#define YM_THREAD_TYPE pthread_t
+# include <pthread.h>
+# define YM_THREAD_TYPE pthread_t
 #else
-#define YM_THREAD_TYPE HANDLE
+# define YM_THREAD_TYPE HANDLE
 #endif
 
 #define ymlog_type YMLogThread

@@ -13,7 +13,7 @@
 #include "YMX509Certificate.h"
 
 #ifdef WIN32
-#include <winsock2.h>
+# include <winsock2.h>
 #endif
 
 YM_EXTERN_C_PUSH

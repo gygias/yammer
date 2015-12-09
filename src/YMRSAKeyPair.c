@@ -19,11 +19,11 @@
 #include <openssl/bn.h>
 
 #ifndef WIN32
-#include <pthread.h>
-#include <sys/time.h>
+# include <pthread.h>
+# include <sys/time.h>
 #else
-#include <winsock2.h> // time structures
-#include "YMUtilities.h" // gettimeofday copy
+# include <winsock2.h> // time structures
+# include "YMUtilities.h" // gettimeofday copy
 #endif
 
 YM_EXTERN_C_PUSH
