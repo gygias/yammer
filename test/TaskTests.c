@@ -117,7 +117,7 @@ void _TaskOpensslRun(struct TaskTest *theTest)
 	YMStringRef path = YMSTRC("c:\\Windows\\System32\\find.exe");
 	YMArrayAdd(args, "/I");
 	YMArrayAdd(args, "\"dll\"");
-	YMArrayAdd(args, "c:\\Windows\\*");
+	YMArrayAdd(args, ".\\*");
 #endif
     
     YMTaskRef task = YMTaskCreate(path, args, true);
