@@ -199,6 +199,7 @@ void _YMThreadFree(YMTypeRef object)
 void YMThreadDispatchJoin(YMThreadRef thread_)
 {
     __YMThreadRef thread = (__YMThreadRef)thread_;
+    ymassert(thread->isDispatchThread,"thread '%s' is not a dispatch thread",YMSTR(thread->name));
     __YMThreadDispatchJoin(thread);
 }
 
@@ -315,6 +316,8 @@ void __YMThreadInitThreadDict(__YMThreadRef thread)
 bool YMThreadJoin(YMThreadRef thread_)
 {
     __YMThreadRef thread = (__YMThreadRef)thread_;
+    
+    ymassert(!thread->isDispatchThread,"thread '%s' is a dispatch thread",YMSTR(thread->name));
     
     if ( _YMThreadGetCurrentThreadNumber() == _YMThreadGetThreadNumber(thread) )
         return false;

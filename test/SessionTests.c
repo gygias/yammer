@@ -130,7 +130,7 @@ void SessionTestRun(ym_test_assert_func assert, ym_test_diff_func diff, const vo
     YMRelease(theTest.connectAndAsyncClientCallbackSemaphore);
     YMRelease(theTest.threadExitSemaphore);
     
-    //YMThreadJoin(theTest.incomingDispatch);
+    YMThreadDispatchJoin(theTest.incomingDispatch);
     YMRelease(theTest.incomingDispatch);
 }
 
