@@ -64,7 +64,7 @@ void __YMLogType( int level, char* format, ... )
     YMLockUnlock(gYMLogLock);
 }
 
-void _YMLogLock() { YMLockLock(gYMLogLock); }
-void _YMLogUnlock() { YMLockUnlock(gYMLogLock); }
+void _YMLogLock() { YM_ONCE_DO_LOCAL(__YMLogInit); YMLockLock(gYMLogLock); }
+void _YMLogUnlock() { YM_ONCE_DO_LOCAL(__YMLogInit); YMLockUnlock(gYMLogLock); }
 
 YM_EXTERN_C_POP
