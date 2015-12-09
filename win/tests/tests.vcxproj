@@ -86,7 +86,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>YMWIN32;_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\;..\..\win;..\..\private;..\..\libyammer;..\..\test;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>yammerpch.h</ForcedIncludeFiles>
@@ -157,6 +157,7 @@
     <ClInclude Include="..\..\test\mDNSTests.h" />
     <ClInclude Include="..\..\test\PlexerTests.h" />
     <ClInclude Include="..\..\test\SessionTests.h" />
+    <ClInclude Include="..\..\test\TaskTests.h" />
     <ClInclude Include="..\..\test\Tests.h" />
     <ClInclude Include="..\..\test\TLSTests.h" />
     <ClInclude Include="..\dirent.h" />
@@ -170,6 +171,7 @@
     <ClCompile Include="..\..\test\mDNSTests.c" />
     <ClCompile Include="..\..\test\PlexerTests.c" />
     <ClCompile Include="..\..\test\SessionTests.c" />
+    <ClCompile Include="..\..\test\TaskTests.c" />
     <ClCompile Include="..\..\test\Tests.c" />
     <ClCompile Include="..\..\test\TLSTests.c" />
     <ClCompile Include="stdafx.cpp">

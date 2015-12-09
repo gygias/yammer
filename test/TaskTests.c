@@ -41,6 +41,8 @@ void _TaskUsrBinTrueRun(struct TaskTest *theTest)
 #define SomeTruePath "/usr/bin/true"
 #elif defined(YMLINUX)
 #define SomeTruePath "/bin/true"
+#elif defined(YMWIN32)
+#define SomeTruePath "c:\\Windows\\System32\\getmac.exe"
 #else
 #error implement me
 #endif
@@ -66,15 +68,22 @@ void _TaskUsrBinTrueRun(struct TaskTest *theTest)
 
 void _TaskCatSomeLogRun(struct TaskTest *theTest)
 {
-    YMStringRef path = YMSTRC("/bin/cat");
-    YMArrayRef args = YMArrayCreate();
-#if defined(YMMACOS)
-#define SomeLogPath "/var/log/install.log"
-#elif defined(YMLINUX)
-#define SomeLogPath "/var/log/syslog"
+#if defined(YMMACOS) || defined(YMLINUX)
+#define SomeCatPath "/bin/cat"
+# if defined(YMMACOS)
+#  define SomeLogPath "/var/log/install.log"
+# elif defined(YMLINUX)
+#  define SomeLogPath "/var/log/syslog"
+# endif
+#elif defined(YMWIN32)
+#define SomeCatPath "c:\\Windows\\System32\\cmd"
+#define SomeLogPath "/c \"type c:\\Windows\\WindowsUpdate.log\""
 #else
 #error implement me
 #endif
+
+    YMStringRef path = YMSTRC(SomeCatPath);
+    YMArrayRef args = YMArrayCreate();
     YMArrayAdd(args, SomeLogPath);
     
     YMTaskRef task = YMTaskCreate(path, args, true);
@@ -98,10 +107,18 @@ void _TaskCatSomeLogRun(struct TaskTest *theTest)
 
 void _TaskOpensslRun(struct TaskTest *theTest)
 {
+	YMArrayRef args = YMArrayCreate();
+
+#if !defined(YMWIN32)
     YMStringRef path = YMSTRC("/usr/bin/openssl");
-    YMArrayRef args = YMArrayCreate();
     YMArrayAdd(args, "genrsa");
     YMArrayAdd(args, "4096");
+#else
+	YMStringRef path = YMSTRC("c:\\Windows\\System32\\find.exe");
+	YMArrayAdd(args, "/I");
+	YMArrayAdd(args, "\"dll\"");
+	YMArrayAdd(args, "c:\\Windows\\*");
+#endif
     
     YMTaskRef task = YMTaskCreate(path, args, true);
     testassert(task, "create openssl task");

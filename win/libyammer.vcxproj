@@ -86,7 +86,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;LIBYAMMER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>YMWIN32;WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;LIBYAMMER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\;..\private;..\win;..\libyammer;%USERPROFILE%\sandbox\openssl\include;c:\Program Files\Bonjour SDK\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>yammerpch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <AdditionalOptions>
@@ -173,6 +173,7 @@
     <ClInclude Include="..\libyammer\YMStream.h" />
     <ClInclude Include="..\libyammer\YMString.h" />
     <ClInclude Include="..\private\arc4random.h" />
+    <ClInclude Include="..\private\YMArray.h" />
     <ClInclude Include="..\private\YMConnectionPriv.h" />
     <ClInclude Include="..\private\YMDebug.h" />
     <ClInclude Include="..\private\YMInternal.h" />
@@ -196,6 +197,7 @@
     <ClInclude Include="..\private\YMSemaphore.h" />
     <ClInclude Include="..\private\YMStreamPriv.h" />
     <ClInclude Include="..\private\YMStringPriv.h" />
+    <ClInclude Include="..\private\YMTask.h" />
     <ClInclude Include="..\private\YMThread.h" />
     <ClInclude Include="..\private\YMThreadPriv.h" />
     <ClInclude Include="..\private\YMTLSProvider.h" />
@@ -209,6 +211,7 @@
   <ItemGroup>
     <ClCompile Include="..\src\arc4random.c" />
     <ClCompile Include="..\src\YMAddress.c" />
+    <ClCompile Include="..\src\YMArray.c" />
     <ClCompile Include="..\src\YMBase.c" />
     <ClCompile Include="..\src\YMConnection.c" />
     <ClCompile Include="..\src\YMDictionary.c" />
@@ -231,6 +234,7 @@
     <ClCompile Include="..\src\YMSession.c" />
     <ClCompile Include="..\src\YMStream.c" />
     <ClCompile Include="..\src\YMString.c" />
+    <ClCompile Include="..\src\YMTask.c" />
     <ClCompile Include="..\src\YMThread.c" />
     <ClCompile Include="..\src\YMTLSProvider.c" />
     <ClCompile Include="..\src\YMUtilities.c" />

@@ -15,17 +15,17 @@ YM_EXTERN_C_PUSH
 
 typedef const struct __ym_array_t *YMArrayRef;
 
-YMArrayRef YMArrayCreate();
+YMArrayRef YMAPI YMArrayCreate();
 
-void YMArrayAdd(YMArrayRef, const void *);
-void YMArrayInsert(YMArrayRef, int64_t, const void *);
-void YMArrayReplace(YMArrayRef, int64_t, const void *);
-bool YMArrayContains(YMArrayRef, const void *);
-int64_t YMArrayIndexOf(YMArrayRef, const void *);
-const void *YMArrayGet(YMArrayRef, int64_t);
-int64_t YMArrayGetCount(YMArrayRef);
-void YMArrayRemove(YMArrayRef, int64_t);
-void YMArrayRemoveObject(YMArrayRef, const void *);
+void YMAPI YMArrayAdd(YMArrayRef, const void *);
+void YMAPI YMArrayInsert(YMArrayRef, int64_t, const void *);
+void YMAPI YMArrayReplace(YMArrayRef, int64_t, const void *);
+bool YMAPI YMArrayContains(YMArrayRef, const void *);
+int64_t YMAPI YMArrayIndexOf(YMArrayRef, const void *);
+const YMAPI void *YMArrayGet(YMArrayRef, int64_t);
+int64_t YMAPI YMArrayGetCount(YMArrayRef);
+void YMAPI YMArrayRemove(YMArrayRef, int64_t);
+void YMAPI YMArrayRemoveObject(YMArrayRef, const void *);
 
 YM_EXTERN_C_POP
 

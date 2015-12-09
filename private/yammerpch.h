@@ -164,7 +164,8 @@
     #define YM_POST_SEMAPHORE(s)	{ BOOL __rs = ReleaseSemaphore(s, 1, NULL); if ( ! __rs ) { result = -1; error = GetLastError(); errorStr = GENERIC_WERROR_STR; } else result = 0; }
     #define YM_RETRY_SEMAPHORE		false
     #define YM_CLOSE_SEMAPHORE(s)	{ BOOL __ch = CloseHandle(s->sem); if ( ! __ch ) { result = -1; error = (int)GetLastError(); errorStr = GENERIC_WERROR_STR; } else result = 0; }
-	#define YM_CREATE_PIPE(fds)		{ BOOL __cp = CreatePipe(&fds[0],&fds[1],NULL,UINT16_MAX); if ( ! __cp) { result = -1; error = (int)GetLastError(); errorStr = GENERIC_WERROR_STR; } else result = 0; }
+	#define YM_CREATE_PIPE(fds)		{ SECURITY_ATTRIBUTES saAttr; saAttr.nLength = sizeof(SECURITY_ATTRIBUTES); saAttr.bInheritHandle = TRUE; saAttr.lpSecurityDescriptor = NULL; \
+										BOOL __cp = CreatePipe(&fds[0],&fds[1],&saAttr,UINT16_MAX); if ( ! __cp) { result = -1; error = (int)GetLastError(); errorStr = GENERIC_WERROR_STR; } else result = 0; }
 	#define sleep(x) Sleep(((DWORD)x)*1000)
 	#define usleep(x) Sleep((DWORD)(x)/1000)
 	#define signal(x,y) ymerr("*** sigpipe win32 placeholder ***")

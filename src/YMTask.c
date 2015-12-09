@@ -13,6 +13,8 @@
 
 #if defined(YMLINUX)
 #include <sys/wait.h>
+#elif defined(YMWIN32)
+#define pid_t int32_t
 #endif
 
 #define ymlog_type YMLogDefault
@@ -33,6 +35,9 @@ typedef struct __ym_task_t
     uint32_t outputLen;
     YMPipeRef outputPipe;
     YMThreadRef outputThread;
+#if defined(YMWIN32)
+	HANDLE childHandle;
+#endif
 } __ym_task_t;
 typedef struct __ym_task_t *__YMTaskRef;
 
@@ -44,7 +49,7 @@ void __ym_task_parent_atfork();
 void __ym_task_child_atfork();
 YM_ONCE_DEF(__YMTaskRegisterAtfork);
 
-YMTaskRef YMTaskCreate(YMStringRef path, YMArrayRef args, bool saveOutput)
+YMTaskRef YMAPI YMTaskCreate(YMStringRef path, YMArrayRef args, bool saveOutput)
 {
     __YMTaskRef task = (__YMTaskRef)_YMAlloc(_YMTaskTypeID, sizeof(struct __ym_task_t));
     task->path = YMRetain(path);
@@ -73,6 +78,10 @@ void _YMTaskFree(YMTaskRef task_)
         YMRelease(task->outputThread);
 }
 
+#if defined(YMWIN32)
+#define pthread_atfork(x,y,z) 0
+#endif
+
 YM_ONCE_FUNC(__YMTaskRegisterAtfork, {
     int result = pthread_atfork(__ym_task_prepare_atfork, __ym_task_parent_atfork, __ym_task_child_atfork);
     ymassert(result==0,"failed to register atfork handlers: %d %s",errno,strerror(errno))
@@ -80,11 +89,13 @@ YM_ONCE_FUNC(__YMTaskRegisterAtfork, {
 
 YM_ONCE_OBJ gYMTaskOnce = YM_ONCE_INIT;
 
-bool YMTaskLaunch(YMTaskRef task_)
+bool YMAPI YMTaskLaunch(YMTaskRef task_)
 {
     __YMTaskRef task = (__YMTaskRef)task_;
     
     YM_IO_BOILERPLATE
+
+	bool okay = true;
     
     if ( task->save )
     {
@@ -92,7 +103,9 @@ bool YMTaskLaunch(YMTaskRef task_)
         ymlog("task[%s]: output pipe %d -> %d",YMSTR(task->path),YMPipeGetInputFile(task->outputPipe),YMPipeGetOutputFile(task->outputPipe));
         task->outputThread = YMThreadCreate(task->path, __ym_task_read_output_proc, YMRetain(task));
     }
-    
+
+#if !defined(YMWIN32)
+
     YM_ONCE_DO(gYMTaskOnce, __YMTaskRegisterAtfork);
     
     _YMLogLock();
@@ -129,20 +142,71 @@ bool YMTaskLaunch(YMTaskRef task_)
         exit(EXIT_FAILURE);
     }
     _YMLogUnlock();
-    
-    if ( task->save )
-        YMThreadStart(task->outputThread);
-    
-    ymlog("task[%s]: forked: p%d",YMSTR(task->path) ,pid);
+
     task->childPid = pid;
-    
-    return true;
+
+#else
+	PROCESS_INFORMATION procInfo = {0};
+
+	STARTUPINFO startupInfo = { 0 };
+	if ( task->save )
+	{
+		startupInfo.cb = sizeof(STARTUPINFO);
+		startupInfo.hStdOutput = YMPipeGetInputFile(task->outputPipe);
+		startupInfo.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+		startupInfo.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+		startupInfo.dwFlags |= STARTF_USESTDHANDLES;
+	}
+
+	int cmdLen = strlen(YMSTR(task->path));
+	int cmdlineSize = cmdLen + 128;
+	wchar_t *cmdline = calloc(cmdlineSize,sizeof(wchar_t));
+
+	int cmdLenNull = strlen(YMSTR(task->path)) + 1;
+	swprintf(cmdline, cmdlineSize, L"%hs", YMSTR(task->path));
+	int cmdlineLen = cmdLen;
+
+	if ( task->args ) {
+		for ( int64_t i = 0; i < YMArrayGetCount(task->args); i++ ) {
+			int argMaxLen = 256;
+			const char *arg = YMArrayGet(task->args,i);
+			int argLen = strlen(arg);
+			ymassert(argLen<argMaxLen,"arg len >= 255, fix hard code");
+			if ( ( argLen + 2 ) > ( cmdlineSize - cmdlineLen ) ) {
+				cmdlineSize *= 2;
+				cmdline = realloc(cmdline, cmdlineSize);
+			}
+
+			wcscat(cmdline,L" ");
+			wchar_t wArg[256];
+			swprintf(wArg, argMaxLen, L"%hs", arg);
+			wcscat(cmdline,wArg);
+		}
+	}
+
+	okay = CreateProcess(NULL,cmdline,NULL,NULL,true,0,NULL,NULL,&startupInfo,&procInfo);
+	free(cmdline);
+
+	task->childPid = procInfo.dwProcessId;
+	task->childHandle = procInfo.hProcess;
+
+#endif
+
+	if (task->save)
+		YMThreadStart(task->outputThread);
+
+	ymlog("task[%s]: forked: p%d", YMSTR(task->path), task->childPid);
+
+	return okay;
 }
 
-void YMTaskWait(YMTaskRef task_)
+void YMAPI YMTaskWait(YMTaskRef task_)
 {
     __YMTaskRef task = (__YMTaskRef)task_;
     ymassert(task->childPid!=NULL_PID,"task[%s]: asked to wait on non-existant child",YMSTR(task->path));
+
+#if !defined(YMWIN32)
+
     int stat_loc;
     pid_t result;
     do {
@@ -155,17 +219,34 @@ void YMTaskWait(YMTaskRef task_)
     else
         ymlog("task[%s]: p%d unknown exit status %d", YMSTR(task->path), task->childPid, stat_loc)
     task->result = stat_loc;
+
+#else
+
+	DWORD result = WaitForSingleObject(task->childHandle, INFINITE);
+	if ( result == WAIT_OBJECT_0 ) {
+		DWORD exitCode = 0;
+		BOOL okay = GetExitCodeProcess(task->childHandle, &exitCode);
+		if ( okay ) {
+			ymlog("task[%s]: p%d exited with %d",YMSTR(task->path), task->childPid, exitCode);
+			task->result = exitCode;
+		} else
+			ymerr("task[%s]: GetExitCodeProcess(p%d) failed: %x",YMSTR(task->path),task->childPid,GetLastError());
+	} else
+		ymerr("task[%s]: WaitForSingleObject(p%d) failed: %d %x",YMSTR(task->path),task->childPid,result,GetLastError());
+
+#endif
+
     task->exited = true;
 }
 
-int YMTaskGetExitStatus(YMTaskRef task_)
+int YMAPI YMTaskGetExitStatus(YMTaskRef task_)
 {
     __YMTaskRef task = (__YMTaskRef)task_;
     ymassert(task->exited,"task[%s]: hasn't exited",YMSTR(task->path));
     return task->result;
 }
 
-unsigned char *YMTaskGetOutput(YMTaskRef task_, uint32_t *outLength)
+unsigned YMAPI char *YMTaskGetOutput(YMTaskRef task_, uint32_t *outLength)
 {
     __YMTaskRef task = (__YMTaskRef)task_;
     if ( task->save )

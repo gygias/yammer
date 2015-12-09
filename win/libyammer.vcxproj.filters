@@ -150,6 +150,12 @@
     <ClInclude Include="..\private\arc4random.h">
       <Filter>private</Filter>
     </ClInclude>
+    <ClInclude Include="..\private\YMTask.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMArray.h">
+      <Filter>private</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -234,6 +240,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\src\arc4random.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMArray.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMTask.c">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
