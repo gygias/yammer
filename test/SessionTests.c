@@ -278,6 +278,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteLargeFile(YM_THREAD_PARAM ctx
     testassert(result>=0,"open(r) %s: %d %s", ServerTestPath,error,errorStr);
     YMFILE origFd = (YMFILE)result;
     YM_STOMP_FILE(YMSTR(theTest->tempServerSrc), READ_WRITE_FLAG);
+	testassert(result >= 0, "failed to open large file copy");
     theTest->largeSrcFd = (YMFILE)result;
     testassert(theTest->largeSrcFd>=0,"open(rw) %s: %d %s",YMSTR(theTest->tempServerSrc),error,errorStr);
     uint8_t buff[512];
@@ -287,7 +288,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteLargeFile(YM_THREAD_PARAM ctx
         testassert(aRead>=0,"aRead: %d %s",error,errorStr);
         if ( aRead == 0 ) break;
 		YM_WRITE_FILE(theTest->largeSrcFd,buff,aRead);
-        testassert(aRead==aWrite, "aRead!=aWrite: %d %s",error,errorStr);
+        testassert(aRead==aWrite, "aRead%d!=aWrite%d: %d %s",aRead,aWrite,error,errorStr);
         if ( copyBytes && copyBytes - aRead == 0 ) break;
         copyBytes -= aRead;
     }
@@ -332,6 +333,9 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteLargeFile(YM_THREAD_PARAM ctx
         YMConnectionCloseStream(connection,stream);
         YMSemaphoreSignal(theTest->threadExitSemaphore);
     }
+	
+	YM_CLOSE_FILE(theTest->largeSrcFd);
+	testassert(result == 0, "failed to close large source copy");
     
     ymlog("wrote large file thread (%sSYNC) exiting",theTest->serverAsync?"A":"");
 

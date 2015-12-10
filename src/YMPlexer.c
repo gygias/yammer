@@ -160,7 +160,7 @@ typedef struct __ym_dispatch_plexer_stream_def
 typedef struct __ym_dispatch_plexer_stream_def __ym_dispatch_plexer_and_stream;
 typedef __ym_dispatch_plexer_and_stream *__ym_dispatch_plexer_and_stream_ref;
 
-YM_ONCE_DEF(__YMRegisterSigpipe);
+void __YMRegisterSigpipe();
 void __ym_sigpipe_handler (int signum);
 YMStreamRef __YMPlexerRetainReadyStream(__YMPlexerRef plexer);
 void __YMPlexerDispatchFunctionWithName(__YMPlexerRef plexer, YMStreamRef stream, YMThreadRef targetThread, ym_thread_dispatch_func function, YMStringRef nameToRelease);

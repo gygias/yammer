@@ -284,7 +284,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_local_socket_accept_proc(__unused YM
 #if !defined(YMWIN32)
     ymassert(listenSocket>=0,YM_LOG_PRE "fatal: socket failed (listen): %d (%s)",YM_LOG_DSCG,errno,strerror(errno));
 #else
-	ymassert(listenSocket!=INVALID_SOCKET,YM_LOG_PRE "fatal: socket failed (listen): %x",YM_LOG_DSCG,GetLastError());
+	ymassert(listenSocket!=INVALID_SOCKET,YM_LOG_PRE "fatal: socket failed (listen): %x",YM_LOG_DSCG,WSAGetLastError());
 #endif
     
     int yes = 1;
@@ -306,7 +306,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_local_socket_accept_proc(__unused YM
 #endif
     
 	result = bind (listenSocket, (struct sockaddr *) &sockName, size);
-    if (result != 0 )
+    if ( result != 0 )
     {
         int bindErrno = errno;
 		int error; const char *errorStr;
