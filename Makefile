@@ -74,5 +74,5 @@ chat.o:
 ym-dispatch-main-test: $(LTGT) ym-dispatch-main-test.o
 	cd $(OUT) ;	$(CC) -o $@ $(PT) ym-dispatch-main-test.o $(DLIBS) $(DBG) $(TDEP)
 
-ym-test-dispatch-main.o:
+ym-dispatch-main-test.o:
 	$(CC) -c test/ym-dispatch-main-test.c -o $(OUT)/$@ $(CCF) $(INC) $(FLG) $(DBG)

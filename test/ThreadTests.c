@@ -29,13 +29,13 @@ void _ThreadDispatchMainTestRun(struct ThreadTest *theTest)
     YMStringRef path = YMSTRC("ym-dispatch-main-test");
     YMArrayRef args = YMArrayCreate();
     YMArrayAdd(args, "m");
-    YMArrayAdd(args, "1000000");
+    YMArrayAdd(args, "10000");
     
     YMTaskRef testTask = YMTaskCreate(path, args, false);
     YMTaskLaunch(testTask);
     YMTaskWait(testTask);
     int result = YMTaskGetExitStatus(testTask);
-    testassert(result==0,"dispatch-main-test result %d",result);
+    testassert(result==0,"ym-dispatch-main-test result %d",result);
     
     YMRelease(testTask);
     YMRelease(args);

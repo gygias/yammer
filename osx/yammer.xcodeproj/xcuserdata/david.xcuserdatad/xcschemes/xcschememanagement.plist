@@ -24,17 +24,17 @@
 			<key>orderHint</key>
 			<integer>4</integer>
 		</dict>
-		<key>dispatch-main-test.xcscheme</key>
-		<dict>
-			<key>orderHint</key>
-			<integer>6</integer>
-		</dict>
 		<key>libyammer.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>0</integer>
 		</dict>
-		<key>test.xcscheme</key>
+		<key>ym-dispatch-main-test.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>6</integer>
+		</dict>
+		<key>ymtest.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>5</integer>

@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
     if ( gReps <= 0 )
         usage();
     
-    ymlog("dispatch-main-test running on %s with %d reps",main?"main":"thread",gReps);
+    ymlog("ym-dispatch-main-test running on %s with %d reps",main?"main":"thread",gReps);
     
     if ( main )
     {
