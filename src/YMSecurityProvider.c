@@ -77,7 +77,7 @@ bool YMNoSecurityInit(__unused __YMSecurityProviderRef provider)
 
 bool YMNoSecurityRead(__YMSecurityProviderRef provider, uint8_t *buffer, size_t bytes)
 {
-    YM_IO_BOILERPLATE
+	YM_IO_BOILERPLATE
     YM_READ_SOCKET(provider->socket, buffer, bytes);
     return ( (size_t)aRead == bytes );
 }

@@ -102,7 +102,7 @@ void _TestTLS1(struct TLSTest *theTest)
     
     bool serverFirst = arc4random_uniform(2);
     const char *testBuffer = "moshi moshi";
-    ssize_t testLen = (ssize_t)strlen(testBuffer) + 1;
+    size_t testLen = (ssize_t)strlen(testBuffer) + 1;
 	
 	YM_WRITE_SOCKET(serverFirst?serverSocket:clientSocket, testBuffer, testLen);
     testassert(aWrite==testLen,"failed to write test message: %d (%s)",errno,strerror(errno));
