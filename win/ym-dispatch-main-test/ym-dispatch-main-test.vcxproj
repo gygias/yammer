@@ -90,7 +90,7 @@
       <PreprocessorDefinitions>YMWIN32;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\;..\..\libyammer;..\..\private</AdditionalIncludeDirectories>
-      <ForcedIncludeFiles>..\..\private\yammerpch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <ForcedIncludeFiles>yammerpch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
