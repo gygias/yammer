@@ -21,21 +21,16 @@ bool YMNoSecurityRead(__YMSecurityProviderRef provider,uint8_t*,size_t);
 bool YMNoSecurityWrite(__YMSecurityProviderRef provider,const uint8_t*,size_t);
 bool YMNoSecurityClose(__YMSecurityProviderRef provider);
 
-YMSecurityProviderRef YMSecurityProviderCreateWithSocket(YMSOCKET fd)
+YMSecurityProviderRef YMSecurityProviderCreateWithSocket(YMSOCKET socket)
 {
-    return YMSecurityProviderCreate((YMFILE)fd, (YMFILE)fd);
-}
-
-YMSecurityProviderRef YMSecurityProviderCreate(YMFILE readFile, YMFILE writeFile)
-{    
     __YMSecurityProviderRef provider = (__YMSecurityProviderRef)_YMAlloc(_YMSecurityProviderTypeID,sizeof(struct __ym_security_provider_t));
-    provider->initFunc = YMNoSecurityInit;
     
+    provider->socket = socket;
+    provider->initFunc = YMNoSecurityInit;
     provider->readFunc = YMNoSecurityRead;
     provider->writeFunc = YMNoSecurityWrite;
     provider->closeFunc = YMNoSecurityClose;
-    provider->readFile = readFile;
-    provider->writeFile = writeFile;
+    
     return provider;
 }
 
@@ -82,12 +77,16 @@ bool YMNoSecurityInit(__unused __YMSecurityProviderRef provider)
 
 bool YMNoSecurityRead(__YMSecurityProviderRef provider, uint8_t *buffer, size_t bytes)
 {
-    return ( YMIOSuccess == YMReadFull(provider->readFile, buffer, bytes, NULL) );
+    YM_IO_BOILERPLATE
+    YM_READ_SOCKET(provider->socket, buffer, bytes);
+    return ( (size_t)aRead == bytes );
 }
 
 bool YMNoSecurityWrite(__YMSecurityProviderRef provider, const uint8_t *buffer, size_t bytes)
 {
-    return ( YMIOSuccess == YMWriteFull(provider->writeFile, buffer, bytes, NULL) );
+    YM_IO_BOILERPLATE
+    YM_WRITE_SOCKET(provider->socket, buffer, bytes);
+    return ( (size_t)aWrite == bytes );
 }
 
 bool YMNoSecurityClose(__unused __YMSecurityProviderRef provider_)

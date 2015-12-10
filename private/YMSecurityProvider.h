@@ -13,8 +13,7 @@ YM_EXTERN_C_PUSH
 
 typedef const struct __ym_security_provider_t *YMSecurityProviderRef;
 
-YMSecurityProviderRef YMAPI YMSecurityProviderCreateWithSocket(YMSOCKET fd);
-YMSecurityProviderRef YMAPI YMSecurityProviderCreate(YMFILE inFd, YMFILE outFd);
+YMSecurityProviderRef YMAPI YMSecurityProviderCreateWithSocket(YMSOCKET socket);
 
 bool YMAPI YMSecurityProviderInit(YMSecurityProviderRef provider);
 bool YMAPI YMSecurityProviderRead(YMSecurityProviderRef provider, uint8_t *buffer, size_t bytes);

@@ -122,7 +122,7 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     ymlog("plexer test using %u threads, %u trips per thread, %s streams per thread, %s messages",PlexerTest1Threads,PlexerTest1RoundTripsPerThread,PlexerTest1NewStreamPerRoundTrip?"new":"one",PlexerTest1RandomMessages?"random":"fixed");
     
     YMStringRef name = YMSTRC("L");
-    YMSecurityProviderRef noSecurity = YMSecurityProviderCreate((YMFILE)socketA, (YMFILE)socketA);
+    YMSecurityProviderRef noSecurity = YMSecurityProviderCreateWithSocket(socketA);
     theTest->localPlexer = YMPlexerCreate(name,noSecurity,localIsMaster);
     YMRelease(noSecurity);
     YMRelease(name);
@@ -132,7 +132,7 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     YMPlexerSetCallbackContext(theTest->localPlexer, theTest);
     
     name = YMSTRC("R");
-    noSecurity = YMSecurityProviderCreate((YMFILE)socketB, (YMFILE)socketB);
+    noSecurity = YMSecurityProviderCreateWithSocket(socketB);
     theTest->fakeRemotePlexer = YMPlexerCreate(name,noSecurity,!localIsMaster);
     YMRelease(noSecurity);
     YMRelease(name);

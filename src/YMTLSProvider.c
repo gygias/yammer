@@ -124,8 +124,7 @@ YMTLSProviderRef __YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isWrappin
     
     __YMTLSProviderRef tls = (__YMTLSProviderRef)_YMAlloc(_YMTLSProviderTypeID,sizeof(struct __ym_tls_provider_t));
     
-    tls->_common.readFile = (YMFILE)socket;
-    tls->_common.writeFile = (YMFILE)socket;
+    tls->_common.socket = socket;
     tls->isWrappingSocket = isWrappingSocket;
     tls->isServer = isServer;
     tls->usingGeneratedCert = false;
@@ -500,7 +499,7 @@ bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
     // assuming whatever memory was allocated here gets free'd in SSL_CTX_free
     
     //tls->bio = BIO_new(&ym_bio_methods);
-    tls->bio = BIO_new_socket((YMSOCKET)tls->_common.readFile, BIO_NOCLOSE);
+    tls->bio = BIO_new_socket(tls->_common.socket, BIO_NOCLOSE);
     if ( ! tls->bio )
     {
         sslError = ERR_get_error();
