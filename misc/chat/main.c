@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#ifndef WIN32
+#ifndef YMWIN32
 #include <unistd.h>
 #include <pthread.h>
 # if defined(YMLINUX)
@@ -26,7 +26,7 @@
 YMSessionRef gYMSession = NULL;
 bool gIsServer;
 
-#ifndef WIN32
+#ifndef YMWIN32
 void __sigint_handler (__unused int signum)
 {
 #else
@@ -48,7 +48,7 @@ int main(int argc, const char * argv[]) {
 		exit(1);
     }
         
-#ifndef WIN32
+#ifndef YMWIN32
     signal(SIGINT, __sigint_handler);
 #else
 	SetConsoleCtrlHandler((PHANDLER_ROUTINE)__CtrlHandler, TRUE);
@@ -82,7 +82,7 @@ int main(int argc, const char * argv[]) {
 
 void thread(void (*func)(YMStreamRef), YMStreamRef context)
 {
-#ifndef WIN32
+#ifndef YMWIN32
     pthread_t pthread;
     pthread_create(&pthread, NULL, (void *(*)(void *))func, (void *)context);
 #else

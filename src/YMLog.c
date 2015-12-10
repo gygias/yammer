@@ -13,7 +13,7 @@
 #include "YMThreadPriv.h"
 
 #include <stdarg.h>
-#ifndef WIN32
+#if !defined(YMWIN32)
 # include <pthread.h>
 #endif
 
@@ -40,7 +40,7 @@ void __YMLogType( int level, char* format, ... )
         const char *timeStr = YMGetCurrentTimeString(gTimeFormatBuf, gTimeFormatBufLen);
 		uint64_t threadID = _YMThreadGetCurrentThreadNumber();
 		uint64_t pid =
-#if !defined(WIN32)
+#if !defined(YMWIN32)
 			getpid();
 #else
 			GetCurrentProcessId();

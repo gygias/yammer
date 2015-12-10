@@ -36,7 +36,7 @@
 #  include "arc4random.h"
 #  define __USE_BSD
 # endif
-#elif defined(WIN32)
+#elif defined(YMWIN32)
 # define _WINSOCKAPI_
 # include <windows.h>
 # define _WINSOCK_DEPRECATED_NO_WARNINGS // todo, gethostbyname
@@ -53,7 +53,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#if defined(WIN32)
+#if defined(YMWIN32)
 # define ssize_t SSIZE_T
 # define typeof decltype
 # include <direct.h>
@@ -63,7 +63,7 @@
 # define rmdir _rmdir // ( ( RemoveDirectory(x) == 0 ) ? -1 : 0 )
 #endif
 
-#if defined(WIN32) || defined(YMLINUX)
+#if defined(YMWIN32) || defined(YMLINUX)
 # define __unused
 #endif
 
@@ -73,11 +73,11 @@
 #include "YMInternal.h"
 
 #ifdef YMDEBUG
-# ifndef WIN32
+# ifndef YMWIN32
 #  include <malloc/malloc.h>
 # else
 #  include <malloc.h>
-#  ifdef WIN32
+#  ifdef YMWIN32
 #   define malloc_size _msize
 #  elif defined(YMLINUX)
 #  define malloc_size malloc_usable_size
@@ -91,7 +91,7 @@
 # define YM_DEBUG_CHUNK_SIZE(x) ;
 #endif
 
-#ifndef WIN32
+#ifndef YMWIN32
 	#define YMSOCKET YMFILE
     #define NULL_FILE (-1)
 

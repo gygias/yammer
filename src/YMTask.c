@@ -103,7 +103,7 @@ bool YMAPI YMTaskLaunch(YMTaskRef task_)
     {
         task->outputPipe = YMPipeCreate(NULL);
         ymlog("task[%s]: output pipe %d -> %d",YMSTR(task->path),YMPipeGetInputFile(task->outputPipe),YMPipeGetOutputFile(task->outputPipe));
-        task->outputThread = YMThreadCreate(task->path, __ym_task_read_output_proc, YMRetain(task));
+        task->outputThread = YMThreadCreate(task->path, __ym_task_read_output_proc, (void *)YMRetain(task));
     }
 
 #if !defined(YMWIN32)

@@ -20,7 +20,7 @@ typedef void *(*ym_voidp_voidp_func)(void *);
 
 typedef struct ym_thread_dispatch_t *ym_thread_dispatch_ref;
 
-#ifndef WIN32
+#if !defined(YMWIN32)
 # define YM_THREAD_RETURN void *
 # define YM_CALLING_CONVENTION
 # define YM_THREAD_PARAM void *
@@ -41,7 +41,7 @@ typedef YM_THREAD_RETURN(YM_CALLING_CONVENTION *ym_thread_entry)(YM_THREAD_PARAM
 // function pointers for YMThreadDispatchUserInfo
 typedef ym_thread_dispatch_func ym_thread_dispatch_dealloc;
 
-YMThreadRef YMAPI YMThreadCreate(YMStringRef name, ym_thread_entry entryPoint, const void *context);
+YMThreadRef YMAPI YMThreadCreate(YMStringRef name, ym_thread_entry entryPoint, void *context);
 YMThreadRef YMAPI YMThreadDispatchCreate(YMStringRef name);
 
 void YMThreadSetContext(YMThreadRef thread, void *context);
@@ -65,6 +65,10 @@ typedef struct _ym_thread_forward_file_context_t
     void * context;
 } _ym_thread_forward_file_context_t;
 typedef struct _ym_thread_forward_file_context_t *_ym_thread_forward_file_context_ref;
+
+void YMAPI YMThreadDispatchSetGlobalMode(bool);
+void YMAPI YMThreadDispatchMain();
+YMThreadRef YMAPI YMThreadDispatchGetGlobal();
 
 // the 'forward file' problem
 // user should be able to asynchronously forward a file, release ownership of stream and forget it

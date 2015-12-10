@@ -8,13 +8,14 @@
 
 #include "Tests.h"
 
-#ifdef WIN32
+#ifdef YMWIN32
 #include "arc4random.h"
 #endif
 
 YM_EXTERN_C_PUSH
 
 #include "TaskTests.h"
+#include "ThreadTests.h"
 #include "CryptoTests.h"
 #include "DictionaryTests.h"
 #include "LocalSocketPairTests.h"
@@ -60,49 +61,37 @@ bool _ym_test_diff_func(__unused const void *ctx, __unused const char *path1, __
 	return true;
 }
 
-#if defined(YMLINUX) || defined(MACOS_TEST_TOOL)
-
-int main( __unused int argc, __unused const char *argv[] )
-{
-    bool indefinite = argc > 1;
-    
-    do {
-        RunAllTests();
-    } while (indefinite);
-    
-    return 0;
-}
-
-#endif
-
 void RunAllTests()
 {
     gLock = YMLockCreate();
     
-    ymerr("------ task test start ------");
-    TaskTestRun(_ym_test_assert_func, NULL);
-    ymerr("------ task test end ------");
-	ymerr("------ dictionary test start ------");
-	DictionaryTestRun(_ym_test_assert_func, NULL);
-	ymerr("------ dictionary test end ------");
-	ymerr("------ crypto test start ------");
-	CryptoTestRun(_ym_test_assert_func, NULL);
-	ymerr("------ crypto test end ------");
-	ymerr("------ local socket pair test start ------");
-	LocalSocketPairTestRun(_ym_test_assert_func, NULL);
-	ymerr("------ local socket pair test end ------");
-	ymerr("------ mdns test start ------");
-	mDNSTestRun(_ym_test_assert_func, NULL);
-	ymerr("------ mdns test end ------");
-	ymerr("------ tls test start ------");
-	TLSTestRun(_ym_test_assert_func, NULL);
-	ymerr("------ tls test end ------");
-	ymerr("------ plexer test start ------");
-	PlexerTestRun(_ym_test_assert_func, NULL);
-	ymerr("------ plexer test end ------");
-	ymerr("------ session test start ------");
-	SessionTestRun(_ym_test_assert_func, _ym_test_diff_func, NULL);
-	ymerr("------ session test end ------");
+    ymerr("------ task tests start ------");
+    TaskTestsRun(_ym_test_assert_func, NULL);
+    ymerr("------ task tests end ------");
+    ymerr("------ thread tests start ------");
+    ThreadTestsRun(_ym_test_assert_func, NULL);
+    ymerr("------ thread tests end ------");
+	ymerr("------ dictionary tests start ------");
+	DictionaryTestsRun(_ym_test_assert_func, NULL);
+	ymerr("------ dictionary tests end ------");
+	ymerr("------ crypto tests start ------");
+	CryptoTestsRun(_ym_test_assert_func, NULL);
+	ymerr("------ crypto tests end ------");
+	ymerr("------ local socket pair tests start ------");
+	LocalSocketPairTestsRun(_ym_test_assert_func, NULL);
+	ymerr("------ local socket pair tests end ------");
+	ymerr("------ mdns tests start ------");
+	mDNSTestsRun(_ym_test_assert_func, NULL);
+	ymerr("------ mdns tests end ------");
+	ymerr("------ tls tests start ------");
+	TLSTestsRun(_ym_test_assert_func, NULL);
+	ymerr("------ tls tests end ------");
+	ymerr("------ plexer tests start ------");
+	PlexerTestsRun(_ym_test_assert_func, NULL);
+	ymerr("------ plexer tests end ------");
+	ymerr("------ session tests start ------");
+	SessionTestsRun(_ym_test_assert_func, _ym_test_diff_func, NULL);
+	ymerr("------ session tests end ------");
 }
 
 char *YMRandomASCIIStringWithMaxLength(uint16_t maxLength, bool for_mDNSServiceName, bool for_txtKey)

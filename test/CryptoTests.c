@@ -21,7 +21,7 @@ typedef struct CryptoTest
 
 void _X509GenerationTestRun(struct CryptoTest *test);
 
-void CryptoTestRun(ym_test_assert_func assert, const void *context)
+void CryptoTestsRun(ym_test_assert_func assert, const void *context)
 {
     struct CryptoTest theTest = { assert, context };
     

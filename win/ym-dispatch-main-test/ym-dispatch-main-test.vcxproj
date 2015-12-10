@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{79C39751-4EE7-4E60-A57D-E5089CCA47FC}</ProjectGuid>
+    <ProjectGuid>{74222738-7433-4026-A978-37E259E74132}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>tests</RootNamespace>
+    <RootNamespace>ymdispatchmaintest</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -83,25 +83,26 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>YMWIN32;_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>YMWIN32;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\;..\..\win;..\..\private;..\..\libyammer;..\..\test;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <ForcedIncludeFiles>yammerpch.h</ForcedIncludeFiles>
-      <ObjectFileName>$(IntDir)/%(RelativeDir)</ObjectFileName>
+      <AdditionalIncludeDirectories>..\..\;..\..\libyammer;..\..\private</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>..\..\private\yammerpch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>libyammer.lib;Ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libyammer.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\Debug</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -115,7 +116,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -132,7 +134,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -150,39 +153,12 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\private\yammerpch.h" />
-    <ClInclude Include="..\..\test\CryptoTests.h" />
-    <ClInclude Include="..\..\test\DictionaryTests.h" />
-    <ClInclude Include="..\..\test\LocalSocketPairTests.h" />
-    <ClInclude Include="..\..\test\mDNSTests.h" />
-    <ClInclude Include="..\..\test\PlexerTests.h" />
-    <ClInclude Include="..\..\test\SessionTests.h" />
-    <ClInclude Include="..\..\test\TaskTests.h" />
-    <ClInclude Include="..\..\test\Tests.h" />
-    <ClInclude Include="..\..\test\ThreadTests.h" />
-    <ClInclude Include="..\..\test\TLSTests.h" />
-    <ClInclude Include="..\dirent.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\test\CryptoTests.c" />
-    <ClCompile Include="..\..\test\DictionaryTests.c" />
-    <ClCompile Include="..\..\test\LocalSocketPairTests.c" />
-    <ClCompile Include="..\..\test\mDNSTests.c" />
-    <ClCompile Include="..\..\test\PlexerTests.c" />
-    <ClCompile Include="..\..\test\SessionTests.c" />
-    <ClCompile Include="..\..\test\TaskTests.c" />
-    <ClCompile Include="..\..\test\Tests.c" />
-    <ClCompile Include="..\..\test\TestsMain.c" />
-    <ClCompile Include="..\..\test\ThreadTests.c" />
-    <ClCompile Include="..\..\test\TLSTests.c" />
-    <ClCompile Include="stdafx.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="..\..\test\ym-dispatch-main-test.c" />
+    <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

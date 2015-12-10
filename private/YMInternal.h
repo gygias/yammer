@@ -20,7 +20,7 @@
 # define YMALLOC(x) malloc(x)
 #endif
 
-#ifndef WIN32
+#if !defined(YMWIN32)
 # define YM_ONCE_OBJ pthread_once_t
 # define YM_ONCE_INIT PTHREAD_ONCE_INIT
 # define YM_ONCE_DEF(x) void x()

@@ -9,7 +9,7 @@
 #ifndef Yammer_h
 #define Yammer_h
 
-#ifdef WIN32
+#ifdef YMWIN32
 # define WIN32_LEAN_AND_MEAN
 # include <windows.h>
 #endif

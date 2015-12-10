@@ -67,7 +67,7 @@ void __sigpipe_handler (__unused int signum)
     fprintf(stderr,"sigpipe happened\n");
 }
 
-void TLSTestRun(ym_test_assert_func assert, const void *context)
+void TLSTestsRun(ym_test_assert_func assert, const void *context)
 {
     YMStringRef name = YMSTRC("TLSTest");
     struct TLSTest theTest = { assert, context, YMLockCreateWithOptionsAndName(YMInternalLockType, name), YMSemaphoreCreateWithName(name, 0), 0, 0, false, NULL, 0 };

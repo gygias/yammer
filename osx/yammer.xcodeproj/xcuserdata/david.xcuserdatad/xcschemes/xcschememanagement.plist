@@ -24,6 +24,11 @@
 			<key>orderHint</key>
 			<integer>4</integer>
 		</dict>
+		<key>dispatch-main-test.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>6</integer>
+		</dict>
 		<key>libyammer.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
@@ -68,6 +73,11 @@
 			<true/>
 		</dict>
 		<key>63345ACC1BFAC91300569B3C</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>636166E61C18DFA300D17172</key>
 		<dict>
 			<key>primary</key>
 			<true/>

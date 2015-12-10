@@ -20,7 +20,7 @@
 
 #define YM_CON_DESC (connection->address ? YMSTR(YMAddressGetDescription(connection->address)) : "*")
 
-#ifndef WIN32
+#if !defined(YMWIN32)
 # include <sys/socket.h>
 # include <arpa/inet.h>
 #else
@@ -181,7 +181,7 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     //struct protoent *ppe = getprotobyname("tcp");
     
 	YMSOCKET newSocket = socket(domain, type, protocol);
-#ifndef WIN32
+#if !defined(YMWIN32)
     ymassert(newSocket>=0,"connection[%s]: socket failed: %d (%s)",YM_CON_DESC,errno,strerror(errno));
 #else
 	ymassert(newSocket!=INVALID_SOCKET, "connection[%s]: socket failed: %x",YM_CON_DESC,GetLastError());

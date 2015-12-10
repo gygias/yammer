@@ -18,7 +18,7 @@
 #include <openssl/err.h>
 #include <openssl/bn.h>
 
-#ifndef WIN32
+#if !defined(YMWIN32)
 # include <pthread.h>
 # include <sys/time.h>
 #else

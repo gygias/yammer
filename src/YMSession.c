@@ -24,7 +24,7 @@
 #define YM_LOG_PRE "session[%s]"
 #define YM_LOG_DSC YMSTR(session->logDescription)
 
-#if !defined(WIN32)
+#if !defined(YMWIN32)
 # if defined(YMLINUX)
 #  define __USE_POSIX
 #  include <sys/socket.h>

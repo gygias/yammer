@@ -8,7 +8,7 @@
 
 #include "YMmDNS.h"
 
-#ifndef WIN32
+#if !defined(YMWIN32)
 # if defined(YMLINUX)
 #  define __USE_POSIX
 # endif

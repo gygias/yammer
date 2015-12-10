@@ -118,42 +118,42 @@ bool ym_test_diff_proc(const void *ctx, const char *path1, const char *path2, bo
 
 - (void)testTask {
     const void *SELF = (__bridge const void *)(self);
-    TaskTestRun(ym_test_assert_proc, SELF);
+    TaskTestsRun(ym_test_assert_proc, SELF);
 }
 
 - (void)testDictionary {
     const void *SELF = (__bridge const void *)(self);
-    DictionaryTestRun(ym_test_assert_proc, SELF);
+    DictionaryTestsRun(ym_test_assert_proc, SELF);
 }
 
 - (void)testCrypto {
     const void *SELF = (__bridge const void *)(self);
-    CryptoTestRun(ym_test_assert_proc, SELF);
+    CryptoTestsRun(ym_test_assert_proc, SELF);
 }
 
 - (void)testLocalSocketPair {
     const void *SELF = (__bridge const void *)(self);
-    LocalSocketPairTestRun(ym_test_assert_proc, SELF);
+    LocalSocketPairTestsRun(ym_test_assert_proc, SELF);
 }
 
 - (void)testmDNS {
     const void *SELF = (__bridge const void *)(self);
-    mDNSTestRun(ym_test_assert_proc, SELF);
+    mDNSTestsRun(ym_test_assert_proc, SELF);
 }
 
 - (void)testTLS {
     const void *SELF = (__bridge const void *)(self);
-    TLSTestRun(ym_test_assert_proc, SELF);
+    TLSTestsRun(ym_test_assert_proc, SELF);
 }
 
 - (void)testPlexer {
     const void *SELF = (__bridge const void *)(self);
-    PlexerTestRun(ym_test_assert_proc, SELF);
+    PlexerTestsRun(ym_test_assert_proc, SELF);
 }
 
 - (void)testSession {
     const void *SELF = (__bridge const void *)(self);
-    SessionTestRun(ym_test_assert_proc, ym_test_diff_proc, SELF);
+    SessionTestsRun(ym_test_assert_proc, ym_test_diff_proc, SELF);
 }
 
 @end

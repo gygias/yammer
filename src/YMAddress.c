@@ -6,7 +6,7 @@
 //  Copyright © 2015 combobulated. All rights reserved.
 //
 
-#ifdef WIN32
+#if defined(YMWIN32)
 #include "YMBase.h"
 #include "YMInternal.h"
 #endif
@@ -16,7 +16,7 @@
 
 #include "YMLog.h"
 
-#if !defined(WIN32)
+#if !defined(YMWIN32)
 # include <sys/socket.h>
 # include <netinet/in.h> // protocols
 # if defined (YMLINUX)
@@ -64,7 +64,7 @@ YMAddressRef YMAddressCreate(const void *addressData, uint32_t length)
         type = YMAddressIPV4;
         isIP = isIPV4 = true;
     }
-#ifndef WIN32
+#if !defined(YMWIN32)
     else if ( YM_IS_IPV6(addr) )
     {
         type = YMAddressIPV6;

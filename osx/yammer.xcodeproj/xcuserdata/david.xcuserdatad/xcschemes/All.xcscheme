@@ -76,6 +76,20 @@
                ReferencedContainer = "container:yammer.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "636166E61C18DFA300D17172"
+               BuildableName = "ym-dispatch-main-test"
+               BlueprintName = "ym-dispatch-main-test"
+               ReferencedContainer = "container:yammer.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction

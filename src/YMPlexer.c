@@ -23,7 +23,7 @@
 #ifdef USE_FTIME
 #include <sys/timeb.h>
 #error todo
-#elif !defined(WIN32)
+#elif !defined(YMWIN32)
 #include <sys/select.h>
 #include <sys/time.h>
 #include <pthread.h> // explicit for sigpipe
@@ -207,11 +207,11 @@ YMPlexerRef YMPlexerCreate(YMStringRef name, YMSecurityProviderRef provider, boo
     plexer->remotePlexBuffer = YMALLOC(plexer->remotePlexBufferSize);
     
     aString = YMStringCreateWithFormat("%s-down",YMSTR(plexer->name),NULL);
-    plexer->localServiceThread = YMThreadCreate(aString, __ym_plexer_service_downstream_proc, YMRetain(plexer));
+    plexer->localServiceThread = YMThreadCreate(aString, __ym_plexer_service_downstream_proc, (void *)YMRetain(plexer));
     YMRelease(aString);
     
     aString = YMStringCreateWithFormat("%s-up",YMSTR(plexer->name),NULL);
-    plexer->remoteServiceThread = YMThreadCreate(aString, __ym_plexer_service_upstream_proc, YMRetain(plexer));
+    plexer->remoteServiceThread = YMThreadCreate(aString, __ym_plexer_service_upstream_proc, (void *)YMRetain(plexer));
     YMRelease(aString);
     
     aString = YMStringCreateWithFormat("%s-event",YMSTR(plexer->name),NULL);

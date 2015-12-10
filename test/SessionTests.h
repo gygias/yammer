@@ -13,7 +13,7 @@
 
 YM_EXTERN_C_PUSH
 
-void SessionTestRun(ym_test_assert_func assert, ym_test_diff_func diff, const void *context);
+void SessionTestsRun(ym_test_assert_func assert, ym_test_diff_func diff, const void *context);
 
 YM_EXTERN_C_POP
 

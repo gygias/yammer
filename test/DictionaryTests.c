@@ -34,7 +34,7 @@ typedef struct DictionaryTest
     const void *context;
 } DictionaryTest;
 
-void DictionaryTestRun(ym_test_assert_func assert, const void *context)
+void DictionaryTestsRun(ym_test_assert_func assert, const void *context)
 {
     DictionaryTest theTest = { YMDictionaryCreate(), YMLockCreate(), YMSemaphoreCreate(0), YMDictionaryCreate(), false, 0, assert, context };
     

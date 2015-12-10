@@ -9,7 +9,7 @@
 #ifndef YMLock_h
 #define YMLock_h
 
-#ifndef WIN32
+#if !defined(YMWIN32)
 # if defined(YMLINUX)
 #  define __USE_UNIX98
 # endif

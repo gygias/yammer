@@ -49,7 +49,7 @@ YM_EXTERN_C_PUSH
 # error unknown configuration
 #endif
 
-#ifdef WIN32
+#if defined(YMWIN32)
 # ifdef LIBYAMMER_EXPORTS
 #  define YMAPI __declspec( dllexport )
 # else

@@ -21,7 +21,7 @@ typedef struct _YMmDNSTxtRecordKeyPair
     uint8_t valueLen; // length of key + value can't exceed 255 (allowing for '=')
 } YMmDNSTxtRecordKeyPair;
 
-#ifndef WIN32
+#if !defined(YMWIN32)
 #define YM_ADDRINFO struct addrinfo
 #else
 #define YM_ADDRINFO ADDRINFOA

@@ -80,7 +80,7 @@ void remote_plexer_interrupted(__unused YMPlexerRef plexer, void *context);
 void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *context);
 void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *context);
 
-void PlexerTestRun(ym_test_assert_func assert, const void *context)
+void PlexerTestsRun(ym_test_assert_func assert, const void *context)
 {
     struct PlexerTest theTest = { assert, context,
                                 0, YMLockCreate(), true, false, false,
@@ -114,15 +114,15 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     YM_IO_BOILERPLATE
     
     YMLocalSocketPairRef socketPair = YMLocalSocketPairCreate(NULL, false);
-    int socketA = YMLocalSocketPairGetA(socketPair);
-    int socketB = YMLocalSocketPairGetB(socketPair);
+    YMSOCKET socketA = YMLocalSocketPairGetA(socketPair);
+    YMSOCKET socketB = YMLocalSocketPairGetB(socketPair);
     
     bool localIsMaster = arc4random_uniform(2);
     ymlog("plexer test using pipes: L(%s)-s%d <-> s%d R(%s)",localIsMaster?"M":"S",socketA,socketB,localIsMaster?"S":"M");
     ymlog("plexer test using %u threads, %u trips per thread, %s streams per thread, %s messages",PlexerTest1Threads,PlexerTest1RoundTripsPerThread,PlexerTest1NewStreamPerRoundTrip?"new":"one",PlexerTest1RandomMessages?"random":"fixed");
     
     YMStringRef name = YMSTRC("L");
-    YMSecurityProviderRef noSecurity = YMSecurityProviderCreate(socketA, socketA);
+    YMSecurityProviderRef noSecurity = YMSecurityProviderCreate((YMFILE)socketA, (YMFILE)socketA);
     theTest->localPlexer = YMPlexerCreate(name,noSecurity,localIsMaster);
     YMRelease(noSecurity);
     YMRelease(name);
@@ -132,7 +132,7 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     YMPlexerSetCallbackContext(theTest->localPlexer, theTest);
     
     name = YMSTRC("R");
-    noSecurity = YMSecurityProviderCreate(socketB, socketB);
+    noSecurity = YMSecurityProviderCreate((YMFILE)socketB, (YMFILE)socketB);
     theTest->fakeRemotePlexer = YMPlexerCreate(name,noSecurity,!localIsMaster);
     YMRelease(noSecurity);
     YMRelease(name);

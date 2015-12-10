@@ -13,7 +13,7 @@
 
 YM_EXTERN_C_PUSH
 
-void TaskTestRun(ym_test_assert_func assert, const void *context);
+void TaskTestsRun(ym_test_assert_func assert, const void *context);
 
 YM_EXTERN_C_POP
 

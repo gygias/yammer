@@ -22,7 +22,7 @@ void _TestSpawnFirst(struct LocalSocketPairTest *theTest);
 void _TestSpawnManyStopThenSpawnAnother(struct LocalSocketPairTest *theTest);
 void _TestSpawnOneMore(struct LocalSocketPairTest *theTest);
 
-void LocalSocketPairTestRun(ym_test_assert_func assert, const void *context)
+void LocalSocketPairTestsRun(ym_test_assert_func assert, const void *context)
 {
     struct LocalSocketPairTest theTest = { assert, context };
     

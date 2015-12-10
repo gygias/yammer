@@ -13,7 +13,7 @@
 
 YM_EXTERN_C_PUSH
 
-void DictionaryTestRun(ym_test_assert_func assert, const void *context);
+void DictionaryTestsRun(ym_test_assert_func assert, const void *context);
 
 YM_EXTERN_C_POP
 

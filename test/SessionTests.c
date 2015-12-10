@@ -17,7 +17,7 @@
 #include "YMPipePriv.h"
 #include "YMSemaphore.h"
 
-#ifdef WIN32
+#ifdef YMWIN32
 #include "dirent.h"
 #endif
 
@@ -26,7 +26,7 @@ YM_EXTERN_C_PUSH
 uint64_t gSomeLength = 5678900;
 #define FAKE_DELAY_MAX 3
 
-#ifndef WIN32
+#ifndef YMWIN32
 # if defined(YMMACOS)
 # define ServerTestFile		"install.log"
 # define ServerTestPath		"/private/var/log/" ServerTestFile
@@ -98,7 +98,7 @@ void YM_CALLING_CONVENTION _EatLargeFile(ym_thread_dispatch_ref);
 void YM_CALLING_CONVENTION _EatASparseFile(ym_thread_dispatch_ref);
 void _AsyncForwardCallback(struct SessionTest *theTest, YMConnectionRef connection, YMStreamRef stream, YMIOResult result, uint64_t bytesWritten, bool isServer);
 
-void SessionTestRun(ym_test_assert_func assert, ym_test_diff_func diff, const void *context)
+void SessionTestsRun(ym_test_assert_func assert, ym_test_diff_func diff, const void *context)
 {
     char *suffix = YMRandomASCIIStringWithMaxLength(10, true, false);
     struct SessionTest theTest = {  assert, diff, context,
@@ -233,7 +233,7 @@ void _TestSessionWritingLargeAndReadingSparseFiles(struct SessionTest *theTest) 
     ymlog("session test finished");
 }
 
-#ifndef NAME_MAX // WIN32, unless "dirent.h"
+#ifndef NAME_MAX // YMWIN32, unless "dirent.h"
 #define NAME_MAX 256
 #endif
 
@@ -266,7 +266,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteLargeFile(YM_THREAD_PARAM ctx
     
     uint64_t copyBytes = 0;
     theTest->serverBounding = 
-#if !defined(WIN32) && !defined(YMLINUX) || defined(FOUND_LARGE_WELL_KNOWN_WINDOWS_TEXT_FILE_THATS_BIGGER_THAN_5_MB_TO_USE_FOR_THIS)
+#if !defined(YMWIN32) && !defined(YMLINUX) || defined(FOUND_LARGE_WELL_KNOWN_WINDOWS_TEXT_FILE_THATS_BIGGER_THAN_5_MB_TO_USE_FOR_THIS)
 		arc4random_uniform(2);
 #else
 		false;
@@ -406,12 +406,12 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteSparseFiles(YM_THREAD_PARAM c
     result = rmdir(YMSTR(theTest->tempSparseDir));
     testassert(result==0||errno==ENOENT, "rmdir failed %d %s",errno,strerror(errno));
 
-#ifdef WIN32
+#ifdef YMWIN32
 	for ( int i = 0; i < 5; i++ )
 	{
 #endif
 		result = mkdir(YMSTR(theTest->tempSparseDir),0755);
-#ifdef WIN32
+#ifdef YMWIN32
 		if ( result == 0 ) break;
 		ymerr("looping on mkdir %s...",YMSTR(theTest->tempSparseDir));
 		sleep(1);
@@ -444,7 +444,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteSparseFiles(YM_THREAD_PARAM c
 		strcpy(fullPath, ClientSparsePath);
 		strcat(fullPath, "/");
 		strcat(fullPath, aFile);
-#ifndef WIN32
+#ifndef YMWIN32
 		YM_OPEN_FILE(fullPath, READ_FLAG);
 #else
 		wchar_t wOpenPath[PATH_MAX];

@@ -9,7 +9,7 @@
 #ifndef defs_h
 #define defs_h
 
-#if defined(WIN32) || defined(YMLINUX)
+#if defined(YMWIN32) || defined(YMLINUX)
 #define __unused
 #endif
 

@@ -14,7 +14,7 @@
 #include <dns_sd.h>
 #include <errno.h>
 
-#ifndef WIN32
+#if !defined(YMWIN32)
 # if defined(YMLINUX)
 #  define __USE_POSIX
 #  include <netinet/in.h>
@@ -224,7 +224,7 @@ bool YMmDNSBrowserStart(YMmDNSBrowserRef browser_)
     }
     
     YMStringRef threadName = YMSTRCF("mdns-browse-%s",YMSTR(browser->type));
-    browser->browseEventThread = YMThreadCreate(threadName, __ym_mdns_browser_event_proc, YMRetain(browser));
+    browser->browseEventThread = YMThreadCreate(threadName, __ym_mdns_browser_event_proc, (void *)YMRetain(browser));
     YMRelease(threadName);
     
     bool okay = YMThreadStart(browser->browseEventThread);

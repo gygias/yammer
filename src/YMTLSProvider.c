@@ -23,7 +23,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-#ifndef WIN32
+#if !defined(YMWIN32)
 # include <pthread.h>
 #endif
 
@@ -112,7 +112,7 @@ YMTLSProviderRef __YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isWrappin
 {
 	YM_ONCE_DO(gYMInitTLSOnce,__YMTLSInit);
     
-#ifndef WIN32
+#if !defined(YMWIN32)
     struct stat statbuf;
     fstat(socket, &statbuf);
     if ( ! S_ISSOCK(statbuf.st_mode) )

@@ -12,7 +12,7 @@
 #include "YMSecurityProvider.h"
 #include "YMX509Certificate.h"
 
-#ifdef WIN32
+#if defined(YMWIN32)
 # include <winsock2.h>
 #endif
 

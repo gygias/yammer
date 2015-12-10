@@ -13,7 +13,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <limits.h>
-#ifndef WIN32
+#ifndef YMWIN32
 #include <unistd.h>
 #endif
 #include <stdlib.h>
@@ -21,7 +21,7 @@
 #include <string.h>
 #include <time.h>
 #include <sys/stat.h>
-#ifndef WIN32
+#ifndef YMWIN32
 #include <dirent.h>
 #endif
 #include <errno.h>

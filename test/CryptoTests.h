@@ -13,7 +13,7 @@
 
 YM_EXTERN_C_PUSH
 
-void CryptoTestRun(ym_test_assert_func assert, const void *context);
+void CryptoTestsRun(ym_test_assert_func assert, const void *context);
 
 YM_EXTERN_C_POP
 

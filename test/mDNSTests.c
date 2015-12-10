@@ -51,7 +51,7 @@ void test_service_removed(YMmDNSBrowserRef browser, YMStringRef serviceName, voi
 YMmDNSTxtRecordKeyPair ** _MakeTxtRecordKeyPairs(uint16_t *inOutnKeypairs);
 void _CompareTxtList(struct mDNSTest *theTest, YMmDNSTxtRecordKeyPair **aList, size_t aSize, YMmDNSTxtRecordKeyPair **bList, size_t bSize);
 
-void mDNSTestRun(ym_test_assert_func assert, const void *context)
+void mDNSTestsRun(ym_test_assert_func assert, const void *context)
 {
     struct mDNSTest theTest = { assert, context, NULL, NULL, 0, NULL, NULL, true, true, true };
     

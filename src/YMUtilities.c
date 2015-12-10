@@ -28,7 +28,7 @@
 # else
 #  define YM_PORT_MAX 65535
 # endif
-#elif defined(WIN32)
+#elif defined(YMWIN32)
 # define YM_PORT_MAX IPPORT_DYNAMIC_MAX
 # include <Winsock2.h>
 # include <Ws2tcpip.h>
@@ -169,7 +169,7 @@ catch_fail:
     return ioResult;
 }
     
-#ifdef WIN32
+#if defined(YMWIN32)
 YM_ONCE_FUNC(__YMNetworkingInit,
 {
 	WSADATA wsa;
@@ -184,7 +184,7 @@ YM_ONCE_FUNC(__YMNetworkingInit,
 
 void YMNetworkingInit()
 {
-#ifdef WIN32
+#if defined(YMWIN32)
 	YM_ONCE_DO_LOCAL(__YMNetworkingInit);
 #endif
 }
@@ -213,7 +213,7 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
         
         int domain = ipv4 ? PF_INET : PF_INET6;
         YMSOCKET aResult = socket(domain, SOCK_STREAM, IPPROTO_TCP);
-#ifndef WIN32
+#if !defined(YMWIN32)
         if ( aResult < 0 )
 #else
 		if ( aResult == INVALID_SOCKET )
@@ -256,7 +256,7 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
 int YMGetNumberOfOpenFilesForCurrentProcess()
 {
     int nFiles = 0;
-#ifndef WIN32
+#if !defined(YMWIN32)
     struct rlimit r_limit;
     int result = getrlimit(RLIMIT_NOFILE, &r_limit);
     ymsoftassert(result==0, "getrlimit: %d %s",errno,strerror(errno));
@@ -331,7 +331,7 @@ int YMGetNumberOfOpenFilesForCurrentProcess()
     return nFiles;
 }
 
-#ifndef WIN32
+#if !defined(YMWIN32)
 pthread_mutex_t *YMCreateMutexWithOptions(YMLockOptions options)
 {
     pthread_mutex_t *mutex = NULL;
@@ -461,12 +461,12 @@ HANDLE YMCreateMutexWithOptions(YMLockOptions options)
 
 void YMUtilitiesFreeGlobals()
 {
-#ifdef WIN32
+#if defined(YMWIN32)
 	WSACleanup();
 #endif
 }
 
-#if defined(WIN32) || defined(_YOLO_DONT_TELL_PROFESSOR)
+#if defined(YMWIN32) || defined(_YOLO_DONT_TELL_PROFESSOR)
 int gettimeofday(struct timeval * tp, struct timezone * tzp)
 {
 	// Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's

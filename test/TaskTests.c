@@ -23,7 +23,7 @@ void _TaskUsrBinTrueRun(struct TaskTest *theTest);
 void _TaskCatSomeLogRun(struct TaskTest *theTest);
 void _TaskOpensslRun(struct TaskTest *theTest);
 
-void TaskTestRun(ym_test_assert_func assert, const void *context)
+void TaskTestsRun(ym_test_assert_func assert, const void *context)
 {
     struct TaskTest theTest = { assert, context };
     

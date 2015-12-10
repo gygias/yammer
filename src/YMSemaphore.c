@@ -18,7 +18,7 @@
 //#define PTHREAD_SEMAPHORE
 #ifdef PTHREAD_SEMAPHORE
 # include <pthread.h>
-#elif !defined(WIN32)
+#elif !defined(YMWIN32)
 # include <semaphore.h>
 #endif
 
@@ -26,7 +26,7 @@
 # include <sys/stat.h>
 #endif
 
-#ifndef WIN32
+#if !defined(YMWIN32)
 # define YM_SEMAPHORE_TYPE sem_t
 #else
 # define YM_SEMAPHORE_TYPE HANDLE
@@ -96,7 +96,7 @@ YMSemaphoreRef __YMSemaphoreCreate(YMStringRef name, int initialValue)
     ymlog(YM_SEM_LOG_PREFIX "created",YM_SEM_LOG_DESC);
     YMLockUnlock(gYMSemaphoreIndexLock);
 
-#ifndef WIN32
+#if !defined(YMWIN32)
 try_again:;
     semaphore->sem = sem_open(YMSTR(semaphore->semName), O_CREAT|O_EXCL, S_IRUSR|S_IWUSR, initialValue); // todo mode?
     if ( semaphore->sem == SEM_FAILED )

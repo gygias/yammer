@@ -11,7 +11,7 @@
 #include "YMUtilities.h"
 #include "YMThread.h"
 
-#ifndef WIN32
+#if !defined(YMWIN32)
 # include <sys/socket.h>
 # if defined(YMLINUX)
 #  include <netinet/in.h>

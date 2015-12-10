@@ -18,7 +18,7 @@
 #define YM_LOG_DSC YMSTR(pair->userName)
 #define YM_LOG_DSCG "&"
 
-#ifndef WIN32
+#if !defined(YMWIN32)
 # include <sys/socket.h>
 # include <sys/un.h>
 # include <pthread.h>
@@ -224,7 +224,7 @@ void _YMLocalSocketPairFree(YMTypeRef object)
 int __YMLocalSocketPairCreateClient()
 {
     YMSOCKET sock = socket(LOCAL_SOCKET_DOMAIN, SOCK_STREAM, LOCAL_SOCKET_PROTOCOL/* IP, /etc/sockets man 5 protocols*/);
-#ifndef WIN32
+#if !defined(YMWIN32)
 	ymassert(sock>=0,YM_LOG_PRE "socket failed: %d (%s)",YM_LOG_DSCG,errno,strerror(errno));
 #else
 	ymassert(sock!=INVALID_SOCKET,YM_LOG_PRE "socket failed: %x", YM_LOG_DSCG, GetLastError());
@@ -236,7 +236,7 @@ int __YMLocalSocketPairCreateClient()
         ymerr(YM_LOG_PRE "warning: setsockopt failed on %d: %d: %d (%s)",YM_LOG_DSCG,sock,result,errno,strerror(errno));
     
     /* Bind a name to the socket. */
-#ifndef WIN32
+#if !defined(YMWIN32)
     struct sockaddr_un sockName;
     sockName.sun_family = AF_LOCAL;
     strncpy (sockName.sun_path, YMSTR(gYMLocalSocketPairName), sizeof (sockName.sun_path));
@@ -281,7 +281,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_local_socket_accept_proc(__unused YM
     socketName = YMStringCreateWithFormat("%s:%u",__YMLocalSocketPairNameBase,nameSuffixIter,NULL);
     
     listenSocket = socket(LOCAL_SOCKET_DOMAIN, SOCK_STREAM, LOCAL_SOCKET_PROTOCOL /* /etc/sockets man 5 protocols*/);
-#ifndef WIN32
+#if !defined(YMWIN32)
     ymassert(listenSocket>=0,YM_LOG_PRE "fatal: socket failed (listen): %d (%s)",YM_LOG_DSCG,errno,strerror(errno));
 #else
 	ymassert(listenSocket!=INVALID_SOCKET,YM_LOG_PRE "fatal: socket failed (listen): %x",YM_LOG_DSCG,GetLastError());
@@ -293,7 +293,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_local_socket_accept_proc(__unused YM
         ymerr(YM_LOG_PRE "warning: setsockopt failed on sf%d: %d: %d (%s)",YM_LOG_DSCG,listenSocket,result,errno,strerror(errno));
     
     /* Bind a name to the socket. */
-#ifndef WIN32
+#if !defined(YMWIN32)
     struct sockaddr_un sockName;
     sockName.sun_family = AF_LOCAL;
     strncpy (sockName.sun_path, YMSTR(socketName), sizeof (sockName.sun_path));

@@ -16,7 +16,7 @@
 #include "YMStreamPriv.h"
 #include "YMPlexerPriv.h"
 
-#ifndef WIN32
+#if !defined(YMWIN32)
 # include <pthread.h>
 # define YM_THREAD_TYPE pthread_t
 #else
@@ -38,7 +38,7 @@ typedef struct __ym_thread_t
     
     YMStringRef name;
     ym_thread_entry userEntryPoint;
-    const void *context;
+    void *context;
     YM_THREAD_TYPE pthread;
     YMDictionaryRef threadDict;
     
@@ -76,6 +76,11 @@ typedef struct __ym_thread_dispatch_context_t *__ym_thread_dispatch_context_ref;
 YMThreadDispatchThreadID gDispatchThreadIDNext = 0; // todo only for keying dictionary, implement linked list?
 YMDictionaryRef gDispatchThreadDefsByID = NULL;
 YMLockRef gDispatchThreadListLock = NULL;
+bool gDispatchGlobalModeMain = false;
+__YMThreadRef gDispatchGlobalQueue = NULL;
+YM_ONCE_OBJ gDispatchGlobalInitOnce = YM_ONCE_INIT;
+YM_ONCE_DEF(__YMThreadDispatchInitGlobal);
+void __YMThreadDispatchMain();
 
 // private
 YM_ONCE_DEF(__YMThreadDispatchInit);
@@ -95,8 +100,9 @@ typedef struct __ym_thread_dispatch_forward_file_async_context_t
 } ___ym_thread_dispatch_forward_file_async_t;
 typedef struct __ym_thread_dispatch_forward_file_async_context_t *__ym_thread_dispatch_forward_file_async_context_ref;
 
-__YMThreadRef __YMThreadInitCommon(YMStringRef name, const void *context);
+__YMThreadRef __YMThreadInitCommon(YMStringRef name, void *context);
 void __YMThreadInitThreadDict(__YMThreadRef thread);
+YM_THREAD_TYPE _YMThreadGetCurrentThread();
 YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_generic_entry_proc(YM_THREAD_PARAM theThread);
 YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_dispatch_forward_file_proc(YM_THREAD_PARAM forwardCtx);
 ym_thread_dispatch_ref __YMThreadDispatchCopy(ym_thread_dispatch_ref userDispatchRef);
@@ -112,7 +118,7 @@ YM_ONCE_FUNC(__YMThreadDispatchInit,
 	YMRelease(name);
 })
 
-__YMThreadRef __YMThreadInitCommon(YMStringRef name, const void *context)
+__YMThreadRef __YMThreadInitCommon(YMStringRef name, void *context)
 {
     __YMThreadRef thread = (__YMThreadRef)_YMAlloc(_YMThreadTypeID,sizeof(struct __ym_thread_t));
 
@@ -128,7 +134,7 @@ __YMThreadRef __YMThreadInitCommon(YMStringRef name, const void *context)
     return thread;
 }
 
-YMThreadRef YMThreadCreate(YMStringRef name, ym_thread_entry entryPoint, const void *context)
+YMThreadRef YMThreadCreate(YMStringRef name, ym_thread_entry entryPoint, void *context)
 {
     __YMThreadRef thread = __YMThreadInitCommon(name, context);
     thread->userEntryPoint = entryPoint;
@@ -256,18 +262,16 @@ bool YMThreadStart(YMThreadRef thread_)
     
     const void *context = NULL;
     ym_thread_entry entry = NULL;
-    if ( ! thread->isDispatchThread ) // todo this should be consolidated with dispatch threads' own wrapper context
-    {
+    if ( ! thread->isDispatchThread ) { // todo this should be consolidated with dispatch threads' own wrapper context
         context = YMRetain(thread);
         entry = __ym_thread_generic_entry_proc;
     }
-    else
-    {
+    else{
         context = thread->context;
         entry = thread->userEntryPoint;
     }
     
-#ifndef WIN32
+#if !defined(YMWIN32)
 	int result;
     if ( 0 != ( result = pthread_create(&pthread, NULL, entry, (void *)context) ) ) // todo eagain on pi
     {
@@ -322,7 +326,7 @@ bool YMThreadJoin(YMThreadRef thread_)
     if ( _YMThreadGetCurrentThreadNumber() == _YMThreadGetThreadNumber(thread) )
         return false;
         
-#ifndef WIN32
+#if !defined(YMWIN32)
     int result = pthread_join(thread->pthread, NULL);
     if ( result != 0 )
     {
@@ -458,18 +462,18 @@ void __YMThreadFreeDispatchContext(__ym_thread_dispatch_context_ref dispatchCont
     free(dispatchContext);
 }
 
-// xxx i wonder if this is actually going to be portable
+YM_THREAD_TYPE __YMThreadGetCurrentThread()
+{
+#if defined(YMWIN32)
+    return GetCurrentThread();
+#else
+    return pthread_self();
+#endif
+}
+
 uint64_t _YMThreadGetCurrentThreadNumber()
 {
-    YM_THREAD_TYPE pthread;
-    
-#if defined(WIN32)
-	pthread = GetCurrentThread();
-#else
-	pthread = pthread_self();
-#endif
-    
-    return (uint64_t)pthread;
+    return (uint64_t)__YMThreadGetCurrentThread();
 }
 
 uint64_t _YMThreadGetThreadNumber(YMThreadRef thread_)
@@ -479,6 +483,48 @@ uint64_t _YMThreadGetThreadNumber(YMThreadRef thread_)
     while ( ! YMDictionaryContains(thread->threadDict, (YMDictionaryKey)YMThreadDictThreadIDKey) ) {}
     uint64_t threadId = (uint64_t)YMDictionaryGetItem(thread->threadDict, (YMDictionaryKey)YMThreadDictThreadIDKey);
     return threadId;
+}
+
+YM_ONCE_FUNC(__YMThreadDispatchInitGlobal,
+{
+    YMStringRef globalName = YMSTRCF("dispatch-global-queue-%s",gDispatchGlobalModeMain?"main":"thread");
+    gDispatchGlobalQueue = (__YMThreadRef)YMThreadDispatchCreate(globalName);
+    YMRelease(globalName);
+    
+    if ( ! gDispatchGlobalModeMain )        
+        YMThreadStart(gDispatchGlobalQueue);
+});
+
+void YMThreadDispatchSetGlobalMode(bool main)
+{
+    ymassert(!gDispatchGlobalQueue,"global dispatch mode must be set earlier");
+    gDispatchGlobalModeMain = main;
+    
+    YM_ONCE_DO(gDispatchGlobalInitOnce, __YMThreadDispatchInitGlobal);
+}
+
+void YMThreadDispatchMain()
+{
+    ymassert(gDispatchGlobalModeMain,"global dispatch queue not set to main");
+    ymassert(gDispatchGlobalQueue,"global dispatch queue doesn't exist");
+    __YMThreadDispatchMain();
+}
+
+YMThreadRef YMThreadDispatchGetGlobal()
+{
+    YM_ONCE_DO(gDispatchGlobalInitOnce, __YMThreadDispatchInitGlobal);    
+    return gDispatchGlobalQueue;
+}
+
+void __YMThreadDispatchMain()
+{
+    gDispatchGlobalQueue->pthread =
+#if !defined(YMWIN32)
+        pthread_self();
+#else
+        GetCurrentThread();
+#endif
+    gDispatchGlobalQueue->userEntryPoint(gDispatchGlobalQueue->context);
 }
 
 bool YMThreadDispatchForwardFile(YMFILE fromFile, YMStreamRef toStream, const uint64_t *nBytesPtr, bool sync, _ym_thread_forward_file_context_ref callbackInfo)

@@ -38,7 +38,7 @@ YMPipeRef YMPipeCreate(YMStringRef name)
     
     while ( result != 0 )
     {
-#ifndef WIN32
+#if !defined(YMWIN32)
         if ( errno == EFAULT )
         {
             ymerr("pipe[%s]: error: invalid address space",YMSTR(name));
