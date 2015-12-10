@@ -181,7 +181,7 @@ void __ym_plexer_free_stream_info(YMStreamRef stream);
 
 YMPlexerRef YMPlexerCreate(YMStringRef name, YMSecurityProviderRef provider, bool master)
 {
-	YM_ONCE_DO_LOCAL(__YMRegisterSigpipe);
+	__YMRegisterSigpipe();
     
     __YMPlexerRef plexer = (__YMPlexerRef)_YMAlloc(_YMPlexerTypeID,sizeof(struct __ym_plexer_t));
     
@@ -429,10 +429,10 @@ bool YMPlexerStop(YMPlexerRef plexer_)
 
 #pragma mark internal
 
-YM_ONCE_FUNC(__YMRegisterSigpipe,
+void __YMRegisterSigpipe()
 {
     signal(SIGPIPE,__ym_sigpipe_handler);
-})
+}
 
 void __ym_sigpipe_handler (__unused int signum)
 {
