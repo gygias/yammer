@@ -105,11 +105,11 @@ void _TestTLS1(struct TLSTest *theTest)
     size_t testLen = (ssize_t)strlen(testBuffer) + 1;
 	
 	YM_WRITE_SOCKET(serverFirst?serverSocket:clientSocket, testBuffer, testLen);
-    testassert(aWrite==testLen,"failed to write test message: %d (%s)",errno,strerror(errno));
+    testassert((size_t)aWrite==testLen,"failed to write test message: %d (%s)",errno,strerror(errno));
     char testIncoming[32];
     
 	YM_READ_SOCKET(serverFirst?clientSocket:serverSocket, testIncoming, testLen);
-    testassert(aRead==testLen,"failed to receive test message: %d (%s)",errno,strerror(errno));
+    testassert((size_t)aRead==testLen,"failed to receive test message: %d (%s)",errno,strerror(errno));
     testassert(strncmp(testBuffer,testIncoming,aRead)==0,"received test message does not match");
     
     YMTLSProviderRef localProvider = YMTLSProviderCreateWithSocket(localIsServer ? serverSocket : clientSocket, localIsServer);
