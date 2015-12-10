@@ -461,7 +461,7 @@ HANDLE YMCreateMutexWithOptions(YMLockOptions options)
 
 void YMUtilitiesFreeGlobals()
 {
-#if defined(YMWIN32)
+#if defined(YMWIN32) && defined(YM_FEELING_THOROUGH)
 	WSACleanup();
 #endif
 }

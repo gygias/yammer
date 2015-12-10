@@ -14,7 +14,7 @@
 
 #define ymlog_type YMLogIO
 #include "YMLog.h"
-#define YM_LOG_PRE "local-socket[%s]"
+#define YM_LOG_PRE "local-socket[%s]: "
 #define YM_LOG_DSC YMSTR(pair->userName)
 #define YM_LOG_DSCG "&"
 
@@ -284,7 +284,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_local_socket_accept_proc(__unused YM
 #if !defined(YMWIN32)
     ymassert(listenSocket>=0,YM_LOG_PRE "fatal: socket failed (listen): %d (%s)",YM_LOG_DSCG,errno,strerror(errno));
 #else
-	ymassert(listenSocket!=INVALID_SOCKET,YM_LOG_PRE "fatal: socket failed (listen): %x",YM_LOG_DSCG,WSAGetLastError());
+	ymassert(listenSocket!=INVALID_SOCKET,YM_LOG_PRE "fatal: socket failed (listen): %d",YM_LOG_DSCG,WSAGetLastError());
 #endif
     
     int yes = 1;
