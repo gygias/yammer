@@ -329,6 +329,10 @@ bool YMSessionConnectToPeer(YMSessionRef session_, YMPeerRef peer, bool sync)
 {
     __YMSessionRef session = (__YMSessionRef)session_;
     
+    YMStringRef name = NULL;
+    __ym_session_connect_async_context_ref context = NULL;
+    YMDictionaryEnumRef addrEnum = NULL;
+    
     bool knownPeer = true;
     YMLockLock(session->knownPeersLock);
     YMStringRef peerName = YMPeerGetName(peer);
@@ -343,48 +347,58 @@ bool YMSessionConnectToPeer(YMSessionRef session_, YMPeerRef peer, bool sync)
         return false;
     
     YMDictionaryRef addresses = YMPeerGetAddresses(peer);
-    YMDictionaryKey aKey = YMDictionaryGetRandomKey(addresses);
-    YMAddressRef address = (YMAddressRef)YMDictionaryGetItem(addresses, aKey);
-    YMConnectionRef newConnection = YMConnectionCreate(address, YMConnectionStream, YMTLS, true);
-    
-    __ym_session_connect_async_context_ref context = (__ym_session_connect_async_context_ref)YMALLOC(sizeof(__ym_session_connect_async_context));
-    context->session = (__YMSessionRef)YMRetain(session);
-    context->peer = (YMPeerRef)YMRetain(peer);
-    context->connection = (YMConnectionRef)YMRetain(newConnection);
-    
-    YMStringRef name = YMStringCreateWithFormat("session-async-connect-%s",YMSTR(YMAddressGetDescription(address)),NULL);
-    struct ym_thread_dispatch_t connectDispatch = {__ym_session_connect_async_proc, 0, 0, context, name};
-    
-    if ( ! sync )
-    {
-        if ( ! session->connectDispatchThread )
+    addrEnum = YMDictionaryEnumeratorBegin(addresses);
+    while ( addrEnum ) {
+        YMAddressRef address = (YMAddressRef)YMDictionaryGetItem(addresses, addrEnum->key);
+        YMConnectionRef newConnection = YMConnectionCreate(address, YMConnectionStream, YMTLS, true);
+        
+        context = (__ym_session_connect_async_context_ref)YMALLOC(sizeof(__ym_session_connect_async_context));
+        context->session = (__YMSessionRef)YMRetain(session);
+        context->peer = (YMPeerRef)YMRetain(peer);
+        context->connection = (YMConnectionRef)YMRetain(newConnection);
+        
+        name = YMSTRC("session-async-connect");
+        struct ym_thread_dispatch_t connectDispatch = {__ym_session_connect_async_proc, 0, 0, context, name};
+        
+        if ( ! sync )
         {
-            session->connectDispatchThread = YMThreadDispatchCreate(name);
             if ( ! session->connectDispatchThread )
             {
-                ymerr(YM_LOG_PRE "error: failed to create async connect thread",YM_LOG_DSC);
-                goto catch_fail;
+                session->connectDispatchThread = YMThreadDispatchCreate(name);
+                if ( ! session->connectDispatchThread )
+                {
+                    ymerr(YM_LOG_PRE "error: failed to create async connect thread",YM_LOG_DSC);
+                    goto catch_fail;
+                }
+                bool okay = YMThreadStart(session->connectDispatchThread);
+                if ( ! okay )
+                {
+                    ymerr(YM_LOG_PRE "error: failed to start async connect thread",YM_LOG_DSC);
+                    goto catch_fail;
+                }
             }
-            bool okay = YMThreadStart(session->connectDispatchThread);
-            if ( ! okay )
-            {
-                ymerr(YM_LOG_PRE "error: failed to start async connect thread",YM_LOG_DSC);
-                goto catch_fail;
-            }
+            
+            YMThreadDispatchDispatch(session->connectDispatchThread, connectDispatch);
         }
+        else
+            __ym_session_connect_async_proc(&connectDispatch);
         
-        YMThreadDispatchDispatch(session->connectDispatchThread, connectDispatch);
+        YMRelease(newConnection);
+        YMRelease(name);
+        
+        addrEnum = YMDictionaryEnumeratorGetNext(addrEnum);
     }
-    else
-        __ym_session_connect_async_proc(&connectDispatch);
+    YMDictionaryEnumeratorEnd(addrEnum);
     
-    YMRelease(newConnection);
-    YMRelease(name);
     return true;
     
 catch_fail:
-    free(context);
-    YMRelease(name);
+    if ( context )
+        free(context);
+    if ( name )
+        YMRelease(name);
+    if ( addrEnum )
+        YMDictionaryEnumeratorEnd(addrEnum);
     return false;
 }
 
@@ -858,10 +872,12 @@ void __ym_mdns_service_removed_func(__unused YMmDNSBrowserRef browser, YMStringR
         }
         YMDictionaryEnumeratorEnd(myEnum);
         
-		ymsoftassert(found, YM_LOG_PRE "notified of removal of unknown peer: %s", YM_LOG_DSC, YMSTR(name));
+        if ( ! found ) {
+            ymerr(YM_LOG_PRE "warning: notified of removal of unknown peer: %s", YM_LOG_DSC, YMSTR(name));
+            return;
+        }
         
-        if ( found )
-            YMDictionaryRemove(session->knownPeers, mysteryKey);
+        YMDictionaryRemove(session->knownPeers, mysteryKey);
     }
     YMLockUnlock(session->knownPeersLock);
 }

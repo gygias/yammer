@@ -103,6 +103,13 @@ YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*typ
         noDomain = NULL;
     }
     
+    if ( addrinfo ) {
+        YM_ADDRINFO *addrinfoIter = addrinfo;
+        int i = 0;
+        while ( addrinfoIter ) { i++; addrinfoIter = addrinfoIter->ai_next; }
+        ymlog("mdns: getaddrinfo found %d addresses for '%s'",i,hostname);
+    }
+    
     if ( txtRecord && txtLength > 1 )
     {
         txtList = _YMmDNSTxtKeyPairsCreate(txtRecord, txtLength, &txtSize);

@@ -26,9 +26,20 @@
 #else
 # include <winsock2.h>
 # include <ws2tcpip.h>
+# include <time.h>
 #endif
 
 #define NOT_CONNECTED ( ( connection->socket == NULL_SOCKET ) && ! connection->isConnected )
+
+typedef enum {
+    YMConnectionCommandSample = -1,
+    YMConnectionCommandInit = INT32_MIN
+} __YMConnectionCommand;
+
+typedef struct __ym_connection_command {
+    __YMConnectionCommand command;
+    uint32_t userInfo;
+} __ym_connection_command;
 
 YM_EXTERN_C_PUSH
 
@@ -52,6 +63,7 @@ typedef struct __ym_connection_t
     
     // volatile
     bool isConnected;
+    int64_t sample;
     YMSecurityProviderRef security;
     YMPlexerRef plexer;
 } __ym_connection_t;
@@ -75,6 +87,7 @@ void ym_connection_interrupted_proc(YMPlexerRef plexer, void *context);
 
 __YMConnectionRef __YMConnectionCreate(bool isIncoming, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType, bool closeWhenDone);
 bool __YMConnectionDestroy(__YMConnectionRef connection, bool explicit);
+int64_t __YMConnectionDoSample(__YMConnectionRef connection, YMSOCKET socket, uint32_t length, bool asServer);
 bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, bool asServer);
 
 bool __YMConnectionForward(YMConnectionRef connection, bool toFile, YMStreamRef stream, YMFILE file, const uint64_t *nBytesPtr, bool sync, ym_connection_forward_context_t*);
@@ -159,6 +172,8 @@ bool YMConnectionConnect(YMConnectionRef connection_)
 {
     __YMConnectionRef connection = (__YMConnectionRef)connection_;
     
+    YM_IO_BOILERPLATE
+    
     if ( connection->socket != NULL_SOCKET || connection->isIncoming )
     {
         ymerr("connection[%s]: connect called on connected socket",YM_CON_DESC);
@@ -188,7 +203,7 @@ bool YMConnectionConnect(YMConnectionRef connection_)
 #endif
     
     int yes = 1;
-    int result = setsockopt(newSocket, SOL_SOCKET, SO_REUSEADDR, (const void *)&yes, sizeof(yes));
+    result = setsockopt(newSocket, SOL_SOCKET, SO_REUSEADDR, (const void *)&yes, sizeof(yes));
     if (result != 0 )
         ymerr("connection[%s]: warning: setsockopt failed on f%d: %d: %d (%s)",YM_CON_DESC,newSocket,result,errno,strerror(errno));
     
@@ -207,7 +222,6 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     if ( result != 0 )
     {
         ymerr("connection[%s]: error: connect(%s): %d (%s)",YM_CON_DESC,YMSTR(YMAddressGetDescription(connection->address)),errno,strerror(errno));
-		int error; const char *errorStr;
         YM_CLOSE_SOCKET(newSocket);
         return false;
     }
@@ -221,10 +235,101 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     return true;
 }
 
+int64_t __YMConnectionDoSample(__YMConnectionRef connection, YMSOCKET socket, uint32_t length, bool asServer)
+{
+    YM_IO_BOILERPLATE
+    
+    uint32_t sample = -1;
+    
+    int remain = length % 4;
+    if ( remain != 0 )
+    {
+        ymerr("connection[%s]: warning: sample length not word-aligned, snapping to next word length: %u",YM_CON_DESC,length);
+        length += remain;
+    }
+    
+    time_t startTime = time(NULL);
+    
+    uint32_t halfLength = length / 2;
+    for( int i = 0; i < 2; i++ ) {
+        bool writing = ( i == 0 ) ^ !asServer;
+        uint32_t sentReceived = 0;
+        
+        while ( sentReceived < halfLength ) {
+            uint32_t random;
+            ssize_t toReadWrite = ( sizeof(random) + sentReceived > halfLength ) ? ( halfLength - sentReceived ) : sizeof(random);
+            if ( writing ) {
+                random = arc4random();
+                YM_WRITE_SOCKET(socket, (const char *)&random, (size_t)toReadWrite);
+                if ( aWrite != toReadWrite ) return sample;
+                sentReceived += aWrite;
+            } else {
+                YM_READ_SOCKET(socket, (char *)&random, (size_t)toReadWrite);
+                if ( aRead != toReadWrite ) return sample;
+                sentReceived += aRead;
+            }
+        }
+        ymdbg("%s half-length %u",writing?"wrote":"read",halfLength);
+    }
+    
+    sample = (uint32_t)(length / ( time(NULL) - startTime ));
+    ymlog("connection[%s]: approximated sample to %ub/s",YM_CON_DESC,sample);
+    
+    return sample;
+}
+
 bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, bool asServer)
 {
+    YM_IO_BOILERPLATE
+    
     YMSecurityProviderRef security = NULL;
     YMPlexerRef plexer = NULL;
+    
+    if ( asServer ) {
+        // if ( clientWantsSamplingFastestEtc )
+#define THIRTY_TWO_MEGABYTES 33554432
+        for ( int i = 0; i < 2; i++ ) {
+            struct __ym_connection_command command;
+            if ( i == 0 ) { command.command = YMConnectionCommandSample; command.userInfo = THIRTY_TWO_MEGABYTES; }
+            else { command.command = YMConnectionCommandInit; command.userInfo = 0; }
+            
+            YM_WRITE_SOCKET(newSocket, (const char *)&command, sizeof(command));
+            if ( aWrite != sizeof(command) ) {
+                ymerr("connection[%s]: error: connection failed to initialize: %d %d %s",YM_CON_DESC,i,error,errorStr);
+                YM_CLOSE_SOCKET(newSocket);
+                return false;
+            }
+            
+            if ( i == 0 ) {
+                ymerr("connection[%s]: performing sample of length %ub",YM_CON_DESC,THIRTY_TWO_MEGABYTES);
+                connection->sample = __YMConnectionDoSample(connection, newSocket, THIRTY_TWO_MEGABYTES, true);
+            }
+        }
+        
+        
+    } else {
+        struct __ym_connection_command command;
+        while(1) {
+            YM_READ_SOCKET(newSocket, (char *)&command, sizeof(command));
+            if ( aRead != sizeof(command) ) {
+                ymerr("connection[%s]: error: connection failed to initialize: %d %s",YM_CON_DESC,error,errorStr);
+                YM_CLOSE_SOCKET(newSocket);
+                return false;
+            }
+            
+            if ( command.command == YMConnectionCommandSample ) {
+                ymerr("connection[%s]: performing sample of length %ub",YM_CON_DESC,command.userInfo);
+                connection->sample = __YMConnectionDoSample(connection, newSocket, command.userInfo, false);
+            } else if ( command.command == YMConnectionCommandInit ) {
+                ymerr("connection[%s]: init command received, proceeding",YM_CON_DESC);
+                break;
+            } else {
+                ymerr("connection[%s]: error: unknown initialization command: %d",YM_CON_DESC,command.command);
+                YM_CLOSE_SOCKET(newSocket);
+                return false;
+            }
+        }
+    }
     
     switch( connection->securityType )
     {
