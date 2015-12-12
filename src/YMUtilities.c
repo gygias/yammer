@@ -53,8 +53,8 @@ const char *YMGetCurrentTimeString(char *buf, size_t bufLen)
     result = (int)strftime(buf, bufLen, "%Y-%m-%d %H:%M:%S", now);
     if ( result == 0 )
         return NULL;
-    if ( result < (int)bufLen - 3 )
-        snprintf(buf, bufLen - result, "%s.%03d",buf,epoch.tv_usec/1000);
+    if ( result < (int)bufLen - 4 )
+        snprintf(buf + result, bufLen - result, ".%03d",epoch.tv_usec/1000);
     return buf;
 }
 

@@ -11,6 +11,8 @@
 
 #include "YMArray.h"
 
+#include "YMThread.h"
+
 #define mDNS_SERVICE_NAME_LENGTH_MAX 63
 #define mDNS_SERVICE_NAME_LENGTH_MIN 1
 
@@ -40,6 +42,9 @@ typedef struct _YMmDNSServiceRecord
     uint16_t port;
     YMmDNSTxtRecordKeyPair **txtRecordKeyPairs;
     size_t txtRecordKeyPairsSize;
+    
+    void *getAddrInfoRef;
+    YMThreadRef getAddrInfoThread;
 } YMmDNSServiceRecord;
 
 typedef struct _YMmDNSServiceList

@@ -47,8 +47,6 @@ typedef struct __ym_mdns_browser_t
     bool browsing;
     DNSServiceRef *browseServiceRef;
     YMThreadRef browseEventThread;
-    DNSServiceRef *getAddrInfoRef;
-    YMThreadRef getAddrInfoThread;
     
     bool resolving;
     DNSServiceRef *resolveServiceRef;
@@ -311,6 +309,7 @@ bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser_, YMStringRef serviceName)
 YMmDNSServiceRecord *__YMmDNSBrowserAddOrUpdateService(__YMmDNSBrowserRef browser, YMmDNSServiceRecord *record)
 {
     YMmDNSServiceList *aListItem = (YMmDNSServiceList *)browser->serviceList;
+    
     // update?
     while ( aListItem )
     {
@@ -504,8 +503,8 @@ void DNSSD_API __ym_mdns_addr_info_callback
             browser->serviceResolved((YMmDNSBrowserRef)browser, true, record, browser->callbackContext);
         
         shutdown(DNSServiceRefSockFD(sdRef),SHUT_RDWR);
-        YMRelease(browser->getAddrInfoThread);
-        browser->getAddrInfoThread = NULL;
+        YMRelease(record->getAddrInfoThread);
+        record->getAddrInfoThread = NULL;
     }
 }
 
@@ -531,19 +530,21 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
     ymassert(record,"failed to lookup existing service from %s: %s",fullname,YMSTR(unescapedName));
     
     if ( okay ) {
+        
+        while ( record->getAddrInfoThread ) {} ; /// todo YOLO SPINLOCK
+        
         _YMmDNSServiceRecordSetPort(record, port);
         _YMmDNSServiceRecordSetTxtRecord(record, txtRecord, txtLength);
-        while ( browser->getAddrInfoThread ) {} ; /// todo YOLO SPINLOCK
         
         if ( ! record->complete ) {
-            browser->getAddrInfoRef = YMALLOC(sizeof(DNSServiceRef));
+            record->getAddrInfoRef = YMALLOC(sizeof(DNSServiceRef));
             __ym_get_addr_info_context_ref aCtx = YMALLOC(sizeof(struct __ym_get_addr_info_context_t));
             aCtx->browser = (__YMmDNSBrowserRef)YMRetain(browser);
             aCtx->unescapedName = YMRetain(unescapedName);
-            DNSServiceErrorType err = DNSServiceGetAddrInfo(browser->getAddrInfoRef, kDNSServiceFlagsForceMulticast, kDNSServiceInterfaceIndexAny, kDNSServiceProtocol_IPv4|kDNSServiceProtocol_IPv6, host, __ym_mdns_addr_info_callback, aCtx);
+            DNSServiceErrorType err = DNSServiceGetAddrInfo(record->getAddrInfoRef, kDNSServiceFlagsForceMulticast, kDNSServiceInterfaceIndexAny, kDNSServiceProtocol_IPv4|kDNSServiceProtocol_IPv6, host, __ym_mdns_addr_info_callback, aCtx);
             if ( err == kDNSServiceErr_NoError) {
-                browser->getAddrInfoThread = YMThreadCreate(NULL, __ym_mdns_event_proc, browser->getAddrInfoRef);
-                YMThreadStart(browser->getAddrInfoThread);
+                record->getAddrInfoThread = YMThreadCreate(NULL, __ym_mdns_event_proc, record->getAddrInfoRef);
+                YMThreadStart(record->getAddrInfoThread);
             } else {
                 ymerr("mdns[%s]: error: failed to get addr info for %s",YMSTR(browser->type),YMSTR(unescapedName));
             }
