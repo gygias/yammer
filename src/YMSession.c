@@ -346,10 +346,9 @@ bool YMSessionConnectToPeer(YMSessionRef session_, YMPeerRef peer, bool sync)
     if ( ! knownPeer )
         return false;
     
-    YMDictionaryRef addresses = YMPeerGetAddresses(peer);
-    addrEnum = YMDictionaryEnumeratorBegin(addresses);
-    while ( addrEnum ) {
-        YMAddressRef address = (YMAddressRef)YMDictionaryGetItem(addresses, addrEnum->key);
+    YMArrayRef addresses = YMPeerGetAddresses(peer);
+    for ( int64_t i = 0; i < YMArrayGetCount(addresses); i++ ) {
+        YMAddressRef address = (YMAddressRef)YMArrayGet(addresses, i);
         YMConnectionRef newConnection = YMConnectionCreate(address, YMConnectionStream, YMTLS, true);
         
         context = (__ym_session_connect_async_context_ref)YMALLOC(sizeof(__ym_session_connect_async_context));
@@ -385,10 +384,7 @@ bool YMSessionConnectToPeer(YMSessionRef session_, YMPeerRef peer, bool sync)
         
         YMRelease(newConnection);
         YMRelease(name);
-        
-        addrEnum = YMDictionaryEnumeratorGetNext(addrEnum);
     }
-    YMDictionaryEnumeratorEnd(addrEnum);
     
     return true;
     
@@ -650,13 +646,13 @@ void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(ym_thread_
     socklen_t addrLen = initCtx->addrLen;
     __unused bool ipv4 = initCtx->ipv4;
     
-    ymlog(YM_LOG_PRE "__ym_session_init_connection entered: sf%d %d %d",YM_LOG_DSC,socket,addrLen,ipv4);
-    
     YMAddressRef address = NULL;
     YMPeerRef peer = NULL;
     YMConnectionRef newConnection = NULL;
     
-    address = YMAddressCreate(addr, addrLen);
+    ymlog(YM_LOG_PRE "__ym_session_init_connection entered: sf%d %d %d",YM_LOG_DSC,socket,addrLen,ipv4);
+    
+    address = YMAddressCreate(addr,ipv4?ntohs(((struct sockaddr_in *)addr)->sin_port):ntohs(((struct sockaddr_in6 *)addr)->sin6_port));
     peer = _YMPeerCreateWithAddress(address);
     if ( ! session->shouldAcceptFunc(session, peer, session->callbackContext) )
     {
@@ -913,31 +909,9 @@ void __ym_mdns_service_resolved_func(__unused YMmDNSBrowserRef browser, bool suc
         }
         YMDictionaryEnumeratorEnd(myEnum);
     }
-    
-    YMDictionaryRef addresses = YMDictionaryCreate();
-    
-	YM_ADDRINFO *addrInfoIter = service->addrinfo;
-	while ( addrInfoIter )
-	{
-		if ( addrInfoIter->ai_family == AF_INET /*|| addrInfoIter->ai_family == AF_INET6*/ )
-		{
-			((struct sockaddr_in *)addrInfoIter->ai_addr)->sin_port = service->port;
-			YMAddressRef address = YMAddressCreate(addrInfoIter->ai_addr, addrInfoIter->ai_addrlen);
-			if ( address )
-				YMDictionaryAdd(addresses, (YMDictionaryKey)address, address);
-			ymlog(YM_LOG_PRE "%s address with family %d proto %d length %d canon %s: %s",YM_LOG_DSC,address?"parsed":"failed to parse",
-				  addrInfoIter->ai_family,addrInfoIter->ai_protocol,addrInfoIter->ai_addrlen,addrInfoIter->ai_canonname,address?YMSTR(YMAddressGetDescription(address)):"(null");
-		}
-		else
-			ymlog(YM_LOG_PRE "ignoring address with family %d proto %d length %d canon %s:",YM_LOG_DSC,
-				  addrInfoIter->ai_family,addrInfoIter->ai_protocol,addrInfoIter->ai_addrlen,addrInfoIter->ai_canonname);
-		addrInfoIter = addrInfoIter->ai_next;
-	}
 	
-	_YMPeerSetAddresses(peer, addresses);
+	_YMPeerSetAddresses(peer, service->sockaddrList);
 	_YMPeerSetPort(peer, service->port);
-    
-    YMRelease(addresses);
     
     YMLockUnlock(session->knownPeersLock);
     

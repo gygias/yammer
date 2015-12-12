@@ -10,6 +10,7 @@
 
 #include "YMUtilities.h"
 #include "YMThread.h"
+#include "YMAddress.h"
 
 #include <dns_sd.h>
 #include <errno.h>
@@ -46,6 +47,8 @@ typedef struct __ym_mdns_browser_t
     bool browsing;
     DNSServiceRef *browseServiceRef;
     YMThreadRef browseEventThread;
+    DNSServiceRef *getAddrInfoRef;
+    YMThreadRef getAddrInfoThread;
     
     bool resolving;
     DNSServiceRef *resolveServiceRef;
@@ -67,7 +70,7 @@ static void DNSSD_API __ym_mdns_browse_callback(DNSServiceRef sdRef, DNSServiceF
 void DNSSD_API __ym_mdns_resolve_callback(DNSServiceRef serviceRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *name,
                                       const char *host, uint16_t port, uint16_t txtLen, const unsigned char *txtRecord, void *context );
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_browser_event_proc(YM_THREAD_PARAM);
+YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_event_proc(YM_THREAD_PARAM);
 YMmDNSServiceRecord *__YMmDNSBrowserAddOrUpdateService(__YMmDNSBrowserRef browser, YMmDNSServiceRecord *record);
 void __YMmDNSBrowserRemoveServiceNamed(__YMmDNSBrowserRef browser, YMStringRef name);
 
@@ -224,7 +227,7 @@ bool YMmDNSBrowserStart(YMmDNSBrowserRef browser_)
     }
     
     YMStringRef threadName = YMSTRCF("mdns-browse-%s",YMSTR(browser->type));
-    browser->browseEventThread = YMThreadCreate(threadName, __ym_mdns_browser_event_proc, (void *)YMRetain(browser));
+    browser->browseEventThread = YMThreadCreate(threadName, __ym_mdns_event_proc, browser->browseServiceRef);
     YMRelease(threadName);
     
     bool okay = YMThreadStart(browser->browseEventThread);
@@ -244,15 +247,18 @@ bool YMmDNSBrowserStop(YMmDNSBrowserRef browser_)
         int fd  = DNSServiceRefSockFD(*(browser->browseServiceRef));
         int result = shutdown(fd, SHUT_RDWR);
         ymassert(result==0,"close service ref fd");
-        //DNSServiceRefDeallocate(*(browser->browseServiceRef));
-        //free(browser->browseServiceRef); // let the thread deallocate this on its way out, cheap way to avoid synchronization
-        //browser->browseServiceRef = NULL;
     }
 
 	browser->browsing = false;
 
     return true;
 }
+
+typedef struct __ym_mdns_browser_resolve_context_t {
+    __YMmDNSBrowserRef browser;
+    YMStringRef unescapedName;
+} __ym_mdns_browser_resolve_context_t;
+typedef struct __ym_mdns_browser_resolve_context_t *__ym_mdns_browser_resolve_context_ref;
 
 bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser_, YMStringRef serviceName)
 {
@@ -266,14 +272,17 @@ bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser_, YMStringRef serviceName)
     }
     
     browser->resolveServiceRef = (DNSServiceRef *)calloc( 1, sizeof(DNSServiceRef) );
+    __ym_mdns_browser_resolve_context_ref ctx = YMALLOC(sizeof(struct __ym_mdns_browser_resolve_context_t));
+    ctx->browser = (__YMmDNSBrowserRef)YMRetain(browser);
+    ctx->unescapedName = YMRetain(serviceName);
     DNSServiceErrorType result = DNSServiceResolve ( browser->resolveServiceRef, // DNSServiceRef
                                                     0, // DNSServiceFlags
                                                     0, // interfaceIndex
                                                     YMSTR(serviceName),
                                                     YMSTR(browser->type), // type
-                                                    theService->domain ? YMSTR(theService->domain) : NULL, // domain
+                                                    YMSTR(theService->domain), // domain
                                                     __ym_mdns_resolve_callback,
-                                                    browser );
+                                                    ctx );
     if ( result != kDNSServiceErr_NoError )
     {
         ymerr("mdns[%s]: service resolve failed: %d",YMSTR(browser->type),result);
@@ -288,6 +297,7 @@ bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser_, YMStringRef serviceName)
     if ( result != kDNSServiceErr_NoError )
     {
         ymerr("mdns[%s]: resolve process result failed: %d", YMSTR(browser->type), result);
+        DNSServiceRefDeallocate(*browser->resolveServiceRef);
         free(browser->resolveServiceRef);
         browser->resolveServiceRef = NULL;
         return false;
@@ -322,14 +332,18 @@ YMmDNSServiceRecord *__YMmDNSBrowserAddOrUpdateService(__YMmDNSBrowserRef browse
             // a throw-away copy of the record structure.
             if ( existingRecord->txtRecordKeyPairs )
                 _YMmDNSTxtKeyPairsFree(existingRecord->txtRecordKeyPairs, existingRecord->txtRecordKeyPairsSize);
-            existingRecord->txtRecordKeyPairs = record->txtRecordKeyPairs;
-            if ( existingRecord->addrinfo )
-                freeaddrinfo(existingRecord->addrinfo);
-            existingRecord->addrinfo = record->addrinfo;
+            if ( existingRecord->sockaddrList ) {
+                while ( YMArrayGetCount(existingRecord->sockaddrList) > 0 ) {
+                    YMAddressRef address = (YMAddressRef)YMArrayGet(existingRecord->sockaddrList, 0);
+                    YMRelease(address);
+                    YMArrayRemove(existingRecord->sockaddrList, 0);
+                }
+                YMRelease(existingRecord->sockaddrList);
+            }
             
             existingRecord->txtRecordKeyPairs = record->txtRecordKeyPairs;
             existingRecord->txtRecordKeyPairsSize = record->txtRecordKeyPairsSize;
-            existingRecord->addrinfo = record->addrinfo;
+            existingRecord->sockaddrList = record->sockaddrList ? YMRetain(record->sockaddrList) : NULL;
             existingRecord->port = record->port;
             
             _YMmDNSServiceRecordFree(record, true);
@@ -442,9 +456,57 @@ static void DNSSD_API __ym_mdns_browse_callback(__unused DNSServiceRef serviceRe
     }
     else
     {
-        YMmDNSServiceRecord *record = _YMmDNSServiceRecordCreate(name, type, domain, false, NULL, 0, NULL, 0);
+        YMmDNSServiceRecord *record = _YMmDNSServiceRecordCreate(name, type, domain);
         __YMmDNSBrowserAddOrUpdateService(browser, record);
     }    
+}
+
+struct __ym_get_addr_info_context_t {
+    YMStringRef unescapedName;
+    __YMmDNSBrowserRef browser;
+} __ym_get_addr_info_context_t;
+typedef struct __ym_get_addr_info_context_t *__ym_get_addr_info_context_ref;
+
+void DNSSD_API __ym_mdns_addr_info_callback
+(
+ __unused DNSServiceRef sdRef,
+ __unused  DNSServiceFlags flags,
+ __unused  uint32_t interfaceIndex,
+ __unused  DNSServiceErrorType errorCode,
+ __unused  const char                       *hostname,
+ __unused  const struct sockaddr            *address,
+ __unused  uint32_t ttl,
+ __unused  void                             *context
+ )
+{
+    __ym_get_addr_info_context_ref ctx = context;
+    __YMmDNSBrowserRef browser = ctx->browser;
+    YMStringRef unescapedName = ctx->unescapedName;
+    
+    ymassert(address->sa_family==AF_INET||address->sa_family==AF_INET6,"bad address family %d",address->sa_family);    
+    YMmDNSServiceRecord *record = __YMmDNSBrowserGetServiceWithName(browser, unescapedName, false);
+    ymsoftassert(record, "failed to find existing record for %s on addrinfo callback",YMSTR(unescapedName));
+    
+    YMAddressRef ymAddress = YMAddressCreate(address,record->port);
+    ymerr("__ym_mdns_addr_info_callback: %s: %s",hostname,YMSTR(YMAddressGetDescription(ymAddress)));
+    YMRelease(ymAddress);
+    
+    if ( address->sa_family == AF_INET ) {
+        _YMmDNSServiceRecordAppendSockaddr(record,address);
+    }
+    
+    if ( ! ( flags & kDNSServiceFlagsMoreComing ) ) {
+        ymlog("mdns[&]: finished enumerating addresses");
+        
+        _YMmDNSServiceRecordSetComplete(record);
+        
+        if ( browser->serviceResolved )
+            browser->serviceResolved((YMmDNSBrowserRef)browser, true, record, browser->callbackContext);
+        
+        shutdown(DNSServiceRefSockFD(sdRef),SHUT_RDWR);
+        YMRelease(browser->getAddrInfoThread);
+        browser->getAddrInfoThread = NULL;
+    }
 }
 
 void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
@@ -454,57 +516,55 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
                                           const char *fullname,
                                           const char *host,
                                           uint16_t port,
-                                          uint16_t txtLength,
-                                          const unsigned char *txtRecord,
+                                          __unused uint16_t txtLength,
+                                          __unused const unsigned char *txtRecord,
                                           void *context )
 {
-    __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)context;
-    ymlog("__ym_mdns_resolve_callback: %s/%s -> %s:%u",YMSTR(browser->type),fullname,host,(unsigned)port);
+    __ym_mdns_browser_resolve_context_ref ctx = context;
+    __YMmDNSBrowserRef browser = ctx->browser;
+    YMStringRef unescapedName = ctx->unescapedName;
+    ymlog("__ym_mdns_resolve_callback: %s/%s(%s) -> %s:%u",YMSTR(browser->type),fullname,YMSTR(unescapedName),host,(unsigned)port);
     
     bool okay = ( result == kDNSServiceErr_NoError );
     
-    YMmDNSServiceRecord *record = NULL;
-    if ( okay )
-    {
-		// fullname: "host._whatever._tcp.local."
-        // host: "host.local."
-        char *nameCopy = strdup(fullname);
-        char *one = strstr(nameCopy,".");
-        ymsoftassert(one, "mdns: failed to get service name from full name '%s'",fullname);
-        one[0] = '\0';
+    YMmDNSServiceRecord *record = __YMmDNSBrowserGetServiceWithName(browser, unescapedName, false);
+    ymassert(record,"failed to lookup existing service from %s: %s",fullname,YMSTR(unescapedName));
+    
+    if ( okay ) {
+        _YMmDNSServiceRecordSetPort(record, port);
+        _YMmDNSServiceRecordSetTxtRecord(record, txtRecord, txtLength);
+        while ( browser->getAddrInfoThread ) {} ; /// todo YOLO SPINLOCK
         
-        char *hostCopy = strdup(host);
-        size_t len = strlen(hostCopy);
-        if ( hostCopy[len - 1] == '.' )
-            hostCopy[len - 1] = '\0';
-        
-        record = _YMmDNSServiceRecordCreate(nameCopy, YMSTR(browser->type), "local",
-                                            true, hostCopy, port, txtRecord, txtLength);
-        if ( record )   
-			record = __YMmDNSBrowserAddOrUpdateService(browser, record);
-        else
-			okay = false;
-        
-        free(nameCopy);
-        free(hostCopy);
+        if ( ! record->complete ) {
+            browser->getAddrInfoRef = YMALLOC(sizeof(DNSServiceRef));
+            __ym_get_addr_info_context_ref aCtx = YMALLOC(sizeof(struct __ym_get_addr_info_context_t));
+            aCtx->browser = (__YMmDNSBrowserRef)YMRetain(browser);
+            aCtx->unescapedName = YMRetain(unescapedName);
+            DNSServiceErrorType err = DNSServiceGetAddrInfo(browser->getAddrInfoRef, kDNSServiceFlagsForceMulticast, kDNSServiceInterfaceIndexAny, kDNSServiceProtocol_IPv4|kDNSServiceProtocol_IPv6, host, __ym_mdns_addr_info_callback, aCtx);
+            if ( err == kDNSServiceErr_NoError) {
+                browser->getAddrInfoThread = YMThreadCreate(NULL, __ym_mdns_event_proc, browser->getAddrInfoRef);
+                YMThreadStart(browser->getAddrInfoThread);
+            } else {
+                ymerr("mdns[%s]: error: failed to get addr info for %s",YMSTR(browser->type),YMSTR(unescapedName));
+            }
+        }
+    } else if ( browser->serviceResolved )
+        browser->serviceResolved((YMmDNSBrowserRef)browser, false, record, browser->callbackContext);
+    
+    if ( ! ( flags & kDNSServiceFlagsMoreComing ) ) {
+        YMRelease(browser);
+        YMRelease(unescapedName);
+        free(ctx);
     }
-    
-    if ( browser->serviceResolved )
-        browser->serviceResolved((YMmDNSBrowserRef)browser, okay, record, browser->callbackContext);
-    
-    DNSServiceRefDeallocate( *(browser->resolveServiceRef) );
-    free( browser->resolveServiceRef );
-    browser->resolveServiceRef = NULL;
 }
 
 // this function was mostly lifted from "Zero Configuration Networking: The Definitive Guide" -o'reilly
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_browser_event_proc(YM_THREAD_PARAM ctx)
+YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_event_proc(YM_THREAD_PARAM ctx)
 {
-    __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)ctx;
-	DNSServiceRef *serviceRef = browser->browseServiceRef;
+	DNSServiceRef *serviceRef = ctx;
     int fd  = DNSServiceRefSockFD(*(serviceRef));
     
-    ymlog("mdns[%s]: event thread f%d entered", YMSTR(browser->type), fd);
+    ymlog("mdns[&]: event thread f%d entered", fd);
     
     bool keepGoing = true;
     while ( keepGoing )
@@ -536,7 +596,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_browser_event_proc(YM_THREAD_PA
             }
             if (err != kDNSServiceErr_NoError)
             {
-                ymerr("mdns[%s]: event thread process result on f%d failed: %d", YMSTR(browser->type), fd, err);
+                ymerr("mdns[&]: event thread process result on f%d failed: %d", fd, err);
                 keepGoing = false;
             }
         }
@@ -546,16 +606,15 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_browser_event_proc(YM_THREAD_PA
         }
         else
         {
-            ymerr("mdns[%s]: event thread select on f%d failed: %d: %d (%s)",YMSTR(browser->type), fd, result,errno,strerror(errno));
+            ymerr("mdns[&]: event thread select on f%d failed: %d: %d (%s)", fd, result,errno,strerror(errno));
             keepGoing = false;
         }
     }
     
-    ymlog("mdns[%s] event thread f%d exiting", YMSTR(browser->type), fd);
+    ymlog("mdns[&] event thread f%d exiting", fd);
     
     DNSServiceRefDeallocate(*(serviceRef));
 	free(serviceRef);
-	YMRelease(browser);
 
 	YM_THREAD_END
 }

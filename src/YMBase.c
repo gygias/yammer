@@ -12,6 +12,8 @@
 
 YM_EXTERN_C_PUSH
 
+YMFILE gYMWatchFile = NULL_FILE;
+
 YMTypeID _YMAddressTypeID = 'a';
 YMTypeID _YMArrayTypeID = 'A';
 YMTypeID _YMmDNSBrowserTypeID = 'b';

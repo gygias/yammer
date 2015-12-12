@@ -108,7 +108,7 @@
 	#define YM_SEEK_FILE(f,o,r)				{ result = lseek(f,o,,r); if ( result != 0 ) { error = errno; errorStr = strerror(errno); } }
     #define YM_READ_FILE(fd,addr,count)		{ aRead = read(fd, addr, count); if ( aRead == -1 ) { error = errno; errorStr = strerror(errno); } }
     #define YM_WRITE_FILE(fd,addr,count)	{ aWrite = write(fd,addr,count); if ( aRead == -1 ) { error = errno; errorStr = strerror(errno); } }
-    #define YM_CLOSE_FILE(fd)				{ result = close(fd); if ( result != 0 ) { error = errno; errorStr = strerror(error); } }
+    #define YM_CLOSE_FILE(fd)				{ if ( gYMWatchFile != NULL_FILE && fd == gYMWatchFile ) abort(); result = close(fd); if ( result != 0 ) { error = errno; errorStr = strerror(error); } }
     #define NULL_SOCKET (-1)
 	#define YM_READ_SOCKET(s,b,l)	YM_READ_FILE(s,b,l)
 	#define YM_WRITE_SOCKET(s,b,l)	YM_WRITE_FILE(s,b,l)
@@ -176,5 +176,7 @@
 	#define signal(x,y) ymerr("*** sigpipe win32 placeholder ***")
 	#define strerror(x) "(strerror win32 placeholder)"
 #endif
+
+extern YMFILE gYMWatchFile;
 
 #endif /* PrefixHeader_pch */

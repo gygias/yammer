@@ -11,6 +11,6 @@
 
 #include "YMDictionary.h"
 
-void _YMDictionaryShift(YMDictionaryRef, int64_t);
+void _YMDictionaryShift(YMDictionaryRef, int64_t, bool);
 
 #endif /* YMDictionaryPriv_h */

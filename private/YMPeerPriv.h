@@ -14,12 +14,12 @@
 YM_EXTERN_C_PUSH
 
 YMPeerRef _YMPeerCreateWithAddress(YMAddressRef address);
-YMPeerRef _YMPeerCreate(YMStringRef name, YMDictionaryRef addresses, YMDictionaryRef certificates);
+YMPeerRef _YMPeerCreate(YMStringRef name, YMArrayRef addresses, YMArrayRef certificates);
 
 void _YMPeerSetName(YMPeerRef peer, YMStringRef name);
-void _YMPeerSetAddresses(YMPeerRef peer, YMDictionaryRef addresses);
+void _YMPeerSetAddresses(YMPeerRef peer, YMArrayRef addresses);
 void _YMPeerSetPort(YMPeerRef peer, uint16_t port);
-void _YMPeerSetCertificates(YMPeerRef peer, YMDictionaryRef certificates);
+void _YMPeerSetCertificates(YMPeerRef peer, YMArrayRef certificates);
 
 YM_EXTERN_C_POP
 

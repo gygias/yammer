@@ -8,6 +8,8 @@
 
 #include "YMmDNS.h"
 
+#include "YMAddress.h"
+
 #if !defined(YMWIN32)
 # if defined(YMLINUX)
 #  define __USE_POSIX
@@ -61,64 +63,10 @@ void _YMmDNSServiceListFree(YMmDNSServiceList *serviceList)
     }
 }
 
-YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*type, const char *domain, bool resolved, const char *hostname,
-                                                uint16_t port, const unsigned char *txtRecord, uint16_t txtLength)
-{   
-	char *noDomain = NULL;
-	YM_ADDRINFO *addrinfo = NULL;
-	size_t txtSize = 0;
-	YMmDNSTxtRecordKeyPair **txtList = NULL;
-	struct addrinfo hints = { 0, AF_INET, SOCK_STREAM, 0, 0, NULL, NULL, NULL };
-	int result = 0;
-		
+YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*type, const char *domain)
+{
 	if ( ! name || ! type || ! domain )
 		return NULL;
-	
-    if ( hostname )
-    {
-		ymlog("mdns: creating resolved record from %s/%s/%s -- %s %u [%d]",name,type,domain,hostname,port,txtLength);
-	
-		// host.local. -> host
-		// THIS SHOULD GO FROM SMALL TO LARGE BUT NOT HOST.LOCAL.?
-		// reverse of the order it's doing here, rpi times out
-		noDomain = strdup(hostname);
-		char *one = strstr(noDomain,".");
-		
-		ymlog("mdns: getting addresses for '%s'...",noDomain);
-		result = getaddrinfo(noDomain, NULL, &hints, &addrinfo);
-		if ( result != 0 && one )
-        {
-            one[0] = '\0';
-			ymlog("mdns: getting fallback addresses for '%s'...",noDomain);
-			result = getaddrinfo(noDomain, NULL, &hints, &addrinfo);
-		}
-		
-        if ( result != 0 )
-        {
-			ymerr("mdns: failed to parse hostname '%s': %d (%s)",hostname,result,gai_strerror(result));
-			goto catch_fail;
-		}
-        
-        free(noDomain);
-        noDomain = NULL;
-    }
-    
-    if ( addrinfo ) {
-        YM_ADDRINFO *addrinfoIter = addrinfo;
-        int i = 0;
-        while ( addrinfoIter ) { i++; addrinfoIter = addrinfoIter->ai_next; }
-        ymlog("mdns: getaddrinfo found %d addresses for '%s'",i,hostname);
-    }
-    
-    if ( txtRecord && txtLength > 1 )
-    {
-        txtList = _YMmDNSTxtKeyPairsCreate(txtRecord, txtLength, &txtSize);
-        if ( ! txtList )
-        {
-			ymerr("mdns: failed to parse txt record for %s:%s",type,name);
-			goto catch_fail;
-		}
-	}
 	
     YMmDNSServiceRecord *record = (YMmDNSServiceRecord *)YMALLOC(sizeof(struct _YMmDNSServiceRecord));
     
@@ -136,32 +84,74 @@ YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*typ
         record->domain = YMSTRC(domain);
     else
         record->domain = NULL;
-        
-    record->addrinfo = addrinfo;    
-    record->resolved = resolved;    
-    record->port = port;
     
-    if ( txtList )
-    {
-        record->txtRecordKeyPairs = txtList;
-        record->txtRecordKeyPairsSize = txtSize;
-    }
-    else
-    {
-        record->txtRecordKeyPairs = NULL;
-        record->txtRecordKeyPairsSize = 0;
-    }
+    record->complete = false;
+    record->port = 0;
+    record->txtRecordKeyPairs = NULL;
+    record->txtRecordKeyPairsSize = 0;
+    record->sockaddrList = NULL;
     
     return record;
+}
+
+void YMAPI _YMmDNSServiceRecordSetPort(YMmDNSServiceRecord *record, uint16_t port)
+{
+    record->port = port;
+}
+
+void YMAPI _YMmDNSServiceRecordSetTxtRecord(YMmDNSServiceRecord *record, const unsigned char *txtRecord, uint16_t txtLength)
+{
+    size_t txtSize = 0;
+    YMmDNSTxtRecordKeyPair **txtList = NULL;
     
-catch_fail:
-    if ( noDomain )
-		free(noDomain);
-	if ( addrinfo )
-		freeaddrinfo(addrinfo);
-	if ( txtList )
-		_YMmDNSTxtKeyPairsFree(txtList, txtSize);
-	return NULL;
+    if ( txtRecord && txtLength > 1 )
+    {
+        txtList = _YMmDNSTxtKeyPairsCreate(txtRecord, txtLength, &txtSize);
+        if ( ! txtList )
+        {
+            ymerr("mdns: failed to parse txt record for %s:%s",YMSTR(record->type),YMSTR(record->name));
+            return;
+        }
+    }
+    
+    if ( record->txtRecordKeyPairs )
+        _YMmDNSTxtKeyPairsFree(record->txtRecordKeyPairs, record->txtRecordKeyPairsSize);
+    
+    record->txtRecordKeyPairsSize = txtSize;
+    record->txtRecordKeyPairs = txtList;
+}
+
+void YMAPI _YMmDNSServiceRecordAppendSockaddr(YMmDNSServiceRecord *record, const void *mdnsPortlessSockaddr_)
+{
+    const struct sockaddr *mdnsPortlessSockaddr = mdnsPortlessSockaddr_;
+    if ( ! record->sockaddrList )
+        record->sockaddrList = YMArrayCreate();
+    
+    for ( int i = 0; i < YMArrayGetCount(record->sockaddrList); i++ ) {
+        YMAddressRef aAddress = (YMAddressRef)YMArrayGet(record->sockaddrList, i);
+        const struct sockaddr *aSockaddr = YMAddressGetAddressData(aAddress);
+        if ( mdnsPortlessSockaddr->sa_family == aSockaddr->sa_family ) {
+            if ( aSockaddr->sa_family == AF_INET ) {
+                if ( ((struct sockaddr_in *)aSockaddr)->sin_addr.s_addr == ((struct sockaddr_in *)mdnsPortlessSockaddr)->sin_addr.s_addr ) {
+                    return;
+                    ymerr("service record already contains this ipv4 address");
+                }
+            } else if ( aSockaddr->sa_family == AF_INET6 ) {
+                if ( memcmp(&((struct sockaddr_in6 *)aSockaddr)->sin6_addr,&((struct sockaddr_in6 *)mdnsPortlessSockaddr)->sin6_addr,sizeof(struct in6_addr)) ) {
+                    ymerr("service record already contains this ipv6 address");
+                    return;
+                }
+            }
+        }
+    }
+    
+    YMAddressRef address = YMAddressCreate(mdnsPortlessSockaddr,record->port);
+    YMArrayAdd(record->sockaddrList, address);
+}
+
+void YMAPI _YMmDNSServiceRecordSetComplete(YMmDNSServiceRecord *record)
+{
+    record->complete = true;
 }
 
 void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record, bool floatResolvedInfo)
@@ -174,8 +164,14 @@ void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record, bool floatResolvedInf
         YMRelease(record->domain);
     if ( ! floatResolvedInfo ) // allows in-place update of existing service record
     {
-        if ( record->addrinfo )
-			freeaddrinfo( record->addrinfo );
+        if ( record->sockaddrList ) {
+            while ( YMArrayGetCount(record->sockaddrList) > 0 ) {
+                YMAddressRef address = (YMAddressRef)YMArrayGet(record->sockaddrList, 0);
+                YMRelease(address);
+                YMArrayRemove(record->sockaddrList, 0);
+            }
+            YMRelease(record->sockaddrList);
+        }
         if ( record->txtRecordKeyPairs )
             _YMmDNSTxtKeyPairsFree( (YMmDNSTxtRecordKeyPair **)record->txtRecordKeyPairs, record->txtRecordKeyPairsSize );
     }

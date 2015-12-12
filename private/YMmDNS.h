@@ -9,6 +9,8 @@
 #ifndef YMmDNS_h
 #define YMmDNS_h
 
+#include "YMArray.h"
+
 #define mDNS_SERVICE_NAME_LENGTH_MAX 63
 #define mDNS_SERVICE_NAME_LENGTH_MIN 1
 
@@ -33,9 +35,8 @@ typedef struct _YMmDNSServiceRecord
     YMStringRef name;
     YMStringRef domain;
     
-    // values below aren't known until the service is resolved
-    bool resolved;
-	YM_ADDRINFO *addrinfo;
+    bool complete;
+    YMArrayRef sockaddrList;
     uint16_t port;
     YMmDNSTxtRecordKeyPair **txtRecordKeyPairs;
     size_t txtRecordKeyPairsSize;
@@ -47,8 +48,11 @@ typedef struct _YMmDNSServiceList
     struct _YMmDNSServiceList *next;
 } YMmDNSServiceList;
 
-YMAPI YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*type, const char *domain, bool resolved, const char *hostname,
-                                                uint16_t port, const unsigned char *txtRecord, uint16_t txtLength);
+YMAPI YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*type, const char *domain);
+void YMAPI _YMmDNSServiceRecordSetPort(YMmDNSServiceRecord *record, uint16_t port);
+void YMAPI _YMmDNSServiceRecordSetTxtRecord(YMmDNSServiceRecord *record, const unsigned char *txtRecord, uint16_t txtLength);
+void YMAPI _YMmDNSServiceRecordAppendSockaddr(YMmDNSServiceRecord *record, const void *mdnsPortlessSockaddr);
+void YMAPI _YMmDNSServiceRecordSetComplete(YMmDNSServiceRecord *record);
 void YMAPI _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record, bool floatResolvedInfo);
 
 YMAPI YMmDNSTxtRecordKeyPair **_YMmDNSTxtKeyPairsCreate(const unsigned char *txtRecord, uint16_t txtLength, size_t *outSize);

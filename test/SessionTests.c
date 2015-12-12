@@ -334,8 +334,10 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteLargeFile(YM_THREAD_PARAM ctx
         YMSemaphoreSignal(theTest->threadExitSemaphore);
     }
 	
-	YM_CLOSE_FILE(theTest->largeSrcFd);
-	testassert(result == 0, "failed to close large source copy");
+    if ( ! theTest->serverAsync ) {
+        YM_CLOSE_FILE(theTest->largeSrcFd);
+        testassert(result==0, "failed to close large src f%d sync",theTest->largeSrcFd);
+    }
     
     ymlog("wrote large file thread (%sSYNC) exiting",theTest->serverAsync?"A":"");
 
@@ -647,12 +649,14 @@ void _client_async_forward_callback(YMConnectionRef connection, YMStreamRef stre
     _AsyncForwardCallback(theTest, connection, stream, result, bytesWritten, false);
 }
 
-void _AsyncForwardCallback(struct SessionTest *theTest, YMConnectionRef connection, YMStreamRef stream, YMIOResult result, uint64_t bytesWritten, bool isServer)
+void _AsyncForwardCallback(struct SessionTest *theTest, YMConnectionRef connection, YMStreamRef stream, YMIOResult ioResult, uint64_t bytesWritten, bool isServer)
 {
+    YM_IO_BOILERPLATE
+    
     testassert(connection,"connection nil");
     testassert(stream,"stream nil");
-    testassert(result==YMIOSuccess||(isServer&&!theTest->serverBounding&&result==YMIOEOF)||
-              (!isServer&&!theTest->lastClientBounded&&result==YMIOEOF),"!result");
+    testassert(ioResult==YMIOSuccess||(isServer&&!theTest->serverBounding&&ioResult==YMIOEOF)||
+              (!isServer&&!theTest->lastClientBounded&&ioResult==YMIOEOF),"!ioResult");
     testassert((isServer&&theTest->serverAsync)||(!isServer&&theTest->lastClientAsync),"callback for sync forward (%d)",isServer);
     
     if ( isServer && theTest->serverBounding )
@@ -668,6 +672,8 @@ void _AsyncForwardCallback(struct SessionTest *theTest, YMConnectionRef connecti
     if ( isServer ) {
         YMConnectionCloseStream(connection, stream); // client is effectively synchronized by the 'thx for sparse' writeback
         YMSemaphoreSignal(theTest->threadExitSemaphore);
+        YM_CLOSE_FILE(theTest->largeSrcFd);
+        testassert(result==0, "failed to close large src f f%d async",theTest->largeSrcFd);
     } else
         YMSemaphoreSignal(theTest->connectAndAsyncClientCallbackSemaphore);
 }

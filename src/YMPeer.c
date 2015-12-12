@@ -15,30 +15,30 @@ typedef struct __ym_peer_t
     _YMType _type;
     
     YMStringRef name;
-    YMDictionaryRef addresses;
+    YMArrayRef addresses;
     uint16_t port;
-    YMDictionaryRef certificates;
+    YMArrayRef certificates;
 } __ym_peer_t;
 typedef struct __ym_peer_t *__YMPeerRef;
 
-YMPeerRef __YMPeerCreate(YMStringRef name, YMDictionaryRef addresses, YMDictionaryRef certificates);
+YMPeerRef __YMPeerCreate(YMStringRef name, YMArrayRef addresses, YMArrayRef certificates);
 
 YMPeerRef _YMPeerCreateWithAddress(YMAddressRef address)
 {
-    YMDictionaryRef dictionary = YMDictionaryCreate();
-    YMDictionaryAdd(dictionary, (YMDictionaryKey)address, address);
+    YMArrayRef array = YMArrayCreate();
+    YMArrayAdd(array, address);
     YMRetain(address);
-    YMPeerRef peer = __YMPeerCreate(NULL,dictionary,NULL);
-    YMRelease(dictionary);
+    YMPeerRef peer = __YMPeerCreate(NULL,array,NULL);
+    YMRelease(array);
     return peer;
 }
 
-YMPeerRef _YMPeerCreate(YMStringRef name, YMDictionaryRef addresses, YMDictionaryRef certificates)
+YMPeerRef _YMPeerCreate(YMStringRef name, YMArrayRef addresses, YMArrayRef certificates)
 {
     return __YMPeerCreate(name, addresses, certificates);
 }
 
-YMPeerRef __YMPeerCreate(YMStringRef name, YMDictionaryRef addresses, YMDictionaryRef certificates)
+YMPeerRef __YMPeerCreate(YMStringRef name, YMArrayRef addresses, YMArrayRef certificates)
 {
     __YMPeerRef peer = (__YMPeerRef)_YMAlloc(_YMPeerTypeID,sizeof(struct __ym_peer_t));
     
@@ -53,26 +53,13 @@ void _YMPeerFree(YMTypeRef object)
 {
     __YMPeerRef peer = (__YMPeerRef)object;
     
-    if ( peer->addresses )
-    {
-        YMDictionaryEnumRef aEnum = YMDictionaryEnumeratorBegin(peer->addresses);
-        while ( aEnum )
-        {
-            YMRelease(aEnum->value);
-            aEnum = YMDictionaryEnumeratorGetNext(aEnum);
-        }
-        if ( aEnum ) YMDictionaryEnumeratorEnd(aEnum);
+    if ( peer->addresses ) {
+        _YMArrayRemoveAll(peer->addresses, true);
         YMRelease(peer->addresses);
     }
-    if ( peer->certificates )
-    {
-        YMDictionaryEnumRef aEnum = YMDictionaryEnumeratorBegin(peer->certificates);
-        while ( aEnum )
-        {
-            YMRelease(aEnum->value);
-            aEnum = YMDictionaryEnumeratorGetNext(aEnum);
-        }
-        if ( aEnum ) YMDictionaryEnumeratorEnd(aEnum);
+    
+    if ( peer->certificates ) {
+        _YMArrayRemoveAll(peer->certificates, true);
         YMRelease(peer->certificates);
     }
     
@@ -85,7 +72,7 @@ YMStringRef YMPeerGetName(YMPeerRef peer_)
     return peer->name;
 }
 
-YMDictionaryRef YMPeerGetAddresses(YMPeerRef peer_)
+YMArrayRef YMPeerGetAddresses(YMPeerRef peer_)
 {
     __YMPeerRef peer = (__YMPeerRef)peer_;
     return peer->addresses;
@@ -97,7 +84,7 @@ uint16_t YMPeerGetPort(YMPeerRef peer_)
     return peer->port;
 }
 
-YMDictionaryRef YMPeerGetCertificates(YMPeerRef peer_)
+YMArrayRef YMPeerGetCertificates(YMPeerRef peer_)
 {
     __YMPeerRef peer = (__YMPeerRef)peer_;
     return peer->certificates;
@@ -109,7 +96,7 @@ void _YMPeerSetName(YMPeerRef peer_, YMStringRef name)
     peer->name = YMRetain(name);
 }
 
-void _YMPeerSetAddresses(YMPeerRef peer_, YMDictionaryRef addresses)
+void _YMPeerSetAddresses(YMPeerRef peer_, YMArrayRef addresses)
 {
     __YMPeerRef peer = (__YMPeerRef)peer_;
     peer->addresses = YMRetain(addresses);
@@ -121,7 +108,7 @@ void _YMPeerSetPort(YMPeerRef peer_, uint16_t port)
     peer->port = port;
 }
 
-void _YMPeerSetCertificates(YMPeerRef peer_, YMDictionaryRef certificates)
+void _YMPeerSetCertificates(YMPeerRef peer_, YMArrayRef certificates)
 {
     __YMPeerRef peer = (__YMPeerRef)peer_;
     peer->certificates = YMRetain(certificates);

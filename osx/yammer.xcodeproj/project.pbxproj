@@ -82,6 +82,7 @@
 		637E3D5E1BF262EE00D702ED /* YMX509Certificate.h in Headers */ = {isa = PBXBuildFile; fileRef = 637E3D5C1BF262EE00D702ED /* YMX509Certificate.h */; };
 		638E1D661C098AF900BA2FA4 /* libcrypto.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 638E1D651C098AF900BA2FA4 /* libcrypto.tbd */; };
 		63957E8F1C137AFB00960961 /* dirent.h in Headers */ = {isa = PBXBuildFile; fileRef = 63957E8E1C137AFB00960961 /* dirent.h */; };
+		63B594071C1B895E0041121A /* YMArray.h in Headers */ = {isa = PBXBuildFile; fileRef = 63BA70A61C174AA700210D2E /* YMArray.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		63BA70A21C17493600210D2E /* YMTask.c in Sources */ = {isa = PBXBuildFile; fileRef = 63BA70A11C17493600210D2E /* YMTask.c */; };
 		63BA70A51C174A9900210D2E /* YMArray.c in Sources */ = {isa = PBXBuildFile; fileRef = 63BA70A41C174A9900210D2E /* YMArray.c */; };
 		63BA70AA1C17612600210D2E /* TaskTests.c in Sources */ = {isa = PBXBuildFile; fileRef = 63BA70A81C17612600210D2E /* TaskTests.c */; };
@@ -266,7 +267,7 @@
 		63BA70A11C17493600210D2E /* YMTask.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMTask.c; path = src/YMTask.c; sourceTree = "<group>"; };
 		63BA70A31C17494700210D2E /* YMTask.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMTask.h; path = private/YMTask.h; sourceTree = "<group>"; };
 		63BA70A41C174A9900210D2E /* YMArray.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMArray.c; path = src/YMArray.c; sourceTree = "<group>"; };
-		63BA70A61C174AA700210D2E /* YMArray.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMArray.h; path = private/YMArray.h; sourceTree = "<group>"; };
+		63BA70A61C174AA700210D2E /* YMArray.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMArray.h; path = libyammer/YMArray.h; sourceTree = "<group>"; };
 		63BA70A71C17522400210D2E /* YMDictionaryPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMDictionaryPriv.h; path = private/YMDictionaryPriv.h; sourceTree = "<group>"; };
 		63BA70A81C17612600210D2E /* TaskTests.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = TaskTests.c; sourceTree = "<group>"; };
 		63BA70A91C17612600210D2E /* TaskTests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TaskTests.h; sourceTree = "<group>"; };
@@ -446,6 +447,8 @@
 				63225D971BE92B6000C28F05 /* YMBase.c */,
 				637816C61BF68B8F00BF79E2 /* YMString.h */,
 				637816C51BF68B8F00BF79E2 /* YMString.c */,
+				63BA70A61C174AA700210D2E /* YMArray.h */,
+				63BA70A41C174A9900210D2E /* YMArray.c */,
 				63476A4E1BEB159C00D10081 /* YMDictionary.h */,
 				63476A4D1BEB159C00D10081 /* YMDictionary.c */,
 				6335CABE1BF453A800412CC9 /* YMAddress.h */,
@@ -513,8 +516,6 @@
 				63BD75CC1BF3F0E700D01F70 /* YMLocalSocketPair.c */,
 				63BA70A31C17494700210D2E /* YMTask.h */,
 				63BA70A11C17493600210D2E /* YMTask.c */,
-				63BA70A61C174AA700210D2E /* YMArray.h */,
-				63BA70A41C174A9900210D2E /* YMArray.c */,
 			);
 			name = Private;
 			path = ..;
@@ -603,6 +604,7 @@
 				63476A501BEB159C00D10081 /* YMDictionary.h in Headers */,
 				6335CAC01BF453A800412CC9 /* YMAddress.h in Headers */,
 				63225D5D1BE9092500C28F05 /* YMStream.h in Headers */,
+				63B594071C1B895E0041121A /* YMArray.h in Headers */,
 				63476A451BEAF4DB00D10081 /* YMLock.h in Headers */,
 				63225D6A1BE9184000C28F05 /* YMUtilities.h in Headers */,
 				630A5CFB1BE95E36003292EE /* YMThread.h in Headers */,
@@ -1307,6 +1309,7 @@
 				636166ED1C18DFA300D17172 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		63EEC75A1BFB6AA400990ECE /* Build configuration list for PBXNativeTarget "ymchat" */ = {
 			isa = XCConfigurationList;

@@ -52,28 +52,31 @@ typedef struct __ym_address
 typedef struct __ym_address __YMAddress;
 typedef __YMAddress *__YMAddressRef;
 
-YMAddressRef YMAddressCreate(const void *addressData, uint32_t length)
+YMAddressRef YMAddressCreate(const void *sockaddr_, uint16_t port)
 {
-    const struct sockaddr *addr = addressData;
+    const struct sockaddr *sockaddr = sockaddr_;
     
     YMAddressType type;
     bool isIP = false;
     bool isIPV4 = false;
-    if( YM_IS_IPV4(addr) )
+    uint16_t length;
+    if( YM_IS_IPV4(sockaddr) )
     {
         type = YMAddressIPV4;
         isIP = isIPV4 = true;
+        length = sizeof(struct sockaddr_in);
     }
 #if !defined(YMWIN32)
-    else if ( YM_IS_IPV6(addr) )
+    else if ( YM_IS_IPV6(sockaddr) )
     {
         type = YMAddressIPV6;
         isIP = true;
+        length = sizeof(struct sockaddr_in6);
     }
 #endif
     else
     {
-        ymlog("address: warning: yammer doesn't support address family %d",addr->sa_family);
+        ymlog("address: warning: yammer doesn't support address family %d",sockaddr->sa_family);
         return NULL;
     }
     
@@ -81,14 +84,18 @@ YMAddressRef YMAddressCreate(const void *addressData, uint32_t length)
     
     address->type = type;
     address->address = YMALLOC(length);
-    memcpy(address->address, addressData, length);
+    memcpy(address->address, sockaddr, length);
+    if ( isIPV4 )
+        ((struct sockaddr_in *)address->address)->sin_port = port;
+    else
+        ((struct sockaddr_in6 *)address->address)->sin6_port = port;
     address->length = length;
     
     if ( isIP )
     {
         int family = isIPV4 ? AF_INET : AF_INET6;
         socklen_t ipLength = isIPV4 ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN;
-        void *in46_addr = isIPV4 ? (void *)&((struct sockaddr_in *)addr)->sin_addr : (void *)&((struct sockaddr_in6 *)addr)->sin6_addr;
+        void *in46_addr = isIPV4 ? (void *)&((struct sockaddr_in *)sockaddr)->sin_addr : (void *)&((struct sockaddr_in6 *)sockaddr)->sin6_addr;
         char ipString[INET6_ADDRSTRLEN];
         
         if ( ! inet_ntop(family, in46_addr, ipString, ipLength) )
@@ -96,12 +103,8 @@ YMAddressRef YMAddressCreate(const void *addressData, uint32_t length)
             ymerr("address: error: inet_ntop failed for address length %d",ipLength);
             goto rewind_fail;
         }
-        uint16_t hostPort;
-        if ( isIPV4 )
-            hostPort = ntohs(((struct sockaddr_in *)addr)->sin_port);
-        else
-            hostPort = ntohs(((struct sockaddr_in6 *)addr)->sin6_port);
-        address->description = YMStringCreateWithFormat("%s:%u",ipString,hostPort,NULL);
+        
+        address->description = YMStringCreateWithFormat("%s:%u",ipString,ntohs(port),NULL);
     }
     
     return (YMAddressRef)address;
@@ -125,7 +128,7 @@ YMAddressRef YMAddressCreateLocalHostIPV4(uint16_t port)
     newAddr->sin_len = length;
 #endif
     
-    YMAddressRef address = YMAddressCreate(newAddr, length); // todo could be optimized
+    YMAddressRef address = YMAddressCreate(newAddr, newAddr->sin_port);
     free(newAddr);
     return address;
 }
@@ -150,7 +153,7 @@ YMAddressRef YMAddressCreateWithIPStringAndPort(YMStringRef ipString, uint16_t p
     sinAddr.sin_port = htons(port);
     sinAddr.sin_addr.s_addr = inAddr.s_addr;
     
-    return YMAddressCreate(&sinAddr, addrLen);
+    return YMAddressCreate(&sinAddr, sinAddr.sin_port);
 }
 
 void _YMAddressFree(YMTypeRef object)
@@ -211,6 +214,7 @@ int YMAddressGetDefaultProtocolForAddressFamily(int addressFamily)
     switch(addressFamily)
     {
         case AF_INET:
+        case AF_INET6:
             return IPPROTO_TCP;
         default: ;
     }

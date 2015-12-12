@@ -11,16 +11,16 @@
 
 YM_EXTERN_C_PUSH
 
-#include <libyammer/YMDictionary.h>
+#include <libyammer/YMArray.h>
 #include <libyammer/YMPeer.h>
 #include <libyammer/YMAddress.h>
 
 typedef const struct __ym_peer_t *YMPeerRef;
 
 YMStringRef YMAPI YMPeerGetName(YMPeerRef peer);
-YMDictionaryRef YMAPI YMPeerGetAddresses(YMPeerRef peer);
+YMArrayRef YMAPI YMPeerGetAddresses(YMPeerRef peer);
 uint16_t YMAPI YMPeerGetPort(YMPeerRef peer);
-YMDictionaryRef YMAPI YMPeerGetCertificates(YMPeerRef peer);
+YMArrayRef YMAPI YMPeerGetCertificates(YMPeerRef peer);
 
 YM_EXTERN_C_POP
 

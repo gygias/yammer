@@ -295,7 +295,7 @@ _YMDictionaryItemRef _YMDictionaryCopyItem(_YMDictionaryItemRef item)
     return itemCopy;
 }
 
-void _YMDictionaryShift(YMDictionaryRef dict_, int64_t baseIdx)
+void _YMDictionaryShift(YMDictionaryRef dict_, int64_t baseIdx, bool inc)
 {
     __YMDictionaryRef dict = (__YMDictionaryRef)dict_;
     CHECK_CONSISTENCY
@@ -304,8 +304,13 @@ void _YMDictionaryShift(YMDictionaryRef dict_, int64_t baseIdx)
     
     while ( iter )
     {
-        if ( iter->key >= (uint64_t)baseIdx )
-            iter->key++;
+        if ( iter->key >= (uint64_t)baseIdx ) {
+            if ( inc )
+                iter->key++;
+            else
+                iter->key--;
+        }
+        
         iter = iter->next;
     }
 }

@@ -269,7 +269,7 @@ int64_t __YMConnectionDoSample(__YMConnectionRef connection, YMSOCKET socket, ui
                 sentReceived += aRead;
             }
         }
-        ymdbg("%s half-length %u",writing?"wrote":"read",halfLength);
+        ymlog("connection[%s]: %s back sample",YM_CON_DESC,writing?"reading":"writing");
     }
     
     sample = (uint32_t)(length / ( time(NULL) - startTime ));
