@@ -251,10 +251,8 @@ void _YMmDNSTxtKeyPairsFree(YMmDNSTxtRecordKeyPair **keyPairList, size_t size)
         YMmDNSTxtRecordKeyPair *aPair = keyPairList[idx];
         if ( aPair )
         {
-            if ( aPair->key )
-                YMRelease(aPair->key);
-            if ( aPair->value )
-                free((void*)aPair->value);
+            YMRelease(aPair->key);
+            free((void*)aPair->value);
             free(aPair);
         }
     }

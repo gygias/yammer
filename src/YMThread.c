@@ -40,6 +40,7 @@ typedef struct __ym_thread_t
     ym_thread_entry userEntryPoint;
     void *context;
     YM_THREAD_TYPE pthread;
+    uint64_t threadId;
     YMDictionaryRef threadDict;
     
     // thread state
@@ -127,6 +128,7 @@ __YMThreadRef __YMThreadInitCommon(YMStringRef name, void *context)
     thread->name = name ? YMRetain(name) : YMSTRC("*");
     thread->context = context;
     thread->pthread = (YM_THREAD_TYPE)NULL;
+    thread->threadId = 0;
     thread->threadDict = YMDictionaryCreate();
     
     thread->didStart = false;
@@ -278,6 +280,7 @@ bool YMThreadStart(YMThreadRef thread_)
         ymerr("thread[%s,%s]: error: pthread_create %d %s", YMSTR(thread->name), thread->isDispatchThread?"dispatch":"user", result, strerror(result));
         goto catch_return;
     }
+    thread->threadId = (uint64_t)pthread;
 #else
 	DWORD threadId;
 	pthread = CreateThread(NULL, 0, entry, (LPVOID)context, 0, &threadId);
@@ -286,6 +289,7 @@ bool YMThreadStart(YMThreadRef thread_)
 		ymerr("thread[%s,%s]: error: CreateThread failed: %x", YMSTR(thread->name), thread->isDispatchThread ? "dispatch" : "user", GetLastError());
         goto catch_return;
 	}
+    thread->threadId = threadId;
 #endif
     
     ymlog("thread[%s,%s]: detached", YMSTR(thread->name), thread->isDispatchThread ? "dispatch" : "user");
@@ -325,7 +329,7 @@ bool YMThreadJoin(YMThreadRef thread_)
     
     if ( _YMThreadGetCurrentThreadNumber() == _YMThreadGetThreadNumber(thread) )
         return false;
-        
+    
 #if !defined(YMWIN32)
     int result = pthread_join(thread->pthread, NULL);
     if ( result != 0 )
@@ -479,10 +483,10 @@ uint64_t _YMThreadGetCurrentThreadNumber()
 uint64_t _YMThreadGetThreadNumber(YMThreadRef thread_)
 {
     __YMThreadRef thread = (__YMThreadRef)thread_;
-    
-    while ( ! YMDictionaryContains(thread->threadDict, (YMDictionaryKey)YMThreadDictThreadIDKey) ) {}
-    uint64_t threadId = (uint64_t)YMDictionaryGetItem(thread->threadDict, (YMDictionaryKey)YMThreadDictThreadIDKey);
-    return threadId;
+    return thread->threadId;
+//    while ( ! YMDictionaryContains(thread->threadDict, (YMDictionaryKey)YMThreadDictThreadIDKey) ) {}
+//    uint64_t threadId = (uint64_t)YMDictionaryGetItem(thread->threadDict, (YMDictionaryKey)YMThreadDictThreadIDKey);
+//    return threadId;
 }
 
 YM_ONCE_FUNC(__YMThreadDispatchInitGlobal,

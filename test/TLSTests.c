@@ -78,7 +78,7 @@ void TLSTestsRun(ym_test_assert_func assert, const void *context)
     
     YMRelease(theTest.stateLock);
     YMRelease(theTest.threadExitSemaphore);
-    if ( theTest.lastMessageSent ) free(theTest.lastMessageSent);
+    free(theTest.lastMessageSent);
 }
 
 void _TestTLS1(struct TLSTest *theTest)
@@ -194,14 +194,14 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _RunEndpoint(YM_THREAD_PARAM ctx)
                       "incoming and last written do not match (i%zu o%zu)",incomingMessageLen,theTest->lastMessageSentLen);
             free(incomingMessage);
             
-            if ( TLSTestRandomMessages && theTest->lastMessageSent ) free(theTest->lastMessageSent);
+            if ( TLSTestRandomMessages ) free(theTest->lastMessageSent);
             theTest->lastMessageSent = outgoingMessage;
             theTest->lastMessageSentLen = outgoingMessageLen;
             _SendAMessage(theTest, tls, outgoingMessage, outgoingMessageLen);
         }
         else
         {
-            if ( TLSTestRandomMessages && theTest->lastMessageSent ) free(theTest->lastMessageSent);
+            if ( TLSTestRandomMessages ) free(theTest->lastMessageSent);
             theTest->lastMessageSent = outgoingMessage;
             theTest->lastMessageSentLen = outgoingMessageLen;
             _SendAMessage(theTest, tls, outgoingMessage, outgoingMessageLen);

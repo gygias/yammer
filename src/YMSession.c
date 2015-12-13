@@ -389,8 +389,7 @@ bool YMSessionConnectToPeer(YMSessionRef session_, YMPeerRef peer, bool sync)
     return true;
     
 catch_fail:
-    if ( context )
-        free(context);
+    free(context);
     if ( name )
         YMRelease(name);
     if ( addrEnum )

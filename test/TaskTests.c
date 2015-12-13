@@ -77,7 +77,7 @@ void _TaskCatSomeLogRun(struct TaskTest *theTest)
 # endif
 #elif defined(YMWIN32)
 # define SomeCatPath "c:\\Windows\\System32\\cmd"
-# define SomeLogPath "/c \"type c:\\Windows\\WindowsUpdate.log\""
+# define SomeLogPath "/c \"type c:\\Windows\\IE11_main.log\""
 #else
 # error implement me
 #endif
@@ -114,10 +114,8 @@ void _TaskOpensslRun(struct TaskTest *theTest)
     YMArrayAdd(args, "genrsa");
     YMArrayAdd(args, "4096");
 #else
-	YMStringRef path = YMSTRC("c:\\Windows\\System32\\find.exe");
-	YMArrayAdd(args, "/I");
-	YMArrayAdd(args, "\"a\"");
-	YMArrayAdd(args, ".\\*");
+	YMStringRef path = YMSTRC("c:\\Windows\\System32\\ipconfig.exe");
+	YMArrayAdd(args, "/all");
 #endif
     
     YMTaskRef task = YMTaskCreate(path, args, true);

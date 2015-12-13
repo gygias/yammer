@@ -261,7 +261,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _RunLocalPlexer(YM_THREAD_PARAM ctx_)
         if ( theTest->timeBasedTimeOver )
         {
             YMPlexerCloseStream(plexer, aStream);
-            if ( incomingMessage ) free(incomingMessage);
+            free(incomingMessage);
             goto catch_release;
         }
         testassert(incomingMessage, "incoming message");
@@ -411,7 +411,7 @@ void YM_CALLING_CONVENTION _handle_remote_stream(ym_thread_dispatch_ref ctx_)
         uint8_t *incomingMessage = _ReceiveMessage(theTest, stream, &incomingMessageLen);
         if ( theTest->timeBasedTimeOver )
         {
-            if ( incomingMessage ) free(incomingMessage);
+            free(incomingMessage);
             goto catch_return;
         }
         testassert(incomingMessage,"incoming message");
@@ -451,7 +451,6 @@ void YM_CALLING_CONVENTION _handle_remote_stream(ym_thread_dispatch_ref ctx_)
 catch_return:
     
     YMPlexerCloseStream(theTest->fakeRemotePlexer,stream);
-    
     YMRelease(stream);
     
     NoisyTestLog("^^^ REMOTE -newStream [%u] exiting (and remoteReleasing)",streamID);

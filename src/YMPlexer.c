@@ -86,6 +86,7 @@ typedef struct __ym_plexer_stream_user_info_t
     YMStringRef name;
     YMPlexerStreamID streamID;
     
+    YMPlexerRef plexer;
     bool isLocallyOriginated;
     struct timeval *lastServiceTime; // free me
     
@@ -938,6 +939,7 @@ YMStreamRef __YMPlexerRetainOrCreateRemoteStreamWithID(__YMPlexerRef plexer, YMP
 YMStreamRef __YMPlexerCreateStreamWithID(__YMPlexerRef plexer, YMPlexerStreamID streamID, bool isLocal, YMStringRef userNameToRelease)
 {
     __ym_plexer_stream_user_info_ref userInfo = (__ym_plexer_stream_user_info_ref)YMALLOC(sizeof(struct __ym_plexer_stream_user_info_t));
+    userInfo->plexer = YMRetain(plexer);
     userInfo->streamID = streamID;
     userInfo->isLocallyOriginated = isLocal;
     userInfo->lastServiceTime = (struct timeval *)YMALLOC(sizeof(struct timeval));
@@ -967,8 +969,8 @@ YMStreamRef __YMPlexerCreateStreamWithID(__YMPlexerRef plexer, YMPlexerStreamID 
 void __ym_plexer_free_stream_info(YMStreamRef stream)
 {
     __ym_plexer_stream_user_info_ref userInfo = YM_STREAM_INFO(stream);
-    //ymlog("%s: %u",__FUNCTION__,userInfo->streamID);
     YMRelease(userInfo->lock);
+    YMRelease(userInfo->plexer);
     free(userInfo->lastServiceTime);
     free(userInfo);
 }

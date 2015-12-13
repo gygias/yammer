@@ -589,7 +589,6 @@ catch_release:
     
     YMRelease(connection);
     YMRelease(stream);
-    //free(ctx);
 }
 
 void YM_CALLING_CONVENTION _EatLargeFile(ym_thread_dispatch_ref ctx_)
@@ -631,7 +630,6 @@ void YM_CALLING_CONVENTION _EatLargeFile(ym_thread_dispatch_ref ctx_)
     
     YMRelease(connection);
     YMRelease(stream);
-    //free(ctx);
 }
 
 void _server_async_forward_callback(YMConnectionRef connection, YMStreamRef stream, YMIOResult result, uint64_t bytesWritten, void * ctx)

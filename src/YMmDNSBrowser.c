@@ -114,14 +114,11 @@ void _YMmDNSBrowserFree(YMTypeRef object)
         YMRelease(browser->enumerateEventThread)
 #endif
         
-    //if ( browser->browseServiceRef ) // released by event thread
-    //    free(browser->browseServiceRef);
+    //free(browser->browseServiceRef); // released by event thread
     if ( browser->browseEventThread )
         YMRelease(browser->browseEventThread);
     
-    if ( browser->resolveServiceRef )
-        free(browser->resolveServiceRef);
-    
+    free(browser->resolveServiceRef);    
     if ( browser->serviceList )
         _YMmDNSServiceListFree((YMmDNSServiceList *)(browser->serviceList));
 }
@@ -163,8 +160,7 @@ bool YMmDNSBrowserEnumeratingStart(YMmDNSBrowserRef browser)
         return false;
     browser->enumerating = true;
     
-    if ( browser->enumerateServiceRef )
-        free(browser->enumerateServiceRef);
+    free(browser->enumerateServiceRef);
     browser->enumerateServiceRef = (DNSServiceRef *)calloc( 1, sizeof(DNSServiceRef) );
     
     DNSServiceErrorType result = DNSServiceEnumerateDomains(browser->enumerateServiceRef, // DNSServiceRef

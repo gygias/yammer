@@ -74,8 +74,7 @@ void _YMTaskFree(YMTaskRef task_)
     YMRelease(task->path);
     if ( task->args )
         YMRelease(task->args);
-    if ( task->output )
-        free(task->output);
+    free(task->output);
     if ( task->outputThread )
         YMRelease(task->outputThread);
 }
@@ -215,11 +214,11 @@ void YMAPI YMTaskWait(YMTaskRef task_)
         result = waitpid(task->childPid, &stat_loc, 0);
     } while ( result != task->childPid );
     if ( WIFEXITED(result) )
-        ymlog("task[%s]: p%d exited with %d", YMSTR(task->path), task->childPid, stat_loc)
+        ymerr("task[%s]: p%d exited with %d", YMSTR(task->path), task->childPid, stat_loc);
     else if ( WIFSIGNALED(result) )
-        ymlog("task[%s]: p%d exited abnormally with %d", YMSTR(task->path), task->childPid, stat_loc)
+        ymerr("task[%s]: p%d exited abnormally with %d", YMSTR(task->path), task->childPid, stat_loc);
     else
-        ymlog("task[%s]: p%d unknown exit status %d", YMSTR(task->path), task->childPid, stat_loc)
+        ymerr("task[%s]: p%d unknown exit status %d", YMSTR(task->path), task->childPid, stat_loc);
     task->result = stat_loc;
 
 #else
@@ -229,7 +228,7 @@ void YMAPI YMTaskWait(YMTaskRef task_)
 		DWORD exitCode = 0;
 		BOOL okay = GetExitCodeProcess(task->childHandle, &exitCode);
 		if ( okay ) {
-			ymlog("task[%s]: p%d exited with %d",YMSTR(task->path), task->childPid, exitCode);
+			ymerr("task[%s]: p%d exited with %d",YMSTR(task->path), task->childPid, exitCode);
 			task->result = exitCode;
 		} else
 			ymerr("task[%s]: GetExitCodeProcess(p%d) failed: %x",YMSTR(task->path),task->childPid,GetLastError());
@@ -237,6 +236,11 @@ void YMAPI YMTaskWait(YMTaskRef task_)
 		ymerr("task[%s]: WaitForSingleObject(p%d) failed: %d %x",YMSTR(task->path),task->childPid,result,GetLastError());
 
 #endif
+    
+    if (task->save) {
+        YMThreadJoin(task->outputThread);
+        ymerr("joined on output thread...");
+    }
 
     task->exited = true;
 }
