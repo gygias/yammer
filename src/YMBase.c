@@ -113,6 +113,8 @@ YM_RELEASE_RETURN_TYPE YMRelease(YMTypeRef object_)
 {
     __YMTypeRef object = (__YMTypeRef)object_;
     
+    ymsoftassert(object, "released null");
+    
     bool dealloc = false;
     YMLockMutex(object->__mutex);
     {

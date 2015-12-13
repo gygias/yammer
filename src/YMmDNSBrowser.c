@@ -445,7 +445,8 @@ static void DNSSD_API __ym_mdns_browse_callback(__unused DNSServiceRef serviceRe
     }
     
     // "An enumeration callback with the "Add" flag NOT set indicates a "Remove", i.e. the domain is no longer valid.
-    bool remove = (flags & kDNSServiceFlagsAdd) == 0;
+//#if !defined(YMLINUX) // my mdnsresponder goes into a removed/added loop on raspian, todo
+    bool remove = ! ((flags & kDNSServiceFlagsAdd) || (flags & kDNSServiceFlagsMoreComing));
     
     if ( remove )
     {
@@ -454,6 +455,7 @@ static void DNSSD_API __ym_mdns_browse_callback(__unused DNSServiceRef serviceRe
         YMRelease(ymName);
     }
     else
+//#endif
     {
         YMmDNSServiceRecord *record = _YMmDNSServiceRecordCreate(name, type, domain);
         __YMmDNSBrowserAddOrUpdateService(browser, record);
@@ -487,14 +489,15 @@ void DNSSD_API __ym_mdns_addr_info_callback
     ymsoftassert(record, "failed to find existing record for %s on addrinfo callback",YMSTR(unescapedName));
     
     YMAddressRef ymAddress = YMAddressCreate(address,record->port);
-    ymerr("__ym_mdns_addr_info_callback: %s: %s",hostname,YMSTR(YMAddressGetDescription(ymAddress)));
-    YMRelease(ymAddress);
-    
-    if ( address->sa_family == AF_INET ) {
-        _YMmDNSServiceRecordAppendSockaddr(record,address);
+    ymerr("__ym_mdns_addr_info_callback: %s: %d: %s",hostname,address->sa_family,ymAddress?YMSTR(YMAddressGetDescription(ymAddress)):"*");
+    if ( ymAddress ) {
+        YMRelease(ymAddress);
+        if ( address->sa_family == AF_INET ) {
+            _YMmDNSServiceRecordAppendSockaddr(record,address);
+        }
     }
-    
-    if ( ! ( flags & kDNSServiceFlagsMoreComing ) ) {
+        
+    if ( ! ( flags & kDNSServiceFlagsMoreComing ) && record->getAddrInfoThread ) {
         ymlog("mdns[&]: finished enumerating addresses");
         
         _YMmDNSServiceRecordSetComplete(record);
@@ -502,7 +505,7 @@ void DNSSD_API __ym_mdns_addr_info_callback
         if ( browser->serviceResolved )
             browser->serviceResolved((YMmDNSBrowserRef)browser, true, record, browser->callbackContext);
         
-        shutdown(DNSServiceRefSockFD(sdRef),SHUT_RDWR);
+        shutdown(DNSServiceRefSockFD(*((DNSServiceRef *)record->getAddrInfoRef)),SHUT_RDWR);
         YMRelease(record->getAddrInfoThread);
         record->getAddrInfoThread = NULL;
     }
@@ -522,7 +525,7 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
     __ym_mdns_browser_resolve_context_ref ctx = context;
     __YMmDNSBrowserRef browser = ctx->browser;
     YMStringRef unescapedName = ctx->unescapedName;
-    ymlog("__ym_mdns_resolve_callback: %s/%s(%s) -> %s:%u",YMSTR(browser->type),fullname,YMSTR(unescapedName),host,(unsigned)port);
+    ymlog("__ym_mdns_resolve_callback: %s/%s(%s) -> %s:%u",YMSTR(browser->type),fullname,YMSTR(unescapedName),host,(unsigned)ntohs(port));
     
     bool okay = ( result == kDNSServiceErr_NoError );
     
