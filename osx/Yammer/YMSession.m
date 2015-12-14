@@ -166,7 +166,7 @@ void _ym_session_resolved_peer_func(__unused YMSessionRef session, YMPeerRef pee
     }
 }
 
-void _ym_session_connect_failed_func(__unused YMSessionRef session, YMPeerRef peerRef, void* context)
+void _ym_session_connect_failed_func(__unused YMSessionRef session, YMPeerRef peerRef, __unused bool moreComing, void* context)
 {
     YMSession *SELF = (__bridge YMSession *)context;
     NSLog(@"%s: %@",__FUNCTION__,SELF);

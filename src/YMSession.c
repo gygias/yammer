@@ -321,6 +321,7 @@ typedef struct __ym_session_connect_async_context_t
     __YMSessionRef session;
     YMPeerRef peer;
     YMConnectionRef connection;
+    bool moreComing;
 } ___ym_session_connect_async_context_t;
 typedef struct __ym_session_connect_async_context_t __ym_session_connect_async_context;
 typedef __ym_session_connect_async_context *__ym_session_connect_async_context_ref;
@@ -355,6 +356,7 @@ bool YMSessionConnectToPeer(YMSessionRef session_, YMPeerRef peer, bool sync)
         context->session = (__YMSessionRef)YMRetain(session);
         context->peer = (YMPeerRef)YMRetain(peer);
         context->connection = (YMConnectionRef)YMRetain(newConnection);
+        context->moreComing = ( i < YMArrayGetCount(addresses) - 1 );
         
         name = YMSTRC("session-async-connect");
         struct ym_thread_dispatch_t connectDispatch = {__ym_session_connect_async_proc, 0, 0, context, name};
@@ -403,6 +405,7 @@ void YM_CALLING_CONVENTION __ym_session_connect_async_proc(ym_thread_dispatch_re
     __YMSessionRef session = context->session;
     YMPeerRef peer = context->peer;
     YMConnectionRef connection = context->connection;
+    bool moreComing = context->moreComing;
     free(context);
     
     ymlog(YM_LOG_PRE "__ym_session_connect_async_proc entered",YM_LOG_DSC);
@@ -415,7 +418,7 @@ void YM_CALLING_CONVENTION __ym_session_connect_async_proc(ym_thread_dispatch_re
         session->connectedFunc(session, connection, session->callbackContext);
     }
     else
-        session->connectFailedFunc(session, peer, session->callbackContext);
+        session->connectFailedFunc(session, peer, moreComing, session->callbackContext);
     
     YMRelease(session);
     YMRelease(peer);
@@ -664,7 +667,7 @@ void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(ym_thread_
     {
         ymlog(YM_LOG_PRE "failed to create new connection",YM_LOG_DSC);
 		if ( session->connectFailedFunc ) 
-			session->connectFailedFunc(session, peer, session->callbackContext);
+			session->connectFailedFunc(session, peer, false, session->callbackContext);
         goto catch_release;
     }
     

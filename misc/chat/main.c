@@ -145,10 +145,11 @@ void _ym_session_resolved_peer_func(__unused YMSessionRef session, YMPeerRef pee
     YMSessionConnectToPeer(session, peer, false);
 }
 
-void _ym_session_connect_failed_func(__unused YMSessionRef session, YMPeerRef peer, __unused void* context)
+void _ym_session_connect_failed_func(__unused YMSessionRef session, YMPeerRef peer, bool moreComing, __unused void* context)
 {
     printf("connect failed %s\n", YMSTR(YMPeerGetName(peer)));
-    //exit(1);
+    if ( ! moreComing )
+        exit(1);
 }
 
 // server

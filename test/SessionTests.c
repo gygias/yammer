@@ -140,7 +140,7 @@ void _ym_session_added_peer_func(YMSessionRef session, YMPeerRef peer, void *con
 void _ym_session_removed_peer_func(YMSessionRef session, YMPeerRef peer, void *context);
 void _ym_session_resolve_failed_func(YMSessionRef session, YMPeerRef peer, void *context);
 void _ym_session_resolved_peer_func(YMSessionRef session, YMPeerRef peer, void *context);
-void _ym_session_connect_failed_func(YMSessionRef session, YMPeerRef peer, void *context);
+void _ym_session_connect_failed_func(YMSessionRef session, YMPeerRef peer, bool moreComing, void *context);
 bool _ym_session_should_accept_func(YMSessionRef session, YMPeerRef peer, void *context);
 void _ym_session_connected_func(YMSessionRef session, YMConnectionRef connection, void *context);
 void _ym_session_interrupted_func(YMSessionRef session, void *context);
@@ -745,7 +745,7 @@ void _ym_session_resolved_peer_func(YMSessionRef session, YMPeerRef peer, void *
     //});
 }
 
-void _ym_session_connect_failed_func(YMSessionRef session, YMPeerRef peer, void *context)
+void _ym_session_connect_failed_func(YMSessionRef session, YMPeerRef peer, bool moreComing, void *context)
 {
     ymlog("%s",__FUNCTION__);
     struct SessionTest *theTest = context;
@@ -753,7 +753,7 @@ void _ym_session_connect_failed_func(YMSessionRef session, YMPeerRef peer, void 
     testassert(theTest,"connectFailed context");
     testassert(session==theTest->clientSession,"connectFailed session");
     testassert(0==strcmp(YMSTR(YMPeerGetName(peer)),YMSTR(theTest->testName)),"connectFailed name");
-    testassert(false,"connectFailed");
+    testassert(moreComing||YMSessionGetDefaultConnection(session),"connectFailed");
 }
 
 // server

@@ -25,7 +25,7 @@ typedef void(*ym_session_added_peer_func)(YMSessionRef,YMPeerRef,void*);
 typedef void(*ym_session_removed_peer_func)(YMSessionRef,YMPeerRef,void*);
 typedef void(*ym_session_resolve_failed_func)(YMSessionRef,YMPeerRef,void*);
 typedef void(*ym_session_resolved_peer_func)(YMSessionRef,YMPeerRef,void*);
-typedef void(*ym_session_connect_failed_func)(YMSessionRef,YMPeerRef,void*);
+typedef void(*ym_session_connect_failed_func)(YMSessionRef,YMPeerRef,bool,void*);
 
 // advertising
 typedef bool(*ym_session_should_accept_func)(YMSessionRef,YMPeerRef,void*);
