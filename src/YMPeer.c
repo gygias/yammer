@@ -54,12 +54,12 @@ void _YMPeerFree(YMTypeRef object)
     __YMPeerRef peer = (__YMPeerRef)object;
     
     if ( peer->addresses ) {
-        _YMArrayRemoveAll(peer->addresses, true);
+        _YMArrayRemoveAll(peer->addresses, true, false);
         YMRelease(peer->addresses);
     }
     
     if ( peer->certificates ) {
-        _YMArrayRemoveAll(peer->certificates, true);
+        _YMArrayRemoveAll(peer->certificates, true, false);
         YMRelease(peer->certificates);
     }
     

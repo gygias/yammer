@@ -261,11 +261,8 @@ void test_service_resolved(YMmDNSBrowserRef browser, bool resolved, YMmDNSServic
     
     testassert(resolved, "service did not resolve");
     
-    ymlog("%s/%s:%d resolved",YMSTR(service->type),YMSTR(service->name),service->port);
-    YMmDNSTxtRecordKeyPair **keyPairs = service->txtRecordKeyPairs;
-    size_t keyPairsSize = service->txtRecordKeyPairsSize;
-    
-    _CompareTxtList(theTest,keyPairs,keyPairsSize,theTest->testKeyPairs,theTest->nTestKeyPairs);
+    ymlog("%s/%s:%d resolved",YMSTR(service->type),YMSTR(service->name),service->port);    
+    _CompareTxtList(theTest,service->txtRecordKeyPairs,service->txtRecordKeyPairsSize,theTest->testKeyPairs,theTest->nTestKeyPairs);
     
     theTest->waitingOnResolution = false;
     YMmDNSServiceStop(theTest->service, false);

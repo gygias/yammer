@@ -109,7 +109,7 @@ void YMAPI _YMmDNSServiceRecordSetTxtRecord(YMmDNSServiceRecord *record, const u
         txtList = _YMmDNSTxtKeyPairsCreate(txtRecord, txtLength, &txtSize);
         if ( ! txtList )
         {
-            ymerr("mdns: failed to parse txt record for %s:%s",YMSTR(record->type),YMSTR(record->name));
+            ymerr("mdns[&]: failed to parse txt record for '%s:%s'",YMSTR(record->type),YMSTR(record->name));
             return;
         }
     }
@@ -119,6 +119,8 @@ void YMAPI _YMmDNSServiceRecordSetTxtRecord(YMmDNSServiceRecord *record, const u
     
     record->txtRecordKeyPairsSize = txtSize;
     record->txtRecordKeyPairs = txtList;
+    
+    ymerr("mdns[&]: updated txt record of '%s:%s' to n%zu",YMSTR(record->type),YMSTR(record->name),txtSize);
 }
 
 void YMAPI _YMmDNSServiceRecordAppendSockaddr(YMmDNSServiceRecord *record, const void *mdnsPortlessSockaddr_)

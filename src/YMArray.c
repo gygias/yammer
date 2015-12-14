@@ -127,7 +127,7 @@ void YMAPI YMArrayRemoveObject(YMArrayRef array_, const void *value)
     array->count--;
 }
 
-void YMAPI _YMArrayRemoveAll(YMArrayRef array_, bool ymRelease)
+void YMAPI _YMArrayRemoveAll(YMArrayRef array_, bool ymRelease, bool free_)
 {
     __YMArrayRef array = (__YMArrayRef)array_;
     
@@ -135,6 +135,7 @@ void YMAPI _YMArrayRemoveAll(YMArrayRef array_, bool ymRelease)
         int64_t aKey = YMDictionaryGetRandomKey(array->dict);
         void *object = YMDictionaryGetItem(array->dict, aKey);
         if ( ymRelease ) YMRelease(object);
+        else if ( free_ ) free(object);
         YMDictionaryRemove(array->dict, aKey);
     }
 }

@@ -89,12 +89,14 @@ void _YMPipeFree(YMTypeRef object)
 YMFILE YMPipeGetInputFile(YMPipeRef pipe_)
 {
     __YMPipeRef pipe = (__YMPipeRef)pipe_;
+    ymassert(pipe->inFd!=NULL_FILE,"input file is closed");
     return pipe->inFd;
 }
     
 YMFILE YMPipeGetOutputFile(YMPipeRef pipe_)
 {
     __YMPipeRef pipe = (__YMPipeRef)pipe_;
+    ymassert(pipe->outFd!=NULL_FILE,"output file is closed");
     return pipe->outFd;
 }
     

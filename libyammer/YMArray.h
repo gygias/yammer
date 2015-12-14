@@ -27,7 +27,7 @@ int64_t YMAPI YMArrayGetCount(YMArrayRef);
 void YMAPI YMArrayRemove(YMArrayRef, int64_t);
 void YMAPI YMArrayRemoveObject(YMArrayRef, const void *);
 
-void YMAPI _YMArrayRemoveAll(YMArrayRef,bool);
+void YMAPI _YMArrayRemoveAll(YMArrayRef array_, bool ymRelease, bool free);
 
 YM_EXTERN_C_POP
 

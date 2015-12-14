@@ -169,8 +169,8 @@ void _TestSessionWritingLargeAndReadingSparseFiles(struct SessionTest *theTest) 
     YMSemaphoreWait(theTest->connectAndAsyncClientCallbackSemaphore);
     YMSemaphoreWait(theTest->connectAndAsyncClientCallbackSemaphore);
     
-    while ( ! YMSessionGetDefaultConnection(theTest->clientSession) ) { ymlog("spinning for client connection fixme..."); }
-    while ( ! YMSessionGetDefaultConnection(theTest->serverSession) ) { ymlog("spinning for server connection fixme..."); }
+    testassert(YMSessionGetDefaultConnection(theTest->clientSession),"client default connection is nil!");
+    testassert(YMSessionGetDefaultConnection(theTest->serverSession),"server default connection is nil!");
     
 #define RUN_SERVER
 #ifdef RUN_SERVER
