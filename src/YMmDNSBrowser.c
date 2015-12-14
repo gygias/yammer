@@ -12,7 +12,6 @@
 #include "YMThread.h"
 #include "YMAddress.h"
 #include "YMArray.h"
-#include "YMPipe.h"
 
 #include <dns_sd.h>
 #include <errno.h>
@@ -45,7 +44,6 @@ typedef struct __ym_mdns_browser_t
     
     bool browsing;
     YMThreadRef browseEventThread;
-    YMPipeRef eventThreadSignalPipe;
     YMArrayRef activeServiceRefs;
     YMLockRef activeServiceRefsLock;
     
@@ -89,9 +87,6 @@ YMmDNSBrowserRef YMmDNSBrowserCreateWithCallbacks(YMStringRef type,
     
     browser->type = YMRetain(type);
     browser->serviceList = NULL;
-#if !defined(YMWIN32)
-    browser->eventThreadSignalPipe = YMPipeCreate(NULL);
-#endif
     browser->activeServiceRefs = YMArrayCreate();
     browser->activeServiceRefsLock = YMLockCreateWithOptions(YMLockRecursive);
     YMmDNSBrowserSetServiceAppearedFunc(browser, serviceAppeared);
@@ -106,17 +101,12 @@ YMmDNSBrowserRef YMmDNSBrowserCreateWithCallbacks(YMStringRef type,
 void _YMmDNSBrowserFree(YMTypeRef object)
 {
     __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)object;
+    
+    YMmDNSBrowserStop(browser);
+    
     if ( browser->type )
         YMRelease(browser->type);
     
-#if !defined(YMWIN32)
-    YM_IO_BOILERPLATE
-    unsigned char aByte = YM_EVENT_SIGNAL_EXIT;
-    YM_WRITE_FILE(YMPipeGetInputFile(browser->eventThreadSignalPipe), &aByte, sizeof(aByte));
-    ymassert(aWrite==sizeof(aByte),"failed to signal event thread to exit");
-    
-    YMRelease(browser->eventThreadSignalPipe);
-#endif
     YMRelease(browser->activeServiceRefs);
     YMRelease(browser->activeServiceRefsLock);
         
@@ -213,14 +203,6 @@ bool YMmDNSBrowserStop(YMmDNSBrowserRef browser_)
         }
 	}
 	YMLockUnlock(browser->activeServiceRefsLock);
-
-
-//#if !defined(YMWIN32)
-//    YM_IO_BOILERPLATE
-//    unsigned char aByte = YM_EVENT_SIGNAL_EXIT;
-//    YM_WRITE_FILE(YMPipeGetInputFile(browser->eventThreadSignalPipe),&aByte,sizeof(aByte));
-//    ymassert(aWrite==sizeof(aByte),"close service ref fd");
-//#endif
 
 	browser->browsing = false;
 
@@ -542,11 +524,6 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
             aCtx->unescapedName = YMRetain(unescapedName);
             DNSServiceErrorType err = DNSServiceGetAddrInfo(addrinfoSdref, kDNSServiceFlagsForceMulticast, kDNSServiceInterfaceIndexAny, kDNSServiceProtocol_IPv4|kDNSServiceProtocol_IPv6, host, __ym_mdns_addr_info_callback, aCtx);
             if ( err == kDNSServiceErr_NoError) {
-#if !defined(YMWIN32)
-                unsigned char aByte = YM_EVENT_SIGNAL_CONTINUE;
-                YM_WRITE_FILE(YMPipeGetInputFile(browser->eventThreadSignalPipe), &aByte, sizeof(aByte));
-                ymassert(aWrite==sizeof(aByte),"signal event thread continue: %d %s",error,errorStr);
-#endif
             } else {
                 ymerr("mdns[%s]: error: failed to get addr info for %s",YMSTR(browser->type),YMSTR(unescapedName));
                 free(addrinfoSdref);
@@ -566,20 +543,13 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_event_proc(YM_THREAD_PARAM ctx)
     
     YMmDNSBrowserRef browser = ctx;
     
-    YMFILE signalFd =
-#if !defined(YMWIN32)
-        YMPipeGetOutputFile(browser->eventThreadSignalPipe);
-#else
-        NULL_FILE;
-#endif
-    
     ymlog("mdns[&]: event thread entered");
     
     bool keepGoing = true;
     while ( keepGoing )
     {
 		int nfds = 1;
-        int maxFd = (int)signalFd; // unused on win32, parameter only exists for compatibility
+        int maxFd = -1; // unused on win32, parameter only exists for compatibility
         fd_set readfds;
         fd_set* nullFd = (fd_set*) NULL;
         struct timeval tv;
@@ -592,9 +562,6 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_event_proc(YM_THREAD_PARAM ctx)
         FD_ZERO(&readfds);
         
         // 2. Add the fds to the fd_set
-#if !defined(YMWIN32)
-        FD_SET((YMSOCKET)signalFd, &readfds);
-#endif
         YMLockLock(browser->activeServiceRefsLock);
         {
             for ( int i = 0; i < YMArrayGetCount(browser->activeServiceRefs); i++ ) {
@@ -614,36 +581,17 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_event_proc(YM_THREAD_PARAM ctx)
         {
             YMLockLock(browser->activeServiceRefsLock);
             {
-#if !defined(YMWIN32)
-                if ( FD_ISSET(signalFd, &readfds) ) {
-                    // cycle or exit
-                    unsigned char aByte;
-                    YM_READ_FILE(signalFd,&aByte,sizeof(aByte));
-                    if ( aRead != sizeof(aByte) ) {
-                        ymlog("mdns[&]: event thread failed to read signal byte on f%d, exiting: %zd %d %s",signalFd,aRead,error,errorStr);
-                        keepGoing = false;
-                    } else if ( aByte == YM_EVENT_SIGNAL_CONTINUE ) {
-                        ymdbg("mdns[&]: event thread signaled to continue");
-                    } else if ( aByte == YM_EVENT_SIGNAL_EXIT ) {
-                        ymlog("mdns[&]: event thread signaled to exit on f%d",signalFd);
-                        keepGoing = false;
-                    }
-                }
-#endif
-                
-                if ( keepGoing ) {
-                    for ( int i = 0; i < YMArrayGetCount(browser->activeServiceRefs); i++ ) {
-                        DNSServiceRef *sdref = (DNSServiceRef *)YMArrayGet(browser->activeServiceRefs, i);
-                        int aFd = DNSServiceRefSockFD(*sdref);
-                        if ( FD_ISSET(aFd, &readfds) ) {
-                            ymdbg("mdns[&]: processing service ref fd f%d",aFd);
-                            
-                            DNSServiceErrorType err = kDNSServiceErr_NoError;
-                            err = DNSServiceProcessResult(*(sdref));
-                            if (err != kDNSServiceErr_NoError) {
-                                ymerr("mdns[&]: event thread process result on f%d failed: %d", aFd, err);
-                                keepGoing = false;
-                            }
+                for ( int i = 0; i < YMArrayGetCount(browser->activeServiceRefs); i++ ) {
+                    DNSServiceRef *sdref = (DNSServiceRef *)YMArrayGet(browser->activeServiceRefs, i);
+                    int aFd = DNSServiceRefSockFD(*sdref);
+                    if ( FD_ISSET(aFd, &readfds) ) {
+                        ymdbg("mdns[&]: processing service ref fd f%d",aFd);
+                        
+                        DNSServiceErrorType err = kDNSServiceErr_NoError;
+                        err = DNSServiceProcessResult(*(sdref));
+                        if (err != kDNSServiceErr_NoError) {
+                            ymerr("mdns[&]: event thread process result on f%d failed: %d", aFd, err);
+                            keepGoing = false;
                         }
                     }
                 }
