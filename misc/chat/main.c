@@ -9,15 +9,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+
 #ifndef YMWIN32
-#include <unistd.h>
-#include <pthread.h>
+# include <unistd.h>
+# include <pthread.h>
 # if defined(YMLINUX)
-# include <signal.h>
+#  include <signal.h>
 # endif
 #else
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+# define WIN32_LEAN_AND_MEAN
+# include <windows.h>
 #endif
 
 #include <libyammer/Yammer.h>
@@ -32,8 +33,8 @@ void __sigint_handler (__unused int signum)
 #else
 void __CtrlHandler(DWORD cType)
 {
-	if ( cType != CTRL_C_EVENT )
-		return;
+    if ( cType != CTRL_C_EVENT )
+        return;
 #endif
     printf("caught sigint\n");
     exit(1);
@@ -51,7 +52,7 @@ int main(int argc, const char * argv[]) {
 #ifndef YMWIN32
     signal(SIGINT, __sigint_handler);
 #else
-	SetConsoleCtrlHandler((PHANDLER_ROUTINE)__CtrlHandler, TRUE);
+    SetConsoleCtrlHandler((PHANDLER_ROUTINE)__CtrlHandler, TRUE);
 #endif
 
     if ( argc == 3 )
@@ -74,12 +75,8 @@ int main(int argc, const char * argv[]) {
 		printf("looking for service...\n");
     }
     
-#if !defined(YMMACOS)
     int longTime = 999999999;
     sleep(longTime);
-#else
-    CFRunLoopRun();
-#endif
     
     return 0;
 }

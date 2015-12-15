@@ -21,8 +21,9 @@ ifeq ($(ARCH),macos)
 			-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk
 	STD=gnu99
     IEX=-I/opt/local/include
-    LLEX=-arch x86_64 -dynamiclib -install_name /usr/local/lib/libyammer.dylib -single_module -compatibility_version 1 -current_version 1\
-            -L/opt/local/lib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk
+    LLEX=-arch x86_64 -dynamiclib -install_name /usr/local/lib/libyammer.dylib -single_module -compatibility_version 1 -current_version 1 \
+            -L/opt/local/lib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk \
+	 -framework CoreFoundation -framework SystemConfiguration
 else
 	LSRC+= arc4random.c interface.c
 	DEFS=-DYMLINUX
