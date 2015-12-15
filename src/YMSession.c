@@ -979,6 +979,8 @@ void __ym_mdns_service_resolved_func(__unused YMmDNSBrowserRef browser, bool suc
     }
 }
 
+#pragma mark config change observing
+
 void __YMSessionUpdateNetworkConfigDate(__YMSessionRef session)
 {
 	ymerr("network config changed on %p", session);
