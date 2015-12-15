@@ -944,8 +944,14 @@ bool __YMSessionObserveNetworkInterfaceChangesWin32(__YMSessionRef session, bool
 			session->gobbledygook = NULL;
 
 			YMRelease(session->my_gobbledygook->that);
-			free(session->my_gobbledygook->lpVtbl);
-			free(session->my_gobbledygook);
+			session->my_gobbledygook->lpVtbl->Release((IWbemObjectSink *)session->my_gobbledygook);
+			// these malloc'd pointers move on the first QueryInterface call
+			// as if some standard com thing wraps them in something else.
+			// presumably they still need to be free'd, wherever it is they went.
+			// or maybe that's done for us in Release?
+			//free(session->my_gobbledygook->lpVtbl);
+			//free(session->my_gobbledygook);
+			session->my_gobbledygook = NULL;
 
 			return true;
 		}
