@@ -4,6 +4,7 @@
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 #include <net/if.h>
+#include <errno.h>
 
 int
 main()
@@ -18,6 +19,7 @@ main()
     return 1;
   }
 
+  fprintf(stderr,"socket: f%d\n",sock);
   memset(&addr, 0, sizeof(addr));
   addr.nl_family = AF_NETLINK;
   addr.nl_groups = RTMGRP_IPV4_IFADDR;
@@ -27,8 +29,10 @@ main()
     return 1;
   }
 
+  fprintf(stderr,"bound\n");
   nlh = (struct nlmsghdr *)buffer;
   while ((len = recv(sock, nlh, 4096, 0)) > 0) {
+    fprintf(stderr,"recv returned %db (%d %s)\n",len,errno,strerror(errno));
     while ((NLMSG_OK(nlh, len)) && (nlh->nlmsg_type != NLMSG_DONE)) {
       if (nlh->nlmsg_type == RTM_NEWADDR) {
 	struct ifaddrmsg *ifa = (struct ifaddrmsg *) NLMSG_DATA(nlh);

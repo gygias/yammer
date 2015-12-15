@@ -4,8 +4,6 @@ LSRC=YMAddress.c YMBase.c YMConnection.c YMDictionary.c YMLinkedList.c YMLocalSo
 				 YMmDNSBrowser.c YMmDNSService.c YMPeer.c YMPipe.c YMPlexer.c YMRSAKeyPair.c YMSecurityProvider.c \
 				 YMSemaphore.c YMSession.c YMStream.c YMString.c YMThread.c YMTLSProvider.c YMUtilities.c \
 				 YMX509Certificate.c YMTask.c YMArray.c
-LOBJ=$(LSRC:%.c=%.o)
-LDEP=$(LOBJ:%.o=$(OUT)/%.o)
 LTGT=libyammer.a
 
 TSRC=CryptoTests.c DictionaryTests.c LocalSocketPairTests.c mDNSTests.c PlexerTests.c SessionTests.c Tests.c TLSTests.c \
@@ -26,13 +24,16 @@ ifeq ($(ARCH),macos)
     LLEX=-arch x86_64 -dynamiclib -install_name /usr/local/lib/libyammer.dylib -single_module -compatibility_version 1 -current_version 1\
             -L/opt/local/lib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk
 else
-	LSRC+= arc4random.c
+	LSRC+= arc4random.c interface.c
 	DEFS=-DYMLINUX
 	CC=$(GCC)
 	STD=c99
+	IEX=-Ilinux
 	LLEX=-ldns_sd
 	PT=-pthread
 endif
+LOBJ=$(LSRC:%.c=%.o)
+LDEP=$(LOBJ:%.o=$(OUT)/%.o)
 INC=-I. -Iprivate -Ilibyammer $(IEX)
 LLIBS=-lssl -lcrypto $(LLEX)
 DBG=-ggdb3
@@ -52,6 +53,9 @@ $(OUT):
 
 $(LTGT): $(LOBJ)
 	$(CC) -shared -o $(OUT)/$@ $(PT) $(ALG) $(LLIBS) $(DBG) $(LDEP)
+
+interface.o: linux/interface.c
+	$(CC) -c $< -o $(OUT)/$@ $(CCF) $(INC) $(FLG) $(DBG)
 
 %.o: src/%.c
 	$(CC) -c $< -o $(OUT)/$@ $(CCF) $(INC) $(FLG) $(DBG)

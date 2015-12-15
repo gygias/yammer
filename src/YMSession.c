@@ -44,6 +44,7 @@
 #if defined(YMMACOS)
 #define __YMSessionObserveNetworkInterfaceChanges __YMSessionObserveNetworkInterfaceChangesMacos
 #elif defined(YMLINUX)
+#include "interface.h"
 #define __YMSessionObserveNetworkInterfaceChanges __YMSessionObserveNetworkInterfaceChangesLinux
 #elif defined(YMWIN32)
 #define __YMSessionObserveNetworkInterfaceChanges __YMSessionObserveNetworkInterfaceChangesWin32
@@ -76,6 +77,9 @@ typedef struct __ym_session_t
 #elif defined(YMWIN32)
 	IWbemServices *gobbledygook;
 	YM_IWbemObjectSink* my_gobbledygook;
+#else
+	YMThreadRef linuxPollThread;
+	bool linuxPollThreadExitFlag;
 #endif
     
     // server
@@ -151,6 +155,8 @@ YMSessionRef YMSessionCreate(YMStringRef type)
 	session->gobbledygook = NULL;
 	session->my_gobbledygook = NULL;
 #else
+	session->linuxPollThread = NULL;
+	session->linuxPollThreadExitFlag = false;
 #endif
     
     YMStringRef memberName = YMSTRC("connections-by-address");
@@ -866,9 +872,94 @@ bool __YMSessionObserveNetworkInterfaceChangesMacos(__YMSessionRef session, bool
 
 #elif defined(YMLINUX)
 
+YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_linux_proc_net_dev_scrape_proc(YM_THREAD_PARAM ctx)
+{
+	__YMSessionRef session = ctx;
+	YMThreadRef thisThread = session->linuxPollThread;
+	
+	// this /proc scraping method was cribbed from ifplugd. thanks ifplugd!
+	// PF_NETLINK approach didn't work after not a whole lot of trying on raspbian
+	while ( ! session->linuxPollThreadExitFlag ) {
+	    FILE *f;
+	    char ln[256];
+	    
+	    if ( ! ( f = fopen("/proc/net/dev", "r") ) ) {
+			ymerr(YM_LOG_PRE "failed to open /proc/net/dev: %d %s",YM_LOG_DSC,errno,strerror(errno));
+			YM_THREAD_END
+		}
+		
+		fgets(ln,sizeof(ln),f);
+		fgets(ln,sizeof(ln),f);
+		
+		while (fgets(ln,sizeof(ln),f)) {
+			char *p, *e;
+			p = ln + strspn(ln," \t");
+			if ( ! (e = strchr(p, ':')) ) {
+				ymerr(YM_LOG_PRE "failed to parse /proc/net/dev",YM_LOG_DSC);
+				fclose(f);
+				YM_THREAD_END
+			}
+			
+			*e = '\0';
+			
+			int fd;    
+			if ((fd = socket(PF_INET, SOCK_DGRAM, 0)) < 0) {
+				ymerr(YM_LOG_PRE "failed to open /proc/net/dev: %d %s",YM_LOG_DSC,errno,strerror(errno));
+				YM_THREAD_END
+			}
+			
+	        interface_status_t s;
+	        if ((s = interface_detect_beat_ethtool(fd, p)) == IFSTATUS_ERR)
+	            if ((s = interface_detect_beat_mii(fd, p)) == IFSTATUS_ERR)
+	                if ((s = interface_detect_beat_wlan(fd, p)) == IFSTATUS_ERR)
+	                    s = interface_detect_beat_iff(fd, p);
+	
+	        switch(s) {
+	            case IFSTATUS_UP:
+	                ymerr(YM_LOG_PRE "%s: up",YM_LOG_DSC, p);
+	                break;
+	                
+	            case IFSTATUS_DOWN:
+	                ymerr(YM_LOG_PRE "%s: down",YM_LOG_DSC, p);
+	                break;
+	
+	            default:
+					ymerr(YM_LOG_PRE "%s: not supported",YM_LOG_DSC, p);
+	                break;
+	        }
+		}
+        
+		fclose(f);
+		
+		if ( session->linuxPollThreadExitFlag )
+			break;
+		sleep(1);
+	}
+	
+	YM_THREAD_END
+}	
+
 bool __YMSessionObserveNetworkInterfaceChangesLinux(__YMSessionRef session, bool startStop)
 {
-    
+	if ( ! startStop ) {
+		if ( ! session->linuxPollThread )
+			return false;
+		
+		session->linuxPollThreadExitFlag = true;
+		YMThreadJoin(session->linuxPollThread);
+		YMRelease(session->linuxPollThread);
+		session->linuxPollThread = NULL;
+		
+		return true;
+	}
+	
+	session->linuxPollThread = YMThreadCreate(NULL, __ym_session_linux_proc_net_dev_scrape_proc, session);
+	session->linuxPollThreadExitFlag = false;
+	bool okay = YMThreadStart(session->linuxPollThread);
+	if ( ! okay ) {
+		YMRelease(session->linuxPollThread);
+		session->linuxPollThread = NULL;
+	}	
 }
 
 #else
