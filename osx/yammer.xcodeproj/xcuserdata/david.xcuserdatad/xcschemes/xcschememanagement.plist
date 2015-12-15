@@ -19,6 +19,11 @@
 			<key>orderHint</key>
 			<integer>2</integer>
 		</dict>
+		<key>libyammer-ios.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>7</integer>
+		</dict>
 		<key>libyammer.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
@@ -73,6 +78,11 @@
 			<true/>
 		</dict>
 		<key>63345ACC1BFAC91300569B3C</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>6346BBAB1C1F7FE800437E21</key>
 		<dict>
 			<key>primary</key>
 			<true/>

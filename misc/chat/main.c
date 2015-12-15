@@ -73,9 +73,13 @@ int main(int argc, const char * argv[]) {
             exit(1);
 		printf("looking for service...\n");
     }
-        
+    
+#if !defined(YMMACOS)
     int longTime = 999999999;
     sleep(longTime);
+#else
+    CFRunLoopRun();
+#endif
     
     return 0;
 }

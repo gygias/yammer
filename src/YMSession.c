@@ -28,12 +28,27 @@
 # if defined(YMLINUX)
 #  define __USE_POSIX
 #  include <sys/socket.h>
+# elif defined(YMMACOS)
+#  include <SystemConfiguration/SystemConfiguration.h>
 # endif
 # include <netinet/in.h>
 # include <netdb.h> // struct hostent
 #else
 # include <winsock2.h>
 # include <ws2tcpip.h>
+# include <Objbase.h>
+# include <Wbemidl.h>
+# include <tchar.h>
+#endif
+
+#if defined(YMMACOS)
+#define __YMSessionObserveNetworkInterfaceChanges __YMSessionObserveNetworkInterfaceChangesMacos
+#elif defined(YMLINUX)
+#define __YMSessionObserveNetworkInterfaceChanges __YMSessionObserveNetworkInterfaceChangesLinux
+#elif defined(YMWIN32)
+#define __YMSessionObserveNetworkInterfaceChanges __YMSessionObserveNetworkInterfaceChangesWin32
+#else
+#error unknown platform
 #endif
 
 YM_EXTERN_C_PUSH
@@ -49,6 +64,9 @@ typedef struct __ym_session_t
     YMLockRef connectionsByAddressLock;
     YMConnectionRef defaultConnection;
     bool interrupted;
+#if defined(YMMACOS)
+    SCDynamicStoreRef scDynamicStore;
+#endif
     
     // server
     YMStringRef name;
@@ -82,6 +100,8 @@ typedef struct __ym_session_t *__YMSessionRef;
 #pragma mark setup
 
 __YMSessionRef __YMSessionCreateShared(YMStringRef type, bool isServer);
+bool __YMSessionObserveNetworkInterfaceChanges(__YMSessionRef session, bool startStop);
+void __YMSessionUpdateNetworkConfigDate(__YMSessionRef sesison);
 bool __YMSessionInterrupt(__YMSessionRef session, YMConnectionRef floatConnection);
 bool __YMSessionCloseAllConnections(__YMSessionRef session);
 void __YMSessionAddConnection(__YMSessionRef session, YMConnectionRef connection);
@@ -194,6 +214,7 @@ void _YMSessionFree(YMTypeRef object)
     if ( session->service )
     {
         YMmDNSServiceStop(session->service, true); // xxx
+        __YMSessionObserveNetworkInterfaceChanges(session, false);
         YMRelease(session->service);
     }
     
@@ -445,7 +466,7 @@ bool YMSessionStartAdvertising(YMSessionRef session_, YMStringRef name)
     
     session->name = YMRetain(name);
     
-    bool mDNSOK = false;
+    bool okay = false;
     int socket = -1;
     bool ipv4 = true;
     
@@ -484,8 +505,8 @@ bool YMSessionStartAdvertising(YMSessionRef session_, YMStringRef name)
         goto rewind_fail;
     }
     session->acceptThreadExitFlag = false;
-    bool threadOK = YMThreadStart(session->acceptThread);
-    if ( ! threadOK )
+    okay = YMThreadStart(session->acceptThread);
+    if ( ! okay )
     {
         ymerr(YM_LOG_PRE "error: failed to start accept thread",YM_LOG_DSC);
         goto rewind_fail;
@@ -499,8 +520,8 @@ bool YMSessionStartAdvertising(YMSessionRef session_, YMStringRef name)
         ymerr(YM_LOG_PRE "error: failed to create connection init thread",YM_LOG_DSC);
         goto rewind_fail;
     }
-    threadOK = YMThreadStart(session->initConnectionDispatchThread);
-    if ( ! threadOK )
+    okay = YMThreadStart(session->initConnectionDispatchThread);
+    if ( ! okay )
     {
         ymerr(YM_LOG_PRE "error: failed to start start connection init thread",YM_LOG_DSC);
         goto rewind_fail;
@@ -512,12 +533,14 @@ bool YMSessionStartAdvertising(YMSessionRef session_, YMStringRef name)
         ymerr(YM_LOG_PRE "error: failed to create mdns service",YM_LOG_DSC);
         goto rewind_fail;
     }
-    mDNSOK = YMmDNSServiceStart(session->service);
-    if ( ! mDNSOK )
+    okay = YMmDNSServiceStart(session->service);
+    if ( ! okay )
     {
         ymerr(YM_LOG_PRE "error: failed to start mdns service",YM_LOG_DSC);
         goto rewind_fail;
     }
+    
+    okay = __YMSessionObserveNetworkInterfaceChanges(session,true);
     
     return true;
     
@@ -537,8 +560,7 @@ rewind_fail:
     }
     if ( session->service )
     {
-        if ( mDNSOK )
-            YMmDNSServiceStop(session->service, false);
+        YMmDNSServiceStop(session->service, false);
         YMRelease(session->service);
         session->service = NULL;
     }
@@ -774,6 +796,186 @@ bool __YMSessionInterrupt(__YMSessionRef session, YMConnectionRef floatConnectio
     
     return first;
 }
+
+void __YMSessionUpdateNetworkConfigDate(__YMSessionRef session)
+{
+    ymerr("network config changed on %p",session);
+}
+
+#if defined(YMMACOS)
+
+void __ym_SCDynamicStoreCallBack(__unused SCDynamicStoreRef store, __unused CFArrayRef changedKeys, void *info)
+{
+    __YMSessionUpdateNetworkConfigDate(info);
+}
+
+
+bool __YMSessionObserveNetworkInterfaceChangesMacos(__YMSessionRef session, bool startStop)
+{
+    if ( startStop ) {
+        
+        if ( session->scDynamicStore )
+            return true;
+        
+        SCDynamicStoreContext ctx = { 0, session, NULL, NULL, NULL };
+        session->scDynamicStore = SCDynamicStoreCreate(NULL, CFSTR("libyammer"), __ym_SCDynamicStoreCallBack, &ctx);
+        const CFStringRef names[2] = { CFSTR("State:/Network/Global/IPv4/*"), CFSTR("State:/Network/Global/IPv6/*") };
+        CFArrayRef namesArray = CFArrayCreate(NULL, (const void **)names, 2, NULL);
+        SCDynamicStoreSetNotificationKeys(session->scDynamicStore, NULL, namesArray);
+        CFRelease(namesArray);
+        
+        CFRunLoopRef mainRunloop = CFRunLoopGetMain();
+        CFRunLoopSourceRef storeSource = SCDynamicStoreCreateRunLoopSource(NULL,session->scDynamicStore,0);
+        CFRunLoopAddSource(mainRunloop, storeSource, kCFRunLoopDefaultMode);
+        CFRelease(storeSource);
+        
+        ymdbg(YM_LOG_PRE "observing network interface changes",YM_LOG_DSC);
+    } else {
+        
+        if ( ! session->scDynamicStore )
+            return false;
+        
+        CFRelease(session->scDynamicStore);
+        session->scDynamicStore = NULL;
+        
+        ymdbg(YM_LOG_PRE "stopped observing network interface changes",YM_LOG_DSC);
+    }
+    
+    return true;
+}
+
+#elif defined(YMLINUX)
+
+bool __YMSessionObserveNetworkInterfaceChangesLinux(__YMSessionRef session, bool startStop)
+{
+    
+}
+
+#else
+
+bool __YMSessionObserveNetworkInterfaceChangesWin32(__YMSessionRef session, bool startStop)
+{
+    HRESULT hr = CoInitialize(NULL);    // Initialize COM
+	if ( FAILED(hr) ) {
+		return false;
+	}
+
+	static BSTR gbNamespace = NULL;
+	static BSTR gbWql = NULL;
+	static BSTR gbQuery = NULL;
+
+	if ( ! gbNamespace ) {
+#define YM_WMI_DEFAULT_NAMESPACE	"ROOT\\CIMV2"
+#define YM_WMI_WQL					"WQL"
+#define YM_WMI_ALL_INTERFACES		"SELECT * FROM Win32_NetworkAdapter"
+		gbNamespace = SysAllocString(_T(YM_WMI_DEFAULT_NAMESPACE));
+		gbWql = SysAllocString(_T(YM_WMI_WQL));
+		gbQuery = SysAllocString(_T(YM_WMI_ALL_INTERFACES));
+	}
+
+    hr = CoInitializeSecurity(
+                              NULL,                       // security descriptor
+                              -1,                          // use this simple setting
+                              NULL,                        // use this simple setting
+                              NULL,                        // reserved
+                              RPC_C_AUTHN_LEVEL_DEFAULT,   // authentication level
+                              RPC_C_IMP_LEVEL_DELEGATE, // impersonation level
+                              NULL,                        // use this simple setting
+                              EOAC_NONE,                   // no special capabilities
+                              NULL);                          // reserved
+    
+    if (FAILED(hr))
+    {
+        CoUninitialize();
+        return false;
+    }
+    
+    IWbemLocator *pLoc = 0;
+    hr = CoCreateInstance(&CLSID_WbemLocator, 0,
+                          CLSCTX_INPROC_SERVER, &IID_IWbemLocator, (LPVOID *) &pLoc);
+    
+    if (FAILED(hr))
+    {
+        CoUninitialize();
+        return false;     // Program has failed.
+    }
+    
+    IWbemServices *pSvc = 0;
+
+    // Connect to the root\default namespace with the current user.
+    hr = pLoc->lpVtbl->ConnectServer(pLoc, gbNamespace, NULL, NULL, NULL, 0, NULL, NULL, &pSvc);
+    if (FAILED(hr))
+    {
+        pLoc->lpVtbl->Release(pLoc);
+        CoUninitialize();
+        return false;      // Program has failed.
+    }
+    
+    hr = CoSetProxyBlanket((IUnknown *)pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL, RPC_C_AUTHN_LEVEL_CALL,
+                           RPC_C_IMP_LEVEL_DELEGATE, NULL, EOAC_NONE);
+    
+    if (FAILED(hr))
+    {
+        pSvc->lpVtbl->Release(pSvc);
+        pLoc->lpVtbl->Release(pLoc);
+        CoUninitialize();
+        return false;      // Program has failed.
+    }
+    
+    IEnumWbemClassObject* pEnumerator = NULL;
+    hr = pSvc->lpVtbl->ExecQuery(pSvc, gbWql, gbQuery,
+                         WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &pEnumerator);
+    
+    if (FAILED(hr))
+    {
+        pSvc->lpVtbl->Release(pSvc);
+        pLoc->lpVtbl->Release(pLoc);
+        CoUninitialize();
+        return false;
+    }
+    
+    IWbemClassObject *pClassObj;
+    ULONG ulReturnVal;
+	int i = 0;
+	if ( pEnumerator ) {
+		while ( 1 ) {
+			hr = pEnumerator->lpVtbl->Next(pEnumerator, WBEM_INFINITE, 1, &pClassObj, &ulReturnVal);
+        
+			if ( FAILED(hr) || ulReturnVal == 0 )
+				break;
+
+			VARIANT value;
+			CIMTYPE cimType;
+			long flavor;
+			hr = pClassObj->lpVtbl->Get(pClassObj,_T("Description"),0,&value,&cimType,&flavor);
+			if ( FAILED(hr) ) {
+				ymerr(YM_LOG_PRE "failed to query status of a network interface",YM_LOG_DSC);
+			} else {
+				if ( value.vt == VT_NULL )
+					ymerr("the %dth interface has a '?' of null",i);
+				else if ( value.vt == VT_BSTR )
+					ymerr("the %dth interface has description: %S",i,value.bstrVal);
+				else if ( value.vt == VT_LPSTR || value.vt == VT_LPWSTR )
+					ymerr("the %dth interface has a '?' of some kind of string", i);
+				else if ( value.vt == VT_BOOL )
+					ymerr("the %dth interface has a '?' of %s",i,value.boolVal ? "true" : "false");
+				else
+					ymerr("the %dth interface has a '?' of 'something happened'", i);
+			}
+        
+			pClassObj->lpVtbl->Release(pClassObj);
+			i++;
+		}
+
+		pEnumerator->lpVtbl->Release(pEnumerator);
+	} else
+		return false;
+
+    
+    return true;
+}
+
+#endif
 
 #pragma mark connection callbacks
 

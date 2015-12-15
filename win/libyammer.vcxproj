@@ -98,7 +98,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>c:\Program Files\Bonjour SDK\Lib\Win32;lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>dnssd.lib;ws2_32.lib;ssleay32.lib;libeay32.lib;ntdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Wbemuuid.lib;dnssd.lib;ws2_32.lib;ssleay32.lib;libeay32.lib;ntdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/NODEFAULTLIB:libcmt.lib</AdditionalOptions>
       <IgnoreAllDefaultLibraries>
       </IgnoreAllDefaultLibraries>

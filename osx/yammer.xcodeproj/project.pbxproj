@@ -62,6 +62,34 @@
 		6335CAC01BF453A800412CC9 /* YMAddress.h in Headers */ = {isa = PBXBuildFile; fileRef = 6335CABE1BF453A800412CC9 /* YMAddress.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6335CAC51BF480DC00412CC9 /* YMPeer.c in Sources */ = {isa = PBXBuildFile; fileRef = 6335CAC31BF480DC00412CC9 /* YMPeer.c */; };
 		6335CAC61BF480DC00412CC9 /* YMPeer.h in Headers */ = {isa = PBXBuildFile; fileRef = 6335CAC41BF480DC00412CC9 /* YMPeer.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		6346BBB51C1F802500437E21 /* YMBase.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D971BE92B6000C28F05 /* YMBase.c */; };
+		6346BBB61C1F802500437E21 /* YMString.c in Sources */ = {isa = PBXBuildFile; fileRef = 637816C51BF68B8F00BF79E2 /* YMString.c */; };
+		6346BBB71C1F802500437E21 /* YMArray.c in Sources */ = {isa = PBXBuildFile; fileRef = 63BA70A41C174A9900210D2E /* YMArray.c */; };
+		6346BBB81C1F802500437E21 /* YMDictionary.c in Sources */ = {isa = PBXBuildFile; fileRef = 63476A4D1BEB159C00D10081 /* YMDictionary.c */; };
+		6346BBB91C1F802500437E21 /* YMAddress.c in Sources */ = {isa = PBXBuildFile; fileRef = 6335CABD1BF453A800412CC9 /* YMAddress.c */; };
+		6346BBBA1C1F802500437E21 /* YMPeer.c in Sources */ = {isa = PBXBuildFile; fileRef = 6335CAC31BF480DC00412CC9 /* YMPeer.c */; };
+		6346BBBB1C1F802500437E21 /* YMStream.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D5A1BE9092500C28F05 /* YMStream.c */; };
+		6346BBBC1C1F802500437E21 /* YMConnection.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CF01BE950F1003292EE /* YMConnection.c */; };
+		6346BBBD1C1F802500437E21 /* YMSession.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CF41BE9518A003292EE /* YMSession.c */; };
+		6346BBBE1C1F802500437E21 /* YMSecurityProvider.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D621BE90A6400C28F05 /* YMSecurityProvider.c */; };
+		6346BBBF1C1F802500437E21 /* YMTLSProvider.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CE71BE93BEF003292EE /* YMTLSProvider.c */; };
+		6346BBC01C1F802500437E21 /* YMPlexer.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D5E1BE909BB00C28F05 /* YMPlexer.c */; };
+		6346BBC11C1F802500437E21 /* YMLog.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D6B1BE91B3B00C28F05 /* YMLog.c */; };
+		6346BBC21C1F802500437E21 /* YMmDNS.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5D1B1BE98199003292EE /* YMmDNS.c */; };
+		6346BBC31C1F802500437E21 /* YMmDNSBrowser.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5D141BE9777C003292EE /* YMmDNSBrowser.c */; };
+		6346BBC41C1F802500437E21 /* YMmDNSService.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CEB1BE9428C003292EE /* YMmDNSService.c */; };
+		6346BBC51C1F802500437E21 /* YMRSAKeyPair.c in Sources */ = {isa = PBXBuildFile; fileRef = 63FD5B581BF1899800174824 /* YMRSAKeyPair.c */; };
+		6346BBC61C1F802500437E21 /* YMX509Certificate.c in Sources */ = {isa = PBXBuildFile; fileRef = 637E3D5B1BF262EE00D702ED /* YMX509Certificate.c */; };
+		6346BBC71C1F802500437E21 /* YMThread.c in Sources */ = {isa = PBXBuildFile; fileRef = 630A5CF81BE95E36003292EE /* YMThread.c */; };
+		6346BBC81C1F802500437E21 /* YMPipe.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D521BE9074700C28F05 /* YMPipe.c */; };
+		6346BBC91C1F802500437E21 /* YMUtilities.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D671BE9184000C28F05 /* YMUtilities.c */; };
+		6346BBCA1C1F802500437E21 /* YMLock.c in Sources */ = {isa = PBXBuildFile; fileRef = 63476A421BEAF4DB00D10081 /* YMLock.c */; };
+		6346BBCB1C1F802500437E21 /* YMLinkedList.c in Sources */ = {isa = PBXBuildFile; fileRef = 63476A491BEB074C00D10081 /* YMLinkedList.c */; };
+		6346BBCC1C1F802500437E21 /* YMSemaphore.c in Sources */ = {isa = PBXBuildFile; fileRef = 63476A511BEB319000D10081 /* YMSemaphore.c */; };
+		6346BBCD1C1F802500437E21 /* YMLocalSocketPair.c in Sources */ = {isa = PBXBuildFile; fileRef = 63BD75CC1BF3F0E700D01F70 /* YMLocalSocketPair.c */; };
+		6346BBCE1C1F802500437E21 /* YMTask.c in Sources */ = {isa = PBXBuildFile; fileRef = 63BA70A11C17493600210D2E /* YMTask.c */; };
+		6346BBD01C1F826C00437E21 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6346BBCF1C1F826C00437E21 /* CoreFoundation.framework */; };
+		6346BBD21C1F827000437E21 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6346BBD11C1F827000437E21 /* SystemConfiguration.framework */; };
 		63476A441BEAF4DB00D10081 /* YMLock.c in Sources */ = {isa = PBXBuildFile; fileRef = 63476A421BEAF4DB00D10081 /* YMLock.c */; };
 		63476A451BEAF4DB00D10081 /* YMLock.h in Headers */ = {isa = PBXBuildFile; fileRef = 63476A431BEAF4DB00D10081 /* YMLock.h */; };
 		63476A4B1BEB074C00D10081 /* YMLinkedList.c in Sources */ = {isa = PBXBuildFile; fileRef = 63476A491BEB074C00D10081 /* YMLinkedList.c */; };
@@ -152,6 +180,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
+		6346BBAA1C1F7FE800437E21 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "include/$(PRODUCT_NAME)";
+			dstSubfolderSpec = 16;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		636166E51C18DFA300D17172 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -237,6 +274,9 @@
 		6335CAC31BF480DC00412CC9 /* YMPeer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMPeer.c; path = src/YMPeer.c; sourceTree = "<group>"; };
 		6335CAC41BF480DC00412CC9 /* YMPeer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMPeer.h; path = libyammer/YMPeer.h; sourceTree = "<group>"; };
 		6335CAC71BF4813A00412CC9 /* YMPeerPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMPeerPriv.h; path = private/YMPeerPriv.h; sourceTree = "<group>"; };
+		6346BBAC1C1F7FE800437E21 /* liblibyammer-ios.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "liblibyammer-ios.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6346BBCF1C1F826C00437E21 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
+		6346BBD11C1F827000437E21 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		63476A421BEAF4DB00D10081 /* YMLock.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMLock.c; path = src/YMLock.c; sourceTree = "<group>"; };
 		63476A431BEAF4DB00D10081 /* YMLock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMLock.h; path = private/YMLock.h; sourceTree = "<group>"; };
 		63476A491BEB074C00D10081 /* YMLinkedList.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMLinkedList.c; path = src/YMLinkedList.c; sourceTree = "<group>"; };
@@ -325,8 +365,17 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6346BBD21C1F827000437E21 /* SystemConfiguration.framework in Frameworks */,
+				6346BBD01C1F826C00437E21 /* CoreFoundation.framework in Frameworks */,
 				638E1D661C098AF900BA2FA4 /* libcrypto.tbd in Frameworks */,
 				63225D9E1BE9372800C28F05 /* libssl.1.0.0.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6346BBA91C1F7FE800437E21 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -416,6 +465,7 @@
 				631916311BFCFF13001475FC /* Yammer.framework */,
 				631F0D321C141EE500C141D4 /* ymtest */,
 				636166E71C18DFA300D17172 /* ym-dispatch-main-test */,
+				6346BBAC1C1F7FE800437E21 /* liblibyammer-ios.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -423,6 +473,8 @@
 		63225D9C1BE9314100C28F05 /* Dependencies */ = {
 			isa = PBXGroup;
 			children = (
+				6346BBD11C1F827000437E21 /* SystemConfiguration.framework */,
+				6346BBCF1C1F826C00437E21 /* CoreFoundation.framework */,
 				638E1D651C098AF900BA2FA4 /* libcrypto.tbd */,
 				63225D9D1BE9372800C28F05 /* libssl.1.0.0.dylib */,
 			);
@@ -700,6 +752,23 @@
 			productReference = 63225D421BE9026200C28F05 /* libyammer.dylib */;
 			productType = "com.apple.product-type.library.dynamic";
 		};
+		6346BBAB1C1F7FE800437E21 /* libyammer-ios */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6346BBB41C1F7FE900437E21 /* Build configuration list for PBXNativeTarget "libyammer-ios" */;
+			buildPhases = (
+				6346BBA81C1F7FE800437E21 /* Sources */,
+				6346BBA91C1F7FE800437E21 /* Frameworks */,
+				6346BBAA1C1F7FE800437E21 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "libyammer-ios";
+			productName = "libyammer-ios";
+			productReference = 6346BBAC1C1F7FE800437E21 /* liblibyammer-ios.a */;
+			productType = "com.apple.product-type.library.static";
+		};
 		636166E61C18DFA300D17172 /* ym-dispatch-main-test */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 636166EB1C18DFA300D17172 /* Build configuration list for PBXNativeTarget "ym-dispatch-main-test" */;
@@ -758,6 +827,9 @@
 					63225D411BE9026200C28F05 = {
 						CreatedOnToolsVersion = 7.1;
 					};
+					6346BBAB1C1F7FE800437E21 = {
+						CreatedOnToolsVersion = 7.1;
+					};
 					636166E61C18DFA300D17172 = {
 						CreatedOnToolsVersion = 7.1;
 					};
@@ -784,6 +856,7 @@
 				631916301BFCFF13001475FC /* Yammer */,
 				631F0D311C141EE500C141D4 /* ymtest */,
 				636166E61C18DFA300D17172 /* ym-dispatch-main-test */,
+				6346BBAB1C1F7FE800437E21 /* libyammer-ios */,
 			);
 		};
 /* End PBXProject section */
@@ -885,6 +958,39 @@
 				63BA70A21C17493600210D2E /* YMTask.c in Sources */,
 				63476A4F1BEB159C00D10081 /* YMDictionary.c in Sources */,
 				63225D5C1BE9092500C28F05 /* YMStream.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6346BBA81C1F7FE800437E21 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6346BBB51C1F802500437E21 /* YMBase.c in Sources */,
+				6346BBB61C1F802500437E21 /* YMString.c in Sources */,
+				6346BBB71C1F802500437E21 /* YMArray.c in Sources */,
+				6346BBB81C1F802500437E21 /* YMDictionary.c in Sources */,
+				6346BBB91C1F802500437E21 /* YMAddress.c in Sources */,
+				6346BBBA1C1F802500437E21 /* YMPeer.c in Sources */,
+				6346BBBB1C1F802500437E21 /* YMStream.c in Sources */,
+				6346BBBC1C1F802500437E21 /* YMConnection.c in Sources */,
+				6346BBBD1C1F802500437E21 /* YMSession.c in Sources */,
+				6346BBBE1C1F802500437E21 /* YMSecurityProvider.c in Sources */,
+				6346BBBF1C1F802500437E21 /* YMTLSProvider.c in Sources */,
+				6346BBC01C1F802500437E21 /* YMPlexer.c in Sources */,
+				6346BBC11C1F802500437E21 /* YMLog.c in Sources */,
+				6346BBC21C1F802500437E21 /* YMmDNS.c in Sources */,
+				6346BBC31C1F802500437E21 /* YMmDNSBrowser.c in Sources */,
+				6346BBC41C1F802500437E21 /* YMmDNSService.c in Sources */,
+				6346BBC51C1F802500437E21 /* YMRSAKeyPair.c in Sources */,
+				6346BBC61C1F802500437E21 /* YMX509Certificate.c in Sources */,
+				6346BBC71C1F802500437E21 /* YMThread.c in Sources */,
+				6346BBC81C1F802500437E21 /* YMPipe.c in Sources */,
+				6346BBC91C1F802500437E21 /* YMUtilities.c in Sources */,
+				6346BBCA1C1F802500437E21 /* YMLock.c in Sources */,
+				6346BBCB1C1F802500437E21 /* YMLinkedList.c in Sources */,
+				6346BBCC1C1F802500437E21 /* YMSemaphore.c in Sources */,
+				6346BBCD1C1F802500437E21 /* YMLocalSocketPair.c in Sources */,
+				6346BBCE1C1F802500437E21 /* YMTask.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1220,6 +1326,33 @@
 			};
 			name = Release;
 		};
+		6346BBB21C1F7FE900437E21 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = NO;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				IPHONEOS_DEPLOYMENT_TARGET = 9.1;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		6346BBB31C1F7FE900437E21 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = NO;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				IPHONEOS_DEPLOYMENT_TARGET = 9.1;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		636166EC1C18DFA300D17172 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1301,6 +1434,14 @@
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
+		};
+		6346BBB41C1F7FE900437E21 /* Build configuration list for PBXNativeTarget "libyammer-ios" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6346BBB21C1F7FE900437E21 /* Debug */,
+				6346BBB31C1F7FE900437E21 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
 		};
 		636166EB1C18DFA300D17172 /* Build configuration list for PBXNativeTarget "ym-dispatch-main-test" */ = {
 			isa = XCConfigurationList;

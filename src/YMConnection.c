@@ -204,8 +204,9 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     
     int yes = 1;
     result = setsockopt(newSocket, SOL_SOCKET, SO_REUSEADDR, (const void *)&yes, sizeof(yes));
-    if (result != 0 )
-        ymerr("connection[%s]: warning: setsockopt failed on f%d: %d: %d (%s)",YM_CON_DESC,newSocket,result,errno,strerror(errno));
+    if (result != 0 ) ymerr("connection[%s]: warning: setsockopt(reuse) failed on f%d: %d: %d (%s)",YM_CON_DESC,newSocket,result,errno,strerror(errno));
+    result = setsockopt(newSocket, SOL_SOCKET, SO_DONTROUTE, (const void *)&yes, sizeof(yes));
+    if (result != 0 ) ymerr("connection[%s]: warning: setsockopt(dontroute) failed on f%d: %d: %d (%s)",YM_CON_DESC,newSocket,result,errno,strerror(errno));
     
     ymlog("connection[%s]: connecting...",YM_CON_DESC);
     
@@ -214,10 +215,6 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     __unused struct sockaddr_in *addrAsIPV4 = (struct sockaddr_in *)addr;
     __unused struct sockaddr_in6 *addrAsIPV6 = (struct sockaddr_in6 *)addr;
     
-//#if defined(YMLINUX)
-//	unsigned long rev = htonl(addrAsIPV4->sin_addr.s_addr);
-//	memcpy(&addrAsIPV4->sin_addr.s_addr,&rev,sizeof(rev));
-//#endif
     result = connect(newSocket, addr, addrLen);
     if ( result != 0 )
     {
