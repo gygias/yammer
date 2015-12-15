@@ -37,7 +37,7 @@ void TaskTestsRun(ym_test_assert_func assert, const void *context)
 
 void _TaskUsrBinTrueRun(struct TaskTest *theTest)
 {
-#if defined(YMMACOS)
+#if defined(YMAPPLE)
 # define SomeTruePath "/usr/bin/true"
 #elif defined(YMLINUX)
 # define SomeTruePath "/bin/true"
@@ -68,9 +68,9 @@ void _TaskUsrBinTrueRun(struct TaskTest *theTest)
 
 void _TaskCatSomeLogRun(struct TaskTest *theTest)
 {
-#if defined(YMMACOS) || defined(YMLINUX)
+#if defined(YMAPPLE) || defined(YMLINUX)
 # define SomeCatPath "/bin/cat"
-# if defined(YMMACOS)
+# if defined(YMAPPLE)
 #  define SomeLogPath "/var/log/install.log"
 # elif defined(YMLINUX)
 #  define SomeLogPath "/var/log/syslog"

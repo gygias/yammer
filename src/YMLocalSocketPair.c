@@ -95,9 +95,9 @@ void YMLocalSocketPairStop()
         YMRelease(gYMLocalSocketPairAcceptThread);
         gYMLocalSocketPairAcceptThread = NULL;
         
-#if defined(YMMACOS) || defined(YMLINUX)
+#if defined(YMAPPLE) || defined(YMLINUX)
 		char *prefix = "";
-//#if defined (YMMACOS) // it seems i was confused by XCTest setting cwd to /tmp
+//#if defined (YMAPPLE) // it seems i was confused by XCTest setting cwd to /tmp
 //		prefix = "/tmp/";
 //#endif
         YMStringRef tmpPath = YMSTRCF("%s%s",prefix,YMSTR(gYMLocalSocketPairName));
@@ -129,7 +129,7 @@ YM_ONCE_FUNC(__YMLocalSocketPairInitOnce,
     ymassert(okay,YM_LOG_PRE "fatal: failed to start accept thread",YM_LOG_DSCG);
     
     YMSemaphoreWait(gYMLocalSocketSemaphore);
-});
+})
 
 YMLocalSocketPairRef YMLocalSocketPairCreate(YMStringRef name, bool moreComing)
 {

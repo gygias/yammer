@@ -497,7 +497,7 @@ YM_ONCE_FUNC(__YMThreadDispatchInitGlobal,
     
     if ( ! gDispatchGlobalModeMain )        
         YMThreadStart(gDispatchGlobalQueue);
-});
+})
 
 void YMThreadDispatchSetGlobalMode(bool main)
 {

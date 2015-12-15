@@ -86,7 +86,7 @@ void _YMTaskFree(YMTaskRef task_)
 YM_ONCE_FUNC(__YMTaskRegisterAtfork, {
     int result = pthread_atfork(__ym_task_prepare_atfork, __ym_task_parent_atfork, __ym_task_child_atfork);
     ymassert(result==0,"failed to register atfork handlers: %d %s",errno,strerror(errno))
-});
+})
 
 YM_ONCE_OBJ gYMTaskOnce = YM_ONCE_INIT;
 

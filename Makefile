@@ -15,7 +15,7 @@ GCC=gcc
 CLANG=clang
 
 ifeq ($(ARCH),macos)
-	DEFS=-DYMMACOS
+	DEFS=-DYMAPPLE
 	CC=$(CLANG)
     CCF=-x c -arch x86_64 -Wall -Werror -Wno-unused-label -mmacosx-version-min=10.11\
 			-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk

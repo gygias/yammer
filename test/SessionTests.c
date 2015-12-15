@@ -27,7 +27,7 @@ uint64_t gSomeLength = 5678900;
 #define FAKE_DELAY_MAX 3
 
 #ifndef YMWIN32
-# if defined(YMMACOS)
+# if defined(YMAPPLE)
 # define ServerTestFile		"install.log"
 # define ServerTestPath		"/private/var/log/" ServerTestFile
 # else

@@ -124,7 +124,7 @@ YMAddressRef YMAddressCreateLocalHostIPV4(uint16_t port)
     newAddr->sin_family = AF_INET;
     newAddr->sin_addr.s_addr = localhost;
     newAddr->sin_port = htons(port);
-#ifdef YMMACOS
+#ifdef YMAPPLE
     newAddr->sin_len = length;
 #endif
     
@@ -146,7 +146,7 @@ YMAddressRef YMAddressCreateWithIPStringAndPort(YMStringRef ipString, uint16_t p
     struct sockaddr_in sinAddr;
     bzero(&sinAddr, sizeof(sinAddr));
 	socklen_t addrLen = sizeof(struct sockaddr_in);
-#ifdef YMMACOS
+#ifdef YMAPPLE
     sinAddr.sin_len = (uint8_t)addrLen;
 #endif
     sinAddr.sin_family = AF_INET;
