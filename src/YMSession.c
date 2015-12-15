@@ -605,6 +605,8 @@ bool YMSessionStopAdvertising(YMSessionRef session_)
             okay = false;
     }
     
+    __YMSessionObserveNetworkInterfaceChanges(session, false);
+    
     return okay;
 }
 
@@ -853,28 +855,110 @@ bool __YMSessionObserveNetworkInterfaceChangesLinux(__YMSessionRef session, bool
 
 #else
 
-bool __YMSessionObserveNetworkInterfaceChangesWin32(__YMSessionRef session, bool startStop)
+HRESULT STDMETHODCALLTYPE ymsink_QueryInterface(__RPC__in IWbemObjectSink * This,/* [in] */ __RPC__in REFIID riid,/* [annotation][iid_is][out] */_COM_Outptr_  void **ppvObject)
 {
-    HRESULT hr = CoInitialize(NULL);    // Initialize COM
-	if ( FAILED(hr) ) {
-		return false;
+	LPOLESTR iName;
+	StringFromIID(riid,&iName);
+	ymerr("ymsink_QueryInterface %S",iName);
+	CoTaskMemFree(iName);
+
+	// IMarshal:			{00000003-0000-0000-C000-000000000046}
+	// IUnknown:			{00000000-0000-0000-C000-000000000046}
+	// "IdentityUnmarshal":	{0000001B-0000-0000-C000-000000000046}
+	//
+
+	REFIID unklol = &IID_IUnknown;
+	REFIID snklol = &IID_IWbemObjectSink;
+
+	bool isIUnknown = IsEqualIID(riid,&IID_IUnknown);
+	bool isWOS = IsEqualIID(riid,&IID_IWbemObjectSink);
+	if (isIUnknown || isWOS)
+	{
+		*ppvObject = (IWbemObjectSink *) This;
+		This->lpVtbl->AddRef(This);
+		return S_OK;
+	}
+	
+	*ppvObject = NULL;
+	return E_NOINTERFACE;
+}
+
+ULONG STDMETHODCALLTYPE ymsink_AddRef(__RPC__in IWbemObjectSink * This)
+{
+	ymerr("ymsink_AddRef");
+	return 1;
+}
+
+ULONG STDMETHODCALLTYPE ymsink_Release(__RPC__in IWbemObjectSink * This)
+{
+	ymerr("ymsink_Release");
+	return 1;
+}
+
+HRESULT STDMETHODCALLTYPE ymsink_Indicate(__RPC__in IWbemObjectSink * This,/* [in] */ long lObjectCount,/* [size_is][in] */ __RPC__in_ecount_full(lObjectCount) IWbemClassObject **apObjArray)
+{
+	ymerr("ymsink_Indicate");
+	return WBEM_S_NO_ERROR;
+}
+
+HRESULT STDMETHODCALLTYPE ymsink_SetStatus(__RPC__in IWbemObjectSink * This,/* [in] */ long lFlags,/* [in] */ HRESULT hResult,/* [unique][in] */ __RPC__in_opt BSTR strParam,/* [unique][in] */ __RPC__in_opt IWbemClassObject *pObjParam)
+{
+	ymerr("ymsink_SetStatus");
+	if (lFlags == WBEM_STATUS_COMPLETE)
+	{
+		printf("Call complete. hResult = 0x%X\n", hResult);
+	}
+	else if (lFlags == WBEM_STATUS_PROGRESS)
+	{
+		printf("Call in progress.\n");
 	}
 
+	return WBEM_S_NO_ERROR;
+}
+
+bool __YMSessionObserveNetworkInterfaceChangesWin32(__YMSessionRef session, bool startStop)
+{
 	static BSTR gbNamespace = NULL;
 	static BSTR gbWql = NULL;
 	static BSTR gbQuery = NULL;
 
+	IWbemServices *gpSvc = NULL;
+	IWbemObjectSink* gpSink = NULL;
+
+	if ( ! startStop ) {
+		if ( gpSvc ) {
+			gpSvc->lpVtbl->CancelAsyncCall(gpSvc,gpSink);
+			gpSvc->lpVtbl->Release(gpSvc);
+			gpSvc = NULL;
+		}
+		if ( gpSink ) {
+			free(gpSink->lpVtbl);
+			free(gpSink);
+		}
+
+		return true;
+	}
+
+    HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);    // Initialize COM
+	if ( FAILED(hr) ) {
+		ymerr(YM_LOG_PRE "CoInitializeEx failed", YM_LOG_DSC);
+		goto catch_return;
+	}
+
+	IWbemLocator *pLoc = NULL;
+	IUnsecuredApartment* pUnsecApp = NULL;
+	IUnknown* pStubUnk = NULL;
+
 	if ( ! gbNamespace ) {
 #define YM_WMI_DEFAULT_NAMESPACE	"ROOT\\CIMV2"
 #define YM_WMI_WQL					"WQL"
-#define YM_WMI_ALL_INTERFACES		"SELECT * FROM Win32_NetworkAdapter"
+#define YM_WMI_ALL_INTERFACES		"SELECT * FROM __InstanceModificationEvent WITHIN 1 WHERE TargetInstance ISA 'Win32_NetworkAdapter'"
 		gbNamespace = SysAllocString(_T(YM_WMI_DEFAULT_NAMESPACE));
 		gbWql = SysAllocString(_T(YM_WMI_WQL));
 		gbQuery = SysAllocString(_T(YM_WMI_ALL_INTERFACES));
 	}
 
-    hr = CoInitializeSecurity(
-                              NULL,                       // security descriptor
+    hr = CoInitializeSecurity(NULL,                       // security descriptor
                               -1,                          // use this simple setting
                               NULL,                        // use this simple setting
                               NULL,                        // reserved
@@ -884,95 +968,145 @@ bool __YMSessionObserveNetworkInterfaceChangesWin32(__YMSessionRef session, bool
                               EOAC_NONE,                   // no special capabilities
                               NULL);                          // reserved
     
-    if (FAILED(hr))
-    {
-        CoUninitialize();
-        return false;
-    }
+    if (FAILED(hr)) {
+		ymerr(YM_LOG_PRE "CoInitializeSecurity failed", YM_LOG_DSC);
+		goto catch_release;
+	}
     
-    IWbemLocator *pLoc = 0;
     hr = CoCreateInstance(&CLSID_WbemLocator, 0,
                           CLSCTX_INPROC_SERVER, &IID_IWbemLocator, (LPVOID *) &pLoc);
     
-    if (FAILED(hr))
-    {
-        CoUninitialize();
-        return false;     // Program has failed.
+    if (FAILED(hr))  {
+		ymerr(YM_LOG_PRE "CoCreateInstance failed");
+		goto catch_release;
     }
     
-    IWbemServices *pSvc = 0;
 
     // Connect to the root\default namespace with the current user.
-    hr = pLoc->lpVtbl->ConnectServer(pLoc, gbNamespace, NULL, NULL, NULL, 0, NULL, NULL, &pSvc);
-    if (FAILED(hr))
-    {
-        pLoc->lpVtbl->Release(pLoc);
-        CoUninitialize();
-        return false;      // Program has failed.
+    hr = pLoc->lpVtbl->ConnectServer(pLoc, gbNamespace, NULL, NULL, NULL, 0, NULL, NULL, &gpSvc);
+    if (FAILED(hr)) {
+		ymerr(YM_LOG_PRE "ConnectServer failed", YM_LOG_DSC);
+		goto catch_release;
     }
     
-    hr = CoSetProxyBlanket((IUnknown *)pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL, RPC_C_AUTHN_LEVEL_CALL,
+    hr = CoSetProxyBlanket((IUnknown *)gpSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL, RPC_C_AUTHN_LEVEL_CALL,
                            RPC_C_IMP_LEVEL_DELEGATE, NULL, EOAC_NONE);
     
-    if (FAILED(hr))
-    {
-        pSvc->lpVtbl->Release(pSvc);
-        pLoc->lpVtbl->Release(pLoc);
-        CoUninitialize();
-        return false;      // Program has failed.
+    if (FAILED(hr)) {
+		ymerr(YM_LOG_PRE "CoSetProxyBlanket failed", YM_LOG_DSC);
+		goto catch_release;
     }
-    
-    IEnumWbemClassObject* pEnumerator = NULL;
-    hr = pSvc->lpVtbl->ExecQuery(pSvc, gbWql, gbQuery,
-                         WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &pEnumerator);
-    
-    if (FAILED(hr))
-    {
-        pSvc->lpVtbl->Release(pSvc);
-        pLoc->lpVtbl->Release(pLoc);
-        CoUninitialize();
-        return false;
-    }
-    
-    IWbemClassObject *pClassObj;
-    ULONG ulReturnVal;
-	int i = 0;
-	if ( pEnumerator ) {
-		while ( 1 ) {
-			hr = pEnumerator->lpVtbl->Next(pEnumerator, WBEM_INFINITE, 1, &pClassObj, &ulReturnVal);
-        
-			if ( FAILED(hr) || ulReturnVal == 0 )
-				break;
 
-			VARIANT value;
-			CIMTYPE cimType;
-			long flavor;
-			hr = pClassObj->lpVtbl->Get(pClassObj,_T("Description"),0,&value,&cimType,&flavor);
-			if ( FAILED(hr) ) {
-				ymerr(YM_LOG_PRE "failed to query status of a network interface",YM_LOG_DSC);
-			} else {
-				if ( value.vt == VT_NULL )
-					ymerr("the %dth interface has a '?' of null",i);
-				else if ( value.vt == VT_BSTR )
-					ymerr("the %dth interface has description: %S",i,value.bstrVal);
-				else if ( value.vt == VT_LPSTR || value.vt == VT_LPWSTR )
-					ymerr("the %dth interface has a '?' of some kind of string", i);
-				else if ( value.vt == VT_BOOL )
-					ymerr("the %dth interface has a '?' of %s",i,value.boolVal ? "true" : "false");
-				else
-					ymerr("the %dth interface has a '?' of 'something happened'", i);
-			}
-        
-			pClassObj->lpVtbl->Release(pClassObj);
-			i++;
-		}
+	hr = CoCreateInstance(&CLSID_UnsecuredApartment, NULL,
+		CLSCTX_LOCAL_SERVER, &IID_IUnsecuredApartment,
+		(void**)&pUnsecApp);
 
-		pEnumerator->lpVtbl->Release(pEnumerator);
-	} else
-		return false;
+	gpSink = YMALLOC(sizeof(IWbemObjectSink));
+	gpSink->lpVtbl = YMALLOC(sizeof(IWbemObjectSinkVtbl));
+	gpSink->lpVtbl->AddRef = ymsink_AddRef;
+	gpSink->lpVtbl->Indicate = ymsink_Indicate;
+	gpSink->lpVtbl->QueryInterface = ymsink_QueryInterface;
+	gpSink->lpVtbl->Release = ymsink_Release;
+	gpSink->lpVtbl->SetStatus = ymsink_SetStatus;
 
+	gpSink->lpVtbl->AddRef(gpSink);
+
+	hr = pUnsecApp->lpVtbl->CreateObjectStub(pUnsecApp, (IUnknown *)gpSink, &pStubUnk);
+
+	if ( FAILED(hr) ) {
+		ymerr(YM_LOG_PRE "CreateObjectStub failed", YM_LOG_DSC);
+		goto catch_release;
+	}
+
+	hr = pStubUnk->lpVtbl->QueryInterface(pStubUnk, &IID_IWbemObjectSink, (void **)&gpSink);
+
+	if (FAILED(hr)) {
+		ymerr(YM_LOG_PRE "QueryInterface failed", YM_LOG_DSC);
+		goto catch_release;
+	}
+
+	hr = gpSvc->lpVtbl->ExecNotificationQueryAsync( gpSvc,
+													gbWql,
+													gbQuery,
+													WBEM_FLAG_SEND_STATUS,
+													NULL,
+													gpSink);
+
+	if ( FAILED(hr) ) {
+		ymerr(YM_LOG_PRE "ExecNotificationQueryAsync failed", YM_LOG_DSC);
+		goto catch_release;
+	}
+
+	ymdbg(YM_LOG_PRE "started observing interface changes", YM_LOG_DSC);
+
+	return true;
+
+catch_release:
+
+	if ( gpSvc ) {
+		gpSvc->lpVtbl->Release(gpSvc);
+		gpSvc = NULL;
+	}
+	if ( gpSink ) {
+		free(gpSink->lpVtbl);
+		free(gpSink);
+		gpSink = NULL;
+	}
+	if ( pLoc )
+		pLoc->lpVtbl->Release(pLoc);
+
+	CoUninitialize();
+catch_return:
+	return false;
     
-    return true;
+//    IEnumWbemClassObject* pEnumerator = NULL;
+//    hr = pSvc->lpVtbl->ExecQuery(pSvc, gbWql, gbQuery,
+//                         WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &pEnumerator);
+//    
+//    if (FAILED(hr))
+//    {
+//        pSvc->lpVtbl->Release(pSvc);
+//        pLoc->lpVtbl->Release(pLoc);
+//        CoUninitialize();
+//        return false;
+//    }
+//    
+//    IWbemClassObject *pClassObj;
+//    ULONG ulReturnVal;
+//	int i = 0;
+//	if ( pEnumerator ) {
+//		while ( 1 ) {
+//			hr = pEnumerator->lpVtbl->Next(pEnumerator, WBEM_INFINITE, 1, &pClassObj, &ulReturnVal);
+//        
+//			if ( FAILED(hr) || ulReturnVal == 0 )
+//				break;
+//
+//			VARIANT value;
+//			CIMTYPE cimType;
+//			long flavor;
+//			hr = pClassObj->lpVtbl->Get(pClassObj,_T("Description"),0,&value,&cimType,&flavor);
+//			if ( FAILED(hr) ) {
+//				ymerr(YM_LOG_PRE "failed to query status of a network interface",YM_LOG_DSC);
+//			} else {
+//				if ( value.vt == VT_NULL )
+//					ymerr("the %dth interface has a '?' of null",i);
+//				else if ( value.vt == VT_BSTR )
+//					ymerr("the %dth interface has description: %S",i,value.bstrVal);
+//				else if ( value.vt == VT_LPSTR || value.vt == VT_LPWSTR )
+//					ymerr("the %dth interface has a '?' of some kind of string", i);
+//				else if ( value.vt == VT_BOOL )
+//					ymerr("the %dth interface has a '?' of %s",i,value.boolVal ? "true" : "false");
+//				else
+//					ymerr("the %dth interface has a '?' of 'something happened'", i);
+//			}
+//        
+//			pClassObj->lpVtbl->Release(pClassObj);
+//			i++;
+//		}
+//
+//		pEnumerator->lpVtbl->Release(pEnumerator);
+//	} else
+//		return false;
 }
 
 #endif
