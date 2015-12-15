@@ -875,7 +875,8 @@ bool __YMSessionObserveNetworkInterfaceChangesMacos(__YMSessionRef session, bool
 YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_linux_proc_net_dev_scrape_proc(YM_THREAD_PARAM ctx)
 {
 	__YMSessionRef session = ctx;
-	YMThreadRef thisThread = session->linuxPollThread;
+	
+	YMDictionaryRef thisIter = NULL, prevIter = NULL;
 	
 	// this /proc scraping method was cribbed from ifplugd. thanks ifplugd!
 	// PF_NETLINK approach didn't work after not a whole lot of trying on raspbian
@@ -891,6 +892,8 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_linux_proc_net_dev_scrape_pr
 		fgets(ln,sizeof(ln),f);
 		fgets(ln,sizeof(ln),f);
 		
+		thisIter = YMDictionaryCreate();
+		
 		while (fgets(ln,sizeof(ln),f)) {
 			char *p, *e;
 			p = ln + strspn(ln," \t");
@@ -905,6 +908,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_linux_proc_net_dev_scrape_pr
 			int fd;    
 			if ((fd = socket(PF_INET, SOCK_DGRAM, 0)) < 0) {
 				ymerr(YM_LOG_PRE "failed to open /proc/net/dev: %d %s",YM_LOG_DSC,errno,strerror(errno));
+				fclose(f);
 				YM_THREAD_END
 			}
 			
@@ -913,18 +917,42 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_linux_proc_net_dev_scrape_pr
 	            if ((s = interface_detect_beat_mii(fd, p)) == IFSTATUS_ERR)
 	                if ((s = interface_detect_beat_wlan(fd, p)) == IFSTATUS_ERR)
 	                    s = interface_detect_beat_iff(fd, p);
+	        close(fd);
+	        
+			bool somethingMoved = false;
+	        if ( prevIter ) {
+				bool found = false;
+				YMDictionaryEnumRef dEnum = YMDictionaryEnumeratorBegin(prevIter);
+				while ( dEnum ) {
+					if ( strcmp((char *)dEnum->key,p) == 0 ) {
+						found = true;
+						interface_status_t prevStatus = (interface_status_t)dEnum->value;
+						somethingMoved = prevStatus != s;
+						if ( somethingMoved ) {
+							ymerr(YM_LOG_PRE "%s: changed status: %s",YM_LOG_DSC,p,s==IFSTATUS_UP?"up":(s==IFSTATUS_DOWN?"down":"?"));
+							__YMSessionUpdateNetworkConfigDate(session);
+						}
+					}
+					dEnum = YMDictionaryEnumeratorGetNext(dEnum);
+				}
+				
+				if ( ! found ) {
+					ymerr(YM_LOG_PRE "%s: new interface status: %s",YM_LOG_DSC,p,s==IFSTATUS_UP?"up":(s==IFSTATUS_DOWN?"down":"?"));
+					__YMSessionUpdateNetworkConfigDate(session);
+				}
+			}
+	        char *ifCopy = strdup(p);
+	        YMDictionaryAdd(thisIter,(YMDictionaryKey)ifCopy,(YMDictionaryValue)s);
 	
 	        switch(s) {
 	            case IFSTATUS_UP:
-	                ymerr(YM_LOG_PRE "%s: up",YM_LOG_DSC, p);
-	                break;
-	                
+	                ymdbg(YM_LOG_PRE "%s: up",YM_LOG_DSC, p);
+	                break;	                
 	            case IFSTATUS_DOWN:
-	                ymerr(YM_LOG_PRE "%s: down",YM_LOG_DSC, p);
-	                break;
-	
+	                ymdbg(YM_LOG_PRE "%s: down",YM_LOG_DSC, p);
+	                break;	
 	            default:
-					ymerr(YM_LOG_PRE "%s: not supported",YM_LOG_DSC, p);
+					ymdbg(YM_LOG_PRE "%s: not supported",YM_LOG_DSC, p);
 	                break;
 	        }
 		}
@@ -934,6 +962,14 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_linux_proc_net_dev_scrape_pr
 		if ( session->linuxPollThreadExitFlag )
 			break;
 		sleep(1);
+		
+		while ( prevIter && ( YMDictionaryGetCount(prevIter) > 0 ) ) {
+			YMDictionaryKey key = YMDictionaryGetRandomKey(prevIter);
+			YMDictionaryRemove(prevIter,key);
+			free((void *)key);
+		}
+		if ( prevIter ) YMRelease(prevIter);
+		prevIter = thisIter;
 	}
 	
 	YM_THREAD_END
