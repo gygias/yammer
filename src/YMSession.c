@@ -942,14 +942,15 @@ bool __YMSessionObserveNetworkInterfaceChangesWin32(__YMSessionRef session, bool
 			session->gobbledygook->lpVtbl->CancelAsyncCall(session->gobbledygook, (IWbemObjectSink *)session->my_gobbledygook);
 			session->gobbledygook->lpVtbl->Release(session->gobbledygook);
 			session->gobbledygook = NULL;
-		}
-		if (session->my_gobbledygook) {
+
 			YMRelease(session->my_gobbledygook->that);
 			free(session->my_gobbledygook->lpVtbl);
 			free(session->my_gobbledygook);
+
+			return true;
 		}
 
-		return true;
+		return false;
 	}
 
     HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);    // Initialize COM
