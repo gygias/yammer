@@ -47,6 +47,11 @@
 #define __YMSessionObserveNetworkInterfaceChanges __YMSessionObserveNetworkInterfaceChangesLinux
 #elif defined(YMWIN32)
 #define __YMSessionObserveNetworkInterfaceChanges __YMSessionObserveNetworkInterfaceChangesWin32
+typedef struct YM_IWbemObjectSink
+{
+	CONST_VTBL struct IWbemObjectSinkVtbl *lpVtbl;
+	void *that;
+} YM_IWbemObjectSink;
 #else
 #error unknown platform
 #endif
@@ -64,8 +69,13 @@ typedef struct __ym_session_t
     YMLockRef connectionsByAddressLock;
     YMConnectionRef defaultConnection;
     bool interrupted;
+
+	// interface change observer shit
 #if defined(YMMACOS)
     SCDynamicStoreRef scDynamicStore;
+#elif defined(YMWIN32)
+	IWbemServices *gobbledygook;
+	YM_IWbemObjectSink* my_gobbledygook;
 #endif
     
     // server
@@ -134,6 +144,14 @@ YMSessionRef YMSessionCreate(YMStringRef type)
     session->initConnectionDispatchThread = NULL;
     session->defaultConnection = NULL;
     session->connectionsByAddress = YMDictionaryCreate();
+
+#if defined(YMMACOS)
+	session->scDynamicStore = NULL;
+#elif defined(YMWIN32)
+	session->gobbledygook = NULL;
+	session->my_gobbledygook = NULL;
+#else
+#endif
     
     YMStringRef memberName = YMSTRC("connections-by-address");
     session->connectionsByAddressLock = YMLockCreate(YMInternalLockType, memberName);
@@ -865,10 +883,6 @@ HRESULT STDMETHODCALLTYPE ymsink_QueryInterface(__RPC__in IWbemObjectSink * This
 	// IMarshal:			{00000003-0000-0000-C000-000000000046}
 	// IUnknown:			{00000000-0000-0000-C000-000000000046}
 	// "IdentityUnmarshal":	{0000001B-0000-0000-C000-000000000046}
-	//
-
-	REFIID unklol = &IID_IUnknown;
-	REFIID snklol = &IID_IWbemObjectSink;
 
 	bool isIUnknown = IsEqualIID(riid,&IID_IUnknown);
 	bool isWOS = IsEqualIID(riid,&IID_IWbemObjectSink);
@@ -898,6 +912,7 @@ ULONG STDMETHODCALLTYPE ymsink_Release(__RPC__in IWbemObjectSink * This)
 HRESULT STDMETHODCALLTYPE ymsink_Indicate(__RPC__in IWbemObjectSink * This,/* [in] */ long lObjectCount,/* [size_is][in] */ __RPC__in_ecount_full(lObjectCount) IWbemClassObject **apObjArray)
 {
 	ymerr("ymsink_Indicate");
+	__YMSessionUpdateNetworkConfigDate(((YM_IWbemObjectSink *)This)->that);
 	return WBEM_S_NO_ERROR;
 }
 
@@ -922,18 +937,16 @@ bool __YMSessionObserveNetworkInterfaceChangesWin32(__YMSessionRef session, bool
 	static BSTR gbWql = NULL;
 	static BSTR gbQuery = NULL;
 
-	IWbemServices *gpSvc = NULL;
-	IWbemObjectSink* gpSink = NULL;
-
 	if ( ! startStop ) {
-		if ( gpSvc ) {
-			gpSvc->lpVtbl->CancelAsyncCall(gpSvc,gpSink);
-			gpSvc->lpVtbl->Release(gpSvc);
-			gpSvc = NULL;
+		if ( session->gobbledygook ) {
+			session->gobbledygook->lpVtbl->CancelAsyncCall(session->gobbledygook, (IWbemObjectSink *)session->my_gobbledygook);
+			session->gobbledygook->lpVtbl->Release(session->gobbledygook);
+			session->gobbledygook = NULL;
 		}
-		if ( gpSink ) {
-			free(gpSink->lpVtbl);
-			free(gpSink);
+		if (session->my_gobbledygook) {
+			YMRelease(session->my_gobbledygook->that);
+			free(session->my_gobbledygook->lpVtbl);
+			free(session->my_gobbledygook);
 		}
 
 		return true;
@@ -981,15 +994,14 @@ bool __YMSessionObserveNetworkInterfaceChangesWin32(__YMSessionRef session, bool
 		goto catch_release;
     }
     
-
     // Connect to the root\default namespace with the current user.
-    hr = pLoc->lpVtbl->ConnectServer(pLoc, gbNamespace, NULL, NULL, NULL, 0, NULL, NULL, &gpSvc);
+    hr = pLoc->lpVtbl->ConnectServer(pLoc, gbNamespace, NULL, NULL, NULL, 0, NULL, NULL, &session->gobbledygook);
     if (FAILED(hr)) {
 		ymerr(YM_LOG_PRE "ConnectServer failed", YM_LOG_DSC);
 		goto catch_release;
     }
     
-    hr = CoSetProxyBlanket((IUnknown *)gpSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL, RPC_C_AUTHN_LEVEL_CALL,
+    hr = CoSetProxyBlanket((IUnknown *)session->gobbledygook, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL, RPC_C_AUTHN_LEVEL_CALL,
                            RPC_C_IMP_LEVEL_DELEGATE, NULL, EOAC_NONE);
     
     if (FAILED(hr)) {
@@ -1001,36 +1013,35 @@ bool __YMSessionObserveNetworkInterfaceChangesWin32(__YMSessionRef session, bool
 		CLSCTX_LOCAL_SERVER, &IID_IUnsecuredApartment,
 		(void**)&pUnsecApp);
 
-	gpSink = YMALLOC(sizeof(IWbemObjectSink));
-	gpSink->lpVtbl = YMALLOC(sizeof(IWbemObjectSinkVtbl));
-	gpSink->lpVtbl->AddRef = ymsink_AddRef;
-	gpSink->lpVtbl->Indicate = ymsink_Indicate;
-	gpSink->lpVtbl->QueryInterface = ymsink_QueryInterface;
-	gpSink->lpVtbl->Release = ymsink_Release;
-	gpSink->lpVtbl->SetStatus = ymsink_SetStatus;
+	session->my_gobbledygook = YMALLOC(sizeof(YM_IWbemObjectSink));
+	session->my_gobbledygook->that = (void *)YMRetain(session);
+	session->my_gobbledygook->lpVtbl = YMALLOC(sizeof(IWbemObjectSinkVtbl));
+	session->my_gobbledygook->lpVtbl->AddRef = ymsink_AddRef;
+	session->my_gobbledygook->lpVtbl->Indicate = ymsink_Indicate;
+	session->my_gobbledygook->lpVtbl->QueryInterface = ymsink_QueryInterface;
+	session->my_gobbledygook->lpVtbl->Release = ymsink_Release;
+	session->my_gobbledygook->lpVtbl->SetStatus = ymsink_SetStatus;
 
-	gpSink->lpVtbl->AddRef(gpSink);
-
-	hr = pUnsecApp->lpVtbl->CreateObjectStub(pUnsecApp, (IUnknown *)gpSink, &pStubUnk);
+	hr = pUnsecApp->lpVtbl->CreateObjectStub(pUnsecApp, (IUnknown *)session->my_gobbledygook, &pStubUnk);
 
 	if ( FAILED(hr) ) {
 		ymerr(YM_LOG_PRE "CreateObjectStub failed", YM_LOG_DSC);
 		goto catch_release;
 	}
 
-	hr = pStubUnk->lpVtbl->QueryInterface(pStubUnk, &IID_IWbemObjectSink, (void **)&gpSink);
+	hr = pStubUnk->lpVtbl->QueryInterface(pStubUnk, &IID_IWbemObjectSink, (void **)&session->my_gobbledygook);
 
 	if (FAILED(hr)) {
 		ymerr(YM_LOG_PRE "QueryInterface failed", YM_LOG_DSC);
 		goto catch_release;
 	}
 
-	hr = gpSvc->lpVtbl->ExecNotificationQueryAsync( gpSvc,
+	hr = session->gobbledygook->lpVtbl->ExecNotificationQueryAsync(	session->gobbledygook,
 													gbWql,
 													gbQuery,
 													WBEM_FLAG_SEND_STATUS,
 													NULL,
-													gpSink);
+													(IWbemObjectSink *)session->my_gobbledygook);
 
 	if ( FAILED(hr) ) {
 		ymerr(YM_LOG_PRE "ExecNotificationQueryAsync failed", YM_LOG_DSC);
@@ -1043,14 +1054,14 @@ bool __YMSessionObserveNetworkInterfaceChangesWin32(__YMSessionRef session, bool
 
 catch_release:
 
-	if ( gpSvc ) {
-		gpSvc->lpVtbl->Release(gpSvc);
-		gpSvc = NULL;
+	if (session->my_gobbledygook) {
+		free(session->my_gobbledygook->lpVtbl);
+		free(session->my_gobbledygook);
+		session->my_gobbledygook = NULL;
 	}
-	if ( gpSink ) {
-		free(gpSink->lpVtbl);
-		free(gpSink);
-		gpSink = NULL;
+	if (session->gobbledygook) {
+		session->gobbledygook->lpVtbl->Release(session->gobbledygook);
+		session->gobbledygook = NULL;
 	}
 	if ( pLoc )
 		pLoc->lpVtbl->Release(pLoc);
