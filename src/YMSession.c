@@ -823,403 +823,6 @@ bool __YMSessionInterrupt(__YMSessionRef session, YMConnectionRef floatConnectio
     return first;
 }
 
-void __YMSessionUpdateNetworkConfigDate(__YMSessionRef session)
-{
-    ymerr("network config changed on %p",session);
-}
-
-#if defined(YMMACOS)
-
-void __ym_SCDynamicStoreCallBack(__unused SCDynamicStoreRef store, __unused CFArrayRef changedKeys, void *info)
-{
-    __YMSessionUpdateNetworkConfigDate(info);
-}
-
-
-bool __YMSessionObserveNetworkInterfaceChangesMacos(__YMSessionRef session, bool startStop)
-{
-    if ( startStop ) {
-        
-        if ( session->scDynamicStore )
-            return true;
-        
-        SCDynamicStoreContext ctx = { 0, session, NULL, NULL, NULL };
-        session->scDynamicStore = SCDynamicStoreCreate(NULL, CFSTR("libyammer"), __ym_SCDynamicStoreCallBack, &ctx);
-        const CFStringRef names[2] = { CFSTR("State:/Network/Global/IPv4/*"), CFSTR("State:/Network/Global/IPv6/*") };
-        CFArrayRef namesArray = CFArrayCreate(NULL, (const void **)names, 2, NULL);
-        SCDynamicStoreSetNotificationKeys(session->scDynamicStore, NULL, namesArray);
-        CFRelease(namesArray);
-        
-        CFRunLoopRef mainRunloop = CFRunLoopGetMain();
-        CFRunLoopSourceRef storeSource = SCDynamicStoreCreateRunLoopSource(NULL,session->scDynamicStore,0);
-        CFRunLoopAddSource(mainRunloop, storeSource, kCFRunLoopDefaultMode);
-        CFRelease(storeSource);
-        
-        ymdbg(YM_LOG_PRE "observing network interface changes",YM_LOG_DSC);
-    } else {
-        
-        if ( ! session->scDynamicStore )
-            return false;
-        
-        CFRelease(session->scDynamicStore);
-        session->scDynamicStore = NULL;
-        
-        ymdbg(YM_LOG_PRE "stopped observing network interface changes",YM_LOG_DSC);
-    }
-    
-    return true;
-}
-
-#elif defined(YMLINUX)
-
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_linux_proc_net_dev_scrape_proc(YM_THREAD_PARAM ctx)
-{
-	__YMSessionRef session = ctx;
-	YMThreadRef thisThread = session->linuxPollThread;
-	
-	// this /proc scraping method was cribbed from ifplugd. thanks ifplugd!
-	// PF_NETLINK approach didn't work after not a whole lot of trying on raspbian
-	while ( ! session->linuxPollThreadExitFlag ) {
-	    FILE *f;
-	    char ln[256];
-	    
-	    if ( ! ( f = fopen("/proc/net/dev", "r") ) ) {
-			ymerr(YM_LOG_PRE "failed to open /proc/net/dev: %d %s",YM_LOG_DSC,errno,strerror(errno));
-			YM_THREAD_END
-		}
-		
-		fgets(ln,sizeof(ln),f);
-		fgets(ln,sizeof(ln),f);
-		
-		while (fgets(ln,sizeof(ln),f)) {
-			char *p, *e;
-			p = ln + strspn(ln," \t");
-			if ( ! (e = strchr(p, ':')) ) {
-				ymerr(YM_LOG_PRE "failed to parse /proc/net/dev",YM_LOG_DSC);
-				fclose(f);
-				YM_THREAD_END
-			}
-			
-			*e = '\0';
-			
-			int fd;    
-			if ((fd = socket(PF_INET, SOCK_DGRAM, 0)) < 0) {
-				ymerr(YM_LOG_PRE "failed to open /proc/net/dev: %d %s",YM_LOG_DSC,errno,strerror(errno));
-				YM_THREAD_END
-			}
-			
-	        interface_status_t s;
-	        if ((s = interface_detect_beat_ethtool(fd, p)) == IFSTATUS_ERR)
-	            if ((s = interface_detect_beat_mii(fd, p)) == IFSTATUS_ERR)
-	                if ((s = interface_detect_beat_wlan(fd, p)) == IFSTATUS_ERR)
-	                    s = interface_detect_beat_iff(fd, p);
-	
-	        switch(s) {
-	            case IFSTATUS_UP:
-	                ymerr(YM_LOG_PRE "%s: up",YM_LOG_DSC, p);
-	                break;
-	                
-	            case IFSTATUS_DOWN:
-	                ymerr(YM_LOG_PRE "%s: down",YM_LOG_DSC, p);
-	                break;
-	
-	            default:
-					ymerr(YM_LOG_PRE "%s: not supported",YM_LOG_DSC, p);
-	                break;
-	        }
-		}
-        
-		fclose(f);
-		
-		if ( session->linuxPollThreadExitFlag )
-			break;
-		sleep(1);
-	}
-	
-	YM_THREAD_END
-}	
-
-bool __YMSessionObserveNetworkInterfaceChangesLinux(__YMSessionRef session, bool startStop)
-{
-	if ( ! startStop ) {
-		if ( ! session->linuxPollThread )
-			return false;
-		
-		session->linuxPollThreadExitFlag = true;
-		YMThreadJoin(session->linuxPollThread);
-		YMRelease(session->linuxPollThread);
-		session->linuxPollThread = NULL;
-		
-		return true;
-	}
-	
-	session->linuxPollThread = YMThreadCreate(NULL, __ym_session_linux_proc_net_dev_scrape_proc, session);
-	session->linuxPollThreadExitFlag = false;
-	bool okay = YMThreadStart(session->linuxPollThread);
-	if ( ! okay ) {
-		YMRelease(session->linuxPollThread);
-		session->linuxPollThread = NULL;
-	}	
-}
-
-#else
-
-HRESULT STDMETHODCALLTYPE ymsink_QueryInterface(__RPC__in IWbemObjectSink * This,/* [in] */ __RPC__in REFIID riid,/* [annotation][iid_is][out] */_COM_Outptr_  void **ppvObject)
-{
-	LPOLESTR iName;
-	StringFromIID(riid,&iName);
-	ymerr("ymsink_QueryInterface %S",iName);
-	CoTaskMemFree(iName);
-
-	// IMarshal:			{00000003-0000-0000-C000-000000000046}
-	// IUnknown:			{00000000-0000-0000-C000-000000000046}
-	// "IdentityUnmarshal":	{0000001B-0000-0000-C000-000000000046}
-
-	bool isIUnknown = IsEqualIID(riid,&IID_IUnknown);
-	bool isWOS = IsEqualIID(riid,&IID_IWbemObjectSink);
-	if (isIUnknown || isWOS)
-	{
-		*ppvObject = (IWbemObjectSink *) This;
-		This->lpVtbl->AddRef(This);
-		return S_OK;
-	}
-	
-	*ppvObject = NULL;
-	return E_NOINTERFACE;
-}
-
-ULONG STDMETHODCALLTYPE ymsink_AddRef(__RPC__in IWbemObjectSink * This)
-{
-	ymerr("ymsink_AddRef");
-	return 1;
-}
-
-ULONG STDMETHODCALLTYPE ymsink_Release(__RPC__in IWbemObjectSink * This)
-{
-	ymerr("ymsink_Release");
-	return 1;
-}
-
-HRESULT STDMETHODCALLTYPE ymsink_Indicate(__RPC__in IWbemObjectSink * This,/* [in] */ long lObjectCount,/* [size_is][in] */ __RPC__in_ecount_full(lObjectCount) IWbemClassObject **apObjArray)
-{
-	ymerr("ymsink_Indicate");
-	__YMSessionUpdateNetworkConfigDate(((YM_IWbemObjectSink *)This)->that);
-	return WBEM_S_NO_ERROR;
-}
-
-HRESULT STDMETHODCALLTYPE ymsink_SetStatus(__RPC__in IWbemObjectSink * This,/* [in] */ long lFlags,/* [in] */ HRESULT hResult,/* [unique][in] */ __RPC__in_opt BSTR strParam,/* [unique][in] */ __RPC__in_opt IWbemClassObject *pObjParam)
-{
-	ymerr("ymsink_SetStatus");
-	if (lFlags == WBEM_STATUS_COMPLETE)
-	{
-		printf("Call complete. hResult = 0x%X\n", hResult);
-	}
-	else if (lFlags == WBEM_STATUS_PROGRESS)
-	{
-		printf("Call in progress.\n");
-	}
-
-	return WBEM_S_NO_ERROR;
-}
-
-bool __YMSessionObserveNetworkInterfaceChangesWin32(__YMSessionRef session, bool startStop)
-{
-	static BSTR gbNamespace = NULL;
-	static BSTR gbWql = NULL;
-	static BSTR gbQuery = NULL;
-
-	if ( ! startStop ) {
-		if ( session->gobbledygook ) {
-			session->gobbledygook->lpVtbl->CancelAsyncCall(session->gobbledygook, (IWbemObjectSink *)session->my_gobbledygook);
-			session->gobbledygook->lpVtbl->Release(session->gobbledygook);
-			session->gobbledygook = NULL;
-
-			YMRelease(session->my_gobbledygook->that);
-			session->my_gobbledygook->lpVtbl->Release((IWbemObjectSink *)session->my_gobbledygook);
-			// these malloc'd pointers move on the first QueryInterface call
-			// as if some standard com thing wraps them in something else.
-			// presumably they still need to be free'd, wherever it is they went.
-			// or maybe that's done for us in Release?
-			//free(session->my_gobbledygook->lpVtbl);
-			//free(session->my_gobbledygook);
-			session->my_gobbledygook = NULL;
-
-			return true;
-		}
-
-		return false;
-	}
-
-    HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);    // Initialize COM
-	if ( FAILED(hr) ) {
-		ymerr(YM_LOG_PRE "CoInitializeEx failed", YM_LOG_DSC);
-		goto catch_return;
-	}
-
-	IWbemLocator *pLoc = NULL;
-	IUnsecuredApartment* pUnsecApp = NULL;
-	IUnknown* pStubUnk = NULL;
-
-	if ( ! gbNamespace ) {
-#define YM_WMI_DEFAULT_NAMESPACE	"ROOT\\CIMV2"
-#define YM_WMI_WQL					"WQL"
-#define YM_WMI_ALL_INTERFACES		"SELECT * FROM __InstanceModificationEvent WITHIN 1 WHERE TargetInstance ISA 'Win32_NetworkAdapter'"
-		gbNamespace = SysAllocString(_T(YM_WMI_DEFAULT_NAMESPACE));
-		gbWql = SysAllocString(_T(YM_WMI_WQL));
-		gbQuery = SysAllocString(_T(YM_WMI_ALL_INTERFACES));
-	}
-
-    hr = CoInitializeSecurity(NULL,                       // security descriptor
-                              -1,                          // use this simple setting
-                              NULL,                        // use this simple setting
-                              NULL,                        // reserved
-                              RPC_C_AUTHN_LEVEL_DEFAULT,   // authentication level
-                              RPC_C_IMP_LEVEL_DELEGATE, // impersonation level
-                              NULL,                        // use this simple setting
-                              EOAC_NONE,                   // no special capabilities
-                              NULL);                          // reserved
-    
-    if (FAILED(hr)) {
-		ymerr(YM_LOG_PRE "CoInitializeSecurity failed", YM_LOG_DSC);
-		goto catch_release;
-	}
-    
-    hr = CoCreateInstance(&CLSID_WbemLocator, 0,
-                          CLSCTX_INPROC_SERVER, &IID_IWbemLocator, (LPVOID *) &pLoc);
-    
-    if (FAILED(hr))  {
-		ymerr(YM_LOG_PRE "CoCreateInstance failed");
-		goto catch_release;
-    }
-    
-    // Connect to the root\default namespace with the current user.
-    hr = pLoc->lpVtbl->ConnectServer(pLoc, gbNamespace, NULL, NULL, NULL, 0, NULL, NULL, &session->gobbledygook);
-    if (FAILED(hr)) {
-		ymerr(YM_LOG_PRE "ConnectServer failed", YM_LOG_DSC);
-		goto catch_release;
-    }
-    
-    hr = CoSetProxyBlanket((IUnknown *)session->gobbledygook, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL, RPC_C_AUTHN_LEVEL_CALL,
-                           RPC_C_IMP_LEVEL_DELEGATE, NULL, EOAC_NONE);
-    
-    if (FAILED(hr)) {
-		ymerr(YM_LOG_PRE "CoSetProxyBlanket failed", YM_LOG_DSC);
-		goto catch_release;
-    }
-
-	hr = CoCreateInstance(&CLSID_UnsecuredApartment, NULL,
-		CLSCTX_LOCAL_SERVER, &IID_IUnsecuredApartment,
-		(void**)&pUnsecApp);
-
-	session->my_gobbledygook = YMALLOC(sizeof(YM_IWbemObjectSink));
-	session->my_gobbledygook->that = (void *)YMRetain(session);
-	session->my_gobbledygook->lpVtbl = YMALLOC(sizeof(IWbemObjectSinkVtbl));
-	session->my_gobbledygook->lpVtbl->AddRef = ymsink_AddRef;
-	session->my_gobbledygook->lpVtbl->Indicate = ymsink_Indicate;
-	session->my_gobbledygook->lpVtbl->QueryInterface = ymsink_QueryInterface;
-	session->my_gobbledygook->lpVtbl->Release = ymsink_Release;
-	session->my_gobbledygook->lpVtbl->SetStatus = ymsink_SetStatus;
-
-	hr = pUnsecApp->lpVtbl->CreateObjectStub(pUnsecApp, (IUnknown *)session->my_gobbledygook, &pStubUnk);
-
-	if ( FAILED(hr) ) {
-		ymerr(YM_LOG_PRE "CreateObjectStub failed", YM_LOG_DSC);
-		goto catch_release;
-	}
-
-	hr = pStubUnk->lpVtbl->QueryInterface(pStubUnk, &IID_IWbemObjectSink, (void **)&session->my_gobbledygook);
-
-	if (FAILED(hr)) {
-		ymerr(YM_LOG_PRE "QueryInterface failed", YM_LOG_DSC);
-		goto catch_release;
-	}
-
-	hr = session->gobbledygook->lpVtbl->ExecNotificationQueryAsync(	session->gobbledygook,
-													gbWql,
-													gbQuery,
-													WBEM_FLAG_SEND_STATUS,
-													NULL,
-													(IWbemObjectSink *)session->my_gobbledygook);
-
-	if ( FAILED(hr) ) {
-		ymerr(YM_LOG_PRE "ExecNotificationQueryAsync failed", YM_LOG_DSC);
-		goto catch_release;
-	}
-
-	ymdbg(YM_LOG_PRE "started observing interface changes", YM_LOG_DSC);
-
-	return true;
-
-catch_release:
-
-	if (session->my_gobbledygook) {
-		free(session->my_gobbledygook->lpVtbl);
-		free(session->my_gobbledygook);
-		session->my_gobbledygook = NULL;
-	}
-	if (session->gobbledygook) {
-		session->gobbledygook->lpVtbl->Release(session->gobbledygook);
-		session->gobbledygook = NULL;
-	}
-	if ( pLoc )
-		pLoc->lpVtbl->Release(pLoc);
-
-	CoUninitialize();
-catch_return:
-	return false;
-    
-//    IEnumWbemClassObject* pEnumerator = NULL;
-//    hr = pSvc->lpVtbl->ExecQuery(pSvc, gbWql, gbQuery,
-//                         WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &pEnumerator);
-//    
-//    if (FAILED(hr))
-//    {
-//        pSvc->lpVtbl->Release(pSvc);
-//        pLoc->lpVtbl->Release(pLoc);
-//        CoUninitialize();
-//        return false;
-//    }
-//    
-//    IWbemClassObject *pClassObj;
-//    ULONG ulReturnVal;
-//	int i = 0;
-//	if ( pEnumerator ) {
-//		while ( 1 ) {
-//			hr = pEnumerator->lpVtbl->Next(pEnumerator, WBEM_INFINITE, 1, &pClassObj, &ulReturnVal);
-//        
-//			if ( FAILED(hr) || ulReturnVal == 0 )
-//				break;
-//
-//			VARIANT value;
-//			CIMTYPE cimType;
-//			long flavor;
-//			hr = pClassObj->lpVtbl->Get(pClassObj,_T("Description"),0,&value,&cimType,&flavor);
-//			if ( FAILED(hr) ) {
-//				ymerr(YM_LOG_PRE "failed to query status of a network interface",YM_LOG_DSC);
-//			} else {
-//				if ( value.vt == VT_NULL )
-//					ymerr("the %dth interface has a '?' of null",i);
-//				else if ( value.vt == VT_BSTR )
-//					ymerr("the %dth interface has description: %S",i,value.bstrVal);
-//				else if ( value.vt == VT_LPSTR || value.vt == VT_LPWSTR )
-//					ymerr("the %dth interface has a '?' of some kind of string", i);
-//				else if ( value.vt == VT_BOOL )
-//					ymerr("the %dth interface has a '?' of %s",i,value.boolVal ? "true" : "false");
-//				else
-//					ymerr("the %dth interface has a '?' of 'something happened'", i);
-//			}
-//        
-//			pClassObj->lpVtbl->Release(pClassObj);
-//			i++;
-//		}
-//
-//		pEnumerator->lpVtbl->Release(pEnumerator);
-//	} else
-//		return false;
-}
-
-#endif
-
 #pragma mark connection callbacks
 
 void __ym_session_new_stream_proc(YMConnectionRef connection, YMStreamRef stream, void *context)
@@ -1375,5 +978,403 @@ void __ym_mdns_service_resolved_func(__unused YMmDNSBrowserRef browser, bool suc
         abort();
     }
 }
+
+void __YMSessionUpdateNetworkConfigDate(__YMSessionRef session)
+{
+	ymerr("network config changed on %p", session);
+}
+
+#if defined(YMMACOS)
+
+void __ym_SCDynamicStoreCallBack(__unused SCDynamicStoreRef store, __unused CFArrayRef changedKeys, void *info)
+{
+	__YMSessionUpdateNetworkConfigDate(info);
+}
+
+
+bool __YMSessionObserveNetworkInterfaceChangesMacos(__YMSessionRef session, bool startStop)
+{
+	if (startStop) {
+
+		if (session->scDynamicStore)
+			return true;
+
+		SCDynamicStoreContext ctx = { 0, session, NULL, NULL, NULL };
+		session->scDynamicStore = SCDynamicStoreCreate(NULL, CFSTR("libyammer"), __ym_SCDynamicStoreCallBack, &ctx);
+		const CFStringRef names[2] = { CFSTR("State:/Network/Global/IPv4/*"), CFSTR("State:/Network/Global/IPv6/*") };
+		CFArrayRef namesArray = CFArrayCreate(NULL, (const void **)names, 2, NULL);
+		SCDynamicStoreSetNotificationKeys(session->scDynamicStore, NULL, namesArray);
+		CFRelease(namesArray);
+
+		CFRunLoopRef mainRunloop = CFRunLoopGetMain();
+		CFRunLoopSourceRef storeSource = SCDynamicStoreCreateRunLoopSource(NULL, session->scDynamicStore, 0);
+		CFRunLoopAddSource(mainRunloop, storeSource, kCFRunLoopDefaultMode);
+		CFRelease(storeSource);
+
+		ymdbg(YM_LOG_PRE "observing network interface changes", YM_LOG_DSC);
+	}
+	else {
+
+		if (!session->scDynamicStore)
+			return false;
+
+		CFRelease(session->scDynamicStore);
+		session->scDynamicStore = NULL;
+
+		ymdbg(YM_LOG_PRE "stopped observing network interface changes", YM_LOG_DSC);
+	}
+
+	return true;
+}
+
+#elif defined(YMLINUX)
+
+YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_linux_proc_net_dev_scrape_proc(YM_THREAD_PARAM ctx)
+{
+	__YMSessionRef session = ctx;
+	YMThreadRef thisThread = session->linuxPollThread;
+
+	// this /proc scraping method was cribbed from ifplugd. thanks ifplugd!
+	// PF_NETLINK approach didn't work after not a whole lot of trying on raspbian
+	while (!session->linuxPollThreadExitFlag) {
+		FILE *f;
+		char ln[256];
+
+		if (!(f = fopen("/proc/net/dev", "r"))) {
+			ymerr(YM_LOG_PRE "failed to open /proc/net/dev: %d %s", YM_LOG_DSC, errno, strerror(errno));
+			YM_THREAD_END
+		}
+
+		fgets(ln, sizeof(ln), f);
+		fgets(ln, sizeof(ln), f);
+
+		while (fgets(ln, sizeof(ln), f)) {
+			char *p, *e;
+			p = ln + strspn(ln, " \t");
+			if (!(e = strchr(p, ':'))) {
+				ymerr(YM_LOG_PRE "failed to parse /proc/net/dev", YM_LOG_DSC);
+				fclose(f);
+				YM_THREAD_END
+			}
+
+			*e = '\0';
+
+			int fd;
+			if ((fd = socket(PF_INET, SOCK_DGRAM, 0)) < 0) {
+				ymerr(YM_LOG_PRE "failed to open /proc/net/dev: %d %s", YM_LOG_DSC, errno, strerror(errno));
+				YM_THREAD_END
+			}
+
+			interface_status_t s;
+			if ((s = interface_detect_beat_ethtool(fd, p)) == IFSTATUS_ERR)
+				if ((s = interface_detect_beat_mii(fd, p)) == IFSTATUS_ERR)
+					if ((s = interface_detect_beat_wlan(fd, p)) == IFSTATUS_ERR)
+						s = interface_detect_beat_iff(fd, p);
+
+			switch (s) {
+			case IFSTATUS_UP:
+				ymerr(YM_LOG_PRE "%s: up", YM_LOG_DSC, p);
+				break;
+
+			case IFSTATUS_DOWN:
+				ymerr(YM_LOG_PRE "%s: down", YM_LOG_DSC, p);
+				break;
+
+			default:
+				ymerr(YM_LOG_PRE "%s: not supported", YM_LOG_DSC, p);
+				break;
+			}
+		}
+
+		fclose(f);
+
+		if (session->linuxPollThreadExitFlag)
+			break;
+		sleep(1);
+	}
+
+	YM_THREAD_END
+}
+
+bool __YMSessionObserveNetworkInterfaceChangesLinux(__YMSessionRef session, bool startStop)
+{
+	if (!startStop) {
+		if (!session->linuxPollThread)
+			return false;
+
+		session->linuxPollThreadExitFlag = true;
+		YMThreadJoin(session->linuxPollThread);
+		YMRelease(session->linuxPollThread);
+		session->linuxPollThread = NULL;
+
+		return true;
+	}
+
+	session->linuxPollThread = YMThreadCreate(NULL, __ym_session_linux_proc_net_dev_scrape_proc, session);
+	session->linuxPollThreadExitFlag = false;
+	bool okay = YMThreadStart(session->linuxPollThread);
+	if (!okay) {
+		YMRelease(session->linuxPollThread);
+		session->linuxPollThread = NULL;
+	}
+}
+
+#else
+
+HRESULT STDMETHODCALLTYPE ymsink_QueryInterface(__RPC__in IWbemObjectSink * This,/* [in] */ __RPC__in REFIID riid,/* [annotation][iid_is][out] */_COM_Outptr_  void **ppvObject)
+{
+	LPOLESTR iName;
+	StringFromIID(riid, &iName);
+	ymerr("ymsink_QueryInterface %S", iName);
+	CoTaskMemFree(iName);
+
+	// IMarshal:			{00000003-0000-0000-C000-000000000046}
+	// IUnknown:			{00000000-0000-0000-C000-000000000046}
+	// "IdentityUnmarshal":	{0000001B-0000-0000-C000-000000000046}
+
+	bool isIUnknown = IsEqualIID(riid, &IID_IUnknown);
+	bool isWOS = IsEqualIID(riid, &IID_IWbemObjectSink);
+	if (isIUnknown || isWOS)
+	{
+		*ppvObject = (IWbemObjectSink *)This;
+		This->lpVtbl->AddRef(This);
+		return S_OK;
+	}
+
+	*ppvObject = NULL;
+	return E_NOINTERFACE;
+}
+
+ULONG STDMETHODCALLTYPE ymsink_AddRef(__RPC__in IWbemObjectSink * This)
+{
+	ymerr("ymsink_AddRef");
+	return 1;
+}
+
+ULONG STDMETHODCALLTYPE ymsink_Release(__RPC__in IWbemObjectSink * This)
+{
+	ymerr("ymsink_Release");
+	return 1;
+}
+
+HRESULT STDMETHODCALLTYPE ymsink_Indicate(__RPC__in IWbemObjectSink * This,/* [in] */ long lObjectCount,/* [size_is][in] */ __RPC__in_ecount_full(lObjectCount) IWbemClassObject **apObjArray)
+{
+	ymerr("ymsink_Indicate");
+	__YMSessionUpdateNetworkConfigDate(((YM_IWbemObjectSink *)This)->that);
+	return WBEM_S_NO_ERROR;
+}
+
+HRESULT STDMETHODCALLTYPE ymsink_SetStatus(__RPC__in IWbemObjectSink * This,/* [in] */ long lFlags,/* [in] */ HRESULT hResult,/* [unique][in] */ __RPC__in_opt BSTR strParam,/* [unique][in] */ __RPC__in_opt IWbemClassObject *pObjParam)
+{
+	ymerr("ymsink_SetStatus");
+	if (lFlags == WBEM_STATUS_COMPLETE)
+	{
+		printf("Call complete. hResult = 0x%X\n", hResult);
+	}
+	else if (lFlags == WBEM_STATUS_PROGRESS)
+	{
+		printf("Call in progress.\n");
+	}
+
+	return WBEM_S_NO_ERROR;
+}
+
+bool __YMSessionObserveNetworkInterfaceChangesWin32(__YMSessionRef session, bool startStop)
+{
+	static BSTR gbNamespace = NULL;
+	static BSTR gbWql = NULL;
+	static BSTR gbQuery = NULL;
+
+	if (!startStop) {
+		if (session->gobbledygook) {
+			session->gobbledygook->lpVtbl->CancelAsyncCall(session->gobbledygook, (IWbemObjectSink *)session->my_gobbledygook);
+			session->gobbledygook->lpVtbl->Release(session->gobbledygook);
+			session->gobbledygook = NULL;
+
+			YMRelease(session->my_gobbledygook->that);
+			session->my_gobbledygook->lpVtbl->Release((IWbemObjectSink *)session->my_gobbledygook);
+			// these malloc'd pointers move on the first QueryInterface call
+			// as if some standard com thing wraps them in something else.
+			// presumably they still need to be free'd, wherever it is they went.
+			// or maybe that's done for us in Release?
+			//free(session->my_gobbledygook->lpVtbl);
+			//free(session->my_gobbledygook);
+			session->my_gobbledygook = NULL;
+
+			return true;
+		}
+
+		return false;
+	}
+
+	HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);    // Initialize COM
+	if (FAILED(hr)) {
+		ymerr(YM_LOG_PRE "CoInitializeEx failed", YM_LOG_DSC);
+		goto catch_return;
+	}
+
+	IWbemLocator *pLoc = NULL;
+	IUnsecuredApartment* pUnsecApp = NULL;
+	IUnknown* pStubUnk = NULL;
+
+	if (!gbNamespace) {
+#define YM_WMI_DEFAULT_NAMESPACE	"ROOT\\CIMV2"
+#define YM_WMI_WQL					"WQL"
+#define YM_WMI_ALL_INTERFACES		"SELECT * FROM __InstanceModificationEvent WITHIN 1 WHERE TargetInstance ISA 'Win32_NetworkAdapter'"
+		gbNamespace = SysAllocString(_T(YM_WMI_DEFAULT_NAMESPACE));
+		gbWql = SysAllocString(_T(YM_WMI_WQL));
+		gbQuery = SysAllocString(_T(YM_WMI_ALL_INTERFACES));
+	}
+
+	hr = CoInitializeSecurity(NULL,                       // security descriptor
+		-1,                          // use this simple setting
+		NULL,                        // use this simple setting
+		NULL,                        // reserved
+		RPC_C_AUTHN_LEVEL_DEFAULT,   // authentication level
+		RPC_C_IMP_LEVEL_DELEGATE, // impersonation level
+		NULL,                        // use this simple setting
+		EOAC_NONE,                   // no special capabilities
+		NULL);                          // reserved
+
+	if (FAILED(hr)) {
+		ymerr(YM_LOG_PRE "CoInitializeSecurity failed", YM_LOG_DSC);
+		goto catch_release;
+	}
+
+	hr = CoCreateInstance(&CLSID_WbemLocator, 0,
+		CLSCTX_INPROC_SERVER, &IID_IWbemLocator, (LPVOID *)&pLoc);
+
+	if (FAILED(hr)) {
+		ymerr(YM_LOG_PRE "CoCreateInstance failed");
+		goto catch_release;
+	}
+
+	// Connect to the root\default namespace with the current user.
+	hr = pLoc->lpVtbl->ConnectServer(pLoc, gbNamespace, NULL, NULL, NULL, 0, NULL, NULL, &session->gobbledygook);
+	if (FAILED(hr)) {
+		ymerr(YM_LOG_PRE "ConnectServer failed", YM_LOG_DSC);
+		goto catch_release;
+	}
+
+	hr = CoSetProxyBlanket((IUnknown *)session->gobbledygook, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL, RPC_C_AUTHN_LEVEL_CALL,
+		RPC_C_IMP_LEVEL_DELEGATE, NULL, EOAC_NONE);
+
+	if (FAILED(hr)) {
+		ymerr(YM_LOG_PRE "CoSetProxyBlanket failed", YM_LOG_DSC);
+		goto catch_release;
+	}
+
+	hr = CoCreateInstance(&CLSID_UnsecuredApartment, NULL,
+		CLSCTX_LOCAL_SERVER, &IID_IUnsecuredApartment,
+		(void**)&pUnsecApp);
+
+	session->my_gobbledygook = YMALLOC(sizeof(YM_IWbemObjectSink));
+	session->my_gobbledygook->that = (void *)YMRetain(session);
+	session->my_gobbledygook->lpVtbl = YMALLOC(sizeof(IWbemObjectSinkVtbl));
+	session->my_gobbledygook->lpVtbl->AddRef = ymsink_AddRef;
+	session->my_gobbledygook->lpVtbl->Indicate = ymsink_Indicate;
+	session->my_gobbledygook->lpVtbl->QueryInterface = ymsink_QueryInterface;
+	session->my_gobbledygook->lpVtbl->Release = ymsink_Release;
+	session->my_gobbledygook->lpVtbl->SetStatus = ymsink_SetStatus;
+
+	hr = pUnsecApp->lpVtbl->CreateObjectStub(pUnsecApp, (IUnknown *)session->my_gobbledygook, &pStubUnk);
+
+	if (FAILED(hr)) {
+		ymerr(YM_LOG_PRE "CreateObjectStub failed", YM_LOG_DSC);
+		goto catch_release;
+	}
+
+	hr = pStubUnk->lpVtbl->QueryInterface(pStubUnk, &IID_IWbemObjectSink, (void **)&session->my_gobbledygook);
+
+	if (FAILED(hr)) {
+		ymerr(YM_LOG_PRE "QueryInterface failed", YM_LOG_DSC);
+		goto catch_release;
+	}
+
+	hr = session->gobbledygook->lpVtbl->ExecNotificationQueryAsync(session->gobbledygook,
+		gbWql,
+		gbQuery,
+		WBEM_FLAG_SEND_STATUS,
+		NULL,
+		(IWbemObjectSink *)session->my_gobbledygook);
+
+	if (FAILED(hr)) {
+		ymerr(YM_LOG_PRE "ExecNotificationQueryAsync failed", YM_LOG_DSC);
+		goto catch_release;
+	}
+
+	ymdbg(YM_LOG_PRE "started observing interface changes", YM_LOG_DSC);
+
+	return true;
+
+catch_release:
+
+	if (session->my_gobbledygook) {
+		free(session->my_gobbledygook->lpVtbl);
+		free(session->my_gobbledygook);
+		session->my_gobbledygook = NULL;
+	}
+	if (session->gobbledygook) {
+		session->gobbledygook->lpVtbl->Release(session->gobbledygook);
+		session->gobbledygook = NULL;
+	}
+	if (pLoc)
+		pLoc->lpVtbl->Release(pLoc);
+
+	CoUninitialize();
+catch_return:
+	return false;
+
+	//    IEnumWbemClassObject* pEnumerator = NULL;
+	//    hr = pSvc->lpVtbl->ExecQuery(pSvc, gbWql, gbQuery,
+	//                         WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &pEnumerator);
+	//    
+	//    if (FAILED(hr))
+	//    {
+	//        pSvc->lpVtbl->Release(pSvc);
+	//        pLoc->lpVtbl->Release(pLoc);
+	//        CoUninitialize();
+	//        return false;
+	//    }
+	//    
+	//    IWbemClassObject *pClassObj;
+	//    ULONG ulReturnVal;
+	//	int i = 0;
+	//	if ( pEnumerator ) {
+	//		while ( 1 ) {
+	//			hr = pEnumerator->lpVtbl->Next(pEnumerator, WBEM_INFINITE, 1, &pClassObj, &ulReturnVal);
+	//        
+	//			if ( FAILED(hr) || ulReturnVal == 0 )
+	//				break;
+	//
+	//			VARIANT value;
+	//			CIMTYPE cimType;
+	//			long flavor;
+	//			hr = pClassObj->lpVtbl->Get(pClassObj,_T("Description"),0,&value,&cimType,&flavor);
+	//			if ( FAILED(hr) ) {
+	//				ymerr(YM_LOG_PRE "failed to query status of a network interface",YM_LOG_DSC);
+	//			} else {
+	//				if ( value.vt == VT_NULL )
+	//					ymerr("the %dth interface has a '?' of null",i);
+	//				else if ( value.vt == VT_BSTR )
+	//					ymerr("the %dth interface has description: %S",i,value.bstrVal);
+	//				else if ( value.vt == VT_LPSTR || value.vt == VT_LPWSTR )
+	//					ymerr("the %dth interface has a '?' of some kind of string", i);
+	//				else if ( value.vt == VT_BOOL )
+	//					ymerr("the %dth interface has a '?' of %s",i,value.boolVal ? "true" : "false");
+	//				else
+	//					ymerr("the %dth interface has a '?' of 'something happened'", i);
+	//			}
+	//        
+	//			pClassObj->lpVtbl->Release(pClassObj);
+	//			i++;
+	//		}
+	//
+	//		pEnumerator->lpVtbl->Release(pEnumerator);
+	//	} else
+	//		return false;
+}
+
+#endif
 
 YM_EXTERN_C_POP
