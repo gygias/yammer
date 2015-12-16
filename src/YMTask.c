@@ -118,7 +118,7 @@ bool YMAPI YMTaskLaunch(YMTaskRef task_)
         int64_t nArgs = task->args ? YMArrayGetCount(task->args) : 0;
         
         int64_t argvSize = nArgs + 2;
-        const char **argv = malloc(argvSize*sizeof(char *));
+        const char **argv = malloc((unsigned long)argvSize*sizeof(char *));
         
         argv[0] = YMSTR(task->path);
         argv[argvSize - 1] = NULL;
@@ -292,7 +292,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_task_read_output_proc(YM_THREAD_PARA
     while(true) {
         while( ( outputOff + OUTPUT_BUF_INIT_SIZE ) > outputBufSize ) {
             outputBufSize *= 2;
-            task->output = realloc(task->output, outputBufSize);
+            task->output = realloc(task->output, (unsigned long)outputBufSize);
         }
         YM_READ_FILE(outFd, task->output + outputOff, OUTPUT_BUF_INIT_SIZE);
         if ( aRead == -1 ) {
@@ -309,7 +309,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_task_read_output_proc(YM_THREAD_PARA
     
     if ( outputOff == outputBufSize ) {
         outputBufSize++;
-        task->output = realloc(task->output,outputBufSize);
+        task->output = realloc(task->output, (unsigned long)outputBufSize);
     }
     for( int i = 0; i < outputOff; i++ ) {
         if ( task->output[i] == '\0' )

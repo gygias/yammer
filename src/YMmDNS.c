@@ -85,7 +85,7 @@ YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*typ
     else
         record->domain = NULL;
     
-    record->complete = false;
+    record->addrinfoSdref = NULL;
     record->port = 0;
     record->txtRecordKeyPairs = NULL;
     record->txtRecordKeyPairsSize = 0;
@@ -149,11 +149,6 @@ void YMAPI _YMmDNSServiceRecordAppendSockaddr(YMmDNSServiceRecord *record, const
     
     YMAddressRef address = YMAddressCreate(mdnsPortlessSockaddr,record->port);
     YMArrayAdd(record->sockaddrList, address);
-}
-
-void YMAPI _YMmDNSServiceRecordSetComplete(YMmDNSServiceRecord *record)
-{
-    record->complete = true;
 }
 
 void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record, bool floatResolvedInfo)

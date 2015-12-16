@@ -274,7 +274,7 @@
 		6335CAC31BF480DC00412CC9 /* YMPeer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMPeer.c; path = src/YMPeer.c; sourceTree = "<group>"; };
 		6335CAC41BF480DC00412CC9 /* YMPeer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMPeer.h; path = libyammer/YMPeer.h; sourceTree = "<group>"; };
 		6335CAC71BF4813A00412CC9 /* YMPeerPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMPeerPriv.h; path = private/YMPeerPriv.h; sourceTree = "<group>"; };
-		6346BBAC1C1F7FE800437E21 /* liblibyammer-ios.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "liblibyammer-ios.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6346BBAC1C1F7FE800437E21 /* libyammer-ios.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libyammer-ios.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		6346BBCF1C1F826C00437E21 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		6346BBD11C1F827000437E21 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		63476A421BEAF4DB00D10081 /* YMLock.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMLock.c; path = src/YMLock.c; sourceTree = "<group>"; };
@@ -451,7 +451,7 @@
 				63312D031BFAF9E600039336 /* chat */,
 				634A87481C17A4C600C7CA99 /* linux */,
 				63957E8D1C137ADE00960961 /* win */,
-				63225D9C1BE9314100C28F05 /* Dependencies */,
+				63225D9C1BE9314100C28F05 /* apple dependencies */,
 				63225D431BE9026200C28F05 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -465,12 +465,12 @@
 				631916311BFCFF13001475FC /* Yammer.framework */,
 				631F0D321C141EE500C141D4 /* ymtest */,
 				636166E71C18DFA300D17172 /* ym-dispatch-main-test */,
-				6346BBAC1C1F7FE800437E21 /* liblibyammer-ios.a */,
+				6346BBAC1C1F7FE800437E21 /* libyammer-ios.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		63225D9C1BE9314100C28F05 /* Dependencies */ = {
+		63225D9C1BE9314100C28F05 /* apple dependencies */ = {
 			isa = PBXGroup;
 			children = (
 				6346BBD11C1F827000437E21 /* SystemConfiguration.framework */,
@@ -478,7 +478,7 @@
 				638E1D651C098AF900BA2FA4 /* libcrypto.tbd */,
 				63225D9D1BE9372800C28F05 /* libssl.1.0.0.dylib */,
 			);
-			name = Dependencies;
+			name = "apple dependencies";
 			sourceTree = "<group>";
 		};
 		63312D031BFAF9E600039336 /* chat */ = {
@@ -766,7 +766,7 @@
 			);
 			name = "libyammer-ios";
 			productName = "libyammer-ios";
-			productReference = 6346BBAC1C1F7FE800437E21 /* liblibyammer-ios.a */;
+			productReference = 6346BBAC1C1F7FE800437E21 /* libyammer-ios.a */;
 			productType = "com.apple.product-type.library.static";
 		};
 		636166E61C18DFA300D17172 /* ym-dispatch-main-test */ = {
@@ -1331,6 +1331,7 @@
 			buildSettings = {
 				CLANG_ENABLE_MODULES = NO;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				EXECUTABLE_PREFIX = "";
 				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
 					"YMAPPLE=1",
 					"YMIOS=1",
@@ -1348,6 +1349,7 @@
 			buildSettings = {
 				CLANG_ENABLE_MODULES = NO;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				EXECUTABLE_PREFIX = "";
 				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
 					"YMAPPLE=1",
 					"YMIOS=1",

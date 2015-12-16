@@ -35,7 +35,7 @@ typedef struct _YMmDNSServiceRecord
     YMStringRef name;
     YMStringRef domain;
     
-    bool complete;
+    void *addrinfoSdref;
     YMArrayRef sockaddrList;
     uint16_t port;
     YMmDNSTxtRecordKeyPair **txtRecordKeyPairs;
@@ -52,7 +52,6 @@ YMAPI YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const ch
 void YMAPI _YMmDNSServiceRecordSetPort(YMmDNSServiceRecord *record, uint16_t port);
 void YMAPI _YMmDNSServiceRecordSetTxtRecord(YMmDNSServiceRecord *record, const unsigned char *txtRecord, uint16_t txtLength);
 void YMAPI _YMmDNSServiceRecordAppendSockaddr(YMmDNSServiceRecord *record, const void *mdnsPortlessSockaddr);
-void YMAPI _YMmDNSServiceRecordSetComplete(YMmDNSServiceRecord *record);
 void YMAPI _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record, bool floatResolvedInfo);
 
 YMAPI YMmDNSTxtRecordKeyPair **_YMmDNSTxtKeyPairsCreate(const unsigned char *txtRecord, uint16_t txtLength, size_t *outSize);

@@ -1021,6 +1021,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_macos_sc_runloop_proc(YM_THR
     CFRelease(storeSource);
 
     ymerr(YM_LOG_PRE "network interface change observer exiting", YM_LOG_DSC);
+    
 #else
     storeCtx.version = 6969;
     ymabort("network interface change observing unimplemented on ios");
