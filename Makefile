@@ -1,3 +1,6 @@
+# defaults to linux, which has only ever been tested on raspbian.
+# also supports ARCH=macos, which has only ever been tested on 10.11.*
+
 OUT=out
 
 LSRC=YMAddress.c YMBase.c YMConnection.c YMDictionary.c YMLinkedList.c YMLocalSocketPair.c YMLock.c YMLog.c YMmDNS.c \
