@@ -10,7 +10,6 @@
 
 #if defined(YMDEBUG)
 
-bool gYMFirstConnectionFakeSampleUse = false;
 int64_t gYMFirstConnectionFakeSample = 1024;
 
 #endif
