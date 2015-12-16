@@ -126,6 +126,7 @@
 		63DD2E191C0FB45D00D822D1 /* TLSTests.c in Sources */ = {isa = PBXBuildFile; fileRef = 63DD2E171C0FB45D00D822D1 /* TLSTests.c */; };
 		63DD2E1C1C0FC0F600D822D1 /* PlexerTests.c in Sources */ = {isa = PBXBuildFile; fileRef = 63DD2E1A1C0FC0F600D822D1 /* PlexerTests.c */; };
 		63DD2E1F1C0FE41F00D822D1 /* SessionTests.c in Sources */ = {isa = PBXBuildFile; fileRef = 63DD2E1D1C0FE41F00D822D1 /* SessionTests.c */; };
+		63DFAB551C221EA60076BF27 /* YMDebug.c in Sources */ = {isa = PBXBuildFile; fileRef = 63DFAB541C221EA50076BF27 /* YMDebug.c */; };
 		63EEC75D1BFB6AD100990ECE /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 63DDCB311BFB68AA009F91CD /* main.c */; };
 		63EEC75E1BFB6BCF00990ECE /* libyammer.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63225D421BE9026200C28F05 /* libyammer.dylib */; };
 		63FD5B5A1BF1899800174824 /* YMRSAKeyPair.c in Sources */ = {isa = PBXBuildFile; fileRef = 63FD5B581BF1899800174824 /* YMRSAKeyPair.c */; };
@@ -331,6 +332,7 @@
 		63DD2E1D1C0FE41F00D822D1 /* SessionTests.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = SessionTests.c; path = ../test/SessionTests.c; sourceTree = "<group>"; };
 		63DD2E1E1C0FE41F00D822D1 /* SessionTests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SessionTests.h; path = ../test/SessionTests.h; sourceTree = "<group>"; };
 		63DDCB311BFB68AA009F91CD /* main.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = main.c; sourceTree = "<group>"; };
+		63DFAB541C221EA50076BF27 /* YMDebug.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMDebug.c; path = src/YMDebug.c; sourceTree = "<group>"; };
 		63EEC7561BFB6AA400990ECE /* ymchat */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ymchat; sourceTree = BUILT_PRODUCTS_DIR; };
 		63FD5B581BF1899800174824 /* YMRSAKeyPair.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMRSAKeyPair.c; path = src/YMRSAKeyPair.c; sourceTree = "<group>"; };
 		63FD5B591BF1899800174824 /* YMRSAKeyPair.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMRSAKeyPair.h; path = private/YMRSAKeyPair.h; sourceTree = "<group>"; };
@@ -531,6 +533,7 @@
 				630A5CE81BE93BEF003292EE /* YMTLSProvider.h */,
 				630A5CE71BE93BEF003292EE /* YMTLSProvider.c */,
 				63225D991BE92CBA00C28F05 /* YMDebug.h */,
+				63DFAB541C221EA50076BF27 /* YMDebug.c */,
 				637816C31BF680A700BF79E2 /* YMInternal.h */,
 				63225D5F1BE909BB00C28F05 /* YMPlexer.h */,
 				637816C41BF684D300BF79E2 /* YMPlexerPriv.h */,
@@ -955,6 +958,7 @@
 				630A5CF61BE9518A003292EE /* YMSession.c in Sources */,
 				630A5CE91BE93BEF003292EE /* YMTLSProvider.c in Sources */,
 				63225D641BE90A6400C28F05 /* YMSecurityProvider.c in Sources */,
+				63DFAB551C221EA60076BF27 /* YMDebug.c in Sources */,
 				63BA70A21C17493600210D2E /* YMTask.c in Sources */,
 				63476A4F1BEB159C00D10081 /* YMDictionary.c in Sources */,
 				63225D5C1BE9092500C28F05 /* YMStream.c in Sources */,
@@ -1332,6 +1336,7 @@
 				CLANG_ENABLE_MODULES = NO;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				EXECUTABLE_PREFIX = "";
+				GCC_PREFIX_HEADER = ../private/yammerpch.h;
 				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
 					"YMAPPLE=1",
 					"YMIOS=1",
@@ -1350,6 +1355,7 @@
 				CLANG_ENABLE_MODULES = NO;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				EXECUTABLE_PREFIX = "";
+				GCC_PREFIX_HEADER = ../private/yammerpch.h;
 				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
 					"YMAPPLE=1",
 					"YMIOS=1",
@@ -1385,6 +1391,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = NO;
+				GCC_PREFIX_HEADER = ../private/yammerpch.h;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -1393,6 +1400,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = NO;
+				GCC_PREFIX_HEADER = ../private/yammerpch.h;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;

@@ -183,7 +183,7 @@ YMSOCKET YMLocalSocketPairGetB(YMLocalSocketPairRef pair_)
     return pair->socketB;
 }
 
-bool YMAPI YMLocalSocketPairShutdown(YMLocalSocketPairRef pair_)
+bool YMLocalSocketPairShutdown(YMLocalSocketPairRef pair_)
 {
     __YMLocalSocketPairRef pair = (__YMLocalSocketPairRef)pair_;
     

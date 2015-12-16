@@ -755,7 +755,7 @@ YMDictionaryRef YMSessionGetConnections(YMSessionRef session_)
     return *(YMDictionaryRef *)session; // todo, sync
 }
 
-void YMAPI YMSessionStop(YMSessionRef session)
+void YMSessionStop(YMSessionRef session)
 {
     YMLockLock(session->connectionsByAddressLock);
     {

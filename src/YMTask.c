@@ -51,7 +51,7 @@ void __ym_task_parent_atfork();
 void __ym_task_child_atfork();
 YM_ONCE_DEF(__YMTaskRegisterAtfork);
 
-YMTaskRef YMAPI YMTaskCreate(YMStringRef path, YMArrayRef args, bool saveOutput)
+YMTaskRef YMTaskCreate(YMStringRef path, YMArrayRef args, bool saveOutput)
 {
     __YMTaskRef task = (__YMTaskRef)_YMAlloc(_YMTaskTypeID, sizeof(struct __ym_task_t));
     task->path = YMRetain(path);
@@ -90,7 +90,7 @@ YM_ONCE_FUNC(__YMTaskRegisterAtfork, {
 
 YM_ONCE_OBJ gYMTaskOnce = YM_ONCE_INIT;
 
-bool YMAPI YMTaskLaunch(YMTaskRef task_)
+bool YMTaskLaunch(YMTaskRef task_)
 {
     __YMTaskRef task = (__YMTaskRef)task_;
     
@@ -201,7 +201,7 @@ bool YMAPI YMTaskLaunch(YMTaskRef task_)
 	return okay;
 }
 
-void YMAPI YMTaskWait(YMTaskRef task_)
+void YMTaskWait(YMTaskRef task_)
 {
     __YMTaskRef task = (__YMTaskRef)task_;
     ymassert(task->childPid!=NULL_PID,"task[%s]: asked to wait on non-existant child",YMSTR(task->path));
@@ -245,14 +245,14 @@ void YMAPI YMTaskWait(YMTaskRef task_)
     task->exited = true;
 }
 
-int YMAPI YMTaskGetExitStatus(YMTaskRef task_)
+int YMTaskGetExitStatus(YMTaskRef task_)
 {
     __YMTaskRef task = (__YMTaskRef)task_;
     ymassert(task->exited,"task[%s]: hasn't exited",YMSTR(task->path));
     return task->result;
 }
 
-unsigned YMAPI char *YMTaskGetOutput(YMTaskRef task_, uint32_t *outLength)
+unsigned char *YMTaskGetOutput(YMTaskRef task_, uint32_t *outLength)
 {
     __YMTaskRef task = (__YMTaskRef)task_;
     if ( task->save )

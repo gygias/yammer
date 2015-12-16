@@ -1,0 +1,16 @@
+//
+//  YMDebug.c
+//  yammer
+//
+//  Created by david on 12/16/15.
+//  Copyright © 2015 combobulated. All rights reserved.
+//
+
+#include "YMDebug.h"
+
+#if defined(YMDEBUG)
+
+bool gYMFirstConnectionFakeSampleUse = false;
+int64_t gYMFirstConnectionFakeSample = 1024;
+
+#endif

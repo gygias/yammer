@@ -71,6 +71,7 @@
 
 #include "YMBase.h"
 #include "YMInternal.h"
+#include "YMDebug.h"
 
 #ifdef YMDEBUG
 # ifndef YMWIN32

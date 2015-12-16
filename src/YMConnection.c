@@ -303,6 +303,7 @@ bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, 
             if ( i == 0 ) {
                 ymerr(YM_LOG_PRE "performing sample of length %ub",YM_LOG_DSC,sampleSize);
                 connection->sample = __YMConnectionDoSample(connection, newSocket, sampleSize, true);
+                YM_DEBUG_SAMPLE
             }
         }
         
@@ -319,6 +320,7 @@ bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, 
             if ( command.command == YMConnectionCommandSample ) {
                 ymerr(YM_LOG_PRE "performing sample of length %ub",YM_LOG_DSC,command.userInfo);
                 connection->sample = __YMConnectionDoSample(connection, newSocket, command.userInfo, false);
+                YM_DEBUG_SAMPLE
             } else if ( command.command == YMConnectionCommandInit ) {
                 ymerr(YM_LOG_PRE "init command received, proceeding",YM_LOG_DSC);
                 break;

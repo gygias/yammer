@@ -48,16 +48,17 @@ typedef struct _YMmDNSServiceList
     struct _YMmDNSServiceList *next;
 } YMmDNSServiceList;
 
-YMAPI YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*type, const char *domain);
-void YMAPI _YMmDNSServiceRecordSetPort(YMmDNSServiceRecord *record, uint16_t port);
-void YMAPI _YMmDNSServiceRecordSetTxtRecord(YMmDNSServiceRecord *record, const unsigned char *txtRecord, uint16_t txtLength);
-void YMAPI _YMmDNSServiceRecordAppendSockaddr(YMmDNSServiceRecord *record, const void *mdnsPortlessSockaddr);
-void YMAPI _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record, bool floatResolvedInfo);
+YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*type, const char *domain);
+void _YMmDNSServiceRecordSetPort(YMmDNSServiceRecord *record, uint16_t port);
+void _YMmDNSServiceRecordSetTxtRecord(YMmDNSServiceRecord *record, const unsigned char *txtRecord, uint16_t txtLength);
+void _YMmDNSServiceRecordAppendSockaddr(YMmDNSServiceRecord *record, const void *mdnsPortlessSockaddr);
+void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record, bool floatResolvedInfo);
 
+// exported for test cases
 YMAPI YMmDNSTxtRecordKeyPair **_YMmDNSTxtKeyPairsCreate(const unsigned char *txtRecord, uint16_t txtLength, size_t *outSize);
 void YMAPI _YMmDNSTxtKeyPairsFree(YMmDNSTxtRecordKeyPair **keyPairList, size_t size);
-
 YMAPI unsigned char  *_YMmDNSTxtBlobCreate(YMmDNSTxtRecordKeyPair **keyPairList, uint16_t *inSizeOutLength);
+
 void YMAPI _YMmDNSServiceListFree(YMmDNSServiceList *serviceList); // xxx
 
 YM_EXTERN_C_POP
