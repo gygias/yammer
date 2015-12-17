@@ -520,19 +520,22 @@ void _ym_connection_forward_callback_proc(void *context, YMIOResult result, uint
 void ym_connection_new_stream_proc(__unused YMPlexerRef plexer,YMStreamRef stream, void *context)
 {
     __YMConnectionRef connection = (__YMConnectionRef)context;
-    connection->newFunc(connection, stream, connection->newFuncContext);
+    if ( connection->newFunc )
+        connection->newFunc(connection, stream, connection->newFuncContext);
 }
 
 void ym_connection_stream_closing_proc(__unused YMPlexerRef plexer, YMStreamRef stream, void *context)
 {
     __YMConnectionRef connection = (__YMConnectionRef)context;
-    connection->closingFunc(connection, stream, connection->closingFuncContext);
+    if ( connection->closingFunc )
+        connection->closingFunc(connection, stream, connection->closingFuncContext);
 }
 
 void ym_connection_interrupted_proc(__unused YMPlexerRef plexer, void *context)
 {
     __YMConnectionRef connection = (__YMConnectionRef)context;
-    connection->interruptedFunc(connection, connection->interruptedFuncContext);
+    if ( connection->interruptedFunc )
+        connection->interruptedFunc(connection, connection->interruptedFuncContext);
 }
 
 YM_EXTERN_C_POP
