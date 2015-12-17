@@ -85,7 +85,7 @@ YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*typ
     else
         record->domain = NULL;
     
-    record->complete = false;
+    record->addrinfoSdref = NULL;
     record->port = 0;
     record->txtRecordKeyPairs = NULL;
     record->txtRecordKeyPairsSize = 0;
@@ -94,12 +94,12 @@ YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*typ
     return record;
 }
 
-void YMAPI _YMmDNSServiceRecordSetPort(YMmDNSServiceRecord *record, uint16_t port)
+void _YMmDNSServiceRecordSetPort(YMmDNSServiceRecord *record, uint16_t port)
 {
     record->port = port;
 }
 
-void YMAPI _YMmDNSServiceRecordSetTxtRecord(YMmDNSServiceRecord *record, const unsigned char *txtRecord, uint16_t txtLength)
+void _YMmDNSServiceRecordSetTxtRecord(YMmDNSServiceRecord *record, const unsigned char *txtRecord, uint16_t txtLength)
 {
     size_t txtSize = 0;
     YMmDNSTxtRecordKeyPair **txtList = NULL;
@@ -123,7 +123,7 @@ void YMAPI _YMmDNSServiceRecordSetTxtRecord(YMmDNSServiceRecord *record, const u
     ymerr("mdns[&]: updated txt record of '%s:%s' to n%zu",YMSTR(record->type),YMSTR(record->name),txtSize);
 }
 
-void YMAPI _YMmDNSServiceRecordAppendSockaddr(YMmDNSServiceRecord *record, const void *mdnsPortlessSockaddr_)
+void _YMmDNSServiceRecordAppendSockaddr(YMmDNSServiceRecord *record, const void *mdnsPortlessSockaddr_)
 {
     const struct sockaddr *mdnsPortlessSockaddr = mdnsPortlessSockaddr_;
     if ( ! record->sockaddrList )
@@ -149,11 +149,6 @@ void YMAPI _YMmDNSServiceRecordAppendSockaddr(YMmDNSServiceRecord *record, const
     
     YMAddressRef address = YMAddressCreate(mdnsPortlessSockaddr,record->port);
     YMArrayAdd(record->sockaddrList, address);
-}
-
-void YMAPI _YMmDNSServiceRecordSetComplete(YMmDNSServiceRecord *record)
-{
-    record->complete = true;
 }
 
 void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record, bool floatResolvedInfo)

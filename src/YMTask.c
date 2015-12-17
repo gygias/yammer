@@ -51,7 +51,7 @@ void __ym_task_parent_atfork();
 void __ym_task_child_atfork();
 YM_ONCE_DEF(__YMTaskRegisterAtfork);
 
-YMTaskRef YMAPI YMTaskCreate(YMStringRef path, YMArrayRef args, bool saveOutput)
+YMTaskRef YMTaskCreate(YMStringRef path, YMArrayRef args, bool saveOutput)
 {
     __YMTaskRef task = (__YMTaskRef)_YMAlloc(_YMTaskTypeID, sizeof(struct __ym_task_t));
     task->path = YMRetain(path);
@@ -86,11 +86,11 @@ void _YMTaskFree(YMTaskRef task_)
 YM_ONCE_FUNC(__YMTaskRegisterAtfork, {
     int result = pthread_atfork(__ym_task_prepare_atfork, __ym_task_parent_atfork, __ym_task_child_atfork);
     ymassert(result==0,"failed to register atfork handlers: %d %s",errno,strerror(errno))
-});
+})
 
 YM_ONCE_OBJ gYMTaskOnce = YM_ONCE_INIT;
 
-bool YMAPI YMTaskLaunch(YMTaskRef task_)
+bool YMTaskLaunch(YMTaskRef task_)
 {
     __YMTaskRef task = (__YMTaskRef)task_;
     
@@ -118,7 +118,7 @@ bool YMAPI YMTaskLaunch(YMTaskRef task_)
         int64_t nArgs = task->args ? YMArrayGetCount(task->args) : 0;
         
         int64_t argvSize = nArgs + 2;
-        const char **argv = malloc(argvSize*sizeof(char *));
+        const char **argv = malloc((unsigned long)argvSize*sizeof(char *));
         
         argv[0] = YMSTR(task->path);
         argv[argvSize - 1] = NULL;
@@ -201,7 +201,7 @@ bool YMAPI YMTaskLaunch(YMTaskRef task_)
 	return okay;
 }
 
-void YMAPI YMTaskWait(YMTaskRef task_)
+void YMTaskWait(YMTaskRef task_)
 {
     __YMTaskRef task = (__YMTaskRef)task_;
     ymassert(task->childPid!=NULL_PID,"task[%s]: asked to wait on non-existant child",YMSTR(task->path));
@@ -245,14 +245,14 @@ void YMAPI YMTaskWait(YMTaskRef task_)
     task->exited = true;
 }
 
-int YMAPI YMTaskGetExitStatus(YMTaskRef task_)
+int YMTaskGetExitStatus(YMTaskRef task_)
 {
     __YMTaskRef task = (__YMTaskRef)task_;
     ymassert(task->exited,"task[%s]: hasn't exited",YMSTR(task->path));
     return task->result;
 }
 
-unsigned YMAPI char *YMTaskGetOutput(YMTaskRef task_, uint32_t *outLength)
+unsigned char *YMTaskGetOutput(YMTaskRef task_, uint32_t *outLength)
 {
     __YMTaskRef task = (__YMTaskRef)task_;
     if ( task->save )
@@ -292,7 +292,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_task_read_output_proc(YM_THREAD_PARA
     while(true) {
         while( ( outputOff + OUTPUT_BUF_INIT_SIZE ) > outputBufSize ) {
             outputBufSize *= 2;
-            task->output = realloc(task->output, outputBufSize);
+            task->output = realloc(task->output, (unsigned long)outputBufSize);
         }
         YM_READ_FILE(outFd, task->output + outputOff, OUTPUT_BUF_INIT_SIZE);
         if ( aRead == -1 ) {
@@ -309,7 +309,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_task_read_output_proc(YM_THREAD_PARA
     
     if ( outputOff == outputBufSize ) {
         outputBufSize++;
-        task->output = realloc(task->output,outputBufSize);
+        task->output = realloc(task->output, (unsigned long)outputBufSize);
     }
     for( int i = 0; i < outputOff; i++ ) {
         if ( task->output[i] == '\0' )

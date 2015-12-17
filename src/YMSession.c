@@ -28,7 +28,7 @@
 # if defined(YMLINUX)
 #  define __USE_POSIX
 #  include <sys/socket.h>
-# elif defined(YMMACOS)
+# elif defined(YMAPPLE)
 #  include <SystemConfiguration/SystemConfiguration.h>
 # endif
 # include <netinet/in.h>
@@ -41,7 +41,7 @@
 # include <tchar.h>
 #endif
 
-#if defined(YMMACOS)
+#if defined(YMAPPLE)
 #define __YMSessionObserveNetworkInterfaceChanges __YMSessionObserveNetworkInterfaceChangesMacos
 #elif defined(YMLINUX)
 #include "interface.h"
@@ -72,21 +72,22 @@ typedef struct __ym_session_t
     bool interrupted;
 
 	// interface change observer shit
-#if defined(YMMACOS)
-    SCDynamicStoreRef scDynamicStore;
+#if defined(YMAPPLE)
+    YMThreadRef scObserverThread;
+    bool scObserverThreadExitFlag;
 #elif defined(YMWIN32)
-	IWbemServices *gobbledygook;
-	YM_IWbemObjectSink* my_gobbledygook;
+    IWbemServices *gobbledygook;
+    YM_IWbemObjectSink* my_gobbledygook;
 #else
-	YMThreadRef linuxPollThread;
-	bool linuxPollThreadExitFlag;
+    YMThreadRef linuxPollThread;
+    bool linuxPollThreadExitFlag;
 #endif
     
     // server
     YMStringRef name;
     YMmDNSServiceRef service;
-	YMSOCKET ipv4ListenSocket;
-	YMSOCKET ipv6ListenSocket;
+    YMSOCKET ipv4ListenSocket;
+    YMSOCKET ipv6ListenSocket;
     YMThreadRef acceptThread;
     bool acceptThreadExitFlag;
     YMThreadRef initConnectionDispatchThread;
@@ -149,8 +150,9 @@ YMSessionRef YMSessionCreate(YMStringRef type)
     session->defaultConnection = NULL;
     session->connectionsByAddress = YMDictionaryCreate();
 
-#if defined(YMMACOS)
-	session->scDynamicStore = NULL;
+#if defined(YMAPPLE)
+	session->scObserverThread = NULL;
+	session->scObserverThreadExitFlag = false;
 #elif defined(YMWIN32)
 	session->gobbledygook = NULL;
 	session->my_gobbledygook = NULL;
@@ -753,7 +755,7 @@ YMDictionaryRef YMSessionGetConnections(YMSessionRef session_)
     return *(YMDictionaryRef *)session; // todo, sync
 }
 
-void YMAPI YMSessionStop(YMSessionRef session)
+void YMSessionStop(YMSessionRef session)
 {
     YMLockLock(session->connectionsByAddressLock);
     {
@@ -986,44 +988,68 @@ void __YMSessionUpdateNetworkConfigDate(__YMSessionRef session)
 	ymerr("network config changed on %p", session);
 }
 
-#if defined(YMMACOS)
+#if defined(YMAPPLE)
 
 void __ym_SCDynamicStoreCallBack(__unused SCDynamicStoreRef store, __unused CFArrayRef changedKeys, void *info)
 {
 	__YMSessionUpdateNetworkConfigDate(info);
 }
 
+YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_macos_sc_runloop_proc(YM_THREAD_PARAM ctx)
+{
+    __YMSessionRef session = ctx;
+
+    SCDynamicStoreContext storeCtx = { 0, session, NULL, NULL, NULL };
+    
+#if !defined(YMIOS)
+    SCDynamicStoreRef scStore = SCDynamicStoreCreate(NULL, CFSTR("libyammer"), __ym_SCDynamicStoreCallBack, &storeCtx);
+    const CFStringRef names[2] = { CFSTR("State:/Network/Global/IPv4/*"), CFSTR("State:/Network/Global/IPv6/*") };
+    CFArrayRef namesArray = CFArrayCreate(NULL, (const void **)names, 2, NULL);
+    SCDynamicStoreSetNotificationKeys(scStore, NULL, namesArray);
+    CFRelease(namesArray);
+
+    CFRunLoopRef aRunloop = CFRunLoopGetCurrent();
+    CFRunLoopSourceRef storeSource = SCDynamicStoreCreateRunLoopSource(NULL, scStore, 0);
+    CFRunLoopAddSource(aRunloop, storeSource, kCFRunLoopDefaultMode);
+    
+    ymerr(YM_LOG_PRE "network interface change observer entered", YM_LOG_DSC);
+    
+    while ( ! session->scObserverThreadExitFlag )
+      CFRunLoopRunInMode(kCFRunLoopDefaultMode, 1, false);
+
+    CFRunLoopRemoveSource(aRunloop, storeSource, kCFRunLoopDefaultMode);
+    CFRelease(storeSource);
+
+    ymerr(YM_LOG_PRE "network interface change observer exiting", YM_LOG_DSC);
+    
+#else
+    storeCtx.version = 6969;
+    ymabort("network interface change observing unimplemented on ios");
+#endif
+    
+    YM_THREAD_END
+}
 
 bool __YMSessionObserveNetworkInterfaceChangesMacos(__YMSessionRef session, bool startStop)
 {
 	if (startStop) {
-
-		if (session->scDynamicStore)
+		if (session->scObserverThread)
 			return true;
-
-		SCDynamicStoreContext ctx = { 0, session, NULL, NULL, NULL };
-		session->scDynamicStore = SCDynamicStoreCreate(NULL, CFSTR("libyammer"), __ym_SCDynamicStoreCallBack, &ctx);
-		const CFStringRef names[2] = { CFSTR("State:/Network/Global/IPv4/*"), CFSTR("State:/Network/Global/IPv6/*") };
-		CFArrayRef namesArray = CFArrayCreate(NULL, (const void **)names, 2, NULL);
-		SCDynamicStoreSetNotificationKeys(session->scDynamicStore, NULL, namesArray);
-		CFRelease(namesArray);
-
-		CFRunLoopRef mainRunloop = CFRunLoopGetMain();
-		CFRunLoopSourceRef storeSource = SCDynamicStoreCreateRunLoopSource(NULL, session->scDynamicStore, 0);
-		CFRunLoopAddSource(mainRunloop, storeSource, kCFRunLoopDefaultMode);
-		CFRelease(storeSource);
-
-		ymdbg(YM_LOG_PRE "observing network interface changes", YM_LOG_DSC);
+		
+		session->scObserverThread = YMThreadCreate(NULL,__ym_session_macos_sc_runloop_proc,session);
+		session->scObserverThreadExitFlag = false;
+		return session->scObserverThread && YMThreadStart(session->scObserverThread);
 	}
 	else {
 
-		if (!session->scDynamicStore)
+		if (!session->scObserverThread)
 			return false;
 
-		CFRelease(session->scDynamicStore);
-		session->scDynamicStore = NULL;
-
 		ymdbg(YM_LOG_PRE "stopped observing network interface changes", YM_LOG_DSC);
+		session->scObserverThreadExitFlag = true;
+		YMThreadJoin(session->scObserverThread);
+		YMRelease(session->scObserverThread);
+		session->scObserverThread = NULL;
 	}
 
 	return true;

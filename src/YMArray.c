@@ -28,7 +28,7 @@ typedef struct __ym_array_t *__YMArrayRef;
 
 int64_t __YMArrayFind(__YMArrayRef array, const void *value);
 
-YMArrayRef YMAPI YMArrayCreate()
+YMArrayRef YMArrayCreate()
 {
     __YMArrayRef array = (__YMArrayRef)_YMAlloc(_YMArrayTypeID, sizeof(struct __ym_array_t));
     array->dict = YMDictionaryCreate();
@@ -42,14 +42,14 @@ void _YMArrayFree(YMArrayRef array_)
     YMRelease(array->dict);
 }
 
-void YMAPI YMArrayAdd(YMArrayRef array_, const void *value)
+void YMArrayAdd(YMArrayRef array_, const void *value)
 {
     __YMArrayRef array = (__YMArrayRef)array_;
     YMDictionaryAdd(array->dict, array->count, (YMDictionaryValue)value);
     array->count++;
 }
 
-void YMAPI YMArrayInsert(YMArrayRef array_, int64_t idx, const void *value)
+void YMArrayInsert(YMArrayRef array_, int64_t idx, const void *value)
 {
     __YMArrayRef array = (__YMArrayRef)array_;
     ymassert(idx<=array->count,"cannot insert at %llu in array with count %llu",idx,array->count);
@@ -82,7 +82,7 @@ int64_t __YMArrayFind(__YMArrayRef array, const void *value)
     return idx;
 }
 
-bool YMAPI YMArrayContains(YMArrayRef array_, const void *value)
+bool YMArrayContains(YMArrayRef array_, const void *value)
 {
     __YMArrayRef array = (__YMArrayRef)array_;
     
@@ -90,20 +90,20 @@ bool YMAPI YMArrayContains(YMArrayRef array_, const void *value)
 }
 
 
-int64_t YMAPI YMArrayIndexOf(YMArrayRef array_, const void *value)
+int64_t YMArrayIndexOf(YMArrayRef array_, const void *value)
 {
     __YMArrayRef array = (__YMArrayRef)array_;
     return __YMArrayFind(array, value);
 }
 
 
-const YMAPI void *YMArrayGet(YMArrayRef array_, int64_t idx)
+const void *YMArrayGet(YMArrayRef array_, int64_t idx)
 {
     __YMArrayRef array = (__YMArrayRef)array_;
     return YMDictionaryGetItem(array->dict, idx);
 }
 
-int64_t YMAPI YMArrayGetCount(YMArrayRef array_)
+int64_t YMArrayGetCount(YMArrayRef array_)
 {
     __YMArrayRef array = (__YMArrayRef)array_;
     return array->count;
@@ -117,7 +117,7 @@ void YMArrayRemove(YMArrayRef array_, int64_t idx)
     array->count--;
 }
 
-void YMAPI YMArrayRemoveObject(YMArrayRef array_, const void *value)
+void YMArrayRemoveObject(YMArrayRef array_, const void *value)
 {
     __YMArrayRef array = (__YMArrayRef)array_;
     
@@ -127,7 +127,7 @@ void YMAPI YMArrayRemoveObject(YMArrayRef array_, const void *value)
     array->count--;
 }
 
-void YMAPI _YMArrayRemoveAll(YMArrayRef array_, bool ymRelease, bool free_)
+void _YMArrayRemoveAll(YMArrayRef array_, bool ymRelease, bool free_)
 {
     __YMArrayRef array = (__YMArrayRef)array_;
     

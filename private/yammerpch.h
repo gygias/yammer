@@ -25,7 +25,7 @@
 
 #include <stdio.h>
 
-#if defined(YMMACOS) || defined(YMLINUX)
+#if defined(YMAPPLE) || defined(YMLINUX)
 # include <unistd.h>
 # include <time.h>
 # include <sys/time.h>
@@ -71,6 +71,7 @@
 
 #include "YMBase.h"
 #include "YMInternal.h"
+#include "YMDebug.h"
 
 #ifdef YMDEBUG
 # ifndef YMWIN32

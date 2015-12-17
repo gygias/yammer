@@ -9,11 +9,18 @@
 #ifndef YMPrivate_h
 #define YMPrivate_h
 
-#include <Yammer.h>
-
 YM_EXTERN_C_PUSH
 
-_void _YMSessionSimulateInterruption(YMSessionRef session);
+#if defined(YMDEBUG)
+
+extern YMAPI int64_t gYMFirstConnectionFakeSample;
+#define YM_DEBUG_SAMPLE { if ( gYMFirstConnectionFakeSample ) connection->sample = gYMFirstConnectionFakeSample; ymerr("debug: sample %lldb",gYMFirstConnectionFakeSample); }
+
+#else
+
+#define YM_DEBUG_SAMPLE
+
+#endif
 
 YM_EXTERN_C_POP
 

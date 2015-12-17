@@ -214,6 +214,7 @@
     <ClCompile Include="..\src\YMArray.c" />
     <ClCompile Include="..\src\YMBase.c" />
     <ClCompile Include="..\src\YMConnection.c" />
+    <ClCompile Include="..\src\YMDebug.c" />
     <ClCompile Include="..\src\YMDictionary.c" />
     <ClCompile Include="..\src\YMLinkedList.c" />
     <ClCompile Include="..\src\YMLocalSocketPair.c" />

@@ -102,11 +102,11 @@ last_dir=/home/pi
 
 [build-menu]
 CFT_00_LB=_Compile
-CFT_00_CM=gcc -c "%f" -I../ -I../private -I../libyammer -I../win -include ../private/yammer.pch -DRPI -std=c99
+CFT_00_CM=gcc -c "%f" -I../ -I../private -I../libyammer -I../win -include ../private/yammer.pch -DYMLINUX -std=c99
 CFT_00_WD=
 filetypes=C;
 CFT_02_LB=Compile -Wall
-CFT_02_CM=gcc -Wall -c "%f" -I../ -I../private -I../libyammer -include ../private/yammer.pch -DRPI -std=c99
+CFT_02_CM=gcc -Wall -c "%f" -I../ -I../private -I../libyammer -include ../private/yammer.pch -DYMLINUX -std=c99
 CFT_02_WD=
 EX_00_LB=chat client
 EX_00_CM=gdb --args ./out/chat _ychat._tcp
