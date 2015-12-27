@@ -42,8 +42,10 @@
 # define YM_SOFT_ASSERTS 1
 #endif
 
+YM_WPPUSH
 #define ymsoftassert(x,y,...) _ymsoftassert(YM_SOFT_ASSERTS,x,y,##__VA_ARGS__)
 #define _ymsoftassert(z,x,y,...) { if (!(x)) { ymerr("soft assert: "y,##__VA_ARGS__); if (z) abort(); } }
+YM_WPOP
 
 #ifndef YM_HARD_ASSERT
 # define YM_HARD_ASSERT 1
