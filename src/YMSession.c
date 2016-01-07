@@ -369,6 +369,7 @@ typedef struct __ym_session_connect_async_context_t
     YMPeerRef peer;
     YMConnectionRef connection;
     bool moreComing;
+    bool userSync;
 } ___ym_session_connect_async_context_t;
 typedef struct __ym_session_connect_async_context_t __ym_session_connect_async_context;
 typedef __ym_session_connect_async_context *__ym_session_connect_async_context_ref;
@@ -404,6 +405,7 @@ bool YMSessionConnectToPeer(YMSessionRef session_, YMPeerRef peer, bool sync)
         context->peer = (YMPeerRef)YMRetain(peer);
         context->connection = (YMConnectionRef)YMRetain(newConnection);
         context->moreComing = ( i < YMArrayGetCount(addresses) - 1 );
+        context->userSync = sync;
         
         name = YMSTRC("session-async-connect");
         struct ym_thread_dispatch_t connectDispatch = {__ym_session_connect_async_proc, 0, 0, context, name};
@@ -453,19 +455,24 @@ void YM_CALLING_CONVENTION __ym_session_connect_async_proc(ym_thread_dispatch_re
     YMPeerRef peer = context->peer;
     YMConnectionRef connection = context->connection;
     bool moreComing = context->moreComing;
+    bool userSync = context->userSync;
     free(context);
     
     ymlog(YM_LOG_PRE "__ym_session_connect_async_proc entered",YM_LOG_DSC);
     
     bool okay = YMConnectionConnect(connection);
     
-    if ( okay )
-    {
+    if ( okay ) {
         __YMSessionAddConnection(session, connection);
-        session->connectedFunc(session, connection, session->callbackContext);
+        if ( ! userSync ) {
+            session->connectedFunc(session, connection, session->callbackContext);
+        }
     }
-    else
-        session->connectFailedFunc(session, peer, moreComing, session->callbackContext);
+    else {
+        if ( ! userSync ) {
+            session->connectFailedFunc(session, peer, moreComing, session->callbackContext);
+        }
+    }
     
     YMRelease(session);
     YMRelease(peer);
