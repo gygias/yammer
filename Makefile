@@ -1,4 +1,4 @@
-# defaults to linux, which has only ever been tested on raspbian.
+# defaults to linux, which has only ever been tested on raspbian & raspberry pi 2.
 # also supports ARCH=macos, which has only ever been tested on 10.11.*
 
 OUT=out
