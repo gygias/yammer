@@ -169,7 +169,6 @@ YMIOResult YMStreamWriteDown(YMStreamRef stream_, const void *buffer, uint16_t l
     return result;
 }
 
-// void: only ever does in-process i/o
 YMIOResult _YMStreamReadDown(YMStreamRef stream_, void *buffer, uint32_t length)
 {
     __YMStreamRef stream = (__YMStreamRef)stream_;
@@ -184,7 +183,6 @@ YMIOResult _YMStreamReadDown(YMStreamRef stream_, void *buffer, uint32_t length)
     return result;
 }
 
-// void: only ever does in-process i/o
 YMIOResult _YMStreamWriteUp(YMStreamRef stream_, const void *buffer, uint32_t length)
 {
     __YMStreamRef stream = (__YMStreamRef)stream_;

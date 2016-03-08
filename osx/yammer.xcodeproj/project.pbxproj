@@ -854,12 +854,12 @@
 			projectRoot = "";
 			targets = (
 				63225D411BE9026200C28F05 /* libyammer */,
+				6346BBAB1C1F7FE800437E21 /* libyammer-ios */,
+				631916301BFCFF13001475FC /* Yammer */,
 				630A5CFF1BE96CE9003292EE /* YammerTests */,
 				63EEC7551BFB6AA400990ECE /* ymchat */,
-				631916301BFCFF13001475FC /* Yammer */,
 				631F0D311C141EE500C141D4 /* ymtest */,
 				636166E61C18DFA300D17172 /* ym-dispatch-main-test */,
-				6346BBAB1C1F7FE800437E21 /* libyammer-ios */,
 			);
 		};
 /* End PBXProject section */
