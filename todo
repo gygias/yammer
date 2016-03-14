@@ -1,5 +1,5 @@
 - YM_ONCE_DEF-like macro for generic thread boilerplate
-- shared dispatch queues
+- shared "dispatch queues"
 - adopt spinlocks where appropriate
 - generalize copy file / recursive delete dir into utilities, or something
 - __YMRetain(obj,off) optimization
@@ -16,7 +16,7 @@ opaque_thing_that_closes_input_file
         YMPipe:input -> YMPipe:output -> ForwardFile(output,stream)
                                                     |
                                                     V
-                                            Plexer:StreamReadDown -> medium
+                                            Plexer:StreamReadDown -> medium -> ...
 
 - adopt 'synchronized self'? mutexes not small
 - connection ownership/lifetime not clear
