@@ -11,12 +11,18 @@
 #include <fcntl.h>
 
 #include "YMLock.h"
+#include "YMAddress.h"
+#include "YMArray.h"
 
 #define ymlog_type YMLogIO // this file isn't very clearly purposed
 #include "YMLog.h"
 
 #if defined(YMAPPLE) || defined(YMLINUX)
 # include <netinet/in.h>
+# include <sys/ioctl.h>
+# include <sys/types.h>
+# include <sys/socket.h>
+# include <ifaddrs.h>
 # if defined(YMLINUX)
 #  include <sys/resource.h>
 #  define __USE_UNIX98
@@ -329,6 +335,56 @@ int YMGetNumberOfOpenFilesForCurrentProcess()
     
     ymlog("open files: %d",nFiles);
     return nFiles;
+}
+
+YMDictionaryRef YMCreateLocalInterfaceMap()
+{
+    YMDictionaryRef map = YMDictionaryCreate2(true,true);
+    
+#if defined(YMAPPLE) || defined(YMLINUX) // on mac now, guessing about linux
+    struct ifaddrs *ifaddrsList = NULL, *ifaddrsIter;
+    if ( getifaddrs(&ifaddrsList) != 0 ) {
+        ymerr("getifaddrs failed: %d %s",errno,strerror(errno));
+        goto catch_return;
+    }
+    ifaddrsIter = ifaddrsList;
+    while ( ifaddrsIter ) {
+        // IFF_UP // defined in ifconfig.c, anywhere else?
+        //ioctl(<#int#>, <#unsigned long, ...#>);
+        if ( ifaddrsIter->ifa_name && ifaddrsIter->ifa_addr ) {
+            YMAddressRef address = YMAddressCreate(ifaddrsIter->ifa_addr, 0);
+            if ( address ) {
+                YMStringRef name = YMSTRC(ifaddrsIter->ifa_name);
+                if ( ! YMDictionaryContains(map, (YMDictionaryKey)name) ) {
+                    YMArrayRef addresses = YMArrayCreate(true);
+                    YMDictionaryAdd(map, (YMDictionaryKey)name, (void *)addresses);
+                }
+                YMArrayAdd(YMDictionaryGetItem(map, (YMDictionaryKey)name), address);
+                YMRelease(name);
+            }
+        }
+        ifaddrsIter = ifaddrsIter->ifa_next;
+    }
+    freeifaddrs(ifaddrsList);
+#else
+#error todo
+#endif
+    
+    ymlog("current interface map:");
+    YMDictionaryEnumRef denum = YMDictionaryEnumeratorBegin(map);
+    while ( denum ) {
+        ymlogi(" %s:",YMSTR((void *)denum->key))
+        YMArrayRef addresses = (YMArrayRef)denum->value;
+        for ( int i = 0; i < YMArrayGetCount(addresses); i++ ) {
+            ymlogi(" %s",YMSTR(YMAddressGetDescription((YMAddressRef)YMArrayGet(addresses, i))));
+        }
+        ymlogr();
+        denum = YMDictionaryEnumeratorGetNext(denum);
+    }
+    YMDictionaryEnumeratorEnd(denum);
+    
+catch_return:
+    return map;
 }
 
 #if !defined(YMWIN32)

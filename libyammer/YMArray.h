@@ -16,6 +16,7 @@ YM_EXTERN_C_PUSH
 typedef const struct __ym_array_t *YMArrayRef;
 
 YMArrayRef YMAPI YMArrayCreate();
+YMArrayRef YMAPI YMArrayCreate2(bool);
 
 void YMAPI YMArrayAdd(YMArrayRef, const void *);
 void YMAPI YMArrayInsert(YMArrayRef, int64_t, const void *);

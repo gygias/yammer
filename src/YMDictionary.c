@@ -32,23 +32,36 @@ typedef struct __ym_dictionary_t
 {
     _YMType _type;
     
-    bool isYMTypeDict;
     _YMDictionaryItemRef head;
     size_t count;
+    bool ymtypeKeys;
+    bool ymtypeValues;
 } __ym_dictionary_t;
 typedef struct __ym_dictionary_t *__YMDictionaryRef;
 
-_YMDictionaryItemRef _YMDictionaryFindItemWithIdentifier(_YMDictionaryItemRef head, YMDictionaryKey key, _YMDictionaryItemRef *outPreviousItem);
+_YMDictionaryItemRef _YMDictionaryFindItemWithIdentifier(_YMDictionaryItemRef head, YMDictionaryKey key, bool ymtypeKey, _YMDictionaryItemRef *outPreviousItem);
 _YMDictionaryItemRef _YMDictionaryCopyItem(_YMDictionaryItemRef item);
 
-YMDictionaryRef YMDictionaryCreate()
+YMDictionaryRef __YMDictionaryCreate(bool ymtypeKeys, bool ymtypeValues)
 {
     __YMDictionaryRef dict = (__YMDictionaryRef)_YMAlloc(_YMDictionaryTypeID, sizeof(struct __ym_dictionary_t));
     
     dict->head = NULL;
     dict->count = 0;
+    dict->ymtypeKeys = ymtypeKeys;
+    dict->ymtypeValues = ymtypeValues;
     
     return (YMDictionaryRef)dict;
+}
+
+YMDictionaryRef YMDictionaryCreate()
+{
+    return __YMDictionaryCreate(false, false);
+}
+
+YMDictionaryRef YMAPI YMDictionaryCreate2(bool ymtypeKeys, bool ymtypeValues)
+{
+    return __YMDictionaryCreate(ymtypeKeys, ymtypeValues);
 }
 
 void _YMDictionaryFree(YMTypeRef object)
@@ -61,6 +74,10 @@ void _YMDictionaryFree(YMTypeRef object)
     {
         _YMDictionaryItemRef thisItem = itemIter;
         itemIter = itemIter->next;
+        if ( dict->ymtypeKeys )
+            YMRelease((YMTypeRef)itemIter->key);
+        if ( dict->ymtypeValues )
+            YMRelease((YMTypeRef)itemIter->value);
         free(thisItem);
     }
 }
@@ -84,7 +101,7 @@ void YMDictionaryAdd(YMDictionaryRef dict_, YMDictionaryKey key, YMDictionaryVal
         abort();
     }
     
-    if ( _YMDictionaryFindItemWithIdentifier(dict->head, key, NULL) )
+    if ( _YMDictionaryFindItemWithIdentifier(dict->head, key, dict->ymtypeKeys, NULL) )
     {
         ymerr("error: YMDictionary already contains item for key %llu",key);
         abort();
@@ -95,6 +112,11 @@ void YMDictionaryAdd(YMDictionaryRef dict_, YMDictionaryKey key, YMDictionaryVal
     newItem->next = dict->head; // nulls or prepends
     dict->head = newItem;
     
+    if ( dict->ymtypeKeys )
+        YMRetain((void *)key);
+    if ( dict->ymtypeValues )
+        YMRetain((void *)value);
+    
     dict->count++;
 }
 
@@ -104,7 +126,7 @@ bool YMDictionaryContains(YMDictionaryRef dict_, YMDictionaryKey key)
     CHECK_CONSISTENCY
     if ( dict->head == NULL )
         return false;
-    return ( NULL != _YMDictionaryFindItemWithIdentifier(dict->head, key, NULL) );
+    return ( NULL != _YMDictionaryFindItemWithIdentifier(dict->head, key, dict->ymtypeKeys, NULL) );
 }
 
 YMDictionaryKey YMDictionaryGetRandomKey(YMDictionaryRef dict_)
@@ -128,20 +150,22 @@ YMDictionaryValue YMDictionaryGetItem(YMDictionaryRef dict_, YMDictionaryKey key
 {
     __YMDictionaryRef dict = (__YMDictionaryRef)dict_;
     CHECK_CONSISTENCY
-    _YMDictionaryItemRef foundItem = _YMDictionaryFindItemWithIdentifier(dict->head, key, NULL);
+    _YMDictionaryItemRef foundItem = _YMDictionaryFindItemWithIdentifier(dict->head, key, dict->ymtypeKeys, NULL);
     if ( foundItem )
         return foundItem->value;
     return NULL;
 }
 
-_YMDictionaryItemRef _YMDictionaryFindItemWithIdentifier(_YMDictionaryItemRef head, YMDictionaryKey key, _YMDictionaryItemRef *outPreviousItem)
+_YMDictionaryItemRef _YMDictionaryFindItemWithIdentifier(_YMDictionaryItemRef head, YMDictionaryKey key, bool ymtypeKeys, _YMDictionaryItemRef *outPreviousItem)
 {
     _YMDictionaryItemRef itemIter = head,
         previousItem = NULL;
     
     while (itemIter)
     {
-        if ( itemIter->key == key )
+        if ( ymtypeKeys && YMIsEqual((YMTypeRef)key, (YMTypeRef)itemIter->key) )
+            break;
+        else if ( itemIter->key == key )
             break;
         
         previousItem = itemIter;
@@ -167,7 +191,7 @@ YMDictionaryValue YMDictionaryRemove(YMDictionaryRef dict_, YMDictionaryKey key)
     
     YMDictionaryValue outValue = NULL;
     _YMDictionaryItemRef previousItem = NULL;
-    _YMDictionaryItemRef theItem = _YMDictionaryFindItemWithIdentifier(dict->head, key, &previousItem);
+    _YMDictionaryItemRef theItem = _YMDictionaryFindItemWithIdentifier(dict->head, key, dict->ymtypeKeys, &previousItem);
     if ( ! theItem )
     {
         ymerr("error: key does not exist to remove");
@@ -185,6 +209,12 @@ YMDictionaryValue YMDictionaryRemove(YMDictionaryRef dict_, YMDictionaryKey key)
     }
     
     CHECK_CONSISTENCY
+    
+    if ( dict->ymtypeKeys )
+        YMRelease((YMTypeRef)theItem->key);
+    if ( dict->ymtypeValues )
+        YMRelease((YMTypeRef)theItem->value);
+    
     free(theItem);
     return outValue;
 }

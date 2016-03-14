@@ -73,6 +73,8 @@ YMTypeRef YMAPI YMAutorelease(YMTypeRef object);
 #endif
 YM_RELEASE_RETURN_TYPE YMAPI YMRelease(YMTypeRef object);
 
+bool YMAPI YMIsEqual(YMTypeRef a, YMTypeRef b);
+
 void YMAPI YMSelfLock(YMTypeRef object);
 void YMAPI YMSelfUnlock(YMTypeRef object);
 

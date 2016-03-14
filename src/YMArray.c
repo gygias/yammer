@@ -30,8 +30,13 @@ int64_t __YMArrayFind(__YMArrayRef array, const void *value);
 
 YMArrayRef YMArrayCreate()
 {
+    return YMArrayCreate2(false);
+}
+
+YMArrayRef YMArrayCreate2(bool ymtypes)
+{
     __YMArrayRef array = (__YMArrayRef)_YMAlloc(_YMArrayTypeID, sizeof(struct __ym_array_t));
-    array->dict = YMDictionaryCreate();
+    array->dict = YMDictionaryCreate2(false,ymtypes);
     array->count = 0;
     return array;
 }

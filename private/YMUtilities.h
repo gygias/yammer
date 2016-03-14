@@ -9,6 +9,8 @@
 #ifndef YMUtilities_h
 #define YMUtilities_h
 
+#include "YMDictionary.h"
+
 #define YMMIN(a,b) ( (a<b) ? (a) : (b) )
 #define YMMAX(a,b) ( (a>b) ? (a) : (b) )
 
@@ -46,6 +48,8 @@ void YMNetworkingInit();
 int32_t YMPortReserve(bool ipv4, int *outSocket);
 
 int YMGetNumberOfOpenFilesForCurrentProcess();
+
+YMDictionaryRef YMCreateLocalInterfaceMap();
 
 // in utilities for YMAlloc
 #include "YMLock.h"

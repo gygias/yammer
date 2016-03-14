@@ -18,6 +18,7 @@
 #import "SessionTests.h"
 
 #import "YMDictionary.h"
+#import "YMUtilities.h"
 
 @interface YammerTests : XCTestCase
 
@@ -117,6 +118,7 @@ bool ym_test_diff_proc(const void *ctx, const char *path1, const char *path2, bo
 #define testSession             test_I_Session
 
 - (void)testTask {
+    YMCreateLocalInterfaceMap();
     const void *SELF = (__bridge const void *)(self);
     TaskTestsRun(ym_test_assert_proc, SELF);
 }

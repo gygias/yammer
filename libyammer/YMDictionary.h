@@ -19,6 +19,7 @@ typedef uint64_t YMDictionaryKey;
 typedef void *YMDictionaryValue;
 
 YMDictionaryRef YMAPI YMDictionaryCreate();
+YMDictionaryRef YMAPI YMDictionaryCreate2(bool ymtypeKeys, bool ymtypeValues);
 
 void YMAPI YMDictionaryAdd(YMDictionaryRef, YMDictionaryKey key, YMDictionaryValue item);
 bool YMAPI YMDictionaryContains(YMDictionaryRef, YMDictionaryKey key);

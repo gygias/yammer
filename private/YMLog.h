@@ -14,7 +14,7 @@
 #endif
 
 #ifndef ymlog_target
-# define ymlog_target ( YMLogDefault | YMLogSecurity | YMLogConnection | YMLogSession | YMLogmDNS )
+# define ymlog_target ( YMLogDefault | YMLogSecurity | YMLogConnection | YMLogSession | YMLogmDNS | YMLogIO )
 #endif
 
 #ifndef ymlog_type_debug
@@ -33,9 +33,11 @@ YM_WPPUSH // Token pasting of ',' and __VA_ARGS__ is a GNU extension
 # define YM_LOG_DSC ""
 #endif
 
-#define ymlog(x,...) { if ( ymlog_type & ymlog_target ) __YMLogType(ymlog_target,(x),##__VA_ARGS__); }
-#define ymdbg(x,...) { if ( ymlog_type_debug & ymlog_target_debug ) __YMLogType(ymlog_type_debug,(x),##__VA_ARGS__); }
-#define ymerr(x,...) __YMLogType(YMLogError,(x),##__VA_ARGS__)
+#define ymlog(x,...)    { if ( ymlog_type & ymlog_target ) __YMLogType(ymlog_target,true,(x),##__VA_ARGS__); }
+#define ymlogi(x,...)   { if ( ymlog_type & ymlog_target ) __YMLogType(ymlog_target,false,(x),##__VA_ARGS__); }
+#define ymlogr()        { if ( ymlog_type & ymlog_target ) __YMLogReturn(ymlog_target); }
+#define ymdbg(x,...)    { if ( ymlog_type_debug & ymlog_target_debug ) __YMLogType(ymlog_type_debug,true,(x),##__VA_ARGS__); }
+#define ymerr(x,...)    __YMLogType(YMLogError,true,(x),##__VA_ARGS__)
 YM_WPOP
 
 YM_EXTERN_C_PUSH
@@ -59,7 +61,8 @@ typedef enum
     YMLogEverything = 0xFFFF
 } YMLogLevel;
 
-void YMAPI __YMLogType( int level, char* format, ... ) __printflike(2, 3);
+void YMAPI __YMLogType( int level, bool newline, char* format, ... ) __printflike(3, 4);
+void YMAPI __YMLogReturn( int level );
 
 void _YMLogLock();
 void _YMLogUnlock();

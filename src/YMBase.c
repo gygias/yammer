@@ -188,6 +188,22 @@ void __YMFree(__YMTypeRef object)
         ymabort("base: fatal: free type unknown %c",type);
 }
 
+bool YMAPI YMIsEqual(YMTypeRef a_, YMTypeRef b_)
+{
+    __YMTypeRef a = (__YMTypeRef)a_,
+                b = (__YMTypeRef)b_;
+    if ( ! a || ! b )
+        return false;
+    if ( a->__type != b->__type )
+        return false;
+    
+    if ( a->__type == _YMStringTypeID )
+        return YMStringEquals(a_, b_);
+    else
+        ymabort("equivalency for ymtype %d not implemented",a->__type);
+    return false;
+}
+
 void YMSelfLock(YMTypeRef object)
 {
     YMLockMutex(((__YMTypeRef)object)->__mutex);
