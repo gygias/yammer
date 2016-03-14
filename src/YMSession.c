@@ -20,9 +20,9 @@
 #include "YMUtilities.h"
 
 #define ymlog_type YMLogSession
-#include "YMLog.h"
 #define YM_LOG_PRE "session[%s]: "
 #define YM_LOG_DSC YMSTR(session->logDescription)
+#include "YMLog.h"
 
 #if !defined(YMWIN32)
 # if defined(YMLINUX)

@@ -13,10 +13,10 @@
 #include "YMUtilities.h"
 
 #define ymlog_type YMLogIO
-#include "YMLog.h"
 #define YM_LOG_PRE "local-socket[%s]: "
 #define YM_LOG_DSC YMSTR(pair->userName)
 #define YM_LOG_DSCG "&"
+#include "YMLog.h"
 
 #if !defined(YMWIN32)
 # include <sys/socket.h>

@@ -16,10 +16,9 @@
 #include "YMThread.h"
 
 #define ymlog_type YMLogConnection
-#include "YMLog.h"
-
 #define YM_LOG_PRE "connection[%s]: "
 #define YM_LOG_DSC (connection->address ? YMSTR(YMAddressGetDescription(connection->address)) : "*")
+#include "YMLog.h"
 
 #if !defined(YMWIN32)
 # include <sys/socket.h>
@@ -287,7 +286,7 @@ bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, 
     if ( asServer ) {
         // if ( clientWantsSamplingFastestEtc )
 #define THIRTY_TWO_MEGABYTES 33554432
-#define SIXTEEN_MEGABYTES 16777216
+#define SIXTEEN_MEGABYTES ( THIRTY_TWO_MEGABYTES / 2 )
         for ( int i = 0; i < 2; i++ ) {
             uint32_t sampleSize = SIXTEEN_MEGABYTES;
             if ( i == 0 ) { command.command = YMConnectionCommandSample; command.userInfo = sampleSize; }

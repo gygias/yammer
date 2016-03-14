@@ -182,7 +182,7 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     }
     theTest->awaitingInterrupt = true;
     
-    // this used to be done with 2 YMPipes, and the 'interruption' was simulated by releasing (and close-in-dealloc'ing) those pipes.
+    // this used to be done with 2 YMPipes, and the 'interruption' was simulated by releasing (and close-on-dealloc'ing) those pipes.
     // this was problematic because if a service thread wasn't within a provider read/write, the fd would quickly get recycled
     // into something else (generally a new incoming stream on one side), and the service thread would get deadlocked on a valid
     // but different fd.
