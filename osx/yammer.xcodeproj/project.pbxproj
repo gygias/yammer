@@ -104,6 +104,8 @@
 		636166F51C18E05700D17172 /* ym-dispatch-main-test.c in Sources */ = {isa = PBXBuildFile; fileRef = 636166E21C18DF8B00D17172 /* ym-dispatch-main-test.c */; };
 		636166F71C18EDDD00D17172 /* libyammer.geany in Resources */ = {isa = PBXBuildFile; fileRef = 636166F61C18EDDD00D17172 /* libyammer.geany */; };
 		636166F91C18FAF600D17172 /* TestsMain.c in Sources */ = {isa = PBXBuildFile; fileRef = 636166F81C18FAF600D17172 /* TestsMain.c */; };
+		6369CEA31C97570600737A6B /* GrabBagTests.c in Sources */ = {isa = PBXBuildFile; fileRef = 6369CEA11C97570500737A6B /* GrabBagTests.c */; };
+		6369CEA41C97570600737A6B /* GrabBagTests.c in Sources */ = {isa = PBXBuildFile; fileRef = 6369CEA11C97570500737A6B /* GrabBagTests.c */; };
 		637816C71BF68B8F00BF79E2 /* YMString.c in Sources */ = {isa = PBXBuildFile; fileRef = 637816C51BF68B8F00BF79E2 /* YMString.c */; };
 		637816C81BF68B8F00BF79E2 /* YMString.h in Headers */ = {isa = PBXBuildFile; fileRef = 637816C61BF68B8F00BF79E2 /* YMString.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		637E3D5D1BF262EE00D702ED /* YMX509Certificate.c in Sources */ = {isa = PBXBuildFile; fileRef = 637E3D5B1BF262EE00D702ED /* YMX509Certificate.c */; };
@@ -293,6 +295,8 @@
 		636166E71C18DFA300D17172 /* ym-dispatch-main-test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "ym-dispatch-main-test"; sourceTree = BUILT_PRODUCTS_DIR; };
 		636166F61C18EDDD00D17172 /* libyammer.geany */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = libyammer.geany; path = ../linux/libyammer.geany; sourceTree = "<group>"; };
 		636166F81C18FAF600D17172 /* TestsMain.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = TestsMain.c; sourceTree = "<group>"; };
+		6369CEA11C97570500737A6B /* GrabBagTests.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = GrabBagTests.c; sourceTree = "<group>"; };
+		6369CEA21C97570500737A6B /* GrabBagTests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GrabBagTests.h; sourceTree = "<group>"; };
 		637816C31BF680A700BF79E2 /* YMInternal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMInternal.h; path = private/YMInternal.h; sourceTree = "<group>"; };
 		637816C41BF684D300BF79E2 /* YMPlexerPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMPlexerPriv.h; path = private/YMPlexerPriv.h; sourceTree = "<group>"; };
 		637816C51BF68B8F00BF79E2 /* YMString.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMString.c; path = src/YMString.c; sourceTree = "<group>"; };
@@ -608,6 +612,8 @@
 				63DD2E091C0F7D6C00D822D1 /* Tests.h */,
 				63DD2E0A1C0F898200D822D1 /* Tests.c */,
 				636166F81C18FAF600D17172 /* TestsMain.c */,
+				6369CEA21C97570500737A6B /* GrabBagTests.h */,
+				6369CEA11C97570500737A6B /* GrabBagTests.c */,
 				63DD2E0F1C0F988700D822D1 /* CryptoTests.h */,
 				63DD2E0E1C0F988700D822D1 /* CryptoTests.c */,
 				63DD2E071C0F7D2D00D822D1 /* DictionaryTests.h */,
@@ -899,6 +905,7 @@
 				63BA70AA1C17612600210D2E /* TaskTests.c in Sources */,
 				63028B0F1C013D120075B6AC /* CheckStateTest.m in Sources */,
 				63DD2E1F1C0FE41F00D822D1 /* SessionTests.c in Sources */,
+				6369CEA31C97570600737A6B /* GrabBagTests.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -921,6 +928,7 @@
 				631F0D3A1C141F1700C141D4 /* CryptoTests.c in Sources */,
 				631F0D3B1C141F1700C141D4 /* DictionaryTests.c in Sources */,
 				636166DF1C18DC1100D17172 /* ThreadTests.c in Sources */,
+				6369CEA41C97570600737A6B /* GrabBagTests.c in Sources */,
 				631F0D3C1C141F1700C141D4 /* LocalSocketPairTests.c in Sources */,
 				631F0D3D1C141F1700C141D4 /* mDNSTests.c in Sources */,
 				63BA70AB1C17612600210D2E /* TaskTests.c in Sources */,

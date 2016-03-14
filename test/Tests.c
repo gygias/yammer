@@ -14,6 +14,7 @@
 
 YM_EXTERN_C_PUSH
 
+#include "GrabBagTests.h"
 #include "TaskTests.h"
 #include "ThreadTests.h"
 #include "CryptoTests.h"
@@ -65,6 +66,9 @@ void RunAllTests()
 {
     gLock = YMLockCreate();
     
+    ymerr("------ misc tests start ------");
+    GrabBagTestsRun(_ym_test_assert_func, NULL);
+    ymerr("------ misc tests end ------");
     ymerr("------ task tests start ------");
     TaskTestsRun(_ym_test_assert_func, NULL);
     ymerr("------ task tests end ------");

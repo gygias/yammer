@@ -14,7 +14,7 @@
 #include "YMAddress.h"
 #include "YMArray.h"
 
-#define ymlog_type YMLogIO // this file isn't very clearly purposed
+#define ymlog_type YMLogDefault // this file isn't very clearly purposed
 #include "YMLog.h"
 
 #if defined(YMAPPLE) || defined(YMLINUX)
