@@ -115,8 +115,7 @@ void SessionTestsRun(ym_test_assert_func assert, ym_test_diff_func diff, const v
     _TestSessionWritingLargeAndReadingSparseFiles(&theTest);
     ymerr(" Session test finished with %llu sparse files",theTest.nSparseFilesToRead);
     
-    while ( YMDictionaryGetCount(theTest.nonRegularFileNames) > 0 )
-    {
+    while ( YMDictionaryGetCount(theTest.nonRegularFileNames) > 0 ) {
         void *filename = YMDictionaryRemove(theTest.nonRegularFileNames, YMDictionaryGetRandomKey(theTest.nonRegularFileNames));
         free(filename);
     }
@@ -304,16 +303,14 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteLargeFile(YM_THREAD_PARAM ctx
     
     theTest->serverAsync = arc4random_uniform(2);
     ym_connection_forward_context_t *ctx = NULL;
-    if ( theTest->serverAsync )
-    {
+    if ( theTest->serverAsync ) {
         ctx = calloc(sizeof(struct ym_connection_forward_context_t),1);
         ctx->callback = _server_async_forward_callback;
         ctx->context = theTest;
     }
     
     YMFILE forwardReadFd = theTest->largeSrcFd;
-    if ( ! theTest->serverBounding )
-    {
+    if ( ! theTest->serverBounding ) {
         YMStringRef str = YMSTRC("middleman");
         theTest->middlemanPipe = YMPipeCreate(str);
         YMRelease(str);
@@ -327,8 +324,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteLargeFile(YM_THREAD_PARAM ctx
     bool okay = YMConnectionForwardFile(connection, forwardReadFd, stream, theTest->serverBounding ? &gSomeLength : NULL, !theTest->serverAsync, ctx);
     testassert(okay,"server forward file");
     
-    if ( ! theTest->serverAsync )
-    {
+    if ( ! theTest->serverAsync ) {
         if ( ! theTest->serverBounding ) YMRelease(theTest->middlemanPipe);
         YMConnectionCloseStream(connection,stream);
         YMSemaphoreSignal(theTest->threadExitSemaphore);
@@ -362,8 +358,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _FlushMiddleman(YM_THREAD_PARAM ctx_)
 		YM_WRITE_FILE(writeFd, buf, aRead);
         testassert(aWrite==aRead,"middleman write");
         
-        if ( time(NULL) - startTime > writeLargeUnboundedFor )
-        {
+        if ( time(NULL) - startTime > writeLargeUnboundedFor ) {
             ymlog("closing large middleman input (f%d)",writeFd);
             _YMPipeCloseInputFile(theTest->middlemanPipe);
             break;
@@ -387,10 +382,8 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteSparseFiles(YM_THREAD_PARAM c
     
     DIR *dir = opendir(YMSTR(theTest->tempSparseDir));
     struct dirent *dir_ent = NULL;
-    if ( dir )
-    {
-        for ( int i = 0 ; ; i++ )
-        {
+    if ( dir ) {
+        for ( int i = 0 ; ; i++ ) {
             dir_ent = readdir(dir);
             if ( ! dir_ent )
                 break;
@@ -413,8 +406,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteSparseFiles(YM_THREAD_PARAM c
     testassert(result==0||errno==ENOENT, "rmdir failed %d %s",errno,strerror(errno));
 
 #ifdef YMWIN32
-	for ( int i = 0; i < 5; i++ )
-	{
+    for ( int i = 0; i < 5; i++ ) {
 #endif
 		result = mkdir(YMSTR(theTest->tempSparseDir),0755);
 #ifdef YMWIN32
@@ -429,16 +421,14 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteSparseFiles(YM_THREAD_PARAM c
     dir = opendir(ClientSparsePath);
     testassert(dir, "opendir");
     
-    for ( int i = 0 ; ; i++ )
-    {
+    for ( int i = 0 ; ; i++ ) {
         dir_ent = readdir(dir);
         if ( ! dir_ent )
             break;
         
         char *aFile = dir_ent->d_name;
         
-        if ( dir_ent->d_type != DT_REG )
-        {
+        if ( dir_ent->d_type != DT_REG ) {
             ymlog("client skipping %s",aFile);
             char *entry = strdup(aFile);
             YMDictionaryAdd(theTest->nonRegularFileNames, (YMDictionaryKey)entry, entry);
@@ -478,16 +468,14 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteSparseFiles(YM_THREAD_PARAM c
         struct SparseFileHeader header = { theTest->lastClientFileSize , {0}, theTest->lastClientBounded };
         strncpy(header.name, aFile, NAME_MAX+1);
         YMStreamWriteDown(stream, &header, sizeof(header));
-        if ( theTest->stopping )
-        {
+        if ( theTest->stopping ) {
             YMConnectionCloseStream(connection, stream);
             YM_CLOSE_FILE(aSparseFd);
             break;
         }
         
         ym_connection_forward_context_t *ctx = NULL;
-        if ( theTest->lastClientAsync )
-        {
+        if ( theTest->lastClientAsync ) {
             ctx = calloc(sizeof(struct ym_connection_forward_context_t),1);
             ctx->callback = _client_async_forward_callback;
             ctx->context = theTest;
@@ -500,8 +488,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteSparseFiles(YM_THREAD_PARAM c
         struct SparseFileThanks thx;
         uint16_t outLength = 0, length = sizeof(thx);
         result = YMStreamReadUp(stream, &thx, length, &outLength);
-        if ( theTest->stopping )
-        {
+        if ( theTest->stopping ) {
             YMConnectionCloseStream(connection, stream);
             YM_CLOSE_FILE(aSparseFd);
             break;

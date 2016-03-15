@@ -36,19 +36,16 @@ YMPipeRef YMPipeCreate(YMStringRef name)
 	YMFILE fds[2];
     YM_CREATE_PIPE(fds);
     
-    while ( result != 0 )
-    {
+    while ( result != 0 ) {
 #if !defined(YMWIN32)
-        if ( errno == EFAULT )
-        {
+        if ( errno == EFAULT ) {
             ymerr("pipe[%s]: error: invalid address space",YMSTR(name));
             return NULL;
         }
 #endif
 		sleep(1);
 
-        if ( iter )
-        {
+        if ( iter ) {
             iter++;
             if ( iter > 100 )
                 ymerr("pipe[%s]: warning: new files unavailable for pipe()",YMSTR(name));
@@ -123,16 +120,14 @@ void __YMPipeCloseFile(__YMPipeRef pipe, YMFILE *fdPtr)
 {
     YMFILE fd = *fdPtr;
     *fdPtr = NULL_FILE;
-    if ( fd != NULL_FILE )
-    {
+    if ( fd != NULL_FILE ) {
         int result, error = 0;
         const char *errorStr = NULL;
         
         ymlog("   pipe[%s]: closing f%d",YMSTR(pipe->name),fd);
 		YM_CLOSE_FILE(fd);
 
-        if ( result != 0 )
-        {
+        if ( result != 0 ) {
             ymerr("   pipe[%s]: close on f%d failed: %d (%s)",YMSTR(pipe->name), fd, result, errorStr);
             //abort(); plexer
         }

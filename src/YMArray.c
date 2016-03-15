@@ -89,8 +89,7 @@ int64_t __YMArrayFind(__YMArrayRef array, const void *value)
 
 bool YMArrayContains(YMArrayRef array_, const void *value)
 {
-    __YMArrayRef array = (__YMArrayRef)array_;
-    
+    __YMArrayRef array = (__YMArrayRef)array_;    
     return ( __YMArrayFind(array, value) != NULL_INDEX );
 }
 

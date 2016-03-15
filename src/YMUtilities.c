@@ -15,7 +15,7 @@
 #include "YMArray.h"
 #include "YMTask.h"
 
-#define ymlog_type YMLogDefault // this file isn't very clearly purposed
+#define ymlog_type YMLogDefault // this file isn't very clearly purposed, if something reaches critical mass break it out
 #include "YMLog.h"
 
 #if defined(YMAPPLE) || defined(YMLINUX)
@@ -95,8 +95,7 @@ ComparisonResult YMTimevalCompare(struct timeval *a, struct timeval *b)
         return LessThan;
     else if ( a->tv_sec > b->tv_sec )
         return GreaterThan;
-    else
-    {
+    else {
         if ( a->tv_usec < b->tv_usec )
             return LessThan;
         else if ( a->tv_usec > b->tv_usec )
@@ -115,17 +114,13 @@ YMIOResult YMReadFull(YMFILE fd, uint8_t *buffer, size_t bytes, size_t *outRead)
     
     size_t off = 0;
     YMIOResult ioResult = YMIOSuccess;
-    while ( off < bytes )
-    {
+    while ( off < bytes ) {
         YM_READ_FILE(fd, buffer + off, bytes - off);
-        if ( aRead == 0 )
-        {
+        if ( aRead == 0 ) {
             ymdbg("    io: read(f%d, %p + %zu, %zu - %zu) EOF",fd, buffer, off, bytes, off);
             ioResult = YMIOEOF;
             break;
-        }
-        else if ( aRead == -1 )
-        {
+        } else if ( aRead == -1 ) {
             ymerr("    io: read(f%d, %p + %zu, %zu - %zu) failed: %d (%s)",fd, buffer, off, bytes, off, error, errorStr);
             ioResult = YMIOError;
             break;
@@ -149,11 +144,9 @@ YMIOResult YMWriteFull(YMFILE fd, const uint8_t *buffer, size_t bytes, size_t *o
     
     size_t off = 0;
     YMIOResult ioResult = YMIOSuccess;
-    while ( off < bytes )
-    {
+    while ( off < bytes ) {
         YM_WRITE_FILE(fd, buffer + off, bytes - off);
-        switch(aWrite)
-        {
+        switch(aWrite) {
             case 0:
                 ymerr("    io: write(f%d, %p + %zu, %zu - %zu) failed 0?: %d (%s)",fd, buffer, off, bytes, off, error, errorStr);
                 abort();
@@ -181,8 +174,7 @@ YM_ONCE_FUNC(__YMNetworkingInit,
 {
 	WSADATA wsa;
 	int result = WSAStartup(MAKEWORD(2,2),&wsa);
-	if (result != 0)
-	{
+    if ( result != 0 ) {
 		ymerr("fatal: WSAStartup failed: %x %x",result,GetLastError());
 		exit(1);
 	}
@@ -214,8 +206,7 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
     else
         ((struct sockaddr_in6 *)addr)->sin6_addr = in6addr_any;
     
-    while (aPort < YM_PORT_MAX)
-    {
+    while (aPort < YM_PORT_MAX) {
         thePort = aPort++;
         
         int domain = ipv4 ? PF_INET : PF_INET6;
@@ -249,8 +240,7 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
         break;
         
     catch_continue:
-        if ( aSocket > 0 )
-		{
+        if ( aSocket > 0 ) {
 			int result, error; const char *errorStr;
             YM_CLOSE_SOCKET(aSocket);
 		}
@@ -268,8 +258,7 @@ int YMGetNumberOfOpenFilesForCurrentProcess()
     int result = getrlimit(RLIMIT_NOFILE, &r_limit);
     ymsoftassert(result==0, "getrlimit: %d %s",errno,strerror(errno));
     
-    for( rlim_t i = 0; i < r_limit.rlim_cur; i++ )
-    {
+    for( rlim_t i = 0; i < r_limit.rlim_cur; i++ ) {
         errno = 0;
         result = fcntl((int)i, F_GETFD);
         if ( result == 0 )
@@ -278,18 +267,16 @@ int YMGetNumberOfOpenFilesForCurrentProcess()
 #else // maybe there's a hidden "getrlimit" for win32? couldn't find it
 	// cribbed from http://www.codeproject.com/Articles/18975/Listing-Used-Files
     // Get the list of all handles in the system
-	typedef struct _SYSTEM_HANDLE
-	{
+    typedef struct _SYSTEM_HANDLE {
 		DWORD       dwProcessId;
 		BYTE		bObjectType;
 		BYTE		bFlags;
 		WORD		wValue;
 		PVOID       pAddress;
 		DWORD GrantedAccess;
-	}SYSTEM_HANDLE;
+	} SYSTEM_HANDLE;
 
-	typedef struct _SYSTEM_HANDLE_INFORMATION
-	{
+    typedef struct _SYSTEM_HANDLE_INFORMATION {
 		DWORD         dwCount;
 		SYSTEM_HANDLE Handles[1];
 	} SYSTEM_HANDLE_INFORMATION, *PSYSTEM_HANDLE_INFORMATION, **PPSYSTEM_HANDLE_INFORMATION;
@@ -313,15 +300,13 @@ int YMGetNumberOfOpenFilesForCurrentProcess()
 	pSysHandleInformation = malloc(sysHandleInformationSize);
     status = NtQuerySystemInformation( SystemHandleInformation,
                                         pSysHandleInformation, sysHandleInformationSize, &sysHandleInformationSize);
-    if( !NT_SUCCESS(status))
-	{
+    if( !NT_SUCCESS(status) ) {
 		free(pSysHandleInformation);
 		return -1;
 	}
     
 	DWORD currentProcessID = GetCurrentProcessId();
-	for ( DWORD i = 0; i < pSysHandleInformation->dwCount; i++ )
-	{
+	for ( DWORD i = 0; i < pSysHandleInformation->dwCount; i++ ) {
 		SYSTEM_HANDLE sh = pSysHandleInformation->Handles[i];
 		if ( sh.dwProcessId != currentProcessID )
 			continue;
@@ -467,24 +452,19 @@ pthread_mutex_t *YMCreateMutexWithOptions(YMLockOptions options)
     pthread_mutexattr_t *attributesPtr = NULL;
     
     int result = pthread_mutexattr_init(&attributes);
-    if ( result != 0 )
-    {
+    if ( result != 0 ) {
         fprintf(stderr,"pthread_mutexattr_init failed: %d (%s)\n", result, strerror(result));
         goto catch_release;
     }
     
     attributesPtr = &attributes;
     
-    if ( options )
-    {
+    if ( options ) {
         int optionsList[4] = { YMLockRecursive, PTHREAD_MUTEX_RECURSIVE, YMLockErrorCheck, PTHREAD_MUTEX_ERRORCHECK };
-        for(uint8_t i = 0; i < 4; i+=2 )
-        {
-            if ( options & optionsList[i] )
-            {
+        for(uint8_t i = 0; i < 4; i+=2 ) {
+            if ( options & optionsList[i] ) {
                 result = pthread_mutexattr_settype(attributesPtr, optionsList[i+1]);
-                if ( result != 0 )
-                {
+                if ( result != 0 ) {
                     fprintf(stderr,"pthread_mutexattr_settype failed: %d (%s)\n", result, strerror(result));
                     goto catch_release;
                 }
@@ -494,8 +474,7 @@ pthread_mutex_t *YMCreateMutexWithOptions(YMLockOptions options)
     
     mutex = YMALLOC(sizeof(pthread_mutex_t));
     result = pthread_mutex_init(mutex, attributesPtr);
-    if ( result != 0 )
-    {
+    if ( result != 0 ) {
         fprintf(stderr,"pthread_mutex_init failed: %d (%s)\n", result, strerror(result));
         free(mutex);
         mutex = NULL;
@@ -511,8 +490,7 @@ bool YMLockMutex(pthread_mutex_t *mutex)
 {
     int result = pthread_mutex_lock(mutex);
     bool okay = true;
-    switch(result)
-    {
+    switch(result) {
         case 0:
             break;
         case EDEADLK:
@@ -535,8 +513,7 @@ bool YMUnlockMutex(pthread_mutex_t *mutex)
 {
     int result = pthread_mutex_unlock(mutex);
     bool okay = true;
-    switch(result)
-    {
+    switch(result) {
         case 0:
             break;
         case EPERM:

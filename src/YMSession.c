@@ -217,13 +217,11 @@ void _YMSessionFree(YMTypeRef object)
     session->acceptThreadExitFlag = false;
     if ( session->acceptThread )
         YMRelease(session->acceptThread);
-    if ( session->initConnectionDispatchThread )
-    {
+    if ( session->initConnectionDispatchThread ) {
         YMThreadDispatchJoin(session->initConnectionDispatchThread);
         YMRelease(session->initConnectionDispatchThread);
     }
-    if ( session->connectDispatchThread )
-    {
+    if ( session->connectDispatchThread ) {
         YMThreadDispatchJoin(session->connectDispatchThread);
         YMRelease(session->connectDispatchThread);
     }
@@ -237,22 +235,19 @@ void _YMSessionFree(YMTypeRef object)
     // server
     if ( session->name )
         YMRelease(session->name);
-    if ( session->service )
-    {
+    if ( session->service ) {
         YMmDNSServiceStop(session->service, true); // xxx
         __YMSessionObserveNetworkInterfaceChanges(session, false);
         YMRelease(session->service);
     }
     
-    if ( session->browser )
-    {
+    if ( session->browser ) {
         YMmDNSBrowserStop(session->browser);
         YMRelease(session->browser);
     }
     
     YMDictionaryEnumRef aEnum = YMDictionaryEnumeratorBegin(session->knownPeers);
-    while ( aEnum )
-    {
+    while ( aEnum ) {
         YMPeerRef aPeer = aEnum->value;
         YMRelease(aPeer);
         aEnum = YMDictionaryEnumeratorGetNext(aEnum);
@@ -278,15 +273,13 @@ bool YMSessionStartBrowsing(YMSessionRef session_)
                                                         __ym_mdns_service_resolved_func,
                                                         __ym_mdns_service_removed_func,
                                                         session);
-    if ( ! session->browser )
-    {
+    if ( ! session->browser ) {
         ymerr(YM_LOG_PRE "error: failed to create browser",YM_LOG_DSC);
         return false;
     }
     
     bool startOK = YMmDNSBrowserStart(session->browser);
-    if ( ! startOK )
-    {
+    if ( ! startOK ) {
         ymerr(YM_LOG_PRE "error: failed to start browser",YM_LOG_DSC);
         return false;
     }
@@ -302,8 +295,7 @@ bool YMSessionStopBrowsing(YMSessionRef session_)
     
     bool okay = true;
     
-    if ( session->browser )
-    {
+    if ( session->browser ) {
         okay = YMmDNSBrowserStop(session->browser);
         YMRelease(session->browser);
         session->browser = NULL;
@@ -327,10 +319,8 @@ YMPeerRef YMSessionGetPeerNamed(YMSessionRef session_, YMStringRef peerName)
     YMLockLock(session->knownPeersLock);
     {
         YMDictionaryEnumRef peerEnum = YMDictionaryEnumeratorBegin(session->knownPeers);
-        while ( peerEnum )
-        {
-            if ( YMStringEquals(YMPeerGetName((YMPeerRef)peerEnum->value), peerName) )
-            {
+        while ( peerEnum ) {
+            if ( YMStringEquals(YMPeerGetName((YMPeerRef)peerEnum->value), peerName) ) {
                 thePeer = peerEnum->value;
                 break;
             }
@@ -350,8 +340,7 @@ bool YMSessionResolvePeer(YMSessionRef session_, YMPeerRef peer)
     YMLockLock(session->knownPeersLock);
     YMStringRef peerName = YMPeerGetName(peer);
     bool knownPeer = true;
-    if ( ! YMDictionaryContains(session->knownPeers, (YMDictionaryKey)peer) )
-    {
+    if ( ! YMDictionaryContains(session->knownPeers, (YMDictionaryKey)peer) ) {
         ymerr(YM_LOG_PRE "requested resolve of unknown peer: %s",YM_LOG_DSC,YMSTR(peerName));
         knownPeer = false;
     }
@@ -385,8 +374,7 @@ bool YMSessionConnectToPeer(YMSessionRef session_, YMPeerRef peer, bool sync)
     bool knownPeer = true;
     YMLockLock(session->knownPeersLock);
     YMStringRef peerName = YMPeerGetName(peer);
-    if ( ! YMDictionaryContains(session->knownPeers, (YMDictionaryKey)peer) )
-    {
+    if ( ! YMDictionaryContains(session->knownPeers, (YMDictionaryKey)peer) ) {
         ymerr(YM_LOG_PRE "requested connect to unknown peer: %s",YM_LOG_DSC,YMSTR(peerName));
         knownPeer = false;
     }
@@ -410,19 +398,15 @@ bool YMSessionConnectToPeer(YMSessionRef session_, YMPeerRef peer, bool sync)
         name = YMSTRC("session-async-connect");
         struct ym_thread_dispatch_t connectDispatch = {__ym_session_connect_async_proc, 0, 0, context, name};
         
-        if ( ! sync )
-        {
-            if ( ! session->connectDispatchThread )
-            {
+        if ( ! sync ) {
+            if ( ! session->connectDispatchThread ) {
                 session->connectDispatchThread = YMThreadDispatchCreate(name);
-                if ( ! session->connectDispatchThread )
-                {
+                if ( ! session->connectDispatchThread ) {
                     ymerr(YM_LOG_PRE "error: failed to create async connect thread",YM_LOG_DSC);
                     goto catch_fail;
                 }
                 bool okay = YMThreadStart(session->connectDispatchThread);
-                if ( ! okay )
-                {
+                if ( ! okay ) {
                     ymerr(YM_LOG_PRE "error: failed to start async connect thread",YM_LOG_DSC);
                     goto catch_fail;
                 }
@@ -464,14 +448,12 @@ void YM_CALLING_CONVENTION __ym_session_connect_async_proc(ym_thread_dispatch_re
     
     if ( okay ) {
         __YMSessionAddConnection(session, connection);
-        if ( ! userSync ) {
+        if ( ! userSync )
             session->connectedFunc(session, connection, session->callbackContext);
-        }
     }
     else {
-        if ( ! userSync ) {
+        if ( ! userSync )
             session->connectFailedFunc(session, peer, moreComing, session->callbackContext);
-        }
     }
     
     YMRelease(session);
@@ -504,15 +486,13 @@ bool YMSessionStartAdvertising(YMSessionRef session_, YMStringRef name)
     bool ipv4 = true;
     
     int32_t port = YMPortReserve(ipv4, &socket);
-    if ( port < 0 || socket == -1 || socket > UINT16_MAX )
-    {
+    if ( port < 0 || socket == -1 || socket > UINT16_MAX ) {
         ymerr(YM_LOG_PRE "error: failed to reserve port for server start",YM_LOG_DSC);
         return false;
     }
     
     int aResult = listen(socket, 1);
-    if ( aResult != 0 )
-    {
+    if ( aResult != 0 ) {
         ymerr(YM_LOG_PRE "error: failed to listen for server start",YM_LOG_DSC);
 		int result, error; const char *errorStr;
         YM_CLOSE_SOCKET(socket);
@@ -532,15 +512,13 @@ bool YMSessionStartAdvertising(YMSessionRef session_, YMStringRef name)
     ctx->ipv4 = ipv4;
     session->acceptThread = YMThreadCreate(memberName, __ym_session_accept_proc, ctx);
     YMRelease(memberName);
-    if ( ! session->acceptThread )
-    {
+    if ( ! session->acceptThread ) {
         ymerr(YM_LOG_PRE "error: failed to create accept thread",YM_LOG_DSC);
         goto rewind_fail;
     }
     session->acceptThreadExitFlag = false;
     okay = YMThreadStart(session->acceptThread);
-    if ( ! okay )
-    {
+    if ( ! okay ) {
         ymerr(YM_LOG_PRE "error: failed to start accept thread",YM_LOG_DSC);
         goto rewind_fail;
     }
@@ -548,27 +526,23 @@ bool YMSessionStartAdvertising(YMSessionRef session_, YMStringRef name)
     memberName = YMStringCreateWithFormat("session-init-%s",YMSTR(session->type),NULL);
     session->initConnectionDispatchThread = YMThreadDispatchCreate(memberName);
     YMRelease(memberName);
-    if ( ! session->initConnectionDispatchThread )
-    {
+    if ( ! session->initConnectionDispatchThread ) {
         ymerr(YM_LOG_PRE "error: failed to create connection init thread",YM_LOG_DSC);
         goto rewind_fail;
     }
     okay = YMThreadStart(session->initConnectionDispatchThread);
-    if ( ! okay )
-    {
+    if ( ! okay ) {
         ymerr(YM_LOG_PRE "error: failed to start start connection init thread",YM_LOG_DSC);
         goto rewind_fail;
     }
     
     session->service = YMmDNSServiceCreate(session->type, session->name, (uint16_t)port);
-    if ( ! session->service )
-    {
+    if ( ! session->service ) {
         ymerr(YM_LOG_PRE "error: failed to create mdns service",YM_LOG_DSC);
         goto rewind_fail;
     }
     okay = YMmDNSServiceStart(session->service);
-    if ( ! okay )
-    {
+    if ( ! okay ) {
         ymerr(YM_LOG_PRE "error: failed to start mdns service",YM_LOG_DSC);
         goto rewind_fail;
     }
@@ -578,21 +552,18 @@ bool YMSessionStartAdvertising(YMSessionRef session_, YMStringRef name)
     return true;
     
 rewind_fail:
-    if ( socket >= 0 )
-	{
+    if ( socket >= 0 ) {
 		int result, error; const char *errorStr;
         YM_CLOSE_SOCKET(socket);
 	}
     session->ipv4ListenSocket = NULL_SOCKET;
     session->ipv6ListenSocket = NULL_SOCKET;
-    if ( session->acceptThread )
-    {
+    if ( session->acceptThread ) {
         session->acceptThreadExitFlag = true;
         YMRelease(session->acceptThread);
         session->acceptThread = NULL;
     }
-    if ( session->service )
-    {
+    if ( session->service ) {
         YMmDNSServiceStop(session->service, false);
         YMRelease(session->service);
         session->service = NULL;
@@ -608,29 +579,24 @@ bool YMSessionStopAdvertising(YMSessionRef session_)
     
     session->acceptThreadExitFlag = true;
     bool okay = true;
-    if ( session->ipv4ListenSocket != NULL_SOCKET )
-    {
+    if ( session->ipv4ListenSocket != NULL_SOCKET ) {
 		YM_CLOSE_SOCKET(session->ipv4ListenSocket);
-        if ( result != 0 )
-        {
+        if ( result != 0 ) {
             ymerr(YM_LOG_PRE "warning: failed to close ipv4 socket: %d %s",YM_LOG_DSC,error,errorStr);
             okay = false;
         }
         session->ipv4ListenSocket = NULL_SOCKET;
     }
-    if ( session->ipv6ListenSocket != NULL_SOCKET )
-    {
+    if ( session->ipv6ListenSocket != NULL_SOCKET ) {
         YM_CLOSE_SOCKET(session->ipv6ListenSocket);
-        if ( result != 0 )
-        {
+        if ( result != 0 ) {
             ymerr(YM_LOG_PRE "warning: failed to close ipv6 socket: %d %s",YM_LOG_DSC,error,errorStr);
             okay = false;
         }
         session->ipv6ListenSocket = NULL_SOCKET;
     }
     
-    if ( session->service )
-    {
+    if ( session->service ) {
         bool mdnsOK = YMmDNSServiceStop(session->service, false);
         YMRelease(session->service);
         session->service = NULL;    
@@ -659,8 +625,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_accept_proc(YM_THREAD_PARAM 
     __YMSessionRef session = context->session;
     bool ipv4 = context->ipv4;
     
-    while ( ! session->acceptThreadExitFlag )
-    {
+    while ( ! session->acceptThreadExitFlag ) {
         int socket = ipv4 ? session->ipv4ListenSocket : session->ipv6ListenSocket;
         
         struct sockaddr_in6 *bigEnoughAddr = calloc(1,sizeof(struct sockaddr_in6));
@@ -668,8 +633,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_accept_proc(YM_THREAD_PARAM 
         
         ymerr(YM_LOG_PRE "accepting on sf%d...",YM_LOG_DSC,socket);
         int aResult = accept(socket, (struct sockaddr *)bigEnoughAddr, &thisLength);
-        if ( aResult < 0 )
-        {
+        if ( aResult < 0 ) {
             ymerr(YM_LOG_PRE "accept(sf%d) failed: %d (%s)",YM_LOG_DSC,socket,errno,strerror(errno));
             free(bigEnoughAddr);
             continue;
@@ -713,15 +677,13 @@ void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(ym_thread_
     
     address = YMAddressCreate(addr,ipv4?ntohs(((struct sockaddr_in *)addr)->sin_port):ntohs(((struct sockaddr_in6 *)addr)->sin6_port));
     peer = _YMPeerCreateWithAddress(address);
-    if ( ! session->shouldAcceptFunc(session, peer, session->callbackContext) )
-    {
+    if ( ! session->shouldAcceptFunc(session, peer, session->callbackContext) ) {
         ymlog(YM_LOG_PRE "client rejected peer %s",YM_LOG_DSC,YMSTR(YMAddressGetDescription(address)));
         goto catch_release;
     }
     
     newConnection = YMConnectionCreateIncoming(socket, address, YMConnectionStream, YMTLS, true);
-    if ( ! newConnection )
-    {
+    if ( ! newConnection ) {
         ymlog(YM_LOG_PRE "failed to create new connection",YM_LOG_DSC);
 		if ( session->connectFailedFunc ) 
 			session->connectFailedFunc(session, peer, false, session->callbackContext);
@@ -766,8 +728,7 @@ void YMSessionStop(YMSessionRef session)
 {
     YMLockLock(session->connectionsByAddressLock);
     {
-        while ( YMDictionaryGetCount(session->connectionsByAddress) )
-        {
+        while ( YMDictionaryGetCount(session->connectionsByAddress) ) {
             YMDictionaryKey aKey = YMDictionaryGetRandomKey(session->connectionsByAddress);
             YMConnectionRef aConnection = (YMConnectionRef)YMDictionaryRemove(session->connectionsByAddress, aKey);
             YMConnectionClose(aConnection);
@@ -810,14 +771,12 @@ bool __YMSessionInterrupt(__YMSessionRef session, YMConnectionRef floatConnectio
     bool first = false;
     YMLockLock(session->connectionsByAddressLock);
     {
-        if ( ! session->interrupted )
-        {
+        if ( ! session->interrupted ) {
             first = true;
             session->interrupted = true;
             session->defaultConnection = NULL;
     
-            while ( YMDictionaryGetCount(session->connectionsByAddress) )
-            {
+            while ( YMDictionaryGetCount(session->connectionsByAddress) ) {
                 YMDictionaryKey aKey = YMDictionaryGetRandomKey(session->connectionsByAddress);
                 YMConnectionRef aConnection = (YMConnectionRef)YMDictionaryRemove(session->connectionsByAddress, aKey);
                 ymassert(aConnection,"connection list state");
@@ -858,8 +817,7 @@ void __ym_session_stream_closing_proc(YMConnectionRef connection, YMStreamRef st
     YMPlexerStreamID streamID = YM_STREAM_INFO(stream)->streamID;
     ymlog(YM_LOG_PRE "remote stream %u closing on %s",YM_LOG_DSC,streamID,YMSTR(YMAddressGetDescription(address)));
     
-    if ( connection != session->defaultConnection )
-    {
+    if ( connection != session->defaultConnection ) {
         ymerr(YM_LOG_PRE "warning: closing remote stream on non-default connection",YM_LOG_DSC);
         return;
     }
@@ -880,8 +838,7 @@ void __ym_session_connection_interrupted_proc(YMConnectionRef connection, void *
     
 	    ymerr(YM_LOG_PRE "connection interrupted: %s",YM_LOG_DSC,YMSTR(YMAddressGetDescription(YMConnectionGetAddress(connection))));
     
-    if ( isDefault )
-    {
+    if ( isDefault ) {
         if ( session->interruptedFunc )
             session->interruptedFunc(session,session->callbackContext);
     }
@@ -915,11 +872,9 @@ void __ym_mdns_service_removed_func(__unused YMmDNSBrowserRef browser, YMStringR
         YMDictionaryKey mysteryKey = MAX_OF(YMDictionaryKey);
         bool found = false;
         YMDictionaryEnumRef myEnum = YMDictionaryEnumeratorBegin(session->knownPeers);
-        while ( myEnum )
-        {
+        while ( myEnum ) {
             YMPeerRef peer = (YMPeerRef)myEnum->value;
-            if ( strcmp(YMSTR(YMPeerGetName(peer)),YMSTR(name)) == 0 )
-            {
+            if ( strcmp(YMSTR(YMPeerGetName(peer)),YMSTR(name)) == 0 ) {
                 found = true;
                 mysteryKey = myEnum->key;
             }
@@ -954,11 +909,9 @@ void __ym_mdns_service_resolved_func(__unused YMmDNSBrowserRef browser, bool suc
     YMLockLock(session->knownPeersLock);
     {
         YMDictionaryEnumRef myEnum = YMDictionaryEnumeratorBegin(session->knownPeers);
-        while ( myEnum )
-        {
+        while ( myEnum ) {
             peer = (YMPeerRef)myEnum->value;
-            if ( strcmp(YMSTR(YMPeerGetName(peer)),YMSTR(service->name)) == 0 )
-            {
+            if ( strcmp(YMSTR(YMPeerGetName(peer)),YMSTR(service->name)) == 0 ) {
                 found = true;
                 peer = (YMPeerRef)myEnum->value;
                 break;
@@ -974,15 +927,12 @@ void __ym_mdns_service_resolved_func(__unused YMmDNSBrowserRef browser, bool suc
     
     YMLockUnlock(session->knownPeersLock);
     
-    if ( found )
-    {
+    if ( found ) {
         if ( success )
             session->resolvedFunc(session,peer,session->callbackContext);
         else
             session->resolveFailedFunc(session,peer,session->callbackContext);
-    }
-    else
-    {
+    } else {
         ymerr(YM_LOG_PRE "notified of resolution of unknown peer: %s",YM_LOG_DSC,YMSTR(service->name));
         abort();
     }
@@ -1048,7 +998,6 @@ bool __YMSessionObserveNetworkInterfaceChangesMacos(__YMSessionRef session, bool
 		return session->scObserverThread && YMThreadStart(session->scObserverThread);
 	}
 	else {
-
 		if (!session->scObserverThread)
 			return false;
 
@@ -1204,8 +1153,7 @@ HRESULT STDMETHODCALLTYPE ymsink_QueryInterface(__RPC__in IWbemObjectSink * This
 
 	bool isIUnknown = IsEqualIID(riid, &IID_IUnknown);
 	bool isWOS = IsEqualIID(riid, &IID_IWbemObjectSink);
-	if (isIUnknown || isWOS)
-	{
+    if (isIUnknown || isWOS) {
 		*ppvObject = (IWbemObjectSink *)This;
 		This->lpVtbl->AddRef(This);
 		return S_OK;
@@ -1238,13 +1186,9 @@ HRESULT STDMETHODCALLTYPE ymsink_SetStatus(__RPC__in IWbemObjectSink * This,/* [
 {
 	ymerr("ymsink_SetStatus");
 	if (lFlags == WBEM_STATUS_COMPLETE)
-	{
-		printf("Call complete. hResult = 0x%X\n", hResult);
-	}
+		ymlog("call complete: hResult 0x%X", hResult);
 	else if (lFlags == WBEM_STATUS_PROGRESS)
-	{
-		printf("Call in progress.\n");
-	}
+		ymlog("call in progress.");
 
 	return WBEM_S_NO_ERROR;
 }

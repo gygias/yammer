@@ -23,11 +23,9 @@ opaque_thing_that_closes_input_file
 - automatic log indentation by level
 - inlines
 - per-.c log level boilerplate
-- linked list
-- if apple syslog
 - convenience for "my user data is length-prefixed with x width, too"
 - mDNS filter local services
-- typedef struct __X {} _X; and Ref pass
+- struct __X {} __X; and Ref pass
 - muxer protocol renegotiate?
 - plexer chunk-chunk instead of realloc (and test large single user i/o vs plex buf)
 - service all ready downstreams in single loop, lock optimization

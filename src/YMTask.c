@@ -98,8 +98,7 @@ bool YMTaskLaunch(YMTaskRef task_)
 
 	bool okay = true;
     
-    if ( task->save )
-    {
+    if ( task->save ) {
         task->outputPipe = YMPipeCreate(NULL);
         ymlog("task[%s]: output pipe %d -> %d",YMSTR(task->path),YMPipeGetInputFile(task->outputPipe),YMPipeGetOutputFile(task->outputPipe));
         task->outputThread = YMThreadCreate(task->path, __ym_task_read_output_proc, (void *)YMRetain(task));
@@ -111,8 +110,7 @@ bool YMTaskLaunch(YMTaskRef task_)
     
     _YMLogLock();
     pid_t pid = fork();
-    if ( pid == 0 ) // child
-    {
+    if ( pid == 0 ) { // child
         _YMLogUnlock();
         
         int64_t nArgs = task->args ? YMArrayGetCount(task->args) : 0;
@@ -130,8 +128,7 @@ bool YMTaskLaunch(YMTaskRef task_)
         }
         fprintf(stderr,"\n");
 
-        if ( task->save )
-        {
+        if ( task->save ) {
             int pipeIn = YMPipeGetInputFile(task->outputPipe);
             result = dup2(pipeIn, STDOUT_FILENO);
             if ( result == -1 ) { fprintf(stderr,"task[%s]: dup2(%d<-%d) failed: %d %s",YMSTR(task->path),pipeIn,STDOUT_FILENO,errno,strerror(errno)); abort(); }
@@ -150,8 +147,7 @@ bool YMTaskLaunch(YMTaskRef task_)
 	PROCESS_INFORMATION procInfo = {0};
 
 	STARTUPINFO startupInfo = { 0 };
-	if ( task->save )
-	{
+    if ( task->save ) {
 		startupInfo.cb = sizeof(STARTUPINFO);
 		startupInfo.hStdOutput = YMPipeGetInputFile(task->outputPipe);
 		startupInfo.hStdInput = GetStdHandle(STD_INPUT_HANDLE);

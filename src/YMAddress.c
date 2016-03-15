@@ -60,22 +60,19 @@ YMAddressRef YMAddressCreate(const void *sockaddr_, uint16_t port)
     bool isIP = false;
     bool isIPV4 = false;
     uint16_t length;
-    if( YM_IS_IPV4(sockaddr) )
-    {
+    if( YM_IS_IPV4(sockaddr) ) {
         type = YMAddressIPV4;
         isIP = isIPV4 = true;
         length = sizeof(struct sockaddr_in);
     }
 #if !defined(YMWIN32)
-    else if ( YM_IS_IPV6(sockaddr) )
-    {
+    else if ( YM_IS_IPV6(sockaddr) ) {
         type = YMAddressIPV6;
         isIP = true;
         length = sizeof(struct sockaddr_in6);
     }
 #endif
-    else
-    {
+    else {
         ymlog("address: warning: yammer doesn't support address family %d",sockaddr->sa_family);
         return NULL;
     }
@@ -91,15 +88,13 @@ YMAddressRef YMAddressCreate(const void *sockaddr_, uint16_t port)
         ((struct sockaddr_in6 *)address->address)->sin6_port = port;
     address->length = length;
     
-    if ( isIP )
-    {
+    if ( isIP ) {
         int family = isIPV4 ? AF_INET : AF_INET6;
         socklen_t ipLength = isIPV4 ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN;
         void *in46_addr = isIPV4 ? (void *)&((struct sockaddr_in *)sockaddr)->sin_addr : (void *)&((struct sockaddr_in6 *)sockaddr)->sin6_addr;
         char ipString[INET6_ADDRSTRLEN];
         
-        if ( ! inet_ntop(family, in46_addr, ipString, ipLength) )
-        {
+        if ( ! inet_ntop(family, in46_addr, ipString, ipLength) ) {
             ymerr("address: error: inet_ntop failed for address length %d",ipLength);
             goto rewind_fail;
         }
@@ -137,8 +132,7 @@ YMAddressRef YMAddressCreateWithIPStringAndPort(YMStringRef ipString, uint16_t p
 {
     struct in_addr inAddr = {0};
 	int result = inet_pton(AF_INET, YMSTR(ipString), &inAddr);
-    if ( result != 1 )
-    {
+    if ( result != 1 ) {
         ymlog("address: failed to parse '%s' (%u)",YMSTR(ipString),port);
         return NULL;
     }
@@ -184,8 +178,7 @@ YMStringRef YMAddressGetDescription(YMAddressRef address_)
 int YMAddressGetDomain(YMAddressRef address_)
 {
     __YMAddressRef address = (__YMAddressRef)address_;
-    switch(address->type)
-    {
+    switch(address->type) {
         case YMAddressIPV4:
             return PF_INET;
         case YMAddressIPV6:
@@ -198,8 +191,7 @@ int YMAddressGetDomain(YMAddressRef address_)
 int YMAddressGetAddressFamily(YMAddressRef address_)
 {
     __YMAddressRef address = (__YMAddressRef)address_;
-    switch(address->type)
-    {
+    switch(address->type) {
         case YMAddressIPV4:
             return AF_INET;
         case YMAddressIPV6:
@@ -211,8 +203,7 @@ int YMAddressGetAddressFamily(YMAddressRef address_)
 
 int YMAddressGetDefaultProtocolForAddressFamily(int addressFamily)
 {
-    switch(addressFamily)
-    {
+    switch(addressFamily) {
         case AF_INET:
         case AF_INET6:
             return IPPROTO_TCP;

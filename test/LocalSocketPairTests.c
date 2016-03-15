@@ -51,8 +51,7 @@ void _TestSpawnManyStopThenSpawnAnother(struct LocalSocketPairTest *theTest)
 {
     int nPairs = 10;
     YMDictionaryRef pairs = YMDictionaryCreate();
-    for ( int i = 0; i < nPairs; i++ )
-    {
+    for ( int i = 0; i < nPairs; i++ ) {
         YMStringRef name = YMSTRCF("test-socket-%d",i);
         YMLocalSocketPairRef aPair = YMLocalSocketPairCreate(name, ( i < nPairs ));
         YMRelease(name);
@@ -66,8 +65,7 @@ void _TestSpawnManyStopThenSpawnAnother(struct LocalSocketPairTest *theTest)
         YMDictionaryAdd(pairs, (YMDictionaryKey)aPair, (void *)aPair);
     }
     
-    for ( int i = 0; i < nPairs; i++ )
-    {
+    for ( int i = 0; i < nPairs; i++ ) {
         YMLocalSocketPairRef aPair = YMDictionaryRemove(pairs, YMDictionaryGetRandomKey(pairs));
         
         int socketA = YMLocalSocketPairGetA(aPair);

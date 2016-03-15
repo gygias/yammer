@@ -70,8 +70,7 @@ void _YMDictionaryFree(YMTypeRef object)
     // we don't assume ownership of dict members
     _YMDictionaryItemRef itemIter = dict->head;
     
-    while (itemIter)
-    {
+    while (itemIter) {
         _YMDictionaryItemRef thisItem = itemIter;
         itemIter = itemIter->next;
         if ( dict->ymtypeKeys )
@@ -95,14 +94,12 @@ void YMDictionaryAdd(YMDictionaryRef dict_, YMDictionaryKey key, YMDictionaryVal
 #endif
     YM_WPOP
     
-    if ( full )
-    {
+    if ( full ) {
         ymerr("error: YMDictionary is full");
         abort();
     }
     
-    if ( _YMDictionaryFindItemWithIdentifier(dict->head, key, dict->ymtypeKeys, NULL) )
-    {
+    if ( _YMDictionaryFindItemWithIdentifier(dict->head, key, dict->ymtypeKeys, NULL) ) {
         ymerr("error: YMDictionary already contains item for key %llu",key);
         abort();
     }
@@ -133,8 +130,7 @@ YMDictionaryKey YMDictionaryGetRandomKey(YMDictionaryRef dict_)
 {
     __YMDictionaryRef dict = (__YMDictionaryRef)dict_;
     CHECK_CONSISTENCY
-    if ( dict->count == 0 || dict->head == NULL )
-    {
+    if ( dict->count == 0 || dict->head == NULL ) {
         ymerr("error: YMDictionary is empty and has no keys");
         abort();
     }
@@ -161,8 +157,7 @@ _YMDictionaryItemRef _YMDictionaryFindItemWithIdentifier(_YMDictionaryItemRef he
     _YMDictionaryItemRef itemIter = head,
         previousItem = NULL;
     
-    while (itemIter)
-    {
+    while (itemIter) {
         if ( ymtypeKeys && YMIsEqual((YMTypeRef)key, (YMTypeRef)itemIter->key) )
             break;
         else if ( itemIter->key == key )
@@ -183,8 +178,7 @@ YMDictionaryValue YMDictionaryRemove(YMDictionaryRef dict_, YMDictionaryKey key)
     __YMDictionaryRef dict = (__YMDictionaryRef)dict_;
     CHECK_CONSISTENCY
     
-    if ( dict->count == 0 || dict->head == NULL )
-    {
+    if ( dict->count == 0 || dict->head == NULL ) {
         ymerr("error: YMDictionary is empty");
         abort();
     }
@@ -192,13 +186,11 @@ YMDictionaryValue YMDictionaryRemove(YMDictionaryRef dict_, YMDictionaryKey key)
     YMDictionaryValue outValue = NULL;
     _YMDictionaryItemRef previousItem = NULL;
     _YMDictionaryItemRef theItem = _YMDictionaryFindItemWithIdentifier(dict->head, key, dict->ymtypeKeys, &previousItem);
-    if ( ! theItem )
-    {
+    if ( ! theItem ) {
         ymerr("error: key does not exist to remove");
         abort();
     }
-    else
-    {
+    else {
         if ( previousItem )
             previousItem->next = theItem->next;
         else // removed item is head
@@ -280,10 +272,8 @@ bool __Broken_YMDictionaryPopKeyValue(YMDictionaryRef dict_, bool last, YMDictio
     if ( ! outItem )
         return false;
     
-    if ( last )
-    {
-        while ( outItem->next )
-        {
+    if ( last ) {
+        while ( outItem->next ) {
             previous = outItem;
             outItem = outItem->next;
         }
@@ -294,8 +284,7 @@ bool __Broken_YMDictionaryPopKeyValue(YMDictionaryRef dict_, bool last, YMDictio
     if ( outValue )
         *outValue = outItem->value;
     
-    if ( last )
-    {
+    if ( last ) {
         if ( outItem == dict->head )
             dict->head = NULL;
         else
@@ -304,8 +293,7 @@ bool __Broken_YMDictionaryPopKeyValue(YMDictionaryRef dict_, bool last, YMDictio
     else
         dict->head = outItem->next;
     
-    if ( dict->count == 0 )
-    {
+    if ( dict->count == 0 ) {
         ymlog("ymdictionary is broken");
         abort();
     }
@@ -332,8 +320,7 @@ void _YMDictionaryShift(YMDictionaryRef dict_, int64_t baseIdx, bool inc)
     
     _YMDictionaryItemRef iter = dict->head;
     
-    while ( iter )
-    {
+    while ( iter ) {
         if ( iter->key >= (uint64_t)baseIdx ) {
             if ( inc )
                 iter->key++;

@@ -76,8 +76,7 @@ YMStringRef YMStringCreateWithFormat(const char *format,...)
         newStr = "";
     else if ( length < 0 )
         ymerr("snprintf failed on format: %s", format);
-    else
-    {
+    else {
         newStr = (char *)YMALLOC(length);
         vsnprintf(newStr, length, format, formatArgs);
         va_end(formatArgs);
@@ -92,8 +91,7 @@ const char *___YMStringFormat(const char *format,...)
 #ifndef YMTypeRefToken
 #else
     char *currentTokenPtr = strstr(format, "%");
-    if ( ! currentTokenPtr )
-    {
+    if ( ! currentTokenPtr ) {
         ymerr("string; warning: format function used but no tokens found in '%s",format);
         return YMStringCreateWithCString(format);
     }
@@ -104,8 +102,7 @@ const char *___YMStringFormat(const char *format,...)
     va_list vargs;
     va_start(vargs, format);
     
-    while ( currentTokenPtr )
-    {
+    while ( currentTokenPtr ) {
         int aInt[2];
         char *aCharPtr = NULL;
         int *aIntPtr = NULL;
@@ -125,11 +122,9 @@ const char *___YMStringFormat(const char *format,...)
         size_t specifierIdx = currentTokenIdx + 1;
         
         // test for single char tokens
-        if ( specifierIdx < formatLen - 1 )
-        {
+        if ( specifierIdx < formatLen - 1 ) {
             aInt[0] = va_arg(vargs,int);
-            switch(format[specifierIdx])
-            {
+            switch(format[specifierIdx]) {
                 case 'c':
                     aCharPtr = (char *)aInt;
                     break;
@@ -154,18 +149,14 @@ const char *___YMStringFormat(const char *format,...)
                     break;
             }
         }
-        else
-        {
+        else {
             ymerr("string: warning: invalid specifier ending '%s'",format);
             goto catch_fail;
         }
         size_t specifierIdx2 = specifierIdx + 1;
-        if ( ( expandingZ || expandingL ) && ( specifierIdx < formatLen - 2 ) )
-        {
-            if ( expandingL )
-            {
-                switch(format[specifierIdx2])
-                {
+        if ( ( expandingZ || expandingL ) && ( specifierIdx < formatLen - 2 ) ) {
+            if ( expandingL ) {
+                switch(format[specifierIdx2]) {
                     case 'd':
                         aLongIntPtr = (long *)aInt;
                         break;
@@ -178,10 +169,8 @@ const char *___YMStringFormat(const char *format,...)
                         
                 }
             }
-            else if ( expandingZ )
-            {
-                switch(format[specifierIdx2])
-                {
+            else if ( expandingZ ) {
+                switch(format[specifierIdx2]) {
                     case 'u':
 #if __LP64__
                         aInt[1] = va_arg(vargs, int);
@@ -203,17 +192,14 @@ const char *___YMStringFormat(const char *format,...)
                 }
             }
         }
-        else
-        {
+        else {
             ymerr("string: warning: incomplete 2-identifier in '%s'",format);
             goto catch_fail;
         }
         
-        if ( specifierIdx2 < formatLen - 2 )
-        {
+        if ( specifierIdx2 < formatLen - 2 ) {
             size_t specifierIdx3 = specifierIdx2 + 1;
-            switch(format[specifierIdx3])
-            {
+            switch(format[specifierIdx3]) {
                 case 'd':
                     aLongLongPtr = (long long *)&aInt[0];
                     break;
@@ -225,8 +211,7 @@ const char *___YMStringFormat(const char *format,...)
                     goto catch_fail;
             }
         }
-        else
-        {
+        else {
             ymerr("string: warning: incomplete 3-identifier in '%s'",format);
             goto catch_fail;
         }

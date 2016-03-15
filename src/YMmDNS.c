@@ -52,8 +52,7 @@ YM_EXTERN_C_PUSH
 void _YMmDNSServiceListFree(YMmDNSServiceList *serviceList)
 {
     YMmDNSServiceList *listIter = serviceList;
-    while ( listIter )
-    {
+    while ( listIter ) {
         YMmDNSServiceList *aListItem = listIter;
         struct _YMmDNSServiceRecord *service = (struct _YMmDNSServiceRecord *)aListItem->service;
         if ( service )
@@ -104,11 +103,9 @@ void _YMmDNSServiceRecordSetTxtRecord(YMmDNSServiceRecord *record, const unsigne
     size_t txtSize = 0;
     YMmDNSTxtRecordKeyPair **txtList = NULL;
     
-    if ( txtRecord && txtLength > 1 )
-    {
+    if ( txtRecord && txtLength > 1 ) {
         txtList = _YMmDNSTxtKeyPairsCreate(txtRecord, txtLength, &txtSize);
-        if ( ! txtList )
-        {
+        if ( ! txtList ) {
             ymerr("mdns[&]: failed to parse txt record for '%s:%s'",YMSTR(record->type),YMSTR(record->name));
             return;
         }
@@ -159,8 +156,7 @@ void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record, bool floatResolvedInf
         YMRelease(record->type);
     if ( record->domain )
         YMRelease(record->domain);
-    if ( ! floatResolvedInfo ) // allows in-place update of existing service record
-    {
+    if ( ! floatResolvedInfo ) { // allows in-place update of existing service record
         if ( record->sockaddrList ) {
             while ( YMArrayGetCount(record->sockaddrList) > 0 ) {
                 YMAddressRef address = (YMAddressRef)YMArrayGet(record->sockaddrList, 0);
@@ -187,20 +183,17 @@ YMmDNSTxtRecordKeyPair **_YMmDNSTxtKeyPairsCreate(const unsigned char *txtRecord
 	char keyBuf[256];
     size_t currentPairOffset = 0;
     uint8_t aPairLength = txtRecord[currentPairOffset];
-    while ( currentPairOffset < txtLength )
-    {
+    while ( currentPairOffset < txtLength ) {
         const unsigned char* aPairWalker = txtRecord + currentPairOffset + 1;
         __unused const char* debugThisKey = (char *)aPairWalker;
         
-        if ( listSize == allocatedListSize )
-        {
+        if ( listSize == allocatedListSize ) {
             allocatedListSize *= 2;
             keyPairList = (YMmDNSTxtRecordKeyPair **)realloc(keyPairList, allocatedListSize * sizeof(YMmDNSTxtRecordKeyPair*)); // could be optimized
         }
         
         char *equalsPtr = strstr((const char *)aPairWalker,"=");
-        if ( equalsPtr == NULL )
-        {
+        if ( equalsPtr == NULL ) {
             ymlog("mdns: warning: failed to parse %ub txt record",txtLength);
             _YMmDNSTxtKeyPairsFree(keyPairList, listSize);
             return NULL;
@@ -243,11 +236,9 @@ YMmDNSTxtRecordKeyPair **_YMmDNSTxtKeyPairsCreate(const unsigned char *txtRecord
 void _YMmDNSTxtKeyPairsFree(YMmDNSTxtRecordKeyPair **keyPairList, size_t size)
 {
     size_t idx;
-    for ( idx = 0; idx < size; idx++ )
-    {
+    for ( idx = 0; idx < size; idx++ ) {
         YMmDNSTxtRecordKeyPair *aPair = keyPairList[idx];
-        if ( aPair )
-        {
+        if ( aPair ) {
             YMRelease(aPair->key);
             free((void*)aPair->value);
             free(aPair);
@@ -262,25 +253,21 @@ unsigned char  *_YMmDNSTxtBlobCreate(YMmDNSTxtRecordKeyPair **keyPairList, uint1
     size_t blobSize = 0;
     
     uint8_t keyValueLenMax = UINT8_MAX - 1; // assuming data can be empty, and len byte isn't part of the 'max'
-    for( size_t i = 0; i < listSize; i++ )
-    {
+    for( size_t i = 0; i < listSize; i++ ) {
         size_t keyLen = YMStringGetLength(keyPairList[i]->key);
-        if ( keyLen > keyValueLenMax )
-        {
+        if ( keyLen > keyValueLenMax ) {
             ymerr("mdns: key is too long for txt record (%zd)",keyLen);
             return NULL;
         }
         
         uint8_t valueLen = keyPairList[i]->valueLen;
-        if ( keyLen + valueLen > keyValueLenMax )
-        {
+        if ( keyLen + valueLen > keyValueLenMax ) {
             ymerr("mdns: key+value are too long for txt record (%zd+%u)",keyLen,valueLen);
             return NULL;
         }
         
         uint16_t aBlobSize = (uint8_t)keyLen + valueLen + 2;
-        if ( ( blobSize + aBlobSize ) > UINT16_MAX )
-        {
+        if ( ( blobSize + aBlobSize ) > UINT16_MAX ) {
             ymerr("mdns: keyPairList exceeds uint16 max");
             return NULL;
         }
@@ -294,8 +281,7 @@ unsigned char  *_YMmDNSTxtBlobCreate(YMmDNSTxtRecordKeyPair **keyPairList, uint1
     
     unsigned char *txtBlob = YMALLOC(blobSize);
     size_t off = 0;
-    for ( size_t i = 0; i < listSize; i++ )
-    {
+    for ( size_t i = 0; i < listSize; i++ ) {
         size_t keyLen = YMStringGetLength(keyPairList[i]->key);
         txtBlob[off] = (unsigned char)keyLen +
                                         1 +

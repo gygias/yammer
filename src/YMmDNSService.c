@@ -66,8 +66,7 @@ YMmDNSServiceRef YMmDNSServiceCreate(YMStringRef type, YMStringRef name, uint16_
     // DNSServiceRegister will truncate this automatically, but keep the client well informed i suppose
     if ( ! name
         || YMLEN(name) >= mDNS_SERVICE_NAME_LENGTH_MAX
-        || YMLEN(name) < mDNS_SERVICE_NAME_LENGTH_MIN )
-    {
+        || YMLEN(name) < mDNS_SERVICE_NAME_LENGTH_MIN ) {
         ymlog("mdns: invalid service name");
         return NULL;
     }
@@ -92,8 +91,7 @@ void _YMmDNSServiceFree(YMTypeRef object)
         YMRelease(service->type);
     if ( service->name )
         YMRelease(service->name);
-    if ( service->txtRecord )
-    {
+    if ( service->txtRecord ) {
         TXTRecordDeallocate((TXTRecordRef *)service->txtRecord);
         free(service->txtRecord);
     }
@@ -110,8 +108,7 @@ bool YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service_, YMmDNSTxtRecordKeyPai
     
     TXTRecordRef *txtRecord = (TXTRecordRef *)YMALLOC(sizeof(TXTRecordRef));
     TXTRecordCreate(txtRecord, 0, NULL);
-    for ( idx = 0; idx < nPairs; idx++ )
-    {
+    for ( idx = 0; idx < nPairs; idx++ ) {
         YMmDNSTxtRecordKeyPair **_keyPairs = (YMmDNSTxtRecordKeyPair **)keyPairs;
         const char *key = YMSTR(_keyPairs[idx]->key);
         const uint8_t *value = _keyPairs[idx]->value;
@@ -147,8 +144,7 @@ bool YMmDNSServiceStart( YMmDNSServiceRef service_ )
                                                     __ymmdns_register_callback, // DNSServiceRegisterReply
                                                     service); // context
     
-    if( result != kDNSServiceErr_NoError )
-    {
+    if( result != kDNSServiceErr_NoError ) {
         // on error "the callback is never invoked and the DNSServiceRef is not initialized"
         // leading me to think we free instead of DNSServiceRefDeallocate
         free(serviceRef);

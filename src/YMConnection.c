@@ -96,9 +96,7 @@ void _ym_connection_forward_callback_proc(void *context, YMIOResult result, uint
 YMConnectionRef YMConnectionCreate(YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType, bool closeWhenDone)
 {
     __YMConnectionRef c = __YMConnectionCreate(false, address, type, securityType, closeWhenDone);
-    
     c->socket = NULL_SOCKET;
-    
     return c;
 }
 
@@ -106,8 +104,7 @@ YMConnectionRef YMConnectionCreateIncoming(YMSOCKET socket, YMAddressRef address
 {
     __YMConnectionRef connection = __YMConnectionCreate(true, address, type, securityType, closeWhenDone);
     bool commonInitOK = __YMConnectionInitCommon(connection, socket, true);
-    if ( ! commonInitOK )
-    {
+    if ( ! commonInitOK ) {
         ymlog(YM_LOG_PRE "server init failed",YM_LOG_DSC);
         YMRelease(connection);
         return NULL;
@@ -174,15 +171,13 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     
     YM_IO_BOILERPLATE
     
-    if ( connection->socket != NULL_SOCKET || connection->isIncoming )
-    {
+    if ( connection->socket != NULL_SOCKET || connection->isIncoming ) {
         ymerr(YM_LOG_PRE "connect called on connected socket",YM_LOG_DSC);
         return false;
     }    
     
     int type;
-    switch(connection->type)
-    {
+    switch(connection->type) {
         case YMConnectionStream:
             type = SOCK_STREAM;
             break;
@@ -216,8 +211,7 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     __unused struct sockaddr_in6 *addrAsIPV6 = (struct sockaddr_in6 *)addr;
     
     result = connect(newSocket, addr, addrLen);
-    if ( result != 0 )
-    {
+    if ( result != 0 ) {
         ymerr(YM_LOG_PRE "error: connect(%s): %d (%s)",YM_LOG_DSC,YMSTR(YMAddressGetDescription(connection->address)),errno,strerror(errno));
         YM_CLOSE_SOCKET(newSocket);
         return false;
@@ -239,8 +233,7 @@ int64_t __YMConnectionDoSample(__YMConnectionRef connection, YMSOCKET socket, ui
     uint32_t sample = -1;
     
     int remain = length % 4;
-    if ( remain != 0 )
-    {
+    if ( remain != 0 ) {
         ymerr(YM_LOG_PRE "warning: sample length not word-aligned, snapping to next word length: %u",YM_LOG_DSC,length);
         length += remain;
     }
@@ -345,8 +338,7 @@ bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, 
     }
     
     bool securityOK = YMSecurityProviderInit(security);
-    if ( ! securityOK )
-    {
+    if ( ! securityOK ) {
         ymerr(YM_LOG_PRE "security type %d failed to initialize",YM_LOG_DSC,connection->securityType);
         goto rewind_fail;
     }
@@ -358,8 +350,7 @@ bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, 
 	YMPlexerSetCallbackContext(plexer, connection);
 
     bool plexerOK = YMPlexerStart(plexer);
-    if ( ! plexerOK )
-    {
+    if ( ! plexerOK ) {
         ymerr(YM_LOG_PRE "plexer failed to initialize",YM_LOG_DSC);
         goto rewind_fail;
     }
@@ -389,11 +380,9 @@ bool __YMConnectionDestroy(__YMConnectionRef connection, bool explicit)
     YM_IO_BOILERPLATE
     
     bool okay = true;
-    if ( connection->plexer )
-    {
+    if ( connection->plexer ) {
         bool plexerOK = YMPlexerStop(connection->plexer);
-        if ( ! plexerOK )
-        {
+        if ( ! plexerOK ) {
             ymerr(YM_LOG_PRE "warning: failed to close plexer",YM_LOG_DSC);
             okay = plexerOK;
         }
@@ -402,8 +391,7 @@ bool __YMConnectionDestroy(__YMConnectionRef connection, bool explicit)
         connection->plexer = NULL;
     }
     
-    if ( explicit && connection->socket != NULL_SOCKET )
-    {
+    if ( explicit && connection->socket != NULL_SOCKET ) {
         YM_CLOSE_SOCKET(connection->socket);
         ymassert(result==0,"connection explicit media close: %d: %d %s",connection->socket,error,errorStr);
     }
@@ -466,8 +454,7 @@ bool __YMConnectionForward(YMConnectionRef connection, bool toFile, YMStreamRef 
     __ym_connection_forward_callback_t *myContext = NULL;
     _ym_thread_forward_file_context_ref threadContext = NULL;
     
-    if ( ! sync )
-    {
+    if ( ! sync ) {
         myContext = YMALLOC(sizeof(struct __ym_connection_forward_callback_t));
         myContext->connection = YMRetain(connection);
         myContext->stream = YMRetain(stream);
@@ -497,18 +484,12 @@ void _ym_connection_forward_callback_proc(void *context, YMIOResult result, uint
     YMStreamRef stream = myContext->stream;
     
     // allow user to async-forward, if they don't specify callback info it implies "close stream for me when done"
-    if ( ! myContext->userContext )
-    {
+    if ( ! myContext->userContext ) {
         ymerr(YM_LOG_PRE "automatically closing stream %p after async forward",YM_LOG_DSC,myContext->stream);
         YMConnectionCloseStream(connection, stream);
     }
-    else
-    {
-        if ( myContext->userContext->callback )
-        {
-            myContext->userContext->callback(connection, stream, result, bytesForwarded, myContext->userContext->context);
-        }
-    }
+    else if ( myContext->userContext->callback )
+        myContext->userContext->callback(connection, stream, result, bytesForwarded, myContext->userContext->context);
     
     YMRelease(connection);
     YMRelease(stream);

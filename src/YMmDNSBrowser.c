@@ -167,8 +167,7 @@ bool YMmDNSBrowserStart(YMmDNSBrowserRef browser_)
                                                   __ym_mdns_browse_callback, // callback
                                                   browser); // context
     
-    if( result != kDNSServiceErr_NoError )
-    {
+    if( result != kDNSServiceErr_NoError ) {
         ymerr("mdns[%s]: service browse failed: %d", YMSTR(browser->type), result);
         return false;
     }
@@ -209,8 +208,7 @@ bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser_, YMStringRef serviceName)
     __YMmDNSBrowserRef browser = (__YMmDNSBrowserRef)browser_;
     
     YMmDNSServiceRecord *theService = __YMmDNSBrowserGetServiceWithName(browser, serviceName, false);
-    if ( ! theService )
-    {
+    if ( ! theService ) {
         ymerr("mdns[%s]: asked to resolve '%s' without record",YMSTR(browser->type),YMSTR(serviceName));
         return false;
     }
@@ -230,8 +228,7 @@ bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser_, YMStringRef serviceName)
                                                     YMSTR(theService->domain), // domain
                                                     __ym_mdns_resolve_callback,
                                                     ctx );
-    if ( result != kDNSServiceErr_NoError )
-    {
+    if ( result != kDNSServiceErr_NoError ) {
         ymerr("mdns[%s]: service resolve failed: %d",YMSTR(browser->type),result);
         YMRelease(ctx->browser);
         YMRelease(ctx->unescapedName);
@@ -254,10 +251,8 @@ YMmDNSServiceRecord *__YMmDNSBrowserAddOrUpdateService(__YMmDNSBrowserRef browse
     YMmDNSServiceList *aListItem = (YMmDNSServiceList *)browser->serviceList;
     
     // update?
-    while ( aListItem )
-    {
-        if ( 0 == strcmp(YMSTR(record->name),YMSTR(((YMmDNSServiceRecord *)aListItem->service)->name)) )
-        {
+    while ( aListItem ) {
+        if ( 0 == strcmp(YMSTR(record->name),YMSTR(((YMmDNSServiceRecord *)aListItem->service)->name)) ) {
             YMmDNSServiceRecord *existingRecord = aListItem->service;
             
             // the mDNSResponder api behaves such that when ProcessResult is called either from
@@ -316,13 +311,10 @@ YMmDNSServiceRecord *__YMmDNSBrowserGetServiceWithName(__YMmDNSBrowserRef browse
     YMmDNSServiceRecord *matchedRecord = NULL;
     YMmDNSServiceList *aListItem = (YMmDNSServiceList *)browser->serviceList,
                         *previousListItem = (YMmDNSServiceList *)browser->serviceList;
-    while ( aListItem )
-    {
+    while ( aListItem ) {
         YMmDNSServiceRecord *aRecord = aListItem->service;
-        if ( 0 == strcmp(YMSTR(aRecord->name), YMSTR(name)) )
-        {
-            if ( remove )
-            {
+        if ( 0 == strcmp(YMSTR(aRecord->name), YMSTR(name)) ) {
+            if ( remove ) {
                 previousListItem->next = aListItem->next; // nil or not
                 if ( aListItem == browser->serviceList )
                     browser->serviceList = NULL;
@@ -404,13 +396,11 @@ static void DNSSD_API __ym_mdns_browse_callback(__unused DNSServiceRef serviceRe
     
     ymlog("__ym_mdns_browse_callback: %s/%s.%s:?: r: %d if: %u flags: %04x", type, name, domain, result, ifIdx, flags);
     
-    if ( result != kDNSServiceErr_NoError )
-    {
+    if ( result != kDNSServiceErr_NoError ) {
         ymerr("mDNS[%s]: error: browse callback: %d", YMSTR(browser->type), result);
         return;
     }
-    if ( domain == NULL )
-    {
+    if ( domain == NULL ) {
         ymerr("mDNS[%s]: error: service '%s' has no domain", YMSTR(browser->type), name);
         return;
     }
@@ -421,9 +411,7 @@ static void DNSSD_API __ym_mdns_browse_callback(__unused DNSServiceRef serviceRe
     
     YMStringRef ymName = YMSTRC(name);
     if ( remove )
-    {
         __YMmDNSBrowserRemoveServiceNamed(browser, ymName);
-    }
     else
 //#endif
     {
@@ -466,9 +454,8 @@ void DNSSD_API __ym_mdns_addr_info_callback
     ymerr("__ym_mdns_addr_info_callback: %s: %d: %s",hostname,address->sa_family,ymAddress?YMSTR(YMAddressGetDescription(ymAddress)):"*");
     if ( ymAddress ) {
         YMRelease(ymAddress);
-        if ( address->sa_family == AF_INET ) {
+        if ( address->sa_family == AF_INET )
             _YMmDNSServiceRecordAppendSockaddr(record,address);
-        }
     }
         
     if ( ! ( flags & kDNSServiceFlagsMoreComing ) ) {
@@ -518,8 +505,7 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
             aCtx->browser = (__YMmDNSBrowserRef)YMRetain(browser);
             aCtx->unescapedName = YMRetain(unescapedName);
             DNSServiceErrorType err = DNSServiceGetAddrInfo(record->addrinfoSdref, kDNSServiceFlagsForceMulticast, kDNSServiceInterfaceIndexAny, kDNSServiceProtocol_IPv4|kDNSServiceProtocol_IPv6, host, __ym_mdns_addr_info_callback, aCtx);
-            if ( err == kDNSServiceErr_NoError) {
-            } else {
+            if ( err != kDNSServiceErr_NoError ) {
                 ymerr("mdns[%s]: error: failed to get addr info for %s",YMSTR(browser->type),YMSTR(unescapedName));
                 free(record->addrinfoSdref);
                 record->addrinfoSdref = NULL;
@@ -542,8 +528,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_event_proc(YM_THREAD_PARAM ctx)
     ymlog("mdns[&]: event thread entered");
     
     bool keepGoing = true;
-    while ( keepGoing )
-    {
+    while ( keepGoing ) {
 		int nfds = 1;
         int maxFd = -1; // unused on win32, parameter only exists for compatibility
         fd_set readfds;
@@ -573,8 +558,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_event_proc(YM_THREAD_PARAM ctx)
         
         // wait for pending data or .5 secs to elapse:
         result = select(maxFd + 1, &readfds, nullFd, nullFd, &tv);
-        if (result > 0)
-        {
+        if (result > 0) {
             YMLockLock(browser->activeServiceRefsLock);
             {
                 for ( int i = 0; i < YMArrayGetCount(browser->activeServiceRefs); i++ ) {
@@ -592,13 +576,9 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_event_proc(YM_THREAD_PARAM ctx)
                 }
             }
             YMLockUnlock(browser->activeServiceRefsLock);
-        }
-        else if (result == 0)
-        {
+        } else if (result == 0) {
             // timeout elapsed but no fd-s were signalled.
-        }
-        else
-        {
+        } else {
 #if defined(YMWIN32)
 			error = WSAGetLastError();
 			errorStr = "*";

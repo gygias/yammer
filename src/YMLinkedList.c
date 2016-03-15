@@ -46,8 +46,7 @@ void _YMLinkedListFree(YMTypeRef object)
     // we don't assume ownership of list members
     YMLinkedListItem *itemIter = list->head;
     
-    while (itemIter)
-    {
+    while (itemIter) {
         YMLinkedListItem *thisItem = itemIter;
         itemIter = (YMLinkedListItem *)itemIter->next;
         free(thisItem);
@@ -81,8 +80,7 @@ YMLinkedListItem *__YMLinkedListFindItemWithIdentifier(YMLinkedListItem *head, b
     YMLinkedListItem *itemIter = head,
         *previousItem = NULL;
     
-    while (itemIter)
-    {
+    while (itemIter) {
         YMLinkedListItem *thisItem = itemIter;
         if ( (*identifierFunc)(thisItem->representedItem) )
             return thisItem;
@@ -102,8 +100,7 @@ void * YMLinkedListRemove(YMLinkedListRef list_, bool (*identifierFunc)(void *))
     
     YMLinkedListItem *previousItem = NULL;
     YMLinkedListItem *theItem = __YMLinkedListFindItemWithIdentifier(list->head, identifierFunc, &previousItem);
-    if ( theItem )
-    {
+    if ( theItem ) {
         if ( previousItem )
             previousItem->next = theItem->next;
         else

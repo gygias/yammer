@@ -98,8 +98,7 @@ void PlexerTestsRun(ym_test_assert_func assert, const void *context)
     YMRelease(theTest.plexerTest1Lock);
     YMRelease(theTest.interruptNotificationSem);
     
-    while ( YMDictionaryGetCount(theTest.lastMessageWrittenByStreamID) > 0 )
-    {
+    while ( YMDictionaryGetCount(theTest.lastMessageWrittenByStreamID) > 0 ) {
         void *message = YMDictionaryRemove(theTest.lastMessageWrittenByStreamID, YMDictionaryGetRandomKey(theTest.lastMessageWrittenByStreamID));
         free(message);
     }
@@ -148,8 +147,7 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     testassert(okay,"slave did not start");
     
     int nSpawnConcurrentStreams = PlexerTest1Threads;
-    while (nSpawnConcurrentStreams--)
-    {
+    while (nSpawnConcurrentStreams--) {
         YMThreadRef aThread = YMThreadCreate(NULL, _RunLocalPlexer, theTest);
         YMRetain(theTest->localPlexer);
         YMRetain(theTest->plexerTest1Lock);
@@ -158,25 +156,19 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
         YMRelease(aThread);
     }
     
-    if ( ! PlexerTest1TimeBased )
-    {
+    if ( ! PlexerTest1TimeBased ) {
         while ( theTest->plexerTest1Running )
 			sleep(1);
-	}
-    else
-    {
+	} else {
         time_t startTime = time(NULL);
         sleep((unsigned int)(PlexerTest1EndDate - startTime));
     }
     
     theTest->timeBasedTimeOver = true;
-    if ( arc4random_uniform(2) )
-    {
+    if ( arc4random_uniform(2) ) {
         ymlog("closing local");
         theTest->closedPlexer = theTest->localPlexer;
-    }
-    else
-    {
+    } else {
         ymlog("closing remote");
         theTest->closedPlexer = theTest->fakeRemotePlexer;
     }
@@ -224,8 +216,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _RunLocalPlexer(YM_THREAD_PARAM ctx_)
     {
         idx++;
         YMPlexerStreamID streamID;
-        if ( ! aStream || PlexerTest1NewStreamPerRoundTrip )
-        {
+        if ( ! aStream || PlexerTest1NewStreamPerRoundTrip ) {
             YMStringRef name = YMSTRC(__FUNCTION__);
             aStream = YMPlexerCreateStream(plexer,name);
             YMRelease(name);
@@ -236,8 +227,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _RunLocalPlexer(YM_THREAD_PARAM ctx_)
         uint16_t outgoingMessageLen;
         if ( PlexerTest1RandomMessages )
             outgoingMessage = YMRandomDataWithMaxLength(PlexerTest1RandomMessageMaxLength, &outgoingMessageLen);
-        else
-        {
+        else {
             outgoingMessage = (uint8_t *)testLocalMessage;
             outgoingMessageLen = (uint16_t)staticMessageLen + 1;
         }
@@ -245,8 +235,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _RunLocalPlexer(YM_THREAD_PARAM ctx_)
         bool protectTheList = ( PlexerTest1Threads > 1 );
         if ( protectTheList )
             YMLockLock(theTest->plexerTest1Lock);
-        if ( YMDictionaryContains(theTest->lastMessageWrittenByStreamID, (YMDictionaryKey)streamID) )
-        {
+        if ( YMDictionaryContains(theTest->lastMessageWrittenByStreamID, (YMDictionaryKey)streamID) ) {
             void *old = YMDictionaryRemove(theTest->lastMessageWrittenByStreamID, (YMDictionaryKey)streamID);
             free(old);
         }
@@ -258,8 +247,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _RunLocalPlexer(YM_THREAD_PARAM ctx_)
         
         uint16_t incomingMessageLen;
         uint8_t *incomingMessage = _ReceiveMessage(theTest, aStream, &incomingMessageLen);
-        if ( theTest->timeBasedTimeOver )
-        {
+        if ( theTest->timeBasedTimeOver ) {
             YMPlexerCloseStream(plexer, aStream);
             free(incomingMessage);
             goto catch_release;
@@ -318,8 +306,7 @@ uint8_t *_ReceiveMessage(struct PlexerTest *theTest, YMStreamRef stream, uint16_
     uint8_t *buffer = malloc(length);
     outLength = 0;
     result = YMStreamReadUp(stream, buffer, length, &outLength);
-    if ( theTest->timeBasedTimeOver )
-    {
+    if ( theTest->timeBasedTimeOver ) {
         free(buffer);
         return NULL;
     }
@@ -405,12 +392,10 @@ void YM_CALLING_CONVENTION _handle_remote_stream(ym_thread_dispatch_ref ctx_)
     bool protectTheList = ( PlexerTest1Threads > 1 );
     
     unsigned iterations = PlexerTest1NewStreamPerRoundTrip ? 1 : PlexerTest1RoundTripsPerThread;
-    for ( unsigned idx = 0; idx < iterations; idx++ )
-    {
+    for ( unsigned idx = 0; idx < iterations; idx++ ) {
         uint16_t incomingMessageLen;
         uint8_t *incomingMessage = _ReceiveMessage(theTest, stream, &incomingMessageLen);
-        if ( theTest->timeBasedTimeOver )
-        {
+        if ( theTest->timeBasedTimeOver ) {
             free(incomingMessage);
             goto catch_return;
         }
@@ -436,8 +421,7 @@ void YM_CALLING_CONVENTION _handle_remote_stream(ym_thread_dispatch_ref ctx_)
     
         if ( protectTheList )
             YMLockLock(theTest->plexerTest1Lock);
-        if ( YMDictionaryContains(theTest->lastMessageWrittenByStreamID, (YMDictionaryKey)streamID) )
-        {
+        if ( YMDictionaryContains(theTest->lastMessageWrittenByStreamID, (YMDictionaryKey)streamID) ) {
             void *old = YMDictionaryRemove(theTest->lastMessageWrittenByStreamID, (YMDictionaryKey)streamID);
             free(old);
         }
@@ -470,15 +454,11 @@ void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *
     YMLockUnlock(theTest->plexerTest1Lock);
     
     NoisyTestLog("%s: gPlexerTest1AwaitingCloses: %llu",__FUNCTION__,theTest->awaitingClosures);
-    if ( PlexerTest1TimeBased )
-    {
+    if ( PlexerTest1TimeBased ) {
         if ( theTest->streamsCompleted % 10000 == 0 )
             ymlog("handled %lluth stream, approx %llumb in, %llumb out",theTest->streamsCompleted,theTest->bytesIn/1024/1024,theTest->bytesOut/1024/1024);
-    }
-    else
-    {
-        if ( last )
-        {
+    } else {
+        if ( last ) {
             ymlog("%s last stream closed, signaling exit",__FUNCTION__);
             theTest->plexerTest1Running = false;
         }

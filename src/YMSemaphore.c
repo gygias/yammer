@@ -73,8 +73,7 @@ YMSemaphoreRef YMSemaphoreCreateWithName(YMStringRef name, int initialValue)
 
 YMSemaphoreRef __YMSemaphoreCreate(YMStringRef name, int initialValue)
 {
-    if (initialValue < 0)
-    {
+    if (initialValue < 0) {
         ymerr("semaphore[init]: fatal: initial value cannot be negative");
         abort();
     }
@@ -99,17 +98,12 @@ YMSemaphoreRef __YMSemaphoreCreate(YMStringRef name, int initialValue)
 #if !defined(YMWIN32)
 try_again:;
     semaphore->sem = sem_open(YMSTR(semaphore->semName), O_CREAT|O_EXCL, S_IRUSR|S_IWUSR, initialValue); // todo mode?
-    if ( semaphore->sem == SEM_FAILED )
-    {
-        if ( errno == EEXIST )
-        {
-            if ( sem_unlink(YMSTR(semaphore->semName)) == 0 )
-            {
+    if ( semaphore->sem == SEM_FAILED ) {
+        if ( errno == EEXIST ) {
+            if ( sem_unlink(YMSTR(semaphore->semName)) == 0 ) {
                 ymlog(YM_SEM_LOG_PREFIX "exists",YM_SEM_LOG_DESC);
                 goto try_again;
-            }
-            else
-			{
+            } else {
 				ymerr(YM_SEM_LOG_PREFIX "sem_unlink failed %d (%s)",YM_SEM_LOG_DESC,errno,strerror(errno));
 				goto try_again;
 			}
@@ -147,13 +141,11 @@ void YMSemaphoreWait(YMSemaphoreRef semaphore_)
     __YMSemaphoreRef semaphore = (__YMSemaphoreRef)semaphore_;
     
     bool retry = true;
-    while ( retry )
-    {
+    while ( retry ) {
         int result, error = 0;
         const char *errorStr = NULL;
         YM_WAIT_SEMAPHORE(semaphore->sem);
-        if (result != 0)
-        {
+        if (result != 0) {
             retry = YM_RETRY_SEMAPHORE;
             ymerr(YM_SEM_LOG_PREFIX "sem_wait failed%s: %d (%s)", YM_SEM_LOG_DESC, retry ? ", retrying" : "", errno, strerror(errno));
             ymassert(retry,"sem_wait");

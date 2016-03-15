@@ -15,6 +15,7 @@ YM_EXTERN_C_PUSH
 // meanings of 1/0/-1 are sporadic
 #define openssl_success 1
 #define openssl_fail 0
+#define openssl_solarflares -1
 
 YM_EXTERN_C_POP
 

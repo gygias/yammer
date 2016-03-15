@@ -73,8 +73,7 @@ void YMLocalSocketPairStop()
 {
 	YM_IO_BOILERPLATE
 	
-    if ( gYMLocalSocketListenSocket != NULL_SOCKET )
-    {
+    if ( gYMLocalSocketListenSocket != NULL_SOCKET ) {
         // flag & signal thread to exit
         gYMLocalSocketPairAcceptKeepListening = false;
         gYMLocalSocketThreadEnd = true;
@@ -143,8 +142,7 @@ YMLocalSocketPairRef YMLocalSocketPairCreate(YMStringRef name, bool moreComing)
     gYMLocalSocketPairAcceptKeepListening = moreComing;
     
     int clientSocket = __YMLocalSocketPairCreateClient();
-    if ( clientSocket < 0 )
-    {
+    if ( clientSocket < 0 ) {
         ymerr(YM_LOG_PRE "error: failed to create client socket",name_str);
         return NULL;
     }
@@ -152,8 +150,7 @@ YMLocalSocketPairRef YMLocalSocketPairCreate(YMStringRef name, bool moreComing)
     YMSemaphoreWait(gYMLocalSocketSemaphore); // wait for accept to happen and 'server' socket to get set
     
     int serverSocket = gYMLocalSocketPairAcceptedLast;
-    if ( serverSocket < 0 )
-    {
+    if ( serverSocket < 0 ) {
         ymerr(YM_LOG_PRE "error: failed to create server socket",name_str);
         return NULL;
     }
@@ -188,8 +185,7 @@ bool YMLocalSocketPairShutdown(YMLocalSocketPairRef pair_)
     __YMLocalSocketPairRef pair = (__YMLocalSocketPairRef)pair_;
     
     bool okay = false;
-    if ( ! pair->shutdown )
-    {
+    if ( ! pair->shutdown ) {
         ymlog(YM_LOG_PRE "shutting down",YM_LOG_DSC);
         int result = shutdown(pair->socketA, SHUT_RDWR);
         okay = ( result == 0 );
@@ -205,14 +201,12 @@ void _YMLocalSocketPairFree(YMTypeRef object)
     
 	int result, error; const char *errorStr;
     YM_CLOSE_SOCKET(pair->socketA);
-    if ( result != 0 )
-    {
+    if ( result != 0 ) {
         ymerr(YM_LOG_PRE "close failed (%d): %d (%s)",YM_LOG_DSC,result,errno,strerror(errno));
         abort();
     }
     YM_CLOSE_SOCKET(pair->socketB);
-    if ( result != 0 )
-    {
+    if ( result != 0 ) {
         ymerr(YM_LOG_PRE "close failed (%d): %d (%s)",YM_LOG_DSC,result,errno,strerror(errno));
         abort();
     }
@@ -249,8 +243,7 @@ int __YMLocalSocketPairCreateClient()
 #endif
     
     result = connect(sock, (struct sockaddr *) &sockName, size);
-    if ( result != 0 )
-    {
+    if ( result != 0 ) {
         ymerr(YM_LOG_PRE "connect failed: %d: %d (%s)",YM_LOG_DSCG,result,errno,strerror(errno));
 		int error; const char *errorStr;
         YM_CLOSE_SOCKET(sock);
@@ -306,13 +299,11 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_local_socket_accept_proc(__unused YM
 #endif
     
 	result = bind (listenSocket, (struct sockaddr *) &sockName, size);
-    if ( result != 0 )
-    {
+    if ( result != 0 ) {
         int bindErrno = errno;
 		int error; const char *errorStr;
         YM_CLOSE_SOCKET(listenSocket);
-        if ( bindErrno == EADDRINUSE )
-        {
+        if ( bindErrno == EADDRINUSE ) {
             ymerr(YM_LOG_PRE "%s in use, retrying",YM_LOG_DSCG,YMSTR(socketName));
             nameSuffixIter++;
             goto name_retry;
@@ -329,19 +320,16 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_local_socket_accept_proc(__unused YM
     ymlog(YM_LOG_PRE "listening on %s:%d",YM_LOG_DSCG,YMSTR(socketName),listenSocket);
     YMSemaphoreSignal(gYMLocalSocketSemaphore); // signal InitOnce
     
-    do
-    {
+    do {
         ymlog(YM_LOG_PRE "__ym_local_socket_accept_proc accepting...",YM_LOG_DSCG);
         
         int newClient = accept(listenSocket, (struct sockaddr *) &sockName, &size);
-        if ( newClient < 0 )
-        {
+        if ( newClient < 0 ) {
             if ( ! gYMLocalSocketThreadEnd )
                 ymerr("__ym_local_socket_accept_proc: error: accept failed: %d: %d (%s)",newClient,errno,strerror(errno));
             gYMLocalSocketPairAcceptedLast = NULL_SOCKET;
             break;
-        }
-        else
+        } else
             gYMLocalSocketPairAcceptedLast = newClient;
         
         ymlog(YM_LOG_PRE "__ym_local_socket_accept_proc: accepted: sf%d",YM_LOG_DSCG,newClient);

@@ -42,8 +42,7 @@ void DictionaryTestsRun(ym_test_assert_func assert, const void *context)
     YMRelease(name);
     
     YMThreadRef threads[NumberOfThreads];
-    for ( int i = 0; i < NumberOfThreads; i++ )
-    {
+    for ( int i = 0; i < NumberOfThreads; i++ ) {
         name = YMSTRCF("DictionaryTest-%d",i);
         threads[i] = YMThreadCreate(name, _dictionary_test_proc, &theTest);
         YMRelease(name);
@@ -83,8 +82,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _dictionary_test_proc(YM_THREAD_PARAM ctx
     }
     YMLockUnlock(theTest->lock);
     
-    while (!theTest->endTest)
-    {
+    while (!theTest->endTest) {
         char *random_string = YMRandomASCIIStringWithMaxLength((uint16_t)arc4random_uniform(MaxItemLength), false, false);
         uint8_t *random_data = YMRandomDataWithMaxLength(MaxItemLength,NULL);
         
@@ -98,8 +96,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _dictionary_test_proc(YM_THREAD_PARAM ctx
             int iters = 0;
             YMDictionaryEnumRef aEnum = YMDictionaryEnumeratorBegin(theTest->dictionary);
             testassert(aEnum,"enumerator should not be nil");
-            while ( aEnum )
-            {
+            while ( aEnum ) {
                 testassert(aEnum->key==string_key||aEnum->key==data_key,"unknown key: %llu (s%u d%u)",aEnum->key,string_key,data_key);
                 testassert(aEnum->value==random_string||aEnum->value==random_data,"unknown value: %p (s%p d%p)",aEnum->value,random_string,random_data);
                 iters++;
@@ -113,8 +110,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _dictionary_test_proc(YM_THREAD_PARAM ctx
             
             // test removal
             bool removeRandomly = arc4random_uniform(2);
-            if ( removeRandomly )
-            {
+            if ( removeRandomly ) {
                 YMDictionaryKey randomKey = YMDictionaryGetRandomKey(theTest->dictionary);
                 YMDictionaryValue randomValue = YMDictionaryRemove(theTest->dictionary, randomKey);
                 testassert(randomKey==string_key||randomKey==data_key,"randomKey unknown %llu (s%u d%u)",randomKey,string_key,data_key);
@@ -126,9 +122,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _dictionary_test_proc(YM_THREAD_PARAM ctx
                 testassert(randomValue2!=randomValue,"randomValue==randomValue2");
                 testassert(randomKey2==string_key||randomKey2==data_key,"randomKey2 unknown %llu (s%u d%u)",randomKey2,string_key,data_key);
                 testassert(randomValue2==random_string||randomValue2==random_data,"randomValue2 unknown %p (s%p d%p)",randomValue2,random_string,random_data);
-            }
-            else
-            {
+            } else {
                 testassert(YMDictionaryRemove(theTest->dictionary, string_key),"failed to remove string by key!");
                 testassert(YMDictionaryRemove(theTest->dictionary, data_key),"failed to remove data by key!");
             }

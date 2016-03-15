@@ -171,8 +171,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _RunEndpoint(YM_THREAD_PARAM ctx)
     testassert(okay,"provider init");
     
     bool looped = false;
-    for ( unsigned idx = 0; (TLSTestTimeBased && ! theTest->timeBasedEnd) || (idx < TLSTestMessageRoundTrips); idx++ )
-    {
+    for ( unsigned idx = 0; (TLSTestTimeBased && ! theTest->timeBasedEnd) || (idx < TLSTestMessageRoundTrips); idx++ ) {
         if ( looped )
             YMLockUnlock(theTest->stateLock);
         
@@ -181,14 +180,12 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _RunEndpoint(YM_THREAD_PARAM ctx)
         uint16_t incomingMessageLen;
         if ( TLSTestRandomMessages )
             outgoingMessage = YMRandomDataWithMaxLength(TLSTestRandomMessageMaxLength,&outgoingMessageLen);
-        else
-        {
+        else {
             outgoingMessage = (uint8_t *)testMessage;
             outgoingMessageLen = (uint16_t)strlen(testMessage);
         }
         
-        if ( isServer )
-        {
+        if ( isServer ) {
             uint8_t *incomingMessage = _ReceiveAMessage(theTest,tls,&incomingMessageLen);
             testassert(incomingMessageLen&&theTest->lastMessageSentLen&&0==memcmp(incomingMessage, theTest->lastMessageSent, incomingMessageLen),
                       "incoming and last written do not match (i%zu o%zu)",incomingMessageLen,theTest->lastMessageSentLen);
@@ -198,9 +195,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _RunEndpoint(YM_THREAD_PARAM ctx)
             theTest->lastMessageSent = outgoingMessage;
             theTest->lastMessageSentLen = outgoingMessageLen;
             _SendAMessage(theTest, tls, outgoingMessage, outgoingMessageLen);
-        }
-        else
-        {
+        } else {
             if ( TLSTestRandomMessages ) free(theTest->lastMessageSent);
             theTest->lastMessageSent = outgoingMessage;
             theTest->lastMessageSentLen = outgoingMessageLen;

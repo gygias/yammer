@@ -48,16 +48,14 @@ void __YMRSAKeyPairSeed();
 
 YMRSAKeyPairRef YMRSAKeyPairCreateWithModuloSize(int moduloBits, int publicExponent)
 {
-    if ( moduloBits > OPENSSL_RSA_MAX_MODULUS_BITS )
-    {
+    if ( moduloBits > OPENSSL_RSA_MAX_MODULUS_BITS ) {
         ymerr("rsa: requested modulus bits exceeds max");
         return NULL;
     }
     // there's also OPENSSL_RSA_MAX_PUBEXP_BITS
     
     RSA* rsa = RSA_new();
-    if ( ! rsa )
-    {
+    if ( ! rsa ) {
         unsigned long error = ERR_get_error();
         ymerr("RSA_new failed: %lu (%s)", error, ERR_error_string(error,NULL));
         return NULL;
@@ -147,15 +145,13 @@ bool YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair_)
     
     int result = openssl_fail;
     BIGNUM *e = BN_new();
-    if ( ! e )
-    {
+    if ( ! e ) {
         rsaErrFunc = "BN_new";
         goto catch_return;
     }
     
     result = BN_set_word(e, keyPair->publicE);
-    if ( ERR_LIB_NONE != result )
-    {
+    if ( ERR_LIB_NONE != result ) {
         rsaErrFunc = "BN_set_word";
         goto catch_return;
     }
@@ -164,16 +160,14 @@ bool YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair_)
     
     // os x man page doesn't actually state that 1 is success for _ex #yolo
     result = RSA_generate_key_ex(keyPair->rsa, keyPair->moduloNBits, e, NULL /*BN_GENCB *cb callback struct*/);
-    if ( ERR_LIB_NONE != result )
-    {
+    if ( ERR_LIB_NONE != result ) {
         rsaErrFunc = "RSA_generate_key_ex";
         goto catch_return;
     }
     
 #ifdef YMDEBUG
     struct timeval now;
-    if ( timeResult == 0 )
-    {
+    if ( timeResult == 0 ) {
         timeResult = gettimeofday(&now, NULL);
         if ( timeResult == 0 )
             ymlog("rsa: it took %ld seconds to generate rsa keypair with %d modulo bits",now.tv_sec - then.tv_sec,keyPair->moduloNBits);
@@ -183,8 +177,7 @@ bool YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair_)
 #endif
     
 catch_return:
-    if ( ERR_LIB_NONE != result )
-    {
+    if ( ERR_LIB_NONE != result ) {
         rsaErr = ERR_get_error();
         ymerr("rsa: %s failed: %lu (%s)", rsaErrFunc, rsaErr, ERR_error_string(rsaErr,NULL));
     }
@@ -203,8 +196,7 @@ void __YMRSAKeyPairSeed()
 #endif
     
     uint64_t iters = 0;
-    do
-    {
+    do {
         uint32_t aRandom = arc4random();
         RAND_seed(&aRandom, sizeof(aRandom));
         iters++;
@@ -212,8 +204,7 @@ void __YMRSAKeyPairSeed()
     
 #ifdef YMDEBUG
     struct timeval now;
-    if ( timeResult == 0 )
-    {
+    if ( timeResult == 0 ) {
         timeResult = gettimeofday(&now, NULL);
         if ( timeResult == 0 )
             ymlog("rsa: it took %ld seconds and %llu words to seed openssl rand",now.tv_sec - then.tv_sec,iters);

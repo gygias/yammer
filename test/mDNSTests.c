@@ -67,8 +67,7 @@ void mDNSTestsRun(ym_test_assert_func assert, const void *context)
 
 void _TestmDNSTxtRecordParsing(struct mDNSTest *theTest)
 {
-    for(int i = 0; i < 1000; i++)
-    {
+    for(int i = 0; i < 1000; i++) {
         uint16_t desiredAndActualSize = (uint16_t)arc4random_uniform(3);
         YMmDNSTxtRecordKeyPair **keyPairList = _MakeTxtRecordKeyPairs(&desiredAndActualSize);
         uint16_t inSizeOutBlobLen = desiredAndActualSize;
@@ -112,16 +111,13 @@ void _TestmDNSCreateDiscoverResolve(struct mDNSTest *theTest)
                             { (intptr_t)"resolution", (intptr_t)&theTest->waitingOnResolution },
                             { (intptr_t)"disappearance", (intptr_t)&theTest->waitingOnDisappearance } };
     
-    for ( int i = 0; i < nSteps; i++ )
-    {
+    for ( int i = 0; i < nSteps; i++ ) {
         const char *name = (const char *)steps[i][0];
         bool *flag = (bool *)steps[i][1];
      
         time_t startTime = time(NULL);
-        while ( *flag )
-        {
-            if ( ( time(NULL) - startTime ) >= testTimeout )
-            {
+        while ( *flag ) {
+            if ( ( time(NULL) - startTime ) >= testTimeout ) {
                 testassert(false, "timed out waiting for %s",name);
                 return;
             }
@@ -151,8 +147,7 @@ YMmDNSTxtRecordKeyPair ** _MakeTxtRecordKeyPairs(uint16_t *inOutnKeypairs)
     YMmDNSTxtRecordKeyPair **keyPairs = (YMmDNSTxtRecordKeyPair **)calloc(*inOutnKeypairs,sizeof(YMmDNSTxtRecordKeyPair *));
     
     uint16_t remaining = UINT16_MAX;
-    for ( size_t idx = 0; idx < requestedSize; idx++ )
-    {
+    for ( size_t idx = 0; idx < requestedSize; idx++ ) {
         keyPairs[idx] = calloc(1,sizeof(YMmDNSTxtRecordKeyPair));
         
         remaining -= testKeyPairReserved; // length char, '=' and zero-length
@@ -194,17 +189,13 @@ YMmDNSTxtRecordKeyPair ** _MakeTxtRecordKeyPairs(uint16_t *inOutnKeypairs)
 
 void _CompareTxtList(struct mDNSTest *theTest, YMmDNSTxtRecordKeyPair **aList, size_t aSize, YMmDNSTxtRecordKeyPair **bList, size_t bSize)
 {
-    if ( aSize != bSize )
-    {
-        for ( size_t i = 0; i < theTest->nTestKeyPairs; i++ )
-        {
-            if ( i < aSize )
-            {
+    if ( aSize != bSize ) {
+        for ( size_t i = 0; i < theTest->nTestKeyPairs; i++ ) {
+            if ( i < aSize ) {
                 YMmDNSTxtRecordKeyPair *aPair = aList[i];
                 ymlog("a [%zd]: %zd -> %d (%s)",i,YMStringGetLength(aPair->key),aPair->valueLen,YMSTR(aPair->key));
             }
-            if ( i < bSize )
-            {
+            if ( i < bSize ) {
                 YMmDNSTxtRecordKeyPair *bPair = bList[i];
                 ymlog("b [%zd]: %zd -> %d (%s)",i,YMStringGetLength(bPair->key),bPair->valueLen,YMSTR(bPair->key));
             }
@@ -218,8 +209,7 @@ void _CompareTxtList(struct mDNSTest *theTest, YMmDNSTxtRecordKeyPair **aList, s
     
     testassert((uintptr_t)aList ^ (uintptr_t)bList,"null list vs non-null list");
     
-    for ( size_t i = 0; i < aSize; i++ )
-    {
+    for ( size_t i = 0; i < aSize; i++ ) {
         testassert(aList[i]->key&&bList[i],"a key %zdth null",i);
         testassert(0 == strcmp(YMSTR(aList[i]->key), YMSTR(bList[i]->key)),"%zd-th keys '%s' and '%s' don't match",i,YMSTR(aList[i]->key),YMSTR(bList[i]->key));
         testassert(aList[i]->value&&aList[i]->value,"a value %zdth null",i);
@@ -235,8 +225,7 @@ void test_service_appeared(YMmDNSBrowserRef browser, YMmDNSServiceRecord *servic
     
     ymlog("%s/%s:? appeared",YMSTR(service->type),YMSTR(service->name));
     testassert(browser==theTest->browser,"browser pointers are not equal on service appearance");
-    if ( theTest->waitingOnAppearance && 0 == strcmp(YMSTR(service->name), theTest->testServiceName) )
-    {
+    if ( theTest->waitingOnAppearance && 0 == strcmp(YMSTR(service->name), theTest->testServiceName) ) {
         theTest->waitingOnAppearance = false;
         ymlog("resolving...");
         bool startedResolve = YMmDNSBrowserResolve(browser, service->name);
@@ -278,8 +267,7 @@ void test_service_removed(YMmDNSBrowserRef browser, YMStringRef serviceName, voi
     
     if ( theTest->waitingOnAppearance || theTest->waitingOnResolution )
         testassert(strcmp(YMSTR(serviceName),theTest->testServiceName),"test service disappeared before tearDown")
-    else
-    {
+    else {
         ymlog("target service removed");
         theTest->waitingOnDisappearance = false;
     }
