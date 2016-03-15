@@ -13,6 +13,7 @@
 #include "YMLock.h"
 #include "YMAddress.h"
 #include "YMArray.h"
+#include "YMTask.h"
 
 #define ymlog_type YMLogDefault // this file isn't very clearly purposed
 #include "YMLog.h"
@@ -119,7 +120,7 @@ YMIOResult YMReadFull(YMFILE fd, uint8_t *buffer, size_t bytes, size_t *outRead)
         YM_READ_FILE(fd, buffer + off, bytes - off);
         if ( aRead == 0 )
         {
-            ymlog("    io: read(f%d, %p + %zu, %zu - %zu) EOF",fd, buffer, off, bytes, off);
+            ymdbg("    io: read(f%d, %p + %zu, %zu - %zu) EOF",fd, buffer, off, bytes, off);
             ioResult = YMIOEOF;
             break;
         }
@@ -129,7 +130,7 @@ YMIOResult YMReadFull(YMFILE fd, uint8_t *buffer, size_t bytes, size_t *outRead)
             ioResult = YMIOError;
             break;
         }
-        ymlog("    io: read(f%d, %p + %zu, %zu - %zu): %zd",fd, buffer, off, bytes, off, aRead);
+        ymdbg("    io: read(f%d, %p + %zu, %zu - %zu): %zd",fd, buffer, off, bytes, off, aRead);
         off += aRead;
     }
     
@@ -162,7 +163,7 @@ YMIOResult YMWriteFull(YMFILE fd, const uint8_t *buffer, size_t bytes, size_t *o
                 ioResult = YMIOError;
                 goto catch_fail;
             default:
-                ymlog("    io: write(f%d, %p + %zu, %zu - %zu): %zd",fd, buffer, off, bytes, off, aWrite);
+                ymdbg("    io: write(f%d, %p + %zu, %zu - %zu): %zd",fd, buffer, off, bytes, off, aWrite);
                 break;
         }
         off += aWrite;
@@ -373,7 +374,7 @@ YMDictionaryRef YMCreateLocalInterfaceMap()
     ymlog("current interface map:");
     YMDictionaryEnumRef denum = YMDictionaryEnumeratorBegin(map);
     while ( denum ) {
-        ymlogi(" %s:",YMSTR((void *)denum->key))
+        ymlogi(" %s (%s):",YMSTR((void *)denum->key),YMInterfaceTypeDescription(YMInterfaceTypeForName((YMStringRef)denum->key)));
         YMArrayRef addresses = (YMArrayRef)denum->value;
         for ( int i = 0; i < YMArrayGetCount(addresses); i++ ) {
             ymlogi(" %s",YMSTR(YMAddressGetDescription((YMAddressRef)YMArrayGet(addresses, i))));
@@ -385,6 +386,75 @@ YMDictionaryRef YMCreateLocalInterfaceMap()
     
 catch_return:
     return map;
+}
+
+YMInterfaceType YMInterfaceTypeForName(YMStringRef ifName)
+{
+#if defined(YMAPPLE)
+    
+    if ( YMStringHasPrefix2(ifName, "lo") ) {
+        return YMInterfaceLoopback;
+    } else if ( YMStringHasPrefix2(ifName, "en") ) {
+        
+        // the only proper interface i know of for this is obj-c and CoreWLAN/CWInterface.h#interfaceName
+        // so we'd either need an objc helper library for apple platforms, or maybe this is good enough
+        YMStringRef path = YMSTRC("/usr/sbin/networksetup");
+        YMArrayRef args = YMArrayCreate();
+        YMArrayAdd(args, "-getairportnetwork");
+        YMArrayAdd(args, YMSTR(ifName));
+        
+        YMTaskRef task = YMTaskCreate(path, args, false);
+        YMTaskLaunch(task);
+        YMTaskWait(task);
+        int status = YMTaskGetExitStatus(task);
+        
+        YMRelease(path);
+        YMRelease(args);
+        YMRelease(task);
+        
+        if ( status == 0 )
+            return YMInterfaceWirelessEthernet;
+        return YMInterfaceWiredEthernet;
+    } else if ( YMStringHasPrefix2(ifName, "fw") ) {
+        return YMInterfaceFirewire400;
+    }
+    
+#else
+#error todo
+#endif
+    
+    return YMInterfaceUnknown;
+}
+
+const char *YMInterfaceTypeDescription(YMInterfaceType type)
+{
+    switch ( type )
+    {
+        case YMInterfaceUnknown:
+            return "unknown";
+            break;
+        case YMInterfaceLoopback:
+            return "loopback";
+            break;
+        case YMInterfaceWirelessEthernet:
+            return "wifi";
+            break;
+        case YMInterfaceBluetooth:
+            return "bluetooth";
+            break;
+        case YMInterfaceWiredEthernet:
+            return "ethernet";
+            break;
+        case YMInterfaceFirewire400:
+        case YMInterfaceFirewire800:
+        case YMInterfaceFirewire1600:
+        case YMInterfaceFirewire3200:
+            return "firewire";
+            break;
+        case YMInterfaceThunderbolt:
+            return "thunderbolt";
+            break;
+    }
 }
 
 #if !defined(YMWIN32)

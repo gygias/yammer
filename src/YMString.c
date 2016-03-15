@@ -267,4 +267,16 @@ bool YMStringEquals(YMStringRef stringA, YMStringRef stringB)
     return ( 0 == strcmp(YMSTR(stringA),YMSTR(stringB)) );
 }
 
+bool YMStringHasPrefix(YMStringRef string, YMStringRef prefix)
+{
+    const char *cstr = YMSTR(string);
+    return ( strstr(cstr, YMSTR(prefix)) == cstr );
+}
+
+bool YMStringHasPrefix2(YMStringRef string, const char *prefix)
+{
+    const char *cstr = YMSTR(string);
+    return ( strstr(cstr, prefix) == cstr );
+}
+
 YM_EXTERN_C_POP

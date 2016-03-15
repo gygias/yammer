@@ -32,6 +32,8 @@ YMStringRef YMAPI YMStringCreateByAppendingString(YMStringRef base, YMStringRef 
 size_t YMAPI YMStringGetLength(YMStringRef string);
 const YMAPI char * YMStringGetCString(YMStringRef string);
 bool YMAPI YMStringEquals(YMStringRef stringA, YMStringRef stringB);
+bool YMAPI YMStringHasPrefix(YMStringRef string, YMStringRef prefix);
+bool YMAPI YMStringHasPrefix2(YMStringRef string, const char *prefix);
 
 #define YMSTR(x) YMStringGetCString(x)
 #define YMSTRC(x) YMStringCreateWithCString(x)

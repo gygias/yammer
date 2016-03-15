@@ -35,6 +35,7 @@ typedef enum
     EqualTo = 0,
     GreaterThan = 1
 } ComparisonResult;
+
 const char *YMGetCurrentTimeString(char *buf, size_t bufLen);
 ComparisonResult YMTimevalCompare(struct timeval *a, struct timeval *b);
 // ensure portability of the end of time for the watchtower platform
@@ -44,12 +45,27 @@ void YMGetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time);
 YMIOResult YMReadFull(YMFILE fd, uint8_t *buffer, size_t bytes, size_t *outRead);
 YMIOResult YMWriteFull(YMFILE fd, const uint8_t *buffer, size_t bytes, size_t *outWritten);
 
-void YMNetworkingInit();
-int32_t YMPortReserve(bool ipv4, int *outSocket);
-
 int YMGetNumberOfOpenFilesForCurrentProcess();
 
+typedef enum
+{
+    YMInterfaceUnknown = 0,
+    YMInterfaceLoopback = 1,
+    YMInterfaceWirelessEthernet = 100,
+    YMInterfaceBluetooth = 200,
+    YMInterfaceWiredEthernet = 300,
+    YMInterfaceFirewire400 = 400,
+    YMInterfaceFirewire800 = 401,
+    YMInterfaceFirewire1600 = 402,
+    YMInterfaceFirewire3200 = 403,
+    YMInterfaceThunderbolt = 500
+} YMInterfaceType;
+
+void YMNetworkingInit();
+int32_t YMPortReserve(bool ipv4, int *outSocket);
 YMDictionaryRef YMCreateLocalInterfaceMap();
+YMInterfaceType YMInterfaceTypeForName(YMStringRef ifName);
+const char *YMInterfaceTypeDescription(YMInterfaceType type);
 
 // in utilities for YMAlloc
 #include "YMLock.h"

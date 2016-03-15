@@ -106,6 +106,7 @@
 		636166F91C18FAF600D17172 /* TestsMain.c in Sources */ = {isa = PBXBuildFile; fileRef = 636166F81C18FAF600D17172 /* TestsMain.c */; };
 		6369CEA31C97570600737A6B /* GrabBagTests.c in Sources */ = {isa = PBXBuildFile; fileRef = 6369CEA11C97570500737A6B /* GrabBagTests.c */; };
 		6369CEA41C97570600737A6B /* GrabBagTests.c in Sources */ = {isa = PBXBuildFile; fileRef = 6369CEA11C97570500737A6B /* GrabBagTests.c */; };
+		6369CEA61C98621B00737A6B /* CoreWLAN.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6369CEA51C98621B00737A6B /* CoreWLAN.framework */; };
 		637816C71BF68B8F00BF79E2 /* YMString.c in Sources */ = {isa = PBXBuildFile; fileRef = 637816C51BF68B8F00BF79E2 /* YMString.c */; };
 		637816C81BF68B8F00BF79E2 /* YMString.h in Headers */ = {isa = PBXBuildFile; fileRef = 637816C61BF68B8F00BF79E2 /* YMString.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		637E3D5D1BF262EE00D702ED /* YMX509Certificate.c in Sources */ = {isa = PBXBuildFile; fileRef = 637E3D5B1BF262EE00D702ED /* YMX509Certificate.c */; };
@@ -297,6 +298,7 @@
 		636166F81C18FAF600D17172 /* TestsMain.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = TestsMain.c; sourceTree = "<group>"; };
 		6369CEA11C97570500737A6B /* GrabBagTests.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = GrabBagTests.c; sourceTree = "<group>"; };
 		6369CEA21C97570500737A6B /* GrabBagTests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GrabBagTests.h; sourceTree = "<group>"; };
+		6369CEA51C98621B00737A6B /* CoreWLAN.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreWLAN.framework; path = System/Library/Frameworks/CoreWLAN.framework; sourceTree = SDKROOT; };
 		637816C31BF680A700BF79E2 /* YMInternal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMInternal.h; path = private/YMInternal.h; sourceTree = "<group>"; };
 		637816C41BF684D300BF79E2 /* YMPlexerPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMPlexerPriv.h; path = private/YMPlexerPriv.h; sourceTree = "<group>"; };
 		637816C51BF68B8F00BF79E2 /* YMString.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMString.c; path = src/YMString.c; sourceTree = "<group>"; };
@@ -355,6 +357,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6369CEA61C98621B00737A6B /* CoreWLAN.framework in Frameworks */,
 				631916471BFD1CA3001475FC /* libyammer.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -448,6 +451,7 @@
 		63225D391BE9026200C28F05 = {
 			isa = PBXGroup;
 			children = (
+				6369CEA51C98621B00737A6B /* CoreWLAN.framework */,
 				6334656B1C029A84007343B1 /* todo */,
 				634A87491C17A4DB00C7CA99 /* Makefile */,
 				631916461BFD069A001475FC /* libyammer */,
