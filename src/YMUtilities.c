@@ -402,8 +402,10 @@ YMInterfaceType YMInterfaceTypeForName(YMStringRef ifName)
         YMArrayRef args = YMArrayCreate();
         YMArrayAdd(args, "-getairportnetwork");
         YMArrayAdd(args, YMSTR(ifName));
+        YMArrayAdd(args, "2&>");
+        YMArrayAdd(args, "/dev/null");
         
-        YMTaskRef task = YMTaskCreate(path, args, false);
+        YMTaskRef task = YMTaskCreate(path, args, true);
         YMTaskLaunch(task);
         YMTaskWait(task);
         int status = YMTaskGetExitStatus(task);
