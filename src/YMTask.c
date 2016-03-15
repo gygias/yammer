@@ -213,12 +213,9 @@ void YMTaskWait(YMTaskRef task_)
     do {
         result = waitpid(task->childPid, &stat_loc, 0);
     } while ( result != task->childPid );
-    if ( WIFEXITED(result) )
-        ymerr("task[%s]: p%d exited with %d", YMSTR(task->path), task->childPid, stat_loc);
-    else if ( WIFSIGNALED(result) )
-        ymerr("task[%s]: p%d exited abnormally with %d", YMSTR(task->path), task->childPid, stat_loc);
-    else
-        ymerr("task[%s]: p%d unknown exit status %d", YMSTR(task->path), task->childPid, stat_loc);
+    ymerr("task[%s]: p%d exited%s with %d", YMSTR(task->path), task->childPid, WIFEXITED(result) ?
+                                                                                "" :
+                                                                                (WIFSIGNALED(result) ? " signaled," : " (*)"), stat_loc);
     task->result = stat_loc;
 
 #else
