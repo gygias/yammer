@@ -352,6 +352,7 @@ YMDictionaryRef YMCreateLocalInterfaceMap()
         ifaddrsIter = ifaddrsIter->ifa_next;
     }
     freeifaddrs(ifaddrsList);
+#elif defined(YMWIN32)
 #else
 #error todo
 #endif
@@ -406,6 +407,7 @@ YMInterfaceType YMInterfaceTypeForName(YMStringRef ifName)
         return YMInterfaceFirewire400;
     }
     
+#elif defined(YMWIN32)
 #else
 #error todo
 #endif
@@ -417,9 +419,6 @@ const char *YMInterfaceTypeDescription(YMInterfaceType type)
 {
     switch ( type )
     {
-        case YMInterfaceUnknown:
-            return "unknown";
-            break;
         case YMInterfaceLoopback:
             return "loopback";
             break;
@@ -441,6 +440,10 @@ const char *YMInterfaceTypeDescription(YMInterfaceType type)
         case YMInterfaceThunderbolt:
             return "thunderbolt";
             break;
+		default:
+		case YMInterfaceUnknown:
+			return "unknown";
+			break;
     }
 }
 

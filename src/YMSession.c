@@ -1185,10 +1185,11 @@ HRESULT STDMETHODCALLTYPE ymsink_Indicate(__RPC__in IWbemObjectSink * This,/* [i
 HRESULT STDMETHODCALLTYPE ymsink_SetStatus(__RPC__in IWbemObjectSink * This,/* [in] */ long lFlags,/* [in] */ HRESULT hResult,/* [unique][in] */ __RPC__in_opt BSTR strParam,/* [unique][in] */ __RPC__in_opt IWbemClassObject *pObjParam)
 {
 	ymerr("ymsink_SetStatus");
-	if (lFlags == WBEM_STATUS_COMPLETE)
+	if (lFlags == WBEM_STATUS_COMPLETE) {
 		ymlog("call complete: hResult 0x%X", hResult);
-	else if (lFlags == WBEM_STATUS_PROGRESS)
+	} else if (lFlags == WBEM_STATUS_PROGRESS) {
 		ymlog("call in progress.");
+	}
 
 	return WBEM_S_NO_ERROR;
 }

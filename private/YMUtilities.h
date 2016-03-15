@@ -36,16 +36,16 @@ typedef enum
     GreaterThan = 1
 } ComparisonResult;
 
-const char *YMGetCurrentTimeString(char *buf, size_t bufLen);
-ComparisonResult YMTimevalCompare(struct timeval *a, struct timeval *b);
+const char YMAPI * YMGetCurrentTimeString(char *buf, size_t bufLen);
+ComparisonResult YMAPI YMTimevalCompare(struct timeval *a, struct timeval *b);
 // ensure portability of the end of time for the watchtower platform
-void YMGetTheBeginningOfPosixTimeForCurrentPlatform(struct timeval *time);
-void YMGetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time);
+void YMAPI YMGetTheBeginningOfPosixTimeForCurrentPlatform(struct timeval *time);
+void YMAPI YMGetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time);
 
-YMIOResult YMReadFull(YMFILE fd, uint8_t *buffer, size_t bytes, size_t *outRead);
-YMIOResult YMWriteFull(YMFILE fd, const uint8_t *buffer, size_t bytes, size_t *outWritten);
+YMIOResult YMAPI YMReadFull(YMFILE fd, uint8_t *buffer, size_t bytes, size_t *outRead);
+YMIOResult YMAPI YMWriteFull(YMFILE fd, const uint8_t *buffer, size_t bytes, size_t *outWritten);
 
-int YMGetNumberOfOpenFilesForCurrentProcess();
+int YMAPI YMGetNumberOfOpenFilesForCurrentProcess();
 
 typedef enum
 {
@@ -61,24 +61,24 @@ typedef enum
     YMInterfaceThunderbolt = 500
 } YMInterfaceType;
 
-void YMNetworkingInit();
-int32_t YMPortReserve(bool ipv4, int *outSocket);
-YMDictionaryRef YMCreateLocalInterfaceMap();
-YMInterfaceType YMInterfaceTypeForName(YMStringRef ifName);
-const char *YMInterfaceTypeDescription(YMInterfaceType type);
+void YMAPI YMNetworkingInit();
+int32_t YMAPI YMPortReserve(bool ipv4, int *outSocket);
+YMDictionaryRef YMAPI YMCreateLocalInterfaceMap();
+YMInterfaceType YMAPI YMInterfaceTypeForName(YMStringRef ifName);
+const char YMAPI * YMInterfaceTypeDescription(YMInterfaceType type);
 
 // in utilities for YMAlloc
 #include "YMLock.h"
 
-MUTEX_PTR_TYPE YMCreateMutexWithOptions(YMLockOptions options);
-bool YMLockMutex(MUTEX_PTR_TYPE mutex);
-bool YMUnlockMutex(MUTEX_PTR_TYPE mutex);
-bool YMDestroyMutex(MUTEX_PTR_TYPE mutex);
+MUTEX_PTR_TYPE YMAPI YMCreateMutexWithOptions(YMLockOptions options);
+bool YMAPI YMLockMutex(MUTEX_PTR_TYPE mutex);
+bool YMAPI YMUnlockMutex(MUTEX_PTR_TYPE mutex);
+bool YMAPI YMDestroyMutex(MUTEX_PTR_TYPE mutex);
 
-void YMUtilitiesFreeGlobals();
+void YMAPI YMUtilitiesFreeGlobals();
 
 #if defined(YMWIN32) || defined(_YOLO_DONT_TELL_PROFESSOR)
-int gettimeofday(struct timeval * tp, struct timezone * tzp);
+int YMAPI gettimeofday(struct timeval * tp, struct timezone * tzp);
 #endif
 
 YM_EXTERN_C_POP

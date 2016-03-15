@@ -153,6 +153,7 @@
     <ClInclude Include="..\..\private\yammerpch.h" />
     <ClInclude Include="..\..\test\CryptoTests.h" />
     <ClInclude Include="..\..\test\DictionaryTests.h" />
+    <ClInclude Include="..\..\test\GrabBagTests.h" />
     <ClInclude Include="..\..\test\LocalSocketPairTests.h" />
     <ClInclude Include="..\..\test\mDNSTests.h" />
     <ClInclude Include="..\..\test\PlexerTests.h" />
@@ -168,6 +169,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\test\CryptoTests.c" />
     <ClCompile Include="..\..\test\DictionaryTests.c" />
+    <ClCompile Include="..\..\test\GrabBagTests.c" />
     <ClCompile Include="..\..\test\LocalSocketPairTests.c" />
     <ClCompile Include="..\..\test\mDNSTests.c" />
     <ClCompile Include="..\..\test\PlexerTests.c" />
