@@ -39,6 +39,9 @@
 # define YM_PORT_MAX IPPORT_DYNAMIC_MAX
 # include <Winsock2.h>
 # include <Ws2tcpip.h>
+# include <ws2ipdef.h>
+# include <Wlanapi.h>
+# include <iphlpapi.h> // GetAdapterInfo etc.
 # include <time.h>
 # include <Winternl.h> // NtQuery
 # include <Processthreadsapi.h> // GetCurrentProcessId
@@ -353,6 +356,48 @@ YMDictionaryRef YMCreateLocalInterfaceMap()
     }
     freeifaddrs(ifaddrsList);
 #elif defined(YMWIN32)
+	//GetInterfaceInfo(NULL, &ifInfoLen);
+
+	ULONG apInfoLen = 0;
+	PIP_ADAPTER_INFO apInfo, apInfoIter;
+
+	DWORD result = GetAdaptersInfo(NULL, &apInfoLen);
+	if ( result != ERROR_BUFFER_OVERFLOW )
+		goto catch_return;
+
+	apInfo = YMALLOC(apInfoLen);
+	result = GetAdaptersInfo(apInfo, &apInfoLen);
+	if ( result != ERROR_SUCCESS ) // success is the error of winners!
+		goto catch_return;
+	else if ( apInfo ) {
+		apInfoIter = apInfo;
+		while ( apInfoIter ) {
+			IP_ADDR_STRING anIpString = apInfoIter->IpAddressList;
+			YMStringRef ymIp = YMSTRC(anIpString.IpAddress.String);
+
+			if ( ( apInfoIter->Type == MIB_IF_TYPE_ETHERNET ) 
+				|| ( apInfoIter->Type == IF_TYPE_IEEE80211 ) ) {
+				YMAddressRef address = YMAddressCreateWithIPStringAndPort(ymIp, 0);
+
+				if ( address ) { // todo fairly redundant with unix/mac implementation
+					YMStringRef name = YMSTRC(apInfoIter->AdapterName);
+					if ( ! YMDictionaryContains(map, (YMDictionaryKey)name) ) {
+						YMArrayRef addresses = YMArrayCreate(true);
+						YMDictionaryAdd(map, (YMDictionaryKey)name, (void *)addresses);
+					}
+					YMArrayAdd(YMDictionaryGetItem(map, (YMDictionaryKey)name), address);
+					YMRelease(name);
+				}
+			} else
+				ymlog("unknown windows network interface: %u: %s : %s",apInfoIter->Type,anIpString.IpAddress.String,apInfoIter->AdapterName);
+				
+			YMRelease(ymIp);
+			apInfoIter = apInfoIter->Next;
+		}
+	}
+
+	free(apInfo);
+
 #else
 #error todo
 #endif
@@ -376,6 +421,8 @@ catch_return:
 
 YMInterfaceType YMInterfaceTypeForName(YMStringRef ifName)
 {
+	YMInterfaceType defaultType = YMInterfaceUnknown;
+
 #if defined(YMAPPLE)
     
     if ( YMStringHasPrefix2(ifName, "lo") ) {
@@ -408,11 +455,54 @@ YMInterfaceType YMInterfaceTypeForName(YMStringRef ifName)
     }
     
 #elif defined(YMWIN32)
+	// todo should be optimized, known in if mapping function
+
+	// fussing with 10 different string types and 5 different "string <-> guid" functions
+	// took substantially longer than the rest of the if matching stuff, neat!
+	// strip {..}
+	GUID guid = {0};
+	char *nakedGuid = strdup(YMSTR(ifName));
+	nakedGuid[strlen(nakedGuid)-1] = '\0';
+	RPC_STATUS result2 = UuidFromStringA(nakedGuid + 1,&guid);
+	free(nakedGuid);
+	if ( result2 != RPC_S_OK ) {
+		ymerr("CLSIDFromString failed: %08x", GetLastError());
+		goto catch_return;
+	}
+
+# define ymWlanXPSP2_3		1
+# define ymWlanVistaAndUp	2
+	DWORD wlanVersion = 0;
+	HANDLE wlanHandle = NULL;
+
+	DWORD result = WlanOpenHandle(WFD_API_VERSION_1_0, NULL, &wlanVersion, &wlanHandle);
+	if ( result != ERROR_SUCCESS ) {
+		ymerr("WlanOpenHandle failed: %u: %08x", result, GetLastError());
+		goto catch_return;
+	}
+
+	WLAN_CONNECTION_ATTRIBUTES attrs;
+	DWORD attrsLen = sizeof(attrs);
+	WLAN_OPCODE_VALUE_TYPE opcode;
+	result = WlanQueryInterface(wlanHandle, (const GUID *)&guid, wlan_intf_opcode_current_connection, NULL, &attrsLen, (PVOID)&attrs, &opcode);
+	if ( result != ERROR_SUCCESS ) {
+		//ymerr("WlanQueryInterface failed: %u: %08x", result, GetLastError());
+		defaultType = YMInterfaceWiredEthernet; // todo excluding others for now
+		goto catch_close;
+	} else
+		defaultType = YMInterfaceWirelessEthernet;
+
+catch_close:
+	result = WlanCloseHandle(wlanHandle, NULL);
+	if ( result != ERROR_SUCCESS )
+		ymerr("WlanCloseHandle failed: %u: %08x", result, GetLastError());
+
 #else
 #error todo
 #endif
-    
-    return YMInterfaceUnknown;
+
+catch_return:
+    return defaultType;
 }
 
 const char *YMInterfaceTypeDescription(YMInterfaceType type)
