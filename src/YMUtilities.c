@@ -452,7 +452,8 @@ YMInterfaceType YMInterfaceTypeForName(YMStringRef ifName)
         return YMInterfaceWiredEthernet;
     } else if ( YMStringHasPrefix2(ifName, "fw") ) {
         return YMInterfaceFirewire400;
-    }
+    } else
+        goto catch_return;
     
 #elif defined(YMWIN32)
 	// todo should be optimized, known in if mapping function

@@ -84,9 +84,9 @@
 #  define malloc_size malloc_usable_size
 #  endif
 # endif
-# define YM_DEBUG_ASSERT_MALLOC(x) ymassert(( (x) != NULL )&&( malloc_size((void *)x) > 0 ),"debug: malloc didn't allocate this address: %p",(x))
+# define YM_DEBUG_ASSERT_MALLOC(x) ymassert(((x) != NULL)&&(malloc_size((void *)x) > 0),"debug: malloc didn't allocate this address: %p",(x))
 # define YM_INSANE_CHUNK_SIZE 65535
-# define YM_DEBUG_CHUNK_SIZE(x) ymassert(( (x) != 0 )&&( (x) <= YM_INSANE_CHUNK_SIZE ),"debug: chunk length not sane: %u",(x));
+# define YM_DEBUG_CHUNK_SIZE(x) ymassert(((x) != 0)&&((x) <= YM_INSANE_CHUNK_SIZE),"debug: chunk length not sane: %u",(x));
 #else
 # define YM_DEBUG_ASSERT_MALLOC(x) ;
 # define YM_DEBUG_CHUNK_SIZE(x) ;
