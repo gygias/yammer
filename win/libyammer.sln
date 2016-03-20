@@ -21,6 +21,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ym-dispatch-main-test", "ym
 		{79C39751-4EE7-4E60-A57D-E5089CCA47FC} = {79C39751-4EE7-4E60-A57D-E5089CCA47FC}
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7995437A-986A-45CF-A1C5-CFC1365ADFFC}"
+	ProjectSection(SolutionItems) = preProject
+		postbuild_event.bat = postbuild_event.bat
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86

@@ -148,6 +148,10 @@
       <AdditionalLibraryDirectories>c:\Program Files\Bonjour SDK\Lib\Win32;lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>/NODEFAULTLIB:libcmt.lib</AdditionalOptions>
     </Link>
+    <PostBuildEvent>
+      <Command>postbuild_event.bat</Command>
+      <Message>run postbuild script</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
