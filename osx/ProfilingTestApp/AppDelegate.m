@@ -50,11 +50,18 @@
                                                }];
             } else {
                 stateOK = [self.session browsePeersWithHandler:^(YMSession *session, YMPeer *peer) {
-                    [self.session connectToPeer:peer connectionHandler:^(YMSession *session_, YMConnection *connection) {
-                        [self _outgoingConnection:connection];
-                    } failureHandler:^(YMSession *session_, YMPeer *peer_) {
-                        NSLog(@"outgoing connection failed: %@",peer_);
-                        dispatch_async(dispatch_get_main_queue(), ^{ [self startStopPressed:nil]; });
+                    [self.session resolvePeer:peer withHandler:^(YMSession *session_, YMPeer *peer_, BOOL resolved) {
+                        if ( resolved ) {
+                            NSLog(@"resolved %@",peer_);
+                            [self.session connectToPeer:peer_ connectionHandler:^(YMSession *session__, YMConnection *connection) {
+                                NSLog(@"connected %@",connection);
+                                [self _outgoingConnection:connection];
+                            } failureHandler:^(YMSession *session__, YMPeer *peer__) {
+                                NSLog(@"outgoing connection failed: %@",peer__);
+                                dispatch_async(dispatch_get_main_queue(), ^{ [self startStopPressed:nil]; });
+                            }];
+                        } else
+                            NSLog(@"resolve failed: %@",peer_);
                     }];
                 } disappearanceHandler:^(YMSession *session, YMPeer *peer) {
                     NSLog(@"peer disappeared: %@",peer);
