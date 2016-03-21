@@ -104,6 +104,20 @@
                ReferencedContainer = "container:yammer.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "6329D31F1C9F646A0087988D"
+               BuildableName = "ProfilingTestApp.app"
+               BlueprintName = "ProfilingTestApp"
+               ReferencedContainer = "container:yammer.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction

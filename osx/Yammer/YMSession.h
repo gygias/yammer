@@ -8,6 +8,8 @@
 
 #import <Yammer/Yammer.h>
 
+@class YMPeer, YMConnection, YMStream;
+
 @interface YMSession : NSObject
 
 typedef void (^YMSessionPeerDiscoveredHandler)(YMSession *session, YMPeer *peer);
