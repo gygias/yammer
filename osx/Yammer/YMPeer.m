@@ -36,6 +36,14 @@
     return self;
 }
 
+- (void)dealloc
+{
+    if ( self.peerRef )
+        YMRelease(self.peerRef);
+    
+    //[super dealloc]; // arc
+}
+
 - (YMPeerRef)_peerRef
 {
     return self.peerRef;

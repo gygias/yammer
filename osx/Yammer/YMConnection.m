@@ -34,7 +34,10 @@
 
 - (void)dealloc
 {
-    YMRelease(self.connectionRef);
+    if ( self.connectionRef )
+        YMRelease(self.connectionRef);
+    
+    //[super dealloc]; // arc
 }
 
 - (BOOL)_isEqualToRef:(YMConnectionRef)connectionRef

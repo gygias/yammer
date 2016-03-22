@@ -25,6 +25,14 @@
     return self;
 }
 
+- (void)dealloc
+{
+    if ( self.streamRef )
+        YMRelease(self.streamRef);
+    
+    //[super dealloc]; // arc
+}
+
 - (BOOL)_isEqualToRef:(YMStreamRef)streamRef
 {
     return ( self.streamRef == streamRef );

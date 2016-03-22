@@ -59,7 +59,10 @@
 
 - (void)dealloc
 {
-    YMRelease(self.ymsession);
+    if ( self.ymsession )
+        YMRelease(self.ymsession);
+    
+    //[super dealloc]; // arc
 }
 
 - (void)setInterruptionHandler:(YMSessionInterruptedHandler)handler
