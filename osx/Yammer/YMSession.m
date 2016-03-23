@@ -22,9 +22,9 @@
 @property (nonatomic,copy) YMSessionNewConnectionHandler connectionHandler;
 @property (nonatomic,copy) YMSessionConnectionFailedHandler failedHandler;
 @property (nonatomic,copy) YMSessionShouldAcceptConnectionHandler shouldAcceptHandler;
-@property (nonatomic,copy) YMSessionNewStreamHandler streamHandler;
-@property (nonatomic,copy) YMSessionStreamClosingHandler streamClosingHandler;
-@property (nonatomic,copy) YMSessionInterruptedHandler interruptHandler;
+@property (nonatomic,copy) YMSessionNewStreamHandler newHandler;
+@property (nonatomic,copy) YMSessionStreamClosingHandler closingHandler;
+@property (nonatomic,copy) YMSessionInterruptedHandler interruptedHandler;
 
 @property (nonatomic) YMSessionRef ymsession;
 @property (nonatomic,retain) NSMutableArray *connections;
@@ -57,17 +57,21 @@
     return self;
 }
 
+- (void)setStandardHandlers:(YMSessionNewStreamHandler)newHandler
+       streamClosingHandler:(YMSessionStreamClosingHandler)closingHandler
+         interruptedHandler:(YMSessionInterruptedHandler)interruptedHandler
+{
+    self.newHandler = newHandler;
+    self.closingHandler = closingHandler;
+    self.interruptedHandler = interruptedHandler;
+}
+
 - (void)dealloc
 {
     if ( self.ymsession )
         YMRelease(self.ymsession);
     
     //[super dealloc]; // arc
-}
-
-- (void)setInterruptionHandler:(YMSessionInterruptedHandler)handler
-{
-    self.interruptHandler = handler;
 }
 
 - (BOOL)startAdvertisingWithName:(NSString *)name
@@ -218,8 +222,8 @@ void _ym_session_interrupted_func(__unused YMSessionRef sessionRef, void* contex
     YMSession *SELF = (__bridge YMSession *)context;
     NSLog(@"%s: %@",__FUNCTION__,SELF);
     
-    if ( SELF.interruptHandler )
-        SELF.interruptHandler(SELF);
+    if ( SELF.interruptedHandler )
+        SELF.interruptedHandler(SELF);
 }
 
 void _ym_session_new_stream_func(__unused YMSessionRef sessionRef, __unused YMConnectionRef connectionRef, YMStreamRef streamRef, __unused void* context)
@@ -229,8 +233,8 @@ void _ym_session_new_stream_func(__unused YMSessionRef sessionRef, __unused YMCo
     
     YMConnection *connectionForRef = [SELF _connectionForRef:connectionRef];
     YMStream *streamForRef = [connectionForRef _streamForRef:streamRef];
-    if ( SELF.streamHandler )
-        SELF.streamHandler(SELF, connectionForRef, streamForRef);
+    if ( SELF.newHandler )
+        SELF.newHandler(SELF, connectionForRef, streamForRef);
 }
 
 void _ym_session_stream_closing_func(__unused YMSessionRef sessionRef, __unused YMConnectionRef connectionRef, __unused YMStreamRef streamRef, __unused void* context)
@@ -240,8 +244,8 @@ void _ym_session_stream_closing_func(__unused YMSessionRef sessionRef, __unused 
     
     YMConnection *connection = [SELF _connectionForRef:connectionRef];
     YMStream *stream = [connection _streamForRef:streamRef];
-    if ( SELF.streamClosingHandler )
-        SELF.streamClosingHandler(SELF,connection,stream);
+    if ( SELF.closingHandler )
+        SELF.closingHandler(SELF,connection,stream);
 }
 
 @end

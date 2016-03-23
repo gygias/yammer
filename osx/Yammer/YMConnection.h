@@ -12,4 +12,7 @@
 
 @interface YMConnection : NSObject
 
+- (YMStream *)newStreamWithName:(NSString *)name;
+- (void)closeStream:(YMStream *)stream;
+
 @end

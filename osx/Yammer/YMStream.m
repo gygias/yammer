@@ -38,4 +38,53 @@
     return ( self.streamRef == streamRef );
 }
 
+- (YMStreamRef)_streamRef
+{
+    return self.streamRef;
+}
+
+- (NSData *)readDataOfLength:(NSUInteger)length
+{
+    NSUInteger idx = 0;
+    NSMutableData *data = [NSMutableData data],
+        *outData = nil;
+    
+    uint16_t bufLen = 16384;
+    uint8 *buf = malloc(bufLen);
+    while ( idx < length ) {
+        uint16_t outLen = 0;
+        YMIOResult result = YMStreamReadUp(self.streamRef, buf + idx, bufLen, &outLen);
+        if ( result != YMIOError ) {
+            [outData appendBytes:buf length:outLen];
+        } else {
+            NSLog(@"%s: read %zu-%zu failed with %d",__PRETTY_FUNCTION__,idx,idx+bufLen,result);
+            goto catch_return;
+        }
+        
+        idx += outLen;
+    }
+    
+    outData = data;
+    
+catch_return:
+    free(buf);
+    return outData;
+}
+
+- (BOOL)writeData:(NSData *)data
+{
+    NSUInteger idx = 0;
+    while ( idx < [data length] ) {
+        NSUInteger remaining = [data length] - idx;
+        uint16_t aLength = remaining > UINT16_MAX ? UINT16_MAX : (uint16_t)remaining;
+        YMIOResult result = YMStreamWriteDown(self.streamRef, (uint8 *)[data bytes] + idx, aLength);
+        if ( result != YMIOSuccess ) {
+            NSLog(@"%s: write %zu-%zu failed with %d",__PRETTY_FUNCTION__,idx,idx + aLength,result);
+            return NO;
+        }
+    }
+    
+    return YES;
+}
+
 @end

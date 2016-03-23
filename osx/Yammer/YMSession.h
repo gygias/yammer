@@ -20,13 +20,16 @@ typedef bool (^YMSessionShouldAcceptConnectionHandler)(YMSession *session, YMPee
 
 typedef void (^YMSessionConnectionFailedHandler)(YMSession *session, YMPeer *peer);
 typedef void (^YMSessionNewConnectionHandler)(YMSession *session, YMConnection *connection);
+
 typedef void (^YMSessionNewStreamHandler)(YMSession *session, YMConnection *connection, YMStream *stream);
 typedef void (^YMSessionStreamClosingHandler)(YMSession *session, YMConnection *connection, YMStream *stream);
 typedef void (^YMSessionInterruptedHandler)(YMSession *session);
 
-- (id)initWithType:(NSString *)type name:(NSString *)name;
-
-- (void)setInterruptionHandler:(YMSessionInterruptedHandler)handler;
+- (id)initWithType:(NSString *)type
+              name:(NSString *)name;
+- (void)setStandardHandlers:(YMSessionNewStreamHandler)newHandler
+       streamClosingHandler:(YMSessionStreamClosingHandler)closingHandler
+         interruptedHandler:(YMSessionInterruptedHandler)interruptedHandler;
 
 - (BOOL)startAdvertisingWithName:(NSString *)name
                    acceptHandler:(YMSessionShouldAcceptConnectionHandler)acceptHandler

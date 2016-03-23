@@ -10,4 +10,7 @@
 
 @interface YMStream : NSObject
 
+- (NSData *)readDataOfLength:(NSUInteger)length;
+- (BOOL)writeData:(NSData *)data;
+
 @end

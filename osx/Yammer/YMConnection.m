@@ -8,8 +8,9 @@
 
 #import "YMConnection.h"
 #import "YMConnectionPriv.h"
-
 #import "YMStreamPriv.h"
+
+#import <libyammer/YMString.h>
 
 @interface YMConnection ()
 
@@ -58,6 +59,21 @@
     }];
     
     return theStream;
+}
+
+- (YMStream *)newStreamWithName:(NSString *)name
+{
+    YMStringRef ymstr = YMStringCreateWithCString([name UTF8String]);
+    YMStreamRef ymstream = YMConnectionCreateStream(self.connectionRef, ymstr);
+    YMRelease(ymstr);
+    
+    YMStream *stream = [[YMStream alloc] _initWithStreamRef:ymstream];
+    return stream;
+}
+
+- (void)closeStream:(YMStream *)stream
+{
+    YMConnectionCloseStream(self.connectionRef, [stream _streamRef]);
 }
 
 @end

@@ -31,7 +31,7 @@
 {
     if ( ( self = [super init] ) )
     {
-        self.peerRef = peerRef;
+        self.peerRef = YMRetain(peerRef);
     }
     return self;
 }

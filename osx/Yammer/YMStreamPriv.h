@@ -14,6 +14,7 @@
 - (id)_initWithStreamRef:(YMStreamRef)streamRef;
 
 - (BOOL)_isEqualToRef:(YMStreamRef)streamRef;
+- (YMStreamRef)_streamRef;
 
 @end
 
