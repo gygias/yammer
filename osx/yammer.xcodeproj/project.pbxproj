@@ -183,6 +183,13 @@
 			remoteGlobalIDString = 63225D411BE9026200C28F05;
 			remoteInfo = libyammer;
 		};
+		63C8F27C1CA321E3009C0140 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 63225D3A1BE9026200C28F05 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 63225D411BE9026200C28F05;
+			remoteInfo = libyammer;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -822,6 +829,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				63C8F27D1CA321E3009C0140 /* PBXTargetDependency */,
 				6329D3331C9F685A0087988D /* PBXTargetDependency */,
 			);
 			name = ProfilingTestApp;
@@ -1145,6 +1153,11 @@
 			isa = PBXTargetDependency;
 			target = 63225D411BE9026200C28F05 /* libyammer */;
 			targetProxy = 636166F31C18DFC400D17172 /* PBXContainerItemProxy */;
+		};
+		63C8F27D1CA321E3009C0140 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 63225D411BE9026200C28F05 /* libyammer */;
+			targetProxy = 63C8F27C1CA321E3009C0140 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1607,6 +1620,7 @@
 				6329D32F1C9F646A0087988D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		6346BBB41C1F7FE900437E21 /* Build configuration list for PBXNativeTarget "libyammer-ios" */ = {
 			isa = XCConfigurationList;

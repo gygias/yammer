@@ -18,6 +18,7 @@ typedef enum AppState {
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 
 @property YMSession *session;
+@property YMConnection *currentConnection;
 @property AppState state;
 
 

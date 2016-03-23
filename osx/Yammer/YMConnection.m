@@ -58,6 +58,12 @@
         }
     }];
     
+    if ( ! theStream ) {
+        theStream = [[YMStream alloc] _initWithStreamRef:streamRef];
+        [self.streams addObject:theStream];
+    }
+    
+    
     return theStream;
 }
 

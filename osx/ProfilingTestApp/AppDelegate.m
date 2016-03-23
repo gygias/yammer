@@ -8,6 +8,8 @@
 
 #import "AppDelegate.h"
 
+#define SingleStreamLength ( 512 * 1024 * 1024 )
+
 @interface AppDelegate ()
 
 @property (weak) IBOutlet NSWindow *window;
@@ -37,7 +39,19 @@
     if ( newState == OnState ) {
         NSLog(@"starting");
         
+        __unsafe_unretained typeof(self) weakSelf = self;
         self.session = [[YMSession alloc] initWithType:self.typeField.stringValue name:[[NSProcessInfo processInfo] processName]];
+        [self.session setStandardHandlers:^(YMSession *session, YMConnection *connection, YMStream *stream) {
+            if ( self.asServerCheckbox.state != NSOnState ) {
+                [[NSException exceptionWithName:@"client incoming stream" reason:@"shouldn't happen" userInfo:nil] raise];
+            } else {
+                [weakSelf _consumeServerIncomingStream:stream];
+            }
+        } streamClosingHandler:^(YMSession *session, YMConnection *connection, YMStream *stream) {
+            NSLog(@"%@: %@: stream closing: %@",session,connection,stream);
+        } interruptedHandler:^(YMSession *session) {
+            NSLog(@"%@: interrupted",session);
+        }];
         if ( self.session ) {
             
             if ( self.asServerCheckbox.state == NSOnState ) {
@@ -77,6 +91,7 @@
     } else if ( newState == OffState ) {
         NSLog(@"stopping");
         
+#warning todo
         // need objc stop methods
         //stateOK = [self.session stopAndShit];
         
@@ -90,10 +105,50 @@
 
 - (void)_incomingConnection:(YMConnection *)connection {
     NSLog(@"incoming connection: %@",connection);
+    self.currentConnection = connection;
 }
 
 - (void)_outgoingConnection:(YMConnection *)connection {
     NSLog(@"outgoing connection %@",connection);
+    self.currentConnection = connection;
+    
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+       
+        NSUInteger idx = 0;
+        while(self.state == OnState) {
+       
+            NSUInteger streamIdx = 0;
+            YMStream *aStream = [connection newStreamWithName:@"some stream"];
+            while ( streamIdx < SingleStreamLength ) {
+                uint32_t fourBytes = arc4random();
+                NSUInteger remaining = SingleStreamLength - streamIdx;
+                uint16_t thisLength = ( remaining < sizeof(fourBytes) ) ? (uint16_t)remaining : sizeof(fourBytes);
+                [aStream writeData:[NSData dataWithBytes:&fourBytes length:thisLength]];
+                
+                //if ( streamIdx % 16384 == 0 ) NSLog(@"c[%zu]: wrote %zu-%u",idx,streamIdx,thisLength);
+                streamIdx += thisLength;
+            }
+            [connection closeStream:aStream];
+            
+            idx++;
+            NSLog(@"client finished writing %zuth stream of length %0.1fmb",idx,(float)SingleStreamLength / 1024 / 1024);
+        }
+        
+    });
+}
+
+- (void)_consumeServerIncomingStream:(YMStream *)stream {
+    
+    NSUInteger idx = 0;
+    while ( idx < SingleStreamLength ) {
+        uint16_t aRead = 16384;
+        NSData *data = [stream readDataOfLength:aRead];
+        
+        //NSLog(@"s[*]: read %zu-%u: %zu",idx,aRead,[data length]);
+        idx += aRead;
+    }
+    
+    NSLog(@"server finished reading stream of length %0.1fmb",(float)SingleStreamLength / 1024 / 1024);
 }
 
 @end

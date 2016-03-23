@@ -53,9 +53,11 @@
     uint8 *buf = malloc(bufLen);
     while ( idx < length ) {
         uint16_t outLen = 0;
-        YMIOResult result = YMStreamReadUp(self.streamRef, buf + idx, bufLen, &outLen);
+        NSUInteger remaining = ( length - idx );
+        uint16_t aReadLen = ( remaining < bufLen ) ? (uint16_t)remaining : bufLen;
+        YMIOResult result = YMStreamReadUp(self.streamRef, buf, aReadLen, &outLen);
         if ( result != YMIOError ) {
-            [outData appendBytes:buf length:outLen];
+            [data appendBytes:buf length:outLen];
         } else {
             NSLog(@"%s: read %zu-%zu failed with %d",__PRETTY_FUNCTION__,idx,idx+bufLen,result);
             goto catch_return;
@@ -76,12 +78,14 @@ catch_return:
     NSUInteger idx = 0;
     while ( idx < [data length] ) {
         NSUInteger remaining = [data length] - idx;
-        uint16_t aLength = remaining > UINT16_MAX ? UINT16_MAX : (uint16_t)remaining;
+        uint16_t aLength = remaining < UINT16_MAX ? (uint16_t)remaining : UINT16_MAX;
         YMIOResult result = YMStreamWriteDown(self.streamRef, (uint8 *)[data bytes] + idx, aLength);
         if ( result != YMIOSuccess ) {
             NSLog(@"%s: write %zu-%zu failed with %d",__PRETTY_FUNCTION__,idx,idx + aLength,result);
             return NO;
         }
+        
+        idx += aLength;
     }
     
     return YES;
