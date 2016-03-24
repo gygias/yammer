@@ -25,6 +25,15 @@
     self.tputLabel.stringValue = @"";
     self.sampleLabel.stringValue = @"";
     self.othersLabel.stringValue = @"";
+    
+    // twiddle server checkbox if 2 instances running
+    int count = 0;
+    for ( NSRunningApplication *app in [[NSWorkspace sharedWorkspace] runningApplications] ) {
+        if ( [app.localizedName isEqualToString:@"ProfilingTestApp"] )
+            count++;
+    }
+    if ( count > 1 )
+        self.asServerCheckbox.state = NSOffState;
 }
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification {
@@ -91,9 +100,8 @@
     } else if ( newState == OffState ) {
         NSLog(@"stopping");
         
-#warning todo
-        // need objc stop methods
-        //stateOK = [self.session stopAndShit];
+        [self.session stop];
+        self.session = nil;
         
         if ( stateOK )
             self.startStopButton.title = @"start";
@@ -142,7 +150,7 @@
     NSUInteger idx = 0;
     while ( idx < SingleStreamLength ) {
         uint16_t aRead = 16384;
-        NSData *data = [stream readDataOfLength:aRead];
+        __unused NSData *data = [stream readDataOfLength:aRead];
         
         //NSLog(@"s[*]: read %zu-%u: %zu",idx,aRead,[data length]);
         idx += aRead;

@@ -122,6 +122,12 @@
     return YMSessionConnectToPeer(self.ymsession, [peer _peerRef], false);
 }
 
+- (void)stop
+{
+    NSLog(@"%s: %@",__FUNCTION__,self);
+    YMSessionStop(self.ymsession);
+}
+
 - (YMConnection *)_connectionForRef:(YMConnectionRef)connectionRef
 {
     __block YMConnection *theConnection = nil;

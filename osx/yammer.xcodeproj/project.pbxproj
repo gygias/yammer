@@ -136,6 +136,7 @@
 		63DFAB551C221EA60076BF27 /* YMDebug.c in Sources */ = {isa = PBXBuildFile; fileRef = 63DFAB541C221EA50076BF27 /* YMDebug.c */; };
 		63EEC75D1BFB6AD100990ECE /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 63DDCB311BFB68AA009F91CD /* main.c */; };
 		63EEC75E1BFB6BCF00990ECE /* libyammer.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63225D421BE9026200C28F05 /* libyammer.dylib */; };
+		63F8A1871CA4519700D48581 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 63F8A1861CA4519700D48581 /* AppKit.framework */; };
 		63FD5B5A1BF1899800174824 /* YMRSAKeyPair.c in Sources */ = {isa = PBXBuildFile; fileRef = 63FD5B581BF1899800174824 /* YMRSAKeyPair.c */; };
 		63FD5B5B1BF1899800174824 /* YMRSAKeyPair.h in Headers */ = {isa = PBXBuildFile; fileRef = 63FD5B591BF1899800174824 /* YMRSAKeyPair.h */; };
 /* End PBXBuildFile section */
@@ -364,6 +365,7 @@
 		63DDCB311BFB68AA009F91CD /* main.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = main.c; sourceTree = "<group>"; };
 		63DFAB541C221EA50076BF27 /* YMDebug.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMDebug.c; path = src/YMDebug.c; sourceTree = "<group>"; };
 		63EEC7561BFB6AA400990ECE /* ymchat */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ymchat; sourceTree = BUILT_PRODUCTS_DIR; };
+		63F8A1861CA4519700D48581 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		63FD5B581BF1899800174824 /* YMRSAKeyPair.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMRSAKeyPair.c; path = src/YMRSAKeyPair.c; sourceTree = "<group>"; };
 		63FD5B591BF1899800174824 /* YMRSAKeyPair.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMRSAKeyPair.h; path = private/YMRSAKeyPair.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -408,6 +410,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				63F8A1871CA4519700D48581 /* AppKit.framework in Frameworks */,
 				6329D3311C9F68540087988D /* Yammer.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -482,6 +485,7 @@
 		63225D391BE9026200C28F05 = {
 			isa = PBXGroup;
 			children = (
+				63F8A1861CA4519700D48581 /* AppKit.framework */,
 				6334656B1C029A84007343B1 /* todo */,
 				634A87491C17A4DB00C7CA99 /* Makefile */,
 				631916461BFD069A001475FC /* libyammer */,
@@ -1464,6 +1468,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = NO;
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				INFOPLIST_FILE = ProfilingTestApp/Info.plist;
@@ -1479,6 +1484,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = NO;
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				INFOPLIST_FILE = ProfilingTestApp/Info.plist;

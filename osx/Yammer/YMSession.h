@@ -42,4 +42,6 @@ typedef void (^YMSessionInterruptedHandler)(YMSession *session);
     connectionHandler:(YMSessionNewConnectionHandler)connectedHandler
        failureHandler:(YMSessionConnectionFailedHandler)failedHandler;
 
+- (void)stop;
+
 @end
