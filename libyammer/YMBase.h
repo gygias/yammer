@@ -8,7 +8,7 @@
 
 #ifndef YMBase_h
 #define YMBase_h
-    
+
 #include <sys/types.h>
 #include <stdbool.h>
 #include <stdint.h>

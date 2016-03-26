@@ -20,7 +20,8 @@ typedef enum AppState {
 @property YMSession *session;
 @property YMConnection *currentConnection;
 @property AppState state;
-
+@property NSDate *lastTputDate;
+@property NSUInteger bytesSinceLastTput;
 
 @property IBOutlet NSTextField *typeField;
 @property IBOutlet NSTextField *nameField;

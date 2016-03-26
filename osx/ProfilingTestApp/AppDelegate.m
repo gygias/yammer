@@ -123,6 +123,8 @@
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
        
         NSUInteger idx = 0;
+        self.lastTputDate = [NSDate date];
+        self.bytesSinceLastTput = 0;
         while(self.state == OnState) {
        
             NSUInteger streamIdx = 0;
@@ -132,6 +134,16 @@
                 NSUInteger remaining = SingleStreamLength - streamIdx;
                 uint16_t thisLength = ( remaining < sizeof(fourBytes) ) ? (uint16_t)remaining : sizeof(fourBytes);
                 [aStream writeData:[NSData dataWithBytes:&fourBytes length:thisLength]];
+                
+                self.bytesSinceLastTput += thisLength;
+                if ( -[self.lastTputDate timeIntervalSinceNow] > 1 ) {
+                    
+                    NSString *tputString = [NSString stringWithFormat:@"%0.2f mb/s",(double)self.bytesSinceLastTput / 1024 / 1024];
+                    self.tputLabel.stringValue = tputString;
+                    
+                    self.lastTputDate = [NSDate date];
+                    self.bytesSinceLastTput = 0;
+                }
                 
                 //if ( streamIdx % 16384 == 0 ) NSLog(@"c[%zu]: wrote %zu-%u",idx,streamIdx,thisLength);
                 streamIdx += thisLength;
@@ -148,9 +160,22 @@
 - (void)_consumeServerIncomingStream:(YMStream *)stream {
     
     NSUInteger idx = 0;
+    self.lastTputDate = [NSDate date];
+    self.bytesSinceLastTput = 0;
+    
     while ( idx < SingleStreamLength ) {
         uint16_t aRead = 16384;
         __unused NSData *data = [stream readDataOfLength:aRead];
+        
+        self.bytesSinceLastTput += [data length];
+        if ( -[self.lastTputDate timeIntervalSinceNow] > 1 ) {
+            
+            NSString *tputString = [NSString stringWithFormat:@"%0.2f mb/s",(double)self.bytesSinceLastTput / 1024 / 1024];
+            self.tputLabel.stringValue = tputString;
+            
+            self.lastTputDate = [NSDate date];
+            self.bytesSinceLastTput = 0;
+        }
         
         //NSLog(@"s[*]: read %zu-%u: %zu",idx,aRead,[data length]);
         idx += aRead;
