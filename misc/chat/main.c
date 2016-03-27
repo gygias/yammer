@@ -57,14 +57,14 @@ int main(int argc, const char * argv[]) {
     if ( argc == 3 ) {
         gIsServer = true;
         gYMSession = YMSessionCreate(YMSTRC(argv[1]));
-        YMSessionSetCommonCallbacks(gYMSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
+        YMSessionSetCommonCallbacks(gYMSession, NULL, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
         YMSessionSetAdvertisingCallbacks(gYMSession, _ym_session_should_accept_func, NULL);
         if ( ! YMSessionStartAdvertising(gYMSession, YMSTRC(argv[2])) )
             exit(1);
     } else {
         gIsServer = false;
         gYMSession = YMSessionCreate(YMSTRC(argv[1]));
-        YMSessionSetCommonCallbacks(gYMSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
+        YMSessionSetCommonCallbacks(gYMSession, NULL, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
         YMSessionSetBrowsingCallbacks(gYMSession, _ym_session_added_peer_func, _ym_session_removed_peer_func, _ym_session_resolve_failed_func, _ym_session_resolved_peer_func, _ym_session_connect_failed_func, NULL);
         if ( ! YMSessionStartBrowsing(gYMSession) )
             exit(1);
