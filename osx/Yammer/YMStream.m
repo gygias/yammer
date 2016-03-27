@@ -58,6 +58,11 @@
         YMIOResult result = YMStreamReadUp(self.streamRef, buf, aReadLen, &outLen);
         if ( result != YMIOError ) {
             [data appendBytes:buf length:outLen];
+            if ( result == YMIOEOF ) {
+                if ( [data length] == 0 )
+                    data = nil;
+                break;
+            }
         } else {
             NSLog(@"%s: read %zu-%zu failed with %d",__PRETTY_FUNCTION__,idx,idx+bufLen,result);
             goto catch_return;

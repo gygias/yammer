@@ -167,6 +167,10 @@
     while ( idx < SingleStreamLength ) {
         uint16_t aRead = 16384;
         __unused NSData *data = [stream readDataOfLength:aRead];
+        if ( ! data ) {
+            NSLog(@"server hit eof mid-stream");
+            break;
+        }
         
         self.bytesSinceLastTput += [data length];
         if ( -[self.lastTputDate timeIntervalSinceNow] > 1 ) {
