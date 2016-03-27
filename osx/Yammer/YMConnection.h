@@ -17,6 +17,7 @@
 @property (readonly) NSString * localInterfaceDescription;
 @property (readonly) YMInterfaceType remoteInterfaceType;
 @property (readonly) NSString * remoteInterfaceDescription;
+@property (readonly) NSNumber *sample; // bytes/sec
 
 - (YMStream *)newStreamWithName:(NSString *)name;
 - (void)closeStream:(YMStream *)stream;

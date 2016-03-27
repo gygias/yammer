@@ -198,3 +198,15 @@
 }
 
 @end
+
+@interface SpeedTransformer : NSValueTransformer
+@end
+
+@implementation SpeedTransformer
+
+- (nullable id)transformedValue:(nullable id)value
+{
+    return [NSString stringWithFormat:@"%0.2f mb/s",[(YMConnection *)value sample].doubleValue / 1024 / 1024];
+}
+
+@end

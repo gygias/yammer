@@ -94,6 +94,11 @@
     return [NSString stringWithUTF8String:YMInterfaceTypeDescription(self.remoteInterfaceType)];
 }
 
+- (NSNumber *)sample
+{
+    return @( YMConnectionGetSample(self.connectionRef) );
+}
+
 - (YMStream *)newStreamWithName:(NSString *)name
 {
     YMStringRef ymstr = YMStringCreateWithCString([name UTF8String]);

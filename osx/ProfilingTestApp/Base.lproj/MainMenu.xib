@@ -752,6 +752,13 @@
                             <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
+                        <connections>
+                            <binding destination="Voe-Tx-rLC" name="value" keyPath="self.currentConnection" id="wAN-3y-j5y">
+                                <dictionary key="options">
+                                    <string key="NSValueTransformerName">SpeedTransformer</string>
+                                </dictionary>
+                            </binding>
+                        </connections>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="40M-SN-34Y">
                         <rect key="frame" x="18" y="99" width="72" height="17"/>

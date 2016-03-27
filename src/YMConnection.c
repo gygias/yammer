@@ -467,6 +467,12 @@ YMInterfaceType YMAPI YMConnectionGetRemoteInterface(YMConnectionRef connection_
     return connection->remoteIFType;
 }
 
+int64_t YMAPI YMConnectionGetSample(YMConnectionRef connection_)
+{
+    __YMConnectionRef connection = (__YMConnectionRef)connection_;
+    return connection->sample;
+}
+
 YMAddressRef YMConnectionGetAddress(YMConnectionRef connection_)
 {
     __YMConnectionRef connection = (__YMConnectionRef)connection_;
