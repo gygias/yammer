@@ -150,7 +150,7 @@ void _TestSessionWritingLargeAndReadingSparseFiles(struct SessionTest *theTest) 
     
     theTest->serverSession = YMSessionCreate(theTest->testType);
     testassert(theTest->serverSession,"server alloc");
-    YMSessionSetCommonCallbacks(theTest->serverSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
+    YMSessionSetCommonCallbacks(theTest->serverSession, NULL, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
     YMSessionSetAdvertisingCallbacks(theTest->serverSession, _ym_session_should_accept_func, theTest);
     
     bool started = YMSessionStartAdvertising(theTest->serverSession, theTest->testName);
@@ -158,7 +158,7 @@ void _TestSessionWritingLargeAndReadingSparseFiles(struct SessionTest *theTest) 
     
     theTest->clientSession = YMSessionCreate(theTest->testType);
     testassert(theTest->clientSession,"client alloc");
-    YMSessionSetCommonCallbacks(theTest->clientSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
+    YMSessionSetCommonCallbacks(theTest->clientSession, NULL, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
     YMSessionSetBrowsingCallbacks(theTest->clientSession, _ym_session_added_peer_func, _ym_session_removed_peer_func, _ym_session_resolve_failed_func, _ym_session_resolved_peer_func, _ym_session_connect_failed_func, theTest);
     
     started = YMSessionStartBrowsing(theTest->clientSession);

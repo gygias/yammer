@@ -10,7 +10,7 @@ LSRC=YMAddress.c YMBase.c YMConnection.c YMDictionary.c YMLinkedList.c YMLocalSo
 LTGT=libyammer.a
 
 TSRC=CryptoTests.c DictionaryTests.c LocalSocketPairTests.c mDNSTests.c PlexerTests.c SessionTests.c Tests.c TLSTests.c \
-	TaskTests.c ThreadTests.c
+	TaskTests.c ThreadTests.c GrabBagTests.c
 TOBJ=$(TSRC:%.c=%.o)
 TDEP=$(TOBJ:%.o=%.o)
 
@@ -53,22 +53,22 @@ clean:
 	rm -r "$(OUT)"
 
 $(OUT):
-	mkdir -p $(OUT)
+	mkdir -p "$(OUT)"
 
 $(LTGT): $(LOBJ)
-	$(CC) -shared -o $(OUT)/$@ $(PT) $(ALG) $(LLIBS) $(DBG) $(LDEP)
+	$(CC) -shared -o "$(OUT)/$@" $(PT) $(ALG) $(LLIBS) $(DBG) $(LDEP)
 
 interface.o: linux/interface.c
-	$(CC) -c $< -o $(OUT)/$@ $(CCF) $(INC) $(FLG) $(DBG)
+	$(CC) -c $< -o "$(OUT)/$@" $(CCF) $(INC) $(FLG) $(DBG)
 
 %.o: src/%.c
-	$(CC) -c $< -o $(OUT)/$@ $(CCF) $(INC) $(FLG) $(DBG)
+	$(CC) -c $< -o "$(OUT)/$@" $(CCF) $(INC) $(FLG) $(DBG)
 
 %.o: test/%.c
-	$(CC) -c $< -o $(OUT)/$@ $(CCF) $(INC) $(FLG) $(DBG)
+	$(CC) -c $< -o "$(OUT)/$@" $(CCF) $(INC) $(FLG) $(DBG)
 
 ymtest: $(LTGT) $(TOBJ) TestsMain.o
-	cd $(OUT) ;	$(CC) -o $@ TestsMain.o $(PT) $(DLIBS) $(DBG) $(TDEP)
+	cd "$(OUT)" ;	$(CC) -o $@ TestsMain.o $(PT) $(DLIBS) $(DBG) $(TDEP)
 
 TestsMain.o:
 	$(CC) -c test/TestsMain.c $(CCF) -o $(OUT)/$@ $(INC) $(FLG) $(DBG)
@@ -77,10 +77,10 @@ ymchat: $(LTGT) chat.o
 	cd $(OUT) ; $(CC) -o $@ $(PT) $(DLIBS) $(DBG) chat.o
 
 chat.o:
-	$(CC) -c misc/chat/main.c $(CCF) -o $(OUT)/$@ $(INC) $(FLG) $(DBG)
+	$(CC) -c misc/chat/main.c $(CCF) -o "$(OUT)/$@" $(INC) $(FLG) $(DBG)
 
 ym-dispatch-main-test: $(LTGT) ym-dispatch-main-test.o
-	cd $(OUT) ;	$(CC) -o $@ $(PT) ym-dispatch-main-test.o $(DLIBS) $(DBG) $(TDEP)
+	cd "$(OUT)" ;	$(CC) -o $@ $(PT) ym-dispatch-main-test.o $(DLIBS) $(DBG) $(TDEP)
 
 ym-dispatch-main-test.o:
-	$(CC) -c test/ym-dispatch-main-test.c -o $(OUT)/$@ $(CCF) $(INC) $(FLG) $(DBG)
+	$(CC) -c test/ym-dispatch-main-test.c -o "$(OUT)/$@" $(CCF) $(INC) $(FLG) $(DBG)

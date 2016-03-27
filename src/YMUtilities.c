@@ -405,7 +405,7 @@ YMDictionaryRef YMCreateLocalInterfaceMap()
 	free(apInfo);
 
 #else
-#error todo
+#warning todo: if mapping linux
 #endif
     
     ymlog("current interface map:");
@@ -505,7 +505,7 @@ catch_close:
 		ymerr("WlanCloseHandle failed: %u: %08x", result, GetLastError());
 
 #else
-#error todo
+#warning todo: if mapping linux
 #endif
 
 catch_return:
