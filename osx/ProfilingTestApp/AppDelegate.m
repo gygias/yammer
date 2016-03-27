@@ -9,6 +9,7 @@
 #import "AppDelegate.h"
 
 #define SingleStreamLength ( 512 * 1024 * 1024 )
+#define NoInterface -1
 
 @interface AppDelegate ()
 
@@ -182,6 +183,18 @@
     }
     
     NSLog(@"server finished reading stream of length %0.1fmb",(float)SingleStreamLength / 1024 / 1024);
+}
+
+@end
+
+@interface InterfaceTransformer : NSValueTransformer
+@end
+
+@implementation InterfaceTransformer
+
+- (nullable id)transformedValue:(nullable id)value
+{
+    return [NSString stringWithFormat:@"%@ <-> %@",[(YMConnection *)value localInterfaceDescription],[(YMConnection *)value remoteInterfaceDescription]];
 }
 
 @end

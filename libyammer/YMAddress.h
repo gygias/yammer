@@ -27,6 +27,8 @@ YMAddressRef YMAPI YMAddressCreate(const void *sockaddr, uint16_t port);
 YMAddressRef YMAPI YMAddressCreateLocalHostIPV4(uint16_t port);
 YMAddressRef YMAPI YMAddressCreateWithIPStringAndPort(YMStringRef ipString, uint16_t port);
 
+bool YMAPI YMAddressIsEqual(YMAddressRef, YMAddressRef);
+bool YMAPI YMAddressIsEqualIncludingPort(YMAddressRef, YMAddressRef, bool);
 const YMAPI void * YMAddressGetAddressData(YMAddressRef address);
 int YMAPI YMAddressGetLength(YMAddressRef address);
 YMStringRef YMAPI YMAddressGetDescription(YMAddressRef address);

@@ -157,6 +157,44 @@ void _YMAddressFree(YMTypeRef object)
     YMRelease(address->description);
 }
 
+bool YMAPI YMAddressIsEqual(YMAddressRef a, YMAddressRef b)
+{
+    return YMAddressIsEqualIncludingPort(a, b, true);
+}
+
+bool YMAPI YMAddressIsEqualIncludingPort(YMAddressRef a, YMAddressRef b, bool includingPort)
+{
+    const struct sockaddr *aS = YMAddressGetAddressData(a);
+    const struct sockaddr *bS = YMAddressGetAddressData(b);
+    if ( aS->sa_family != bS->sa_family ) {
+        return false;
+    } else {
+        bool ipv4 = aS->sa_family == AF_INET;
+        bool ipv6 = aS->sa_family == AF_INET6;
+        if ( ! ipv4 && ! ipv6 ) {
+            ymerr("warning: address equality doesn't support family %d",aS->sa_family);
+            return false;
+        }
+        
+        if ( includingPort ) {
+            return ( 0 == memcmp(aS, bS, ipv4 ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6)) );
+        }
+        
+        if ( ipv4 ) {
+            in_addr_t aI = ((struct sockaddr_in *)aS)->sin_addr.s_addr;
+            in_addr_t bI = ((struct sockaddr_in *)bS)->sin_addr.s_addr;
+            return ( aI == bI );
+            
+        } else {
+            return ( 0 == memcmp(&(((struct sockaddr_in6 *)aS)->sin6_addr),
+                                 &(((struct sockaddr_in6 *)bS)->sin6_addr),
+                                 sizeof(struct in6_addr)) ); // todo
+        }
+    }
+    
+    return false;
+}
+
 const void *YMAddressGetAddressData(YMAddressRef address_)
 {
     __YMAddressRef address = (__YMAddressRef)address_;

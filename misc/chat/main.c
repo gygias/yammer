@@ -42,8 +42,7 @@ void __CtrlHandler(DWORD cType)
 
 int main(int argc, const char * argv[]) {
         
-    if ( argc < 2 || argc > 3 )
-    {
+    if ( argc < 2 || argc > 3 ) {
         printf("usage: testprompt <mdns type> [<mdns name>]\n");
         printf(" if name is not specified, the tool will act as a client.\n");
 		exit(1);
@@ -55,17 +54,14 @@ int main(int argc, const char * argv[]) {
     SetConsoleCtrlHandler((PHANDLER_ROUTINE)__CtrlHandler, TRUE);
 #endif
 
-    if ( argc == 3 )
-    {
+    if ( argc == 3 ) {
         gIsServer = true;
         gYMSession = YMSessionCreate(YMSTRC(argv[1]));
         YMSessionSetCommonCallbacks(gYMSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
         YMSessionSetAdvertisingCallbacks(gYMSession, _ym_session_should_accept_func, NULL);
         if ( ! YMSessionStartAdvertising(gYMSession, YMSTRC(argv[2])) )
             exit(1);
-    }
-    else
-    {
+    } else {
         gIsServer = false;
         gYMSession = YMSessionCreate(YMSTRC(argv[1]));
         YMSessionSetCommonCallbacks(gYMSession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
@@ -99,20 +95,17 @@ typedef struct message_header
 void run_chat(YMStreamRef stream)
 {
     char aChar;
-    while ( ( aChar = (char)getc(stdin) ) != EOF )
-           {
-               YMStreamWriteDown(stream, &aChar, sizeof(aChar));
-           }
+    while ( ( aChar = (char)getc(stdin) ) != EOF ) {
+        YMStreamWriteDown(stream, &aChar, sizeof(aChar));
+   }
 }
 
 void print_incoming(YMStreamRef stream)
 {
     char aChar;
-    while ( true )
-    {
+    while ( true ) {
         YMIOResult result = YMStreamReadUp(stream, &aChar, sizeof(aChar), NULL);
-        if ( result != YMIOSuccess )
-        {
+        if ( result != YMIOSuccess ) {
             printf("peer left\n");
             exit(1);
         }
@@ -165,8 +158,7 @@ void _ym_session_connected_func(__unused YMSessionRef session,YMConnectionRef co
 {
     printf("connected to %s\n", YMSTR(YMAddressGetDescription(YMConnectionGetAddress(connection))));
     
-    if ( ! gIsServer )
-    {
+    if ( ! gIsServer ) {
         YMStreamRef stream = YMConnectionCreateStream(connection, YMSTRC("outgoing"));
         YMStreamWriteDown(stream, "!", 1);
         thread(run_chat, stream);
@@ -186,8 +178,7 @@ void _ym_session_new_stream_func(__unused YMSessionRef session, __unused YMConne
     printf("stream arrived\n");
     char hello;
     YMStreamReadUp(stream, &hello, 1, NULL);
-    if ( gIsServer )
-    {
+    if ( gIsServer ) {
         thread(run_chat, stream);
         thread(print_incoming, stream);
     }

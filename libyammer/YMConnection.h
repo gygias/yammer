@@ -22,6 +22,9 @@ YM_EXTERN_C_PUSH
 
 typedef const struct __ym_connection_t *YMConnectionRef;
 
+YMStringRef YMAPI YMConnectionGetLocalInterfaceName(YMConnectionRef connection);
+YMInterfaceType YMAPI YMConnectionGetLocalInterface(YMConnectionRef connection);
+YMInterfaceType YMAPI YMConnectionGetRemoteInterface(YMConnectionRef connection);
 YMAddressRef YMAPI YMConnectionGetAddress(YMConnectionRef connection);
 YMStreamRef YMAPI YMConnectionCreateStream(YMConnectionRef connection, YMStringRef name);
 void YMAPI YMConnectionCloseStream(YMConnectionRef connection, YMStreamRef stream);

@@ -85,6 +85,27 @@ typedef enum
     YMIOError = -1
 } YMIOResult;
 
+typedef enum
+{
+    LessThan = -1,
+    EqualTo = 0,
+    GreaterThan = 1
+} ComparisonResult;
+
+typedef enum
+{
+    YMInterfaceUnknown = 0,
+    YMInterfaceLoopback = 1,
+    YMInterfaceWirelessEthernet = 100,
+    YMInterfaceBluetooth = 200,
+    YMInterfaceWiredEthernet = 300,
+    YMInterfaceFirewire400 = 400,
+    YMInterfaceFirewire800 = 401,
+    YMInterfaceFirewire1600 = 402,
+    YMInterfaceFirewire3200 = 403,
+    YMInterfaceThunderbolt = 500
+} YMInterfaceType;
+
 void YMAPI YMFreeGlobalResources();
 
 YM_EXTERN_C_POP

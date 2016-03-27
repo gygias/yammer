@@ -9,6 +9,7 @@
 #import "YMConnection.h"
 #import "YMConnectionPriv.h"
 #import "YMStreamPriv.h"
+#import "YMUtilities.h"
 
 #import <libyammer/YMString.h>
 
@@ -65,6 +66,32 @@
     
     
     return theStream;
+}
+
+- (NSString *)localInterfaceName
+{
+    YMStringRef ymstr = YMConnectionGetLocalInterfaceName(self.connectionRef);
+    return [NSString stringWithUTF8String:YMStringGetCString(ymstr)];
+}
+
+- (YMInterfaceType)localInterfaceType
+{
+    return YMConnectionGetLocalInterface(self.connectionRef);
+}
+
+- (NSString *)localInterfaceDescription
+{
+    return [NSString stringWithUTF8String:YMInterfaceTypeDescription(self.localInterfaceType)];
+}
+
+- (YMInterfaceType)remoteInterfaceType
+{
+    return YMConnectionGetRemoteInterface(self.connectionRef);
+}
+
+- (NSString *)remoteInterfaceDescription
+{
+    return [NSString stringWithUTF8String:YMInterfaceTypeDescription(self.remoteInterfaceType)];
 }
 
 - (YMStream *)newStreamWithName:(NSString *)name

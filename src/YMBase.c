@@ -10,6 +10,10 @@
 
 #include "YMLog.h"
 
+// isequal
+#include "YMAddress.h"
+// ...
+
 YM_EXTERN_C_PUSH
 
 YMFILE gYMWatchFile = NULL_FILE;
@@ -198,6 +202,8 @@ bool YMAPI YMIsEqual(YMTypeRef a_, YMTypeRef b_)
     
     if ( a->__type == _YMStringTypeID )
         return YMStringEquals(a_, b_);
+    else if ( a->__type == _YMAddressTypeID )
+        return YMAddressIsEqual((YMAddressRef)a, (YMAddressRef)b);
     else
         ymabort("equivalency for ymtype %d not implemented",a->__type);
     return false;

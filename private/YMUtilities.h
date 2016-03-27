@@ -10,6 +10,7 @@
 #define YMUtilities_h
 
 #include "YMDictionary.h"
+#include "YMArray.h"
 
 #define YMMIN(a,b) ( (a<b) ? (a) : (b) )
 #define YMMAX(a,b) ( (a>b) ? (a) : (b) )
@@ -29,13 +30,6 @@
 
 YM_EXTERN_C_PUSH
 
-typedef enum
-{
-    LessThan = -1,
-    EqualTo = 0,
-    GreaterThan = 1
-} ComparisonResult;
-
 const char YMAPI * YMGetCurrentTimeString(char *buf, size_t bufLen);
 ComparisonResult YMAPI YMTimevalCompare(struct timeval *a, struct timeval *b);
 // ensure portability of the end of time for the watchtower platform
@@ -46,20 +40,6 @@ YMIOResult YMAPI YMReadFull(YMFILE fd, uint8_t *buffer, size_t bytes, size_t *ou
 YMIOResult YMAPI YMWriteFull(YMFILE fd, const uint8_t *buffer, size_t bytes, size_t *outWritten);
 
 int YMAPI YMGetNumberOfOpenFilesForCurrentProcess();
-
-typedef enum
-{
-    YMInterfaceUnknown = 0,
-    YMInterfaceLoopback = 1,
-    YMInterfaceWirelessEthernet = 100,
-    YMInterfaceBluetooth = 200,
-    YMInterfaceWiredEthernet = 300,
-    YMInterfaceFirewire400 = 400,
-    YMInterfaceFirewire800 = 401,
-    YMInterfaceFirewire1600 = 402,
-    YMInterfaceFirewire3200 = 403,
-    YMInterfaceThunderbolt = 500
-} YMInterfaceType;
 
 void YMAPI YMNetworkingInit();
 int32_t YMAPI YMPortReserve(bool ipv4, int *outSocket);

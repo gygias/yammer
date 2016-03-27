@@ -49,6 +49,9 @@ typedef struct __ym_connection_t
     
 	YMSOCKET socket;
     bool isIncoming;
+    YMStringRef localIFName;
+    YMInterfaceType localIFType;
+    YMInterfaceType remoteIFType;
     YMAddressRef address;
     YMConnectionType type;
     YMConnectionSecurityType securityType;
@@ -140,6 +143,45 @@ __YMConnectionRef __YMConnectionCreate(bool isIncoming, YMAddressRef address, YM
     connection->isConnected = false;
     connection->plexer = NULL;
     
+    // todo this should be part of the map
+    YMDictionaryRef localIFMap = YMCreateLocalInterfaceMap();
+    if ( localIFMap ) {
+        ymlog("finding if type/desc for %s",YMSTR(YMAddressGetDescription(address)));
+        YMDictionaryEnumRef denum = YMDictionaryEnumeratorBegin(localIFMap);
+        bool matched = false;
+        while ( denum ) {
+            YMStringRef ifName = (YMStringRef)denum->key;
+            YMArrayRef ifAddrs = (YMArrayRef)denum->value;
+            for ( int i = 0; i < YMArrayGetCount(ifAddrs); i++ ) {
+                YMAddressRef aLocalAddress = (YMAddressRef)YMArrayGet(ifAddrs, i);                    
+                if ( YMAddressIsEqualIncludingPort(address, aLocalAddress, false) ) {
+                    connection->localIFName = YMRetain(ifName);
+                    connection->localIFType = YMInterfaceTypeForName(ifName);
+                    ymlog(YM_LOG_PRE ": allocated %s (%s)",YM_LOG_DSC,YMSTR(ifName),YMInterfaceTypeDescription(connection->localIFType));
+                    matched = true;
+                    break;
+                }
+                
+                ymlog("%s != %s",YMSTR(YMAddressGetDescription(address)),YMSTR(YMAddressGetDescription(aLocalAddress)));
+            }
+            if ( matched )
+                break;
+            denum = YMDictionaryEnumeratorGetNext(denum);
+        }
+        YMDictionaryEnumeratorEnd(denum);
+        
+        if ( ! matched ) {
+            connection->localIFName = YMSTRC("?");
+            connection->localIFType = YMInterfaceUnknown;
+        }
+    }
+    
+    // todo
+    connection->remoteIFType = YMInterfaceUnknown;
+    ymlog(YM_LOG_PRE ": %s: %s <-> %s",YM_LOG_DSC,YMSTR(connection->localIFName),
+                                                YMInterfaceTypeDescription(connection->localIFType),
+                                                YMInterfaceTypeDescription(connection->remoteIFType));
+    
     return connection;
 }
 
@@ -148,6 +190,7 @@ void _YMConnectionFree(YMTypeRef object)
     __YMConnectionRef connection = (__YMConnectionRef)object;
     __YMConnectionDestroy(connection, true); // frees security and plexer
     YMRelease(connection->address);
+    YMRelease(connection->localIFName);
 }
 
 void YMConnectionSetCallbacks(YMConnectionRef connection_,
@@ -404,6 +447,24 @@ bool __YMConnectionDestroy(__YMConnectionRef connection, bool explicit)
 uint64_t YMConnectionDoSample(YMConnectionRef connection)
 {
     return (uint64_t)connection; // todo
+}
+
+YMStringRef YMAPI YMConnectionGetLocalInterfaceName(YMConnectionRef connection_)
+{
+    __YMConnectionRef connection = (__YMConnectionRef)connection_;
+    return connection->localIFName;
+}
+
+YMInterfaceType YMAPI YMConnectionGetLocalInterface(YMConnectionRef connection_)
+{
+    __YMConnectionRef connection = (__YMConnectionRef)connection_;
+    return connection->localIFType;
+}
+
+YMInterfaceType YMAPI YMConnectionGetRemoteInterface(YMConnectionRef connection_)
+{
+    __YMConnectionRef connection = (__YMConnectionRef)connection_;
+    return connection->remoteIFType;
 }
 
 YMAddressRef YMConnectionGetAddress(YMConnectionRef connection_)
