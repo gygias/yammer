@@ -261,12 +261,14 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     }
     
     ymlog(YM_LOG_PRE "connected",YM_LOG_DSC);
-    
-    bool commonInitOK = __YMConnectionInitCommon(connection, newSocket, false);
-    if ( ! commonInitOK )
-        return false;
+    connection->socket = newSocket;
     
     return true;
+}
+
+bool YMAPI YMConnectionInit(YMConnectionRef connection)
+{
+    return __YMConnectionInitCommon((__YMConnectionRef)connection, connection->socket, false);
 }
 
 int64_t __YMConnectionDoSample(__YMConnectionRef connection, YMSOCKET socket, uint32_t length, bool asServer)

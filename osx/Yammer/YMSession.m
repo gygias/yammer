@@ -19,6 +19,7 @@
 @property (nonatomic,copy) YMSessionPeerDiscoveredHandler discoveredHandler;
 @property (nonatomic,copy) YMSessionPeerDisappearedHandler disappearedHandler;
 @property (nonatomic,copy) YMSessionPeerResolveHandler resolvedHandler;
+@property (nonatomic,copy) YMSessionConnectionInitializingHandler initializingHandler;
 @property (nonatomic,copy) YMSessionNewConnectionHandler connectionHandler;
 @property (nonatomic,copy) YMSessionConnectionFailedHandler failedHandler;
 @property (nonatomic,copy) YMSessionShouldAcceptConnectionHandler shouldAcceptHandler;
@@ -46,7 +47,7 @@
         if ( ! self.ymsession )
             return nil;
         
-        YMSessionSetCommonCallbacks(self.ymsession, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
+        YMSessionSetCommonCallbacks(self.ymsession, _ym_session_initializing_func, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
         YMSessionSetAdvertisingCallbacks(self.ymsession, _ym_session_should_accept_func, (__bridge void *)(self));
         YMSessionSetBrowsingCallbacks(self.ymsession, _ym_session_added_peer_func, _ym_session_removed_peer_func, _ym_session_resolve_failed_func, _ym_session_resolved_peer_func, _ym_session_connect_failed_func, (__bridge void *)(self));
         
@@ -57,13 +58,15 @@
     return self;
 }
 
-- (void)setStandardHandlers:(YMSessionNewStreamHandler)newHandler
-       streamClosingHandler:(YMSessionStreamClosingHandler)closingHandler
-         interruptedHandler:(YMSessionInterruptedHandler)interruptedHandler
+- (void)setStandardHandlers:(YMSessionConnectionInitializingHandler)initializing
+                           :(YMSessionNewStreamHandler)new
+                           :(YMSessionStreamClosingHandler)closing
+                           :(YMSessionInterruptedHandler)interrupted
 {
-    self.newHandler = newHandler;
-    self.closingHandler = closingHandler;
-    self.interruptedHandler = interruptedHandler;
+    self.initializingHandler = initializing;
+    self.newHandler = new;
+    self.closingHandler = closing;
+    self.interruptedHandler = interrupted;
 }
 
 - (void)dealloc
@@ -210,6 +213,15 @@ bool _ym_session_should_accept_func(__unused YMSessionRef session, YMPeerRef pee
     NSLog(@"%s: %@",__FUNCTION__,SELF);
     YMPeer *peer = [[YMPeer alloc] _initWithPeerRef:peerRef];
     return SELF.shouldAcceptHandler(SELF, peer);
+}
+
+void _ym_session_initializing_func(__unused YMSessionRef session, void* context)
+{
+    YMSession *SELF = (__bridge YMSession *)context;
+    NSLog(@"%s: %@",__FUNCTION__,SELF);
+    
+    if ( SELF.initializingHandler )
+        SELF.initializingHandler(SELF);
 }
 
 void _ym_session_connected_func(__unused YMSessionRef session,YMConnectionRef connectionRef, void* context)

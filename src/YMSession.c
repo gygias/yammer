@@ -104,6 +104,7 @@ typedef struct __ym_session_t
     ym_session_resolved_peer_func resolvedFunc;
     ym_session_connect_failed_func connectFailedFunc;
     ym_session_should_accept_func shouldAcceptFunc;
+    ym_session_initializing_func initializingFunc;
     ym_session_connected_func connectedFunc;
     ym_session_interrupted_func interruptedFunc;
     ym_session_new_stream_func newStreamFunc;
@@ -195,11 +196,13 @@ void YMSessionSetAdvertisingCallbacks(YMSessionRef session_,ym_session_should_ac
     session->callbackContext = context;
 }
 
-void YMSessionSetCommonCallbacks(YMSessionRef session_, ym_session_connected_func connected, ym_session_interrupted_func interrupted,
+void YMSessionSetCommonCallbacks(YMSessionRef session_, ym_session_initializing_func initializing, ym_session_connected_func connected,
+                                                        ym_session_interrupted_func interrupted,
                                                         ym_session_new_stream_func new_, ym_session_stream_closing_func closing)
 {
     __YMSessionRef session = (__YMSessionRef)session_;
     
+    session->initializingFunc = initializing;
     session->connectedFunc = connected;
     session->interruptedFunc = interrupted;
     session->newStreamFunc = new_;
@@ -446,6 +449,11 @@ void YM_CALLING_CONVENTION __ym_session_connect_async_proc(ym_thread_dispatch_re
     
     bool okay = YMConnectionConnect(connection);
     
+    if ( okay && session->initializingFunc )
+        session->initializingFunc(session, session->callbackContext);
+    
+    okay = YMConnectionInit(connection);
+    
     if ( okay ) {
         __YMSessionAddConnection(session, connection);
         if ( ! userSync )
@@ -640,6 +648,9 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_accept_proc(YM_THREAD_PARAM 
         }
         
         ymerr(YM_LOG_PRE "accepted sf%d, dispatching connection init",YM_LOG_DSC, aResult);
+        
+        if ( session->initializingFunc )
+            session->initializingFunc(session,session->callbackContext);
         
         __ym_connection_init_context initCtx = (__ym_connection_init_context)YMALLOC(sizeof(struct __ym_connection_init_context_def));
         initCtx->session = (__YMSessionRef)YMRetain(session);

@@ -26,6 +26,8 @@
     self.tputLabel.stringValue = @"";
     self.sampleLabel.stringValue = @"";
     self.othersLabel.stringValue = @"";
+    self.connectionState = IdleState;
+    self.connectionStateLabel.stringValue = @"";
     
     // twiddle server checkbox if 2 instances running
     int count = 0;
@@ -44,41 +46,49 @@
 - (IBAction)startStopPressed:(id)sender {
     
     BOOL stateOK = YES;
-    AppState newState = ( self.state == OnState ) ? OffState : OnState;
+    RunningState newState = ( self.state == OnState ) ? OffState : OnState;
     
     if ( newState == OnState ) {
         NSLog(@"starting");
         
         __unsafe_unretained typeof(self) weakSelf = self;
         self.session = [[YMSession alloc] initWithType:self.typeField.stringValue name:[[NSProcessInfo processInfo] processName]];
-        [self.session setStandardHandlers:^(YMSession *session, YMConnection *connection, YMStream *stream) {
+        [self.session setStandardHandlers:^(YMSession *session) {
+            weakSelf.connectionState = InitializingState;
+        } :^(YMSession *session, YMConnection *connection, YMStream *stream) {
             if ( self.asServerCheckbox.state != NSOnState ) {
                 [[NSException exceptionWithName:@"client incoming stream" reason:@"shouldn't happen" userInfo:nil] raise];
             } else {
                 [weakSelf _consumeServerIncomingStream:stream];
             }
-        } streamClosingHandler:^(YMSession *session, YMConnection *connection, YMStream *stream) {
+        } :^(YMSession *session, YMConnection *connection, YMStream *stream) {
             NSLog(@"%@: %@: stream closing: %@",session,connection,stream);
-        } interruptedHandler:^(YMSession *session) {
+        } :^(YMSession *session) {
             NSLog(@"%@: interrupted",session);
+            weakSelf.connectionState = InterruptedState;
         }];
         if ( self.session ) {
             
             if ( self.asServerCheckbox.state == NSOnState ) {
+                self.connectionState = AdvertisingState;
                 stateOK = [self.session startAdvertisingWithName:self.nameField.stringValue
                                                    acceptHandler:^bool(YMSession *session, YMPeer *connection) {
                                                        return true;
                                                    }
                                                connectionHandler:^(YMSession *session, YMConnection *connection) {
+                                                   NSLog(@"connected over %@",connection);
+                                                   self.connectionState = ConnectedState;
                                                    [self _incomingConnection:connection];
                                                }];
             } else {
+                self.connectionState = SearchingState;
                 stateOK = [self.session browsePeersWithHandler:^(YMSession *session, YMPeer *peer) {
                     [self.session resolvePeer:peer withHandler:^(YMSession *session_, YMPeer *peer_, BOOL resolved) {
                         if ( resolved ) {
                             NSLog(@"resolved %@",peer_);
                             [self.session connectToPeer:peer_ connectionHandler:^(YMSession *session__, YMConnection *connection) {
-                                NSLog(@"connected %@",connection);
+                                NSLog(@"connected over %@",connection);
+                                self.connectionState = ConnectedState;
                                 [self _outgoingConnection:connection];
                             } failureHandler:^(YMSession *session__, YMPeer *peer__) {
                                 NSLog(@"outgoing connection failed: %@",peer__);
@@ -103,6 +113,7 @@
         
         [self.session stop];
         self.session = nil;
+        self.connectionState = IdleState;
         
         if ( stateOK )
             self.startStopButton.title = @"start";
@@ -186,7 +197,7 @@
         idx += aRead;
     }
     
-    NSLog(@"server finished reading stream of length %0.1fmb",(float)SingleStreamLength / 1024 / 1024);
+    NSLog(@"server finished reading stream with length %0.1fmb",(float)idx / 1024 / 1024);
 }
 
 @end
@@ -211,6 +222,38 @@
 - (nullable id)transformedValue:(nullable id)value
 {
     return [NSString stringWithFormat:@"%0.2f mb/s",[(YMConnection *)value sample].doubleValue / 1024 / 1024];
+}
+
+@end
+
+@interface StateTransformer : NSValueTransformer
+@end
+
+@implementation StateTransformer
+
+- (nullable id)transformedValue:(nullable id)value
+{
+    ConnectionState state = [value integerValue];
+    switch(state)
+    {
+        case IdleState:
+            return @"";
+        case SearchingState:
+            return @"searching";
+        case AdvertisingState:
+            return @"advertised";
+        case InitializingState:
+            return @"initializing";
+        case ConnectedState:
+            return @"connected";
+        case InterruptedState:
+            return @"interrupted...";
+        case FailedState:
+            return @"connect failed";
+        default: ;
+    }
+    
+    return @"?";
 }
 
 @end

@@ -31,6 +31,7 @@ typedef void(*ym_session_connect_failed_func)(YMSessionRef,YMPeerRef,bool,void*)
 typedef bool(*ym_session_should_accept_func)(YMSessionRef,YMPeerRef,void*);
 
 // connection & streams
+typedef void(*ym_session_initializing_func)(YMSessionRef,void*);
 typedef void(*ym_session_connected_func)(YMSessionRef,YMConnectionRef,void*);
 typedef void(*ym_session_interrupted_func)(YMSessionRef,void*);
 typedef void(*ym_session_new_stream_func)(YMSessionRef,YMConnectionRef,YMStreamRef,void*);
@@ -42,7 +43,7 @@ void YMAPI YMSessionSetBrowsingCallbacks(YMSessionRef session, ym_session_added_
                                  ym_session_resolve_failed_func rFailed, ym_session_resolved_peer_func resolved,
                                  ym_session_connect_failed_func cFailed, void *context);
 void YMAPI YMSessionSetAdvertisingCallbacks(YMSessionRef session,ym_session_should_accept_func should, void* context);
-void YMAPI YMSessionSetCommonCallbacks(YMSessionRef session, ym_session_connected_func connected, ym_session_interrupted_func interrupted,
+void YMAPI YMSessionSetCommonCallbacks(YMSessionRef session, ym_session_initializing_func initializing, ym_session_connected_func connected, ym_session_interrupted_func interrupted,
                                  ym_session_new_stream_func new_, ym_session_stream_closing_func closing);
 
 bool YMAPI YMSessionStartAdvertising(YMSessionRef session, YMStringRef name);

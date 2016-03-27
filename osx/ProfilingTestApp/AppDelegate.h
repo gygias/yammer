@@ -10,16 +10,27 @@
 
 #import <Yammer/Yammer.h>
 
-typedef enum AppState {
+typedef NS_ENUM(NSInteger,RunningState) {
     OffState = 0,
     OnState = 1
-} AppState;
+};
+
+typedef NS_ENUM(NSInteger,ConnectionState) { // mayhaps this be a library attribute on YMConnectionRef?
+    IdleState = 0,
+    SearchingState,
+    AdvertisingState,
+    InitializingState,
+    ConnectedState,
+    InterruptedState,
+    FailedState
+};
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 
+@property RunningState state;
 @property YMSession *session;
 @property YMConnection *currentConnection;
-@property AppState state;
+@property ConnectionState connectionState;
 @property NSDate *lastTputDate;
 @property NSUInteger bytesSinceLastTput;
 
@@ -27,6 +38,9 @@ typedef enum AppState {
 @property IBOutlet NSTextField *nameField;
 @property IBOutlet NSButton *asServerCheckbox;
 @property IBOutlet NSButton *startStopButton;
+
+@property IBOutlet NSProgressIndicator *connectionSpinner;
+@property IBOutlet NSTextField *connectionStateLabel;
 
 @property IBOutlet NSTextField *activeLabel;
 @property IBOutlet NSTextField *tputLabel;

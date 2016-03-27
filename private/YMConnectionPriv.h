@@ -34,6 +34,7 @@ void YMAPI YMConnectionSetCallbacks(YMConnectionRef connection,
                                     ym_connection_stream_closing_func closingFunc, void *closingFuncContext,
                                     ym_connection_interrupted_func interruptedFunc, void *interruptedFuncContext);
 bool YMAPI YMConnectionConnect(YMConnectionRef connection);
+bool YMAPI YMConnectionInit(YMConnectionRef connection);
 
 uint64_t YMAPI YMConnectionDoSample(YMConnectionRef connection);
 bool YMAPI YMConnectionClose(YMConnectionRef connection);
