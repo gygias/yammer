@@ -719,6 +719,8 @@ bool YMIsDebuggerAttached()
       signal(SIGTRAP, __ymutilities_debugger_sigtrap_trap);
       raise(SIGTRAP);
     }
+#elif defined(YMWIN32)
+	return IsDebuggerPresent();
 #else
 #warning todo: debugger detection for this platform
     return false;
