@@ -16,7 +16,7 @@ typedef void (^YMSessionPeerDiscoveredHandler)(YMSession *session, YMPeer *peer)
 typedef void (^YMSessionPeerDisappearedHandler)(YMSession *session, YMPeer *peer);
 typedef void (^YMSessionPeerResolveHandler)(YMSession *session, YMPeer *peer, BOOL resolved);
 
-typedef bool (^YMSessionShouldAcceptConnectionHandler)(YMSession *session, YMPeer *connection);
+typedef bool (^YMSessionShouldAcceptConnectionHandler)(YMSession *session, YMPeer *peer);
 typedef void (^YMSessionConnectionInitializingHandler)(YMSession *session);
 typedef void (^YMSessionConnectionFailedHandler)(YMSession *session, YMPeer *peer);
 typedef void (^YMSessionNewConnectionHandler)(YMSession *session, YMConnection *connection);
