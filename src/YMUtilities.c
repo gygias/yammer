@@ -680,6 +680,7 @@ bool gYMDebuggerAttached = true;
 void __ymutilities_debugger_sigtrap_trap(int sig)
 {
   gYMDebuggerAttached = false;
+  signal(SIGTRAP, SIG_DFL);
 }
 #endif
 
