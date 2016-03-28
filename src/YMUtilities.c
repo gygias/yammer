@@ -26,6 +26,7 @@
 # include <ifaddrs.h>
 # if defined(YMLINUX)
 #  include <sys/resource.h>
+#  include <signal.h>
 #  define __USE_UNIX98
 # else // YMAPPLE, YMIsDebuggerAttached stuff
 #  include <assert.h>
@@ -336,7 +337,7 @@ YMDictionaryRef YMCreateLocalInterfaceMap()
 {
     YMDictionaryRef map = YMDictionaryCreate2(true,true);
     
-#if defined(YMAPPLE) || defined(YMLINUX) // on mac now, guessing about linux
+#if defined(YMAPPLE) || defined(YMLINUX) // on mac now, guessing about linux (edit: seemed to work out-of-box)
     struct ifaddrs *ifaddrsList = NULL, *ifaddrsIter;
     if ( getifaddrs(&ifaddrsList) != 0 ) {
         ymerr("getifaddrs failed: %d %s",errno,strerror(errno));
@@ -405,7 +406,7 @@ YMDictionaryRef YMCreateLocalInterfaceMap()
 	free(apInfo);
 
 #else
-#warning todo: if mapping linux
+#error if mapping unimplemented for this platform
 #endif
     
     ymlog("current interface map:");
@@ -504,8 +505,17 @@ catch_close:
 	if ( result != ERROR_SUCCESS )
 		ymerr("WlanCloseHandle failed: %u: %08x", result, GetLastError());
 
+#elif defined(YMLINUX)
+
+	if ( YMStringHasPrefix2(ifName, "lo") ) {
+	  return YMInterfaceLoopback;
+	} else if ( YMStringHasPrefix2(ifName, "eth") ) {
+	  return YMInterfaceWiredEthernet;
+	} else if ( YMStringHasPrefix2(ifName, "wlan") ) {
+	  return YMInterfaceWirelessEthernet;
+	}
 #else
-#warning todo: if mapping linux
+#error if matching not implemented for this platform
 #endif
 
 catch_return:
@@ -664,6 +674,15 @@ HANDLE YMCreateMutexWithOptions(YMLockOptions options)
 
 #endif
 
+#if defined(YMLINUX)
+bool gYMDebuggerChecked = false;
+bool gYMDebuggerAttached = true;
+void __ymutilities_debugger_sigtrap_trap(int sig)
+{
+  gYMDebuggerAttached = false;
+}
+#endif
+
 bool YMIsDebuggerAttached()
 {
 #if defined(YMAPPLE)
@@ -694,8 +713,14 @@ bool YMIsDebuggerAttached()
     // We're being debugged if the P_TRACED flag is set.
     
     return ( (info.kp_proc.p_flag & P_TRACED) != 0 );
+#elif defined(YMLINUX)
+    if ( ! gYMDebuggerChecked ) {
+      gYMDebuggerChecked = true;
+      signal(SIGTRAP, __ymutilities_debugger_sigtrap_trap);
+      raise(SIGTRAP);
+    }
 #else
-#warning todo
+#warning todo: debugger detection for this platform
     return false;
 #endif
 }
