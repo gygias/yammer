@@ -162,7 +162,7 @@ __YMConnectionRef __YMConnectionCreate(bool isIncoming, YMAddressRef address, YM
                     break;
                 }
                 
-                ymlog("%s != %s",YMSTR(YMAddressGetDescription(address)),YMSTR(YMAddressGetDescription(aLocalAddress)));
+                ymdbg("%s != %s",YMSTR(YMAddressGetDescription(address)),YMSTR(YMAddressGetDescription(aLocalAddress)));
             }
             if ( matched )
                 break;

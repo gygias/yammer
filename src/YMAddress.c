@@ -181,8 +181,9 @@ bool YMAPI YMAddressIsEqualIncludingPort(YMAddressRef a, YMAddressRef b, bool in
         }
         
         if ( ipv4 ) {
-            in_addr_t aI = ((struct sockaddr_in *)aS)->sin_addr.s_addr;
-            in_addr_t bI = ((struct sockaddr_in *)bS)->sin_addr.s_addr;
+			// int32_t for windows ease
+            int32_t aI = ((struct sockaddr_in *)aS)->sin_addr.s_addr;
+            int32_t bI = ((struct sockaddr_in *)bS)->sin_addr.s_addr;
             return ( aI == bI );
             
         } else {
