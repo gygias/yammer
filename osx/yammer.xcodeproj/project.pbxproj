@@ -485,7 +485,6 @@
 		63225D391BE9026200C28F05 = {
 			isa = PBXGroup;
 			children = (
-				63F8A1861CA4519700D48581 /* AppKit.framework */,
 				6334656B1C029A84007343B1 /* todo */,
 				634A87491C17A4DB00C7CA99 /* Makefile */,
 				631916461BFD069A001475FC /* libyammer */,
@@ -519,6 +518,7 @@
 		63225D9C1BE9314100C28F05 /* apple dependencies */ = {
 			isa = PBXGroup;
 			children = (
+				63F8A1861CA4519700D48581 /* AppKit.framework */,
 				6346BBD11C1F827000437E21 /* SystemConfiguration.framework */,
 				6346BBCF1C1F826C00437E21 /* CoreFoundation.framework */,
 				638E1D651C098AF900BA2FA4 /* libcrypto.tbd */,

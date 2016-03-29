@@ -16,8 +16,8 @@
 #include "YMThread.h"
 
 #define ymlog_type YMLogConnection
-#define YM_LOG_PRE "connection[%s]: "
-#define YM_LOG_DSC (connection->address ? YMSTR(YMAddressGetDescription(connection->address)) : "*")
+#define ymlog_pre "connection[%s]: "
+#define ymlog_args (connection->address ? YMSTR(YMAddressGetDescription(connection->address)) : "*")
 #include "YMLog.h"
 
 #if !defined(YMWIN32)
@@ -108,7 +108,7 @@ YMConnectionRef YMConnectionCreateIncoming(YMSOCKET socket, YMAddressRef address
     __YMConnectionRef connection = __YMConnectionCreate(true, address, type, securityType, closeWhenDone);
     bool commonInitOK = __YMConnectionInitCommon(connection, socket, true);
     if ( ! commonInitOK ) {
-        ymlog(YM_LOG_PRE "server init failed",YM_LOG_DSC);
+        ymlog("server init failed");
         YMRelease(connection);
         return NULL;
     }
@@ -157,7 +157,7 @@ __YMConnectionRef __YMConnectionCreate(bool isIncoming, YMAddressRef address, YM
                 if ( YMAddressIsEqualIncludingPort(address, aLocalAddress, false) ) {
                     connection->localIFName = YMRetain(ifName);
                     connection->localIFType = YMInterfaceTypeForName(ifName);
-                    ymlog(YM_LOG_PRE ": allocated %s (%s)",YM_LOG_DSC,YMSTR(ifName),YMInterfaceTypeDescription(connection->localIFType));
+                    ymlog("allocated %s (%s)",YMSTR(ifName),YMInterfaceTypeDescription(connection->localIFType));
                     matched = true;
                     break;
                 }
@@ -178,9 +178,9 @@ __YMConnectionRef __YMConnectionCreate(bool isIncoming, YMAddressRef address, YM
     
     // todo
     connection->remoteIFType = YMInterfaceUnknown;
-    ymlog(YM_LOG_PRE ": %s: %s <-> %s",YM_LOG_DSC,YMSTR(connection->localIFName),
-                                                YMInterfaceTypeDescription(connection->localIFType),
-                                                YMInterfaceTypeDescription(connection->remoteIFType));
+    ymlog("%s: %s <-> %s",YMSTR(connection->localIFName),
+                          YMInterfaceTypeDescription(connection->localIFType),
+                          YMInterfaceTypeDescription(connection->remoteIFType));
     
     return connection;
 }
@@ -215,7 +215,7 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     YM_IO_BOILERPLATE
     
     if ( connection->socket != NULL_SOCKET || connection->isIncoming ) {
-        ymerr(YM_LOG_PRE "connect called on connected socket",YM_LOG_DSC);
+        ymerr("connect called on connected socket");
         return false;
     }    
     
@@ -235,18 +235,18 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     
 	YMSOCKET newSocket = socket(domain, type, protocol);
 #if !defined(YMWIN32)
-    ymassert(newSocket>=0,YM_LOG_PRE "socket failed: %d (%s)",YM_LOG_DSC,errno,strerror(errno));
+    ymassert(newSocket>=0,"socket failed: %d (%s)",errno,strerror(errno));
 #else
-	ymassert(newSocket!=INVALID_SOCKET,YM_LOG_PRE "socket failed: %x",YM_LOG_DSC,GetLastError());
+	ymassert(newSocket!=INVALID_SOCKET,"socket failed: %x",GetLastError());
 #endif
     
     int yes = 1;
     result = setsockopt(newSocket, SOL_SOCKET, SO_REUSEADDR, (const void *)&yes, sizeof(yes));
-    if (result != 0 ) ymerr(YM_LOG_PRE "warning: setsockopt(reuse) failed on f%d: %d: %d (%s)",YM_LOG_DSC,newSocket,result,errno,strerror(errno));
+    if (result != 0 ) ymerr("warning: setsockopt(reuse) failed on f%d: %d: %d (%s)",newSocket,result,errno,strerror(errno));
     result = setsockopt(newSocket, SOL_SOCKET, SO_DONTROUTE, (const void *)&yes, sizeof(yes));
-    if (result != 0 ) ymerr(YM_LOG_PRE "warning: setsockopt(dontroute) failed on f%d: %d: %d (%s)",YM_LOG_DSC,newSocket,result,errno,strerror(errno));
+    if (result != 0 ) ymerr("warning: setsockopt(dontroute) failed on f%d: %d: %d (%s)",newSocket,result,errno,strerror(errno));
     
-    ymlog(YM_LOG_PRE "connecting...",YM_LOG_DSC);
+    ymlog("connecting...");
     
     struct sockaddr *addr = (struct sockaddr *)YMAddressGetAddressData(connection->address);
     socklen_t addrLen = YMAddressGetLength(connection->address);
@@ -255,12 +255,12 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     
     result = connect(newSocket, addr, addrLen);
     if ( result != 0 ) {
-        ymerr(YM_LOG_PRE "error: connect(%s): %d (%s)",YM_LOG_DSC,YMSTR(YMAddressGetDescription(connection->address)),errno,strerror(errno));
+        ymerr("error: connect(%s): %d (%s)",YMSTR(YMAddressGetDescription(connection->address)),errno,strerror(errno));
         YM_CLOSE_SOCKET(newSocket);
         return false;
     }
     
-    ymlog(YM_LOG_PRE "connected",YM_LOG_DSC);
+    ymlog("connected");
     connection->socket = newSocket;
     
     return true;
@@ -271,7 +271,7 @@ bool YMAPI YMConnectionInit(YMConnectionRef connection)
     return __YMConnectionInitCommon((__YMConnectionRef)connection, connection->socket, false);
 }
 
-int64_t __YMConnectionDoSample(__YMConnectionRef connection, YMSOCKET socket, uint32_t length, bool asServer)
+int64_t __YMConnectionDoSample(__unused __YMConnectionRef connection, YMSOCKET socket, uint32_t length, bool asServer)
 {
     YM_IO_BOILERPLATE
     
@@ -279,7 +279,7 @@ int64_t __YMConnectionDoSample(__YMConnectionRef connection, YMSOCKET socket, ui
     
     int remain = length % 4;
     if ( remain != 0 ) {
-        ymerr(YM_LOG_PRE "warning: sample length not word-aligned, snapping to next word length: %u",YM_LOG_DSC,length);
+        ymerr("warning: sample length not word-aligned, snapping to next word length: %u",length);
         length += remain;
     }
     
@@ -304,11 +304,11 @@ int64_t __YMConnectionDoSample(__YMConnectionRef connection, YMSOCKET socket, ui
                 sentReceived += aRead;
             }
         }
-        ymlog(YM_LOG_PRE "%s back sample",YM_LOG_DSC,writing?"reading":"writing");
+        ymlog("%s back sample",writing?"reading":"writing");
     }
     
     sample = (uint32_t)(length / ( time(NULL) - startTime ));
-    ymlog(YM_LOG_PRE "approximated sample to %ub/s",YM_LOG_DSC,sample);
+    ymlog("approximated sample to %ub/s",sample);
     
     return sample;
 }
@@ -332,13 +332,13 @@ bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, 
             
             YM_WRITE_SOCKET(newSocket, (const char *)&command, sizeof(command));
             if ( aWrite != sizeof(command) ) {
-                ymerr(YM_LOG_PRE "error: connection failed to initialize: %d %d %s",YM_LOG_DSC,i,error,errorStr);
+                ymerr("error: connection failed to initialize: %d %d %s",i,error,errorStr);
                 YM_CLOSE_SOCKET(newSocket);
                 return false;
             }
             
             if ( i == 0 ) {
-                ymerr(YM_LOG_PRE "performing sample of length %ub",YM_LOG_DSC,sampleSize);
+                ymerr("performing sample of length %ub",sampleSize);
                 connection->sample = __YMConnectionDoSample(connection, newSocket, sampleSize, true);
                 YM_DEBUG_SAMPLE
             }
@@ -349,20 +349,20 @@ bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, 
         while(1) {
             YM_READ_SOCKET(newSocket, (char *)&command, sizeof(command));
             if ( aRead != sizeof(command) ) {
-                ymerr(YM_LOG_PRE "error: connection failed to initialize: %d %s",YM_LOG_DSC,error,errorStr);
+                ymerr("error: connection failed to initialize: %d %s",error,errorStr);
                 YM_CLOSE_SOCKET(newSocket);
                 return false;
             }
             
             if ( command.command == YMConnectionCommandSample ) {
-                ymerr(YM_LOG_PRE "performing sample of length %ub",YM_LOG_DSC,command.userInfo);
+                ymerr("performing sample of length %ub",command.userInfo);
                 connection->sample = __YMConnectionDoSample(connection, newSocket, command.userInfo, false);
                 YM_DEBUG_SAMPLE
             } else if ( command.command == YMConnectionCommandInit ) {
-                ymerr(YM_LOG_PRE "init command received, proceeding",YM_LOG_DSC);
+                ymerr("init command received, proceeding");
                 break;
             } else {
-                ymerr(YM_LOG_PRE "error: unknown initialization command: %d",YM_LOG_DSC,command.command);
+                ymerr("error: unknown initialization command: %d",command.command);
                 YM_CLOSE_SOCKET(newSocket);
                 return false;
             }
@@ -378,13 +378,13 @@ bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, 
             security = (YMSecurityProviderRef)YMTLSProviderCreateWithSocket(newSocket, asServer);
             break;
         default:
-            ymerr(YM_LOG_PRE "unknown security type",YM_LOG_DSC);
+            ymerr("unknown security type");
             goto rewind_fail;
     }
     
     bool securityOK = YMSecurityProviderInit(security);
     if ( ! securityOK ) {
-        ymerr(YM_LOG_PRE "security type %d failed to initialize",YM_LOG_DSC,connection->securityType);
+        ymerr("security type %d failed to initialize",connection->securityType);
         goto rewind_fail;
     }
     
@@ -396,7 +396,7 @@ bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, 
 
     bool plexerOK = YMPlexerStart(plexer);
     if ( ! plexerOK ) {
-        ymerr(YM_LOG_PRE "plexer failed to initialize",YM_LOG_DSC);
+        ymerr("plexer failed to initialize");
         goto rewind_fail;
     }
     
@@ -428,7 +428,7 @@ bool __YMConnectionDestroy(__YMConnectionRef connection, bool explicit)
     if ( connection->plexer ) {
         bool plexerOK = YMPlexerStop(connection->plexer);
         if ( ! plexerOK ) {
-            ymerr(YM_LOG_PRE "warning: failed to close plexer",YM_LOG_DSC);
+            ymerr("warning: failed to close plexer");
             okay = plexerOK;
         }
         
@@ -554,7 +554,7 @@ void _ym_connection_forward_callback_proc(void *context, YMIOResult result, uint
     
     // allow user to async-forward, if they don't specify callback info it implies "close stream for me when done"
     if ( ! myContext->userContext ) {
-        ymerr(YM_LOG_PRE "automatically closing stream %p after async forward",YM_LOG_DSC,myContext->stream);
+        ymerr("automatically closing stream %p after async forward",myContext->stream);
         YMConnectionCloseStream(connection, stream);
     }
     else if ( myContext->userContext->callback )

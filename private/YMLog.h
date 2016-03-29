@@ -26,11 +26,11 @@
 #endif
 
 YM_WPPUSH // Token pasting of ',' and __VA_ARGS__ is a GNU extension
-#ifndef YM_LOG_PRE
-# define YM_LOG_PRE ""
+#ifndef ymlog_pre
+# define ymlog_pre "%s"
 #endif
-#ifndef YM_LOG_DSC
-# define YM_LOG_DSC ""
+#ifndef ymlog_args
+# define ymlog_args ""
 #endif
 
 #define ymlog(x,...)    { if ( ymlog_type & ymlog_target ) __YMLogType(ymlog_target,true,(x),##__VA_ARGS__); }

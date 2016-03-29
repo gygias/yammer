@@ -52,7 +52,7 @@ void __YMLogType( int level, bool newline, char* format, ... )
 
             if (timeStr)
                 fprintf(file, "%s ", timeStr);
-            fprintf(file,"yammer[%llu:%llu]: ",pid,threadID);
+            fprintf(file,"yammer[%llu:%llu]: " ymlog_pre,pid,threadID,ymlog_args);
         }
         
         if ( ! newline )
