@@ -316,6 +316,7 @@
 		63476A511BEB319000D10081 /* YMSemaphore.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMSemaphore.c; path = ../src/YMSemaphore.c; sourceTree = "<group>"; };
 		63476A521BEB319000D10081 /* YMSemaphore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMSemaphore.h; path = ../private/YMSemaphore.h; sourceTree = "<group>"; };
 		634A87491C17A4DB00C7CA99 /* Makefile */ = {isa = PBXFileReference; explicitFileType = sourcecode.make; fileEncoding = 4; name = Makefile; path = ../Makefile; sourceTree = "<group>"; };
+		6351A1881CAAF37F007AEF68 /* link_bundle.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = link_bundle.sh; sourceTree = "<group>"; };
 		636166DD1C18DC1100D17172 /* ThreadTests.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ThreadTests.c; sourceTree = "<group>"; };
 		636166E01C18DC1D00D17172 /* ThreadTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ThreadTests.h; sourceTree = "<group>"; };
 		636166E21C18DF8B00D17172 /* ym-dispatch-main-test.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = "ym-dispatch-main-test.c"; sourceTree = "<group>"; };
@@ -547,6 +548,7 @@
 				6329D32A1C9F646A0087988D /* MainMenu.xib */,
 				6329D32D1C9F646A0087988D /* Info.plist */,
 				6329D3251C9F646A0087988D /* Supporting Files */,
+				6351A1881CAAF37F007AEF68 /* link_bundle.sh */,
 			);
 			path = ProfilingTestApp;
 			sourceTree = "<group>";
@@ -828,6 +830,7 @@
 				6329D31C1C9F646A0087988D /* Sources */,
 				6329D31D1C9F646A0087988D /* Frameworks */,
 				6329D31E1C9F646A0087988D /* Resources */,
+				6351A1871CAAF361007AEF68 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -980,6 +983,22 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		6351A1871CAAF361007AEF68 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "#!/bin/bash\n${TARGETNAME}/link_bundle.sh\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		630A5CFC1BE96CE9003292EE /* Sources */ = {

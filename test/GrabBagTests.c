@@ -39,8 +39,8 @@ void _InterfacesTestRun(struct GrabBagTest *theTest)
     YMDictionaryEnumRef denum = YMDictionaryEnumeratorBegin(map);
     testassert(denum, "interface map is not empty but enumerator is null");
     while ( denum ) {
-        YMArrayRef someAddresses = (YMArrayRef)denum->value;
-        testassert(YMArrayGetCount(someAddresses)>0, "interface '%s' has no addresses",YMSTR((YMStringRef)denum->key));
+        YMArrayRef someAddresses = YMDictionaryGetItem(denum->value, gYMIFMapAddressesKey);
+        testassert(someAddresses&&YMArrayGetCount(someAddresses)>0, "interface '%s' has no addresses",YMSTR((YMStringRef)denum->key));
         denum = YMDictionaryEnumeratorGetNext(denum);
     }
     YMDictionaryEnumeratorEnd(denum);

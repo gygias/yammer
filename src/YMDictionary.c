@@ -72,12 +72,12 @@ void _YMDictionaryFree(YMTypeRef object)
     
     while (itemIter) {
         _YMDictionaryItemRef thisItem = itemIter;
-        itemIter = itemIter->next;
         if ( dict->ymtypeKeys )
             YMRelease((YMTypeRef)itemIter->key);
         if ( dict->ymtypeValues )
             YMRelease((YMTypeRef)itemIter->value);
         free(thisItem);
+        itemIter = itemIter->next;
     }
 }
 
@@ -104,15 +104,10 @@ void YMDictionaryAdd(YMDictionaryRef dict_, YMDictionaryKey key, YMDictionaryVal
         abort();
     }
     _YMDictionaryItemRef newItem = (_YMDictionaryItemRef)YMALLOC(sizeof(struct __YMDictionaryItem));
-    newItem->key = key;
-    newItem->value = value;
+    newItem->key = dict->ymtypeKeys ? (YMDictionaryKey)YMRetain((YMTypeRef)key) : key;
+    newItem->value = dict->ymtypeValues ? (YMDictionaryValue)YMRetain((YMTypeRef)value) : value;
     newItem->next = dict->head; // nulls or prepends
     dict->head = newItem;
-    
-    if ( dict->ymtypeKeys )
-        YMRetain((void *)key);
-    if ( dict->ymtypeValues )
-        YMRetain((void *)value);
     
     dict->count++;
 }

@@ -143,15 +143,14 @@ __YMConnectionRef __YMConnectionCreate(bool isIncoming, YMAddressRef address, YM
     connection->isConnected = false;
     connection->plexer = NULL;
     
-    // todo this should be part of the map
     YMDictionaryRef localIFMap = YMCreateLocalInterfaceMap();
     if ( localIFMap ) {
-        ymlog("finding if type/desc for %s",YMSTR(YMAddressGetDescription(address)));
         YMDictionaryEnumRef denum = YMDictionaryEnumeratorBegin(localIFMap);
         bool matched = false;
         while ( denum ) {
             YMStringRef ifName = (YMStringRef)denum->key;
-            YMArrayRef ifAddrs = (YMArrayRef)denum->value;
+            YMDictionaryRef ifInfo = (YMDictionaryRef)denum->value;
+            YMArrayRef ifAddrs = (YMArrayRef)YMDictionaryGetItem(ifInfo, (YMDictionaryKey)gYMIFMapAddressesKey);
             for ( int i = 0; i < YMArrayGetCount(ifAddrs); i++ ) {
                 YMAddressRef aLocalAddress = (YMAddressRef)YMArrayGet(ifAddrs, i);                    
                 if ( YMAddressIsEqualIncludingPort(address, aLocalAddress, false) ) {
@@ -174,6 +173,8 @@ __YMConnectionRef __YMConnectionCreate(bool isIncoming, YMAddressRef address, YM
             connection->localIFName = YMSTRC("?");
             connection->localIFType = YMInterfaceUnknown;
         }
+        
+        YMRelease(localIFMap);
     }
     
     // todo

@@ -150,7 +150,10 @@
                 self.bytesSinceLastTput += thisLength;
                 if ( -[self.lastTputDate timeIntervalSinceNow] > 1 ) {
                     
-                    NSString *tputString = [NSString stringWithFormat:@"%0.2f mb/s",(double)self.bytesSinceLastTput / 1024 / 1024];
+                    NSString *tputString = [NSString stringWithFormat:@"%0.2f mb/s (%0.1f%%)",(double)self.bytesSinceLastTput / 1024 / 1024,
+                                            100 * ((self.currentConnection.sample.doubleValue > 0) ?
+                                                   ((double)self.bytesSinceLastTput / self.currentConnection.sample.doubleValue)
+                                                   : (double)self.bytesSinceLastTput)];
                     self.tputLabel.stringValue = tputString;
                     
                     self.lastTputDate = [NSDate date];
@@ -186,7 +189,10 @@
         self.bytesSinceLastTput += [data length];
         if ( -[self.lastTputDate timeIntervalSinceNow] > 1 ) {
             
-            NSString *tputString = [NSString stringWithFormat:@"%0.2f mb/s",(double)self.bytesSinceLastTput / 1024 / 1024];
+            NSString *tputString = [NSString stringWithFormat:@"%0.2f mb/s (%0.1f%%)",(double)self.bytesSinceLastTput / 1024 / 1024,
+                                    100 * ((self.currentConnection.sample.doubleValue > 0) ?
+                                           ((double)self.bytesSinceLastTput / self.currentConnection.sample.doubleValue)
+                                           : (double)self.bytesSinceLastTput)];
             self.tputLabel.stringValue = tputString;
             
             self.lastTputDate = [NSDate date];

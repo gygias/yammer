@@ -351,17 +351,26 @@ YMDictionaryRef YMCreateLocalInterfaceMap()
             YMAddressRef address = YMAddressCreate(ifaddrsIter->ifa_addr, 0);
             if ( address ) {
                 YMStringRef name = YMSTRC(ifaddrsIter->ifa_name);
-                if ( ! YMDictionaryContains(map, (YMDictionaryKey)name) ) {
-                    YMArrayRef addresses = YMArrayCreate(true);
-                    YMDictionaryAdd(map, (YMDictionaryKey)name, (void *)addresses);
+                YMDictionaryRef ifInfo = YMDictionaryGetItem(map, (YMDictionaryKey)name);
+                if ( ! ifInfo ) {
+                    ifInfo = YMDictionaryCreate();
+                    YMDictionaryAdd(map, (YMDictionaryKey)name, (void *)ifInfo);
+                    YMDictionaryAdd(ifInfo, (YMDictionaryKey)gYMIFMapTypeKey, (void *)YMInterfaceTypeForName(name));
                 }
-                YMArrayAdd(YMDictionaryGetItem(map, (YMDictionaryKey)name), address);
+                YMArrayRef addresses = YMDictionaryGetItem(ifInfo, (YMDictionaryKey)gYMIFMapAddressesKey);
+                if ( ! addresses ) {
+                    addresses = YMArrayCreate2(true);
+                    YMDictionaryAdd(ifInfo, (YMDictionaryKey)"addresses", (void *)addresses);
+                }
+                YMArrayAdd(addresses, address);
                 YMRelease(name);
             }
         }
         ifaddrsIter = ifaddrsIter->ifa_next;
     }
     freeifaddrs(ifaddrsList);
+    
+    // todo fix [un]managed key/value mixing, currently leaks, should be opaque
 #elif defined(YMWIN32)
 	//GetInterfaceInfo(NULL, &ifInfoLen);
 
@@ -404,7 +413,7 @@ YMDictionaryRef YMCreateLocalInterfaceMap()
 	}
 
 	free(apInfo);
-
+#error fix this tonight
 #else
 #error if mapping unimplemented for this platform
 #endif
@@ -412,10 +421,13 @@ YMDictionaryRef YMCreateLocalInterfaceMap()
     ymlog("current interface map:");
     YMDictionaryEnumRef denum = YMDictionaryEnumeratorBegin(map);
     while ( denum ) {
-        ymlogi(" %s (%s):",YMSTR((void *)denum->key),YMInterfaceTypeDescription(YMInterfaceTypeForName((YMStringRef)denum->key)));
-        YMArrayRef addresses = (YMArrayRef)denum->value;
-        for ( int i = 0; i < YMArrayGetCount(addresses); i++ ) {
-            ymlogi(" %s",YMSTR(YMAddressGetDescription((YMAddressRef)YMArrayGet(addresses, i))));
+        YMInterfaceType thisType = (YMInterfaceType)YMDictionaryGetItem(denum->value, (YMDictionaryKey)gYMIFMapTypeKey);
+        ymlogi(" %s (%s):",YMSTR((void *)denum->key),YMInterfaceTypeDescription(thisType));
+        YMArrayRef addresses = YMDictionaryGetItem(denum->value, (YMDictionaryKey)gYMIFMapAddressesKey);
+        if ( addresses ) {
+            for ( int i = 0; i < YMArrayGetCount(addresses); i++ ) {
+                ymlogi(" %s",YMSTR(YMAddressGetDescription((YMAddressRef)YMArrayGet(addresses, i))));
+            }
         }
         ymlogr();
         denum = YMDictionaryEnumeratorGetNext(denum);
