@@ -74,7 +74,7 @@ TestsMain.o:
 	$(CC) -c test/TestsMain.c $(CCF) -o $(OUT)/$@ $(INC) $(FLG) $(DBG)
 
 ymchat: $(LTGT) chat.o
-	cd $(OUT) ; $(CC) -o $@ $(PT) $(DLIBS) $(DBG) chat.o
+	cd "$(OUT)" ; $(CC) -o $@ $(PT) $(DLIBS) $(DBG) chat.o
 
 chat.o:
 	$(CC) -c misc/chat/main.c $(CCF) -o "$(OUT)/$@" $(INC) $(FLG) $(DBG)

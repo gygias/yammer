@@ -1,13 +1,12 @@
-- YM_ONCE_DEF-like macro for generic thread boilerplate
+- YM_ONCE_DEF-like macro for generic thread/dispatch boilerplate
 - shared "dispatch queues"
 - adopt spinlocks where appropriate
 - generalize copy file / recursive delete dir into utilities, or something
-- __YMRetain(obj,off) optimization
+- __YMRetain(obj,off)
 - server session's port order is backwards
 - match plexer buffer / max i/o to connection mtu?
 - __YMX509CertificateCreateX509 is misinterpreting errors from various openssl 'namespaces'
 - eliminate redundant framing between forward file and plexer
-- myabort, so aborts can be switched on and off, or at least not require a compound block, soft and hard for debugging vs internal error
 - need test case for forward-file "opaque" (unbounded), e.g. bom stream close case
 
 opaque_thing_that_closes_input_file
@@ -18,16 +17,13 @@ opaque_thing_that_closes_input_file
                                                     V
                                             Plexer:StreamReadDown -> medium -> ...
 
-- adopt 'synchronized self'? mutexes not small
+- 'self lock'
 - connection ownership/lifetime not clear
-- automatic log indentation by level
+- automatic indent by level
 - inlines
-- per-.c log level boilerplate
 - convenience for "my user data is length-prefixed with x width, too"
 - mDNS filter local services
-- struct __X {} __X; and Ref pass
-- muxer protocol renegotiate?
+- muxer protocol renegotiate
 - plexer chunk-chunk instead of realloc (and test large single user i/o vs plex buf)
 - service all ready downstreams in single loop, lock optimization
 - {h,n}to{n,h}
-- convenience to consolidate dispatch boilerplate for clients
