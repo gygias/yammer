@@ -13,7 +13,7 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 
-using Yammer;
+//using Yammer;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -28,7 +28,7 @@ namespace ProfilingTestApp
         {
             this.InitializeComponent();
 
-            Session s = new Session("_lol._tcp", "whatever");
+            //Session s = new Session("_lol._tcp", "whatever");
         }
     }
 }

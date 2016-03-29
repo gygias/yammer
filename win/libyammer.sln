@@ -26,14 +26,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		postbuild_event.bat = postbuild_event.bat
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yammer", "Yammer\Yammer.csproj", "{B5118C90-F726-4802-94A2-63E698FED711}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProfilingTestApp", "ProfilingTestApp\ProfilingTestApp.csproj", "{767AF62C-907E-4861-A5E5-C8AB87F1AD51}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Yammer", "Yammer\Yammer.vcxproj", "{1DE8D520-BFE1-4D3A-B024-B4B29F292FBC}"
 	ProjectSection(ProjectDependencies) = postProject
 		{36369923-A198-469B-B41B-65AD607E31C3} = {36369923-A198-469B-B41B-65AD607E31C3}
-	EndProjectSection
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProfilingTestApp", "ProfilingTestApp\ProfilingTestApp.csproj", "{767AF62C-907E-4861-A5E5-C8AB87F1AD51}"
-	ProjectSection(ProjectDependencies) = postProject
-		{B5118C90-F726-4802-94A2-63E698FED711} = {B5118C90-F726-4802-94A2-63E698FED711}
 	EndProjectSection
 EndProject
 Global
@@ -96,22 +93,6 @@ Global
 		{74222738-7433-4026-A978-37E259E74132}.Release|x64.Build.0 = Release|x64
 		{74222738-7433-4026-A978-37E259E74132}.Release|x86.ActiveCfg = Release|Win32
 		{74222738-7433-4026-A978-37E259E74132}.Release|x86.Build.0 = Release|Win32
-		{B5118C90-F726-4802-94A2-63E698FED711}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B5118C90-F726-4802-94A2-63E698FED711}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B5118C90-F726-4802-94A2-63E698FED711}.Debug|ARM.ActiveCfg = Debug|ARM
-		{B5118C90-F726-4802-94A2-63E698FED711}.Debug|ARM.Build.0 = Debug|ARM
-		{B5118C90-F726-4802-94A2-63E698FED711}.Debug|x64.ActiveCfg = Debug|x64
-		{B5118C90-F726-4802-94A2-63E698FED711}.Debug|x64.Build.0 = Debug|x64
-		{B5118C90-F726-4802-94A2-63E698FED711}.Debug|x86.ActiveCfg = Debug|x86
-		{B5118C90-F726-4802-94A2-63E698FED711}.Debug|x86.Build.0 = Debug|x86
-		{B5118C90-F726-4802-94A2-63E698FED711}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B5118C90-F726-4802-94A2-63E698FED711}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B5118C90-F726-4802-94A2-63E698FED711}.Release|ARM.ActiveCfg = Release|ARM
-		{B5118C90-F726-4802-94A2-63E698FED711}.Release|ARM.Build.0 = Release|ARM
-		{B5118C90-F726-4802-94A2-63E698FED711}.Release|x64.ActiveCfg = Release|x64
-		{B5118C90-F726-4802-94A2-63E698FED711}.Release|x64.Build.0 = Release|x64
-		{B5118C90-F726-4802-94A2-63E698FED711}.Release|x86.ActiveCfg = Release|x86
-		{B5118C90-F726-4802-94A2-63E698FED711}.Release|x86.Build.0 = Release|x86
 		{767AF62C-907E-4861-A5E5-C8AB87F1AD51}.Debug|Any CPU.ActiveCfg = Debug|x86
 		{767AF62C-907E-4861-A5E5-C8AB87F1AD51}.Debug|ARM.ActiveCfg = Debug|ARM
 		{767AF62C-907E-4861-A5E5-C8AB87F1AD51}.Debug|ARM.Build.0 = Debug|ARM
@@ -132,6 +113,18 @@ Global
 		{767AF62C-907E-4861-A5E5-C8AB87F1AD51}.Release|x86.ActiveCfg = Release|x86
 		{767AF62C-907E-4861-A5E5-C8AB87F1AD51}.Release|x86.Build.0 = Release|x86
 		{767AF62C-907E-4861-A5E5-C8AB87F1AD51}.Release|x86.Deploy.0 = Release|x86
+		{1DE8D520-BFE1-4D3A-B024-B4B29F292FBC}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{1DE8D520-BFE1-4D3A-B024-B4B29F292FBC}.Debug|ARM.ActiveCfg = Debug|Win32
+		{1DE8D520-BFE1-4D3A-B024-B4B29F292FBC}.Debug|x64.ActiveCfg = Debug|x64
+		{1DE8D520-BFE1-4D3A-B024-B4B29F292FBC}.Debug|x64.Build.0 = Debug|x64
+		{1DE8D520-BFE1-4D3A-B024-B4B29F292FBC}.Debug|x86.ActiveCfg = Debug|Win32
+		{1DE8D520-BFE1-4D3A-B024-B4B29F292FBC}.Debug|x86.Build.0 = Debug|Win32
+		{1DE8D520-BFE1-4D3A-B024-B4B29F292FBC}.Release|Any CPU.ActiveCfg = Release|Win32
+		{1DE8D520-BFE1-4D3A-B024-B4B29F292FBC}.Release|ARM.ActiveCfg = Release|Win32
+		{1DE8D520-BFE1-4D3A-B024-B4B29F292FBC}.Release|x64.ActiveCfg = Release|x64
+		{1DE8D520-BFE1-4D3A-B024-B4B29F292FBC}.Release|x64.Build.0 = Release|x64
+		{1DE8D520-BFE1-4D3A-B024-B4B29F292FBC}.Release|x86.ActiveCfg = Release|Win32
+		{1DE8D520-BFE1-4D3A-B024-B4B29F292FBC}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

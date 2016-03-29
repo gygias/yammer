@@ -1,0 +1,3 @@
+// Yammer.h
+
+#pragma once
