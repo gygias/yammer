@@ -27,6 +27,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProfilingTestApp", "ProfilingTestApp\ProfilingTestApp.csproj", "{767AF62C-907E-4861-A5E5-C8AB87F1AD51}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1DE8D520-BFE1-4D3A-B024-B4B29F292FBC} = {1DE8D520-BFE1-4D3A-B024-B4B29F292FBC}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Yammer", "Yammer\Yammer.vcxproj", "{1DE8D520-BFE1-4D3A-B024-B4B29F292FBC}"
 	ProjectSection(ProjectDependencies) = postProject
