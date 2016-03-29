@@ -6,3 +6,5 @@
 
 #include <libyammer/Yammer.h>
 #include "Yammer.h"
+
+using namespace System::Runtime::InteropServices;
