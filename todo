@@ -1,3 +1,4 @@
+- lead mdns,task,tls to the promised land
 - YM_ONCE_DEF-like macro for generic thread/dispatch boilerplate
 - shared "dispatch queues"
 - adopt spinlocks where appropriate
@@ -19,7 +20,6 @@ opaque_thing_that_closes_input_file
 
 - 'self lock'
 - connection ownership/lifetime not clear
-- automatic indent by level
 - inlines
 - convenience for "my user data is length-prefixed with x width, too"
 - mDNS filter local services

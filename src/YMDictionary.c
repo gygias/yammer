@@ -22,8 +22,8 @@ YM_EXTERN_C_PUSH
 
 typedef struct __YMDictionaryItem
 {
-    uint64_t key;
-    void *value;
+    YMDictionaryKey key;
+    YMDictionaryValue value;
     struct __YMDictionaryItem *next;
 } _YMDictionaryItem;
 typedef _YMDictionaryItem *_YMDictionaryItemRef;
@@ -95,12 +95,12 @@ void YMDictionaryAdd(YMDictionaryRef dict_, YMDictionaryKey key, YMDictionaryVal
     YM_WPOP
     
     if ( full ) {
-        ymerr("error: YMDictionary is full");
+        ymerr("YMDictionary is full");
         abort();
     }
     
     if ( _YMDictionaryFindItemWithIdentifier(dict->head, key, dict->ymtypeKeys, NULL) ) {
-        ymerr("error: YMDictionary already contains item for key %llu",key);
+        ymerr("YMDictionary already contains item for key %p",key);
         abort();
     }
     _YMDictionaryItemRef newItem = (_YMDictionaryItemRef)YMALLOC(sizeof(struct __YMDictionaryItem));
@@ -126,7 +126,7 @@ YMDictionaryKey YMDictionaryGetRandomKey(YMDictionaryRef dict_)
     __YMDictionaryRef dict = (__YMDictionaryRef)dict_;
     CHECK_CONSISTENCY
     if ( dict->count == 0 || dict->head == NULL ) {
-        ymerr("error: YMDictionary is empty and has no keys");
+        ymerr("YMDictionary is empty and has no keys");
         abort();
     }
     
@@ -174,7 +174,7 @@ YMDictionaryValue YMDictionaryRemove(YMDictionaryRef dict_, YMDictionaryKey key)
     CHECK_CONSISTENCY
     
     if ( dict->count == 0 || dict->head == NULL ) {
-        ymerr("error: YMDictionary is empty");
+        ymerr("YMDictionary is empty");
         abort();
     }
     
@@ -182,7 +182,7 @@ YMDictionaryValue YMDictionaryRemove(YMDictionaryRef dict_, YMDictionaryKey key)
     _YMDictionaryItemRef previousItem = NULL;
     _YMDictionaryItemRef theItem = _YMDictionaryFindItemWithIdentifier(dict->head, key, dict->ymtypeKeys, &previousItem);
     if ( ! theItem ) {
-        ymerr("error: key does not exist to remove");
+        ymerr("key does not exist to remove");
         abort();
     }
     else {
@@ -316,7 +316,7 @@ void _YMDictionaryShift(YMDictionaryRef dict_, int64_t baseIdx, bool inc)
     _YMDictionaryItemRef iter = dict->head;
     
     while ( iter ) {
-        if ( iter->key >= (uint64_t)baseIdx ) {
+        if ( (int64_t)iter->key >= baseIdx ) { //xxx
             if ( inc )
                 iter->key++;
             else

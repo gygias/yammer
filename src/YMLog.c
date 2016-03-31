@@ -32,6 +32,21 @@ YM_ONCE_FUNC(__YMLogInit,
     gTimeFormatBuf = YMALLOC(gTimeFormatBufLen);
 })
 
+int __YMLogIndent( int level )
+{
+    if ( level >= YMLogCombined5 )
+        return 5;
+    else if ( level >= YMLogCombined4 )
+        return 4;
+    else if ( level >= YMLogCombined3 )
+        return 3;
+    else if ( level >= YMLogCombined2 )
+        return 2;
+    else if ( level >= YMLogCombined1 )
+        return 1;
+    return 0;
+}
+
 void __YMLogType( int level, bool newline, char* format, ... )
 {
 	YM_ONCE_DO_LOCAL(__YMLogInit);
@@ -52,7 +67,12 @@ void __YMLogType( int level, bool newline, char* format, ... )
 
             if (timeStr)
                 fprintf(file, "%s ", timeStr);
-            fprintf(file,"yammer[%llu:%llu]: " ymlog_pre,pid,threadID,ymlog_args);
+            fprintf(file,"yammer[%llu:%llu]: ",pid,threadID);
+            
+            int indent = __YMLogIndent(level);
+            while ( indent-- > 0 )
+                fprintf(file," ");
+            if ( level == YMLogError ) fprintf(file, "!: ");
         }
         
         if ( ! newline )

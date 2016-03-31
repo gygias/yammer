@@ -47,8 +47,8 @@ int32_t YMAPI YMPortReserve(bool ipv4, int *outSocket);
 // { en0 :
 //      { "addresses" : ( 0x123456789, ... ),
 //        "type" : YMInterfaceType } }
-static const char * gYMIFMapAddressesKey = "addresses";
-static const char * gYMIFMapTypeKey = "type";
+#define kYMIFMapAddressesKey ((YMDictionaryKey) 1)
+#define kYMIFMapTypeKey ((YMDictionaryKey) 2)
 YMDictionaryRef YMAPI YMCreateLocalInterfaceMap();
 YMInterfaceType YMAPI YMInterfaceTypeForName(YMStringRef ifName);
 const char YMAPI * YMInterfaceTypeDescription(YMInterfaceType type);

@@ -50,7 +50,7 @@ void YMThreadSetContext(YMThreadRef thread, void *context);
 typedef struct ym_thread_dispatch_t
 {
     ym_thread_dispatch_func dispatchProc;
-    ym_thread_dispatch_dealloc deallocProc; // optional // todo why is this this necessary? can't dispatchProc take care of opaque stuff before it finishes?
+    ym_thread_dispatch_dealloc deallocProc; // optional // todo why is this necessary - can't dispatchProc take care of opaque stuff before it finishes?
     bool freeContextWhenDone; // optional convenience for YMALLOC'd context pointers. will be free'd after deallocProc, if it is specified.
     void *context; // weak
     YMStringRef description; // optional, assigns a name that will be included in logging from YMThreadDispatch

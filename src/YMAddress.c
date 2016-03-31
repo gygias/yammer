@@ -14,6 +14,8 @@
 #include "YMAddress.h"
 #include "YMUtilities.h"
 
+#define ymlog_pre "address%s"
+#define ymlog_args ": "
 #include "YMLog.h"
 
 #if !defined(YMWIN32)
@@ -73,7 +75,7 @@ YMAddressRef YMAddressCreate(const void *sockaddr_, uint16_t port)
     }
 #endif
     else {
-        ymlog("address: warning: yammer doesn't support address family %d",sockaddr->sa_family);
+        ymlog("warning: yammer doesn't support address family %d",sockaddr->sa_family);
         return NULL;
     }
     
@@ -95,7 +97,7 @@ YMAddressRef YMAddressCreate(const void *sockaddr_, uint16_t port)
         char ipString[INET6_ADDRSTRLEN];
         
         if ( ! inet_ntop(family, in46_addr, ipString, ipLength) ) {
-            ymerr("address: error: inet_ntop failed for address length %d",ipLength);
+            ymerr("inet_ntop failed for address length %d",ipLength);
             goto rewind_fail;
         }
         
@@ -133,7 +135,7 @@ YMAddressRef YMAddressCreateWithIPStringAndPort(YMStringRef ipString, uint16_t p
     struct in_addr inAddr = {0};
 	int result = inet_pton(AF_INET, YMSTR(ipString), &inAddr);
     if ( result != 1 ) {
-        ymlog("address: failed to parse '%s' (%u)",YMSTR(ipString),port);
+        ymlog("failed to parse '%s' (%u)",YMSTR(ipString),port);
         return NULL;
     }
     
@@ -172,7 +174,7 @@ bool YMAPI YMAddressIsEqualIncludingPort(YMAddressRef a, YMAddressRef b, bool in
         bool ipv4 = aS->sa_family == AF_INET;
         bool ipv6 = aS->sa_family == AF_INET6;
         if ( ! ipv4 && ! ipv6 ) {
-            ymerr("warning: address equality doesn't support family %d",aS->sa_family);
+            ymerr("address equality doesn't support family %d",aS->sa_family);
             return false;
         }
         

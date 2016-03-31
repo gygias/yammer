@@ -99,8 +99,8 @@ void PlexerTestsRun(ym_test_assert_func assert, const void *context)
     YMRelease(theTest.interruptNotificationSem);
     
     while ( YMDictionaryGetCount(theTest.lastMessageWrittenByStreamID) > 0 ) {
-        void *message = YMDictionaryRemove(theTest.lastMessageWrittenByStreamID, YMDictionaryGetRandomKey(theTest.lastMessageWrittenByStreamID));
-        free(message);
+        const void *message = YMDictionaryRemove(theTest.lastMessageWrittenByStreamID, YMDictionaryGetRandomKey(theTest.lastMessageWrittenByStreamID));
+        free((void *)message);
     }
     YMRelease(theTest.lastMessageWrittenByStreamID);
     
@@ -236,8 +236,8 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _RunLocalPlexer(YM_THREAD_PARAM ctx_)
         if ( protectTheList )
             YMLockLock(theTest->plexerTest1Lock);
         if ( YMDictionaryContains(theTest->lastMessageWrittenByStreamID, (YMDictionaryKey)streamID) ) {
-            void *old = YMDictionaryRemove(theTest->lastMessageWrittenByStreamID, (YMDictionaryKey)streamID);
-            free(old);
+            const void *old = YMDictionaryRemove(theTest->lastMessageWrittenByStreamID, (YMDictionaryKey)streamID);
+            free((void *)old);
         }
         YMDictionaryAdd(theTest->lastMessageWrittenByStreamID, (YMDictionaryKey)streamID, outgoingMessage);
         if ( protectTheList )
@@ -422,8 +422,8 @@ void YM_CALLING_CONVENTION _handle_remote_stream(ym_thread_dispatch_ref ctx_)
         if ( protectTheList )
             YMLockLock(theTest->plexerTest1Lock);
         if ( YMDictionaryContains(theTest->lastMessageWrittenByStreamID, (YMDictionaryKey)streamID) ) {
-            void *old = YMDictionaryRemove(theTest->lastMessageWrittenByStreamID, (YMDictionaryKey)streamID);
-            free(old);
+            const void *old = YMDictionaryRemove(theTest->lastMessageWrittenByStreamID, (YMDictionaryKey)streamID);
+            free((void *)old);
         }
         YMDictionaryAdd(theTest->lastMessageWrittenByStreamID, (YMDictionaryKey)streamID, outgoingMessage);
         if ( protectTheList )

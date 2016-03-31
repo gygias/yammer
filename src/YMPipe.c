@@ -10,6 +10,8 @@
 #include "YMPipePriv.h"
 #include "YMUtilities.h"
 
+#define ymlog_pre "pipe[%s]: "
+#define ymlog_args YMSTR(pipe->name)
 #define ymlog_type YMLogIO
 #include "YMLog.h"
 
@@ -39,7 +41,7 @@ YMPipeRef YMPipeCreate(YMStringRef name)
     while ( result != 0 ) {
 #if !defined(YMWIN32)
         if ( errno == EFAULT ) {
-            ymerr("pipe[%s]: error: invalid address space",YMSTR(name));
+            ymerrg("pipe[%s]: invalid address space",YMSTR(name));
             return NULL;
         }
 #endif
@@ -48,7 +50,7 @@ YMPipeRef YMPipeCreate(YMStringRef name)
         if ( iter ) {
             iter++;
             if ( iter > 100 )
-                ymerr("pipe[%s]: warning: new files unavailable for pipe()",YMSTR(name));
+                ymerrg("pipe[%s]: new files unavailable for pipe()",YMSTR(name));
         }
         
         YM_CREATE_PIPE(fds);
@@ -124,11 +126,11 @@ void __YMPipeCloseFile(__YMPipeRef pipe, YMFILE *fdPtr)
         int result, error = 0;
         const char *errorStr = NULL;
         
-        ymlog("   pipe[%s]: closing f%d",YMSTR(pipe->name),fd);
+        ymlog("closing f%d",fd);
 		YM_CLOSE_FILE(fd);
 
         if ( result != 0 ) {
-            ymerr("   pipe[%s]: close on f%d failed: %d (%s)",YMSTR(pipe->name), fd, result, errorStr);
+            ymerr("close on f%d failed: %d (%s)", fd, result, errorStr);
             //abort(); plexer
         }
     }

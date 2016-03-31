@@ -506,8 +506,8 @@
 				63312D031BFAF9E600039336 /* chat */,
 				634A87481C17A4C600C7CA99 /* linux */,
 				63957E8D1C137ADE00960961 /* win */,
-				63225D9C1BE9314100C28F05 /* apple dependencies */,
 				6329D3211C9F646A0087988D /* ProfilingTestApp */,
+				63225D9C1BE9314100C28F05 /* apple dependencies */,
 				63225D431BE9026200C28F05 /* Products */,
 			);
 			sourceTree = "<group>";

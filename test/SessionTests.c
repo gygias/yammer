@@ -116,8 +116,8 @@ void SessionTestsRun(ym_test_assert_func assert, ym_test_diff_func diff, const v
     ymerr(" Session test finished with %llu sparse files",theTest.nSparseFilesToRead);
     
     while ( YMDictionaryGetCount(theTest.nonRegularFileNames) > 0 ) {
-        void *filename = YMDictionaryRemove(theTest.nonRegularFileNames, YMDictionaryGetRandomKey(theTest.nonRegularFileNames));
-        free(filename);
+        const void *filename = YMDictionaryRemove(theTest.nonRegularFileNames, YMDictionaryGetRandomKey(theTest.nonRegularFileNames));
+        free((void *)filename);
     }
     
     YMRelease(theTest.testType);

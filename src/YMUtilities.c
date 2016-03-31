@@ -127,15 +127,15 @@ YMIOResult YMReadFull(YMFILE fd, uint8_t *buffer, size_t bytes, size_t *outRead)
     while ( off < bytes ) {
         YM_READ_FILE(fd, buffer + off, bytes - off);
         if ( aRead == 0 ) {
-            ymdbg("    io: read(f%d, %p + %zu, %zu - %zu) EOF",fd, buffer, off, bytes, off);
+            ymdbg("io: read(f%d, %p + %zu, %zu - %zu) EOF",fd, buffer, off, bytes, off);
             ioResult = YMIOEOF;
             break;
         } else if ( aRead == -1 ) {
-            ymerr("    io: read(f%d, %p + %zu, %zu - %zu) failed: %d (%s)",fd, buffer, off, bytes, off, error, errorStr);
+            ymerr("io: read(f%d, %p + %zu, %zu - %zu) failed: %d (%s)",fd, buffer, off, bytes, off, error, errorStr);
             ioResult = YMIOError;
             break;
         }
-        ymdbg("    io: read(f%d, %p + %zu, %zu - %zu): %zd",fd, buffer, off, bytes, off, aRead);
+        ymdbg("io: read(f%d, %p + %zu, %zu - %zu): %zd",fd, buffer, off, bytes, off, aRead);
         off += aRead;
     }
     
@@ -158,15 +158,15 @@ YMIOResult YMWriteFull(YMFILE fd, const uint8_t *buffer, size_t bytes, size_t *o
         YM_WRITE_FILE(fd, buffer + off, bytes - off);
         switch(aWrite) {
             case 0:
-                ymerr("    io: write(f%d, %p + %zu, %zu - %zu) failed 0?: %d (%s)",fd, buffer, off, bytes, off, error, errorStr);
+                ymerr("io: write(f%d, %p + %zu, %zu - %zu) failed 0?: %d (%s)",fd, buffer, off, bytes, off, error, errorStr);
                 abort();
                 //goto catch_fail;
             case -1:
-                ymerr("    io: write(f%d, %p + %zu, %zu - %zu) failed: %d (%s)",fd, buffer, off, bytes, off, error, errorStr);
+                ymerr("io: write(f%d, %p + %zu, %zu - %zu) failed: %d (%s)",fd, buffer, off, bytes, off, error, errorStr);
                 ioResult = YMIOError;
                 goto catch_fail;
             default:
-                ymdbg("    io: write(f%d, %p + %zu, %zu - %zu): %zd",fd, buffer, off, bytes, off, aWrite);
+                ymdbg("io: write(f%d, %p + %zu, %zu - %zu): %zd",fd, buffer, off, bytes, off, aWrite);
                 break;
         }
         off += aWrite;
@@ -355,12 +355,12 @@ YMDictionaryRef YMCreateLocalInterfaceMap()
                 if ( ! ifInfo ) {
                     ifInfo = YMDictionaryCreate();
                     YMDictionaryAdd(map, (YMDictionaryKey)name, (void *)ifInfo);
-                    YMDictionaryAdd(ifInfo, (YMDictionaryKey)gYMIFMapTypeKey, (void *)YMInterfaceTypeForName(name));
+                    YMDictionaryAdd(ifInfo, kYMIFMapTypeKey, (void *)YMInterfaceTypeForName(name));
                 }
-                YMArrayRef addresses = YMDictionaryGetItem(ifInfo, (YMDictionaryKey)gYMIFMapAddressesKey);
+                YMArrayRef addresses = YMDictionaryGetItem(ifInfo, kYMIFMapAddressesKey);
                 if ( ! addresses ) {
                     addresses = YMArrayCreate2(true);
-                    YMDictionaryAdd(ifInfo, (YMDictionaryKey)"addresses", (void *)addresses);
+                    YMDictionaryAdd(ifInfo, kYMIFMapAddressesKey, (void *)addresses);
                 }
                 YMArrayAdd(addresses, address);
                 YMRelease(name);
@@ -418,12 +418,14 @@ YMDictionaryRef YMCreateLocalInterfaceMap()
 #error if mapping unimplemented for this platform
 #endif
     
-    ymlog("current interface map:");
+    ymlog("current interface map (%p):",map);
     YMDictionaryEnumRef denum = YMDictionaryEnumeratorBegin(map);
     while ( denum ) {
-        YMInterfaceType thisType = (YMInterfaceType)YMDictionaryGetItem(denum->value, (YMDictionaryKey)gYMIFMapTypeKey);
-        ymlogi(" %s (%s):",YMSTR((void *)denum->key),YMInterfaceTypeDescription(thisType));
-        YMArrayRef addresses = YMDictionaryGetItem(denum->value, (YMDictionaryKey)gYMIFMapAddressesKey);
+        YMStringRef ifName = (YMStringRef)denum->key;
+        YMDictionaryRef ifInfo = denum->value;
+        YMInterfaceType thisType = (YMInterfaceType)YMDictionaryGetItem(ifInfo, kYMIFMapTypeKey);
+        ymlogi(" %s (%s) (%p,%p):",YMSTR(ifName),YMInterfaceTypeDescription(thisType),ifName,ifInfo);
+        YMArrayRef addresses = YMDictionaryGetItem(ifInfo, kYMIFMapAddressesKey);
         if ( addresses ) {
             for ( int i = 0; i < YMArrayGetCount(addresses); i++ ) {
                 ymlogi(" %s",YMSTR(YMAddressGetDescription((YMAddressRef)YMArrayGet(addresses, i))));

@@ -11,9 +11,6 @@
 #include "YMUtilities.h"
 #include "YMLock.h"
 
-#define ymlog_type YMLogThreadSync
-#include "YMLog.h"
-
 #include <fcntl.h>
 //#define PTHREAD_SEMAPHORE
 #ifdef PTHREAD_SEMAPHORE
@@ -32,8 +29,10 @@
 # define YM_SEMAPHORE_TYPE HANDLE
 #endif
 
-#define YM_SEM_LOG_PREFIX "semaphore[%s,%d,%s]: "
-#define YM_SEM_LOG_DESC YMSTR(semaphore->semName),(int)semaphore->sem,YMSTR(semaphore->userName)
+#define ymlog_pre "semaphore[%s,%d,%s]: "
+#define ymlog_args YMSTR(semaphore->semName),(int)semaphore->sem,YMSTR(semaphore->userName)
+#define ymlog_type YMLogThreadSync
+#include "YMLog.h"
 
 YM_EXTERN_C_PUSH
 
@@ -74,7 +73,7 @@ YMSemaphoreRef YMSemaphoreCreateWithName(YMStringRef name, int initialValue)
 YMSemaphoreRef __YMSemaphoreCreate(YMStringRef name, int initialValue)
 {
     if (initialValue < 0) {
-        ymerr("semaphore[init]: fatal: initial value cannot be negative");
+        ymerrg("fatal: semaphore initial value cannot be negative");
         abort();
     }
 
@@ -91,8 +90,8 @@ YMSemaphoreRef __YMSemaphoreCreate(YMStringRef name, int initialValue)
     uint16_t thisIndex = gYMSemaphoreIndex++;
     semaphore->semName = YMStringCreateWithFormat("ym-%u",thisIndex,NULL);
     if ( gYMSemaphoreIndex == 0 )
-        ymerr(YM_SEM_LOG_PREFIX "warning: semaphore name index reset",YM_SEM_LOG_DESC);
-    ymlog(YM_SEM_LOG_PREFIX "created",YM_SEM_LOG_DESC);
+        ymerr("warning: semaphore name index reset");
+    ymlog("created");
     YMLockUnlock(gYMSemaphoreIndexLock);
 
 #if !defined(YMWIN32)
@@ -101,15 +100,15 @@ try_again:;
     if ( semaphore->sem == SEM_FAILED ) {
         if ( errno == EEXIST ) {
             if ( sem_unlink(YMSTR(semaphore->semName)) == 0 ) {
-                ymlog(YM_SEM_LOG_PREFIX "exists",YM_SEM_LOG_DESC);
+                ymlog("exists");
                 goto try_again;
             } else {
-				ymerr(YM_SEM_LOG_PREFIX "sem_unlink failed %d (%s)",YM_SEM_LOG_DESC,errno,strerror(errno));
+				ymerr("sem_unlink failed %d (%s)",errno,strerror(errno));
 				goto try_again;
 			}
         }
         else
-            ymabort(YM_SEM_LOG_PREFIX "fatal: sem_open failed: %d (%s)",YM_SEM_LOG_DESC,errno,strerror(errno));
+            ymabort("fatal: sem_open failed: %d (%s)",errno,strerror(errno));
     }
 #else
 	semaphore->sem = CreateSemaphore(NULL, 0, LONG_MAX, NULL);
@@ -123,13 +122,13 @@ try_again:;
 void _YMSemaphoreFree(YMTypeRef object)
 {
     __YMSemaphoreRef semaphore = (__YMSemaphoreRef)object;
-    ymlog(YM_SEM_LOG_PREFIX "deallocating",YM_SEM_LOG_DESC);
+    ymlog("deallocating");
     
     int result, error = 0;
     const char *errorStr = NULL;
 	YM_CLOSE_SEMAPHORE(semaphore);
 	if (result == -1)
-		ymerr(YM_SEM_LOG_PREFIX "warning: sem_unlink failed: %d (%s)", YM_SEM_LOG_DESC, error, errorStr);
+		ymerr("warning: sem_unlink failed: %d (%s)", error, errorStr);
     
     YMRelease(semaphore->lock);
     YMRelease(semaphore->userName);
@@ -147,14 +146,14 @@ void YMSemaphoreWait(YMSemaphoreRef semaphore_)
         YM_WAIT_SEMAPHORE(semaphore->sem);
         if (result != 0) {
             retry = YM_RETRY_SEMAPHORE;
-            ymerr(YM_SEM_LOG_PREFIX "sem_wait failed%s: %d (%s)", YM_SEM_LOG_DESC, retry ? ", retrying" : "", errno, strerror(errno));
+            ymerr("sem_wait failed%s: %d (%s)", retry ? ", retrying" : "", errno, strerror(errno));
             ymassert(retry,"sem_wait");
         }
         else
             break;
     }
 
-	ymlog(YM_SEM_LOG_PREFIX "waited!->",YM_SEM_LOG_DESC);
+	ymlog("released");
 }
 
 void YMSemaphoreSignal(YMSemaphoreRef semaphore_)
@@ -164,9 +163,9 @@ void YMSemaphoreSignal(YMSemaphoreRef semaphore_)
 	int result, error = 0;
 	const char *errorStr = NULL;
 	YM_POST_SEMAPHORE(semaphore->sem);
-	ymassert(result==0, YM_SEM_LOG_PREFIX "fatal: sem_post failed: %d (%s)", YM_SEM_LOG_DESC, errno, strerror(errno));
+	ymassert(result==0, "fatal: sem_post failed: %d (%s)", errno, strerror(errno));
 	
-	ymlog(YM_SEM_LOG_PREFIX "posted", YM_SEM_LOG_DESC);
+	ymlog("posted");
 }
 
 YM_EXTERN_C_POP

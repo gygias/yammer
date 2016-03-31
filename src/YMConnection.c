@@ -150,7 +150,7 @@ __YMConnectionRef __YMConnectionCreate(bool isIncoming, YMAddressRef address, YM
         while ( denum ) {
             YMStringRef ifName = (YMStringRef)denum->key;
             YMDictionaryRef ifInfo = (YMDictionaryRef)denum->value;
-            YMArrayRef ifAddrs = (YMArrayRef)YMDictionaryGetItem(ifInfo, (YMDictionaryKey)gYMIFMapAddressesKey);
+            YMArrayRef ifAddrs = (YMArrayRef)YMDictionaryGetItem(ifInfo, kYMIFMapAddressesKey);
             for ( int i = 0; i < YMArrayGetCount(ifAddrs); i++ ) {
                 YMAddressRef aLocalAddress = (YMAddressRef)YMArrayGet(ifAddrs, i);                    
                 if ( YMAddressIsEqualIncludingPort(address, aLocalAddress, false) ) {
@@ -243,9 +243,9 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     
     int yes = 1;
     result = setsockopt(newSocket, SOL_SOCKET, SO_REUSEADDR, (const void *)&yes, sizeof(yes));
-    if (result != 0 ) ymerr("warning: setsockopt(reuse) failed on f%d: %d: %d (%s)",newSocket,result,errno,strerror(errno));
+    if ( result != 0 ) ymerr("warning: setsockopt(reuse) failed on f%d: %d: %d (%s)",newSocket,result,errno,strerror(errno));
     result = setsockopt(newSocket, SOL_SOCKET, SO_DONTROUTE, (const void *)&yes, sizeof(yes));
-    if (result != 0 ) ymerr("warning: setsockopt(dontroute) failed on f%d: %d: %d (%s)",newSocket,result,errno,strerror(errno));
+    if ( result != 0 ) ymerr("warning: setsockopt(dontroute) failed on f%d: %d: %d (%s)",newSocket,result,errno,strerror(errno));
     
     ymlog("connecting...");
     
@@ -256,7 +256,7 @@ bool YMConnectionConnect(YMConnectionRef connection_)
     
     result = connect(newSocket, addr, addrLen);
     if ( result != 0 ) {
-        ymerr("error: connect(%s): %d (%s)",YMSTR(YMAddressGetDescription(connection->address)),errno,strerror(errno));
+        ymerr("connect(%s): %d (%s)",YMSTR(YMAddressGetDescription(connection->address)),errno,strerror(errno));
         YM_CLOSE_SOCKET(newSocket);
         return false;
     }
@@ -333,13 +333,13 @@ bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, 
             
             YM_WRITE_SOCKET(newSocket, (const char *)&command, sizeof(command));
             if ( aWrite != sizeof(command) ) {
-                ymerr("error: connection failed to initialize: %d %d %s",i,error,errorStr);
+                ymerr("connection failed to initialize: %d %d %s",i,error,errorStr);
                 YM_CLOSE_SOCKET(newSocket);
                 return false;
             }
             
             if ( i == 0 ) {
-                ymerr("performing sample of length %ub",sampleSize);
+                ymlog("performing sample of length %ub",sampleSize);
                 connection->sample = __YMConnectionDoSample(connection, newSocket, sampleSize, true);
                 YM_DEBUG_SAMPLE
             }
@@ -350,20 +350,20 @@ bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, 
         while(1) {
             YM_READ_SOCKET(newSocket, (char *)&command, sizeof(command));
             if ( aRead != sizeof(command) ) {
-                ymerr("error: connection failed to initialize: %d %s",error,errorStr);
+                ymerr("connection failed to initialize: %d %s",error,errorStr);
                 YM_CLOSE_SOCKET(newSocket);
                 return false;
             }
             
             if ( command.command == YMConnectionCommandSample ) {
-                ymerr("performing sample of length %ub",command.userInfo);
+                ymlog("performing sample of length %ub",command.userInfo);
                 connection->sample = __YMConnectionDoSample(connection, newSocket, command.userInfo, false);
                 YM_DEBUG_SAMPLE
             } else if ( command.command == YMConnectionCommandInit ) {
-                ymerr("init command received, proceeding");
+                ymlog("init command received, proceeding");
                 break;
             } else {
-                ymerr("error: unknown initialization command: %d",command.command);
+                ymerr("unknown initialization command: %d",command.command);
                 YM_CLOSE_SOCKET(newSocket);
                 return false;
             }

@@ -30,10 +30,7 @@ void CryptoTestsRun(ym_test_assert_func assert, const void *context)
 }
 
 void _X509GenerationTestRun(struct CryptoTest *theTest)
-{
-    // This is an example of a functional test case.
-    // Use XCTAssert and related functions to verify your tests produce the correct results.
-    
+{    
     YMRSAKeyPairRef keyPair = YMRSAKeyPairCreate();
     testassert(YMRSAKeyPairGenerate(keyPair), "generate failed");
     YMX509CertificateRef cert = YMX509CertificateCreate(keyPair);

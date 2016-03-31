@@ -29,17 +29,15 @@ void GrabBagTestsRun(ym_test_assert_func assert, const void *context)
 }
 
 void _InterfacesTestRun(struct GrabBagTest *theTest)
-{
-    // This is an example of a functional test case.
-    // Use XCTAssert and related functions to verify your tests produce the correct results.
-    
+{    
     YMDictionaryRef map = YMCreateLocalInterfaceMap();
     testassert(YMDictionaryGetCount(map)>0, "interface map is empty");
     
     YMDictionaryEnumRef denum = YMDictionaryEnumeratorBegin(map);
     testassert(denum, "interface map is not empty but enumerator is null");
+    testassert(YMDictionaryGetCount(denum->value),"ifInfo dict is empty");
     while ( denum ) {
-        YMArrayRef someAddresses = YMDictionaryGetItem(denum->value, gYMIFMapAddressesKey);
+        YMArrayRef someAddresses = YMDictionaryGetItem(denum->value, kYMIFMapAddressesKey);
         testassert(someAddresses&&YMArrayGetCount(someAddresses)>0, "interface '%s' has no addresses",YMSTR((YMStringRef)denum->key));
         denum = YMDictionaryEnumeratorGetNext(denum);
     }

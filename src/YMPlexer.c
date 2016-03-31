@@ -17,6 +17,8 @@
 #include "YMThread.h"
 #include "YMThreadPriv.h"
 
+#define ymlog_pre "plexer[%s]: "
+#define ymlog_args plexer->name?YMSTR(plexer->name):"*"
 #define ymlog_type YMLogPlexer
 #include "YMLog.h"
 
@@ -35,9 +37,6 @@
 #endif
 
 #define YMPlexerBuiltInVersion ((uint32_t)1)
-
-#define ymlog_type YMLogPlexer
-#include "YMLog.h"
 
 YM_EXTERN_C_PUSH
 
@@ -59,8 +58,8 @@ YM_EXTERN_C_PUSH
 // initialization
 typedef struct {
     uint32_t protocolVersion;
-    uint32_t masterStreamIDMin;
-    uint32_t masterStreamIDMax;
+    YMPlexerStreamID masterStreamIDMin;
+    YMPlexerStreamID masterStreamIDMax;
 } YMPlexerMasterInitializer;
 
 typedef struct {
@@ -186,7 +185,7 @@ YMPlexerRef YMPlexerCreate(YMStringRef name, YMSecurityProviderRef provider, boo
     
     __YMPlexerRef plexer = (__YMPlexerRef)_YMAlloc(_YMPlexerTypeID,sizeof(struct __ym_plexer_t));
     
-    plexer->name = YMStringCreateWithFormat("plex-%s(%s)",name?YMSTR(name):"*",master?"m":"s",NULL);
+    plexer->name = YMStringCreateWithFormat("%s(%s)",name?YMSTR(name):"*",master?"m":"s",NULL);
     plexer->provider = YMRetain(provider);
     
     plexer->active = false;
@@ -241,7 +240,7 @@ void _YMPlexerFree(YMPlexerRef plexer_)
     
     // ensure that if we haven't been stopped, or interrupted, we hang up
     bool first = __YMPlexerInterrupt(plexer);
-    ymerr("plexer[%s]: deallocating (%s)",YMSTR(plexer->name),first?"stopping":"already stopped");
+    ymerr("deallocating (%s)",first?"stopping":"already stopped");
     
     YMRelease(plexer->name);
     YMRelease(plexer->provider);
@@ -296,7 +295,7 @@ bool YMPlexerStart(YMPlexerRef plexer_)
     bool okay;
     
     if ( plexer->active ) {
-        ymerr(" plexer[%s]: user error: this plexer is already initialized",YMSTR(plexer->name));
+        ymerr("user: this plexer is already initialized");
         return false;
     }
     
@@ -308,7 +307,7 @@ bool YMPlexerStart(YMPlexerRef plexer_)
     if ( ! okay )
         goto catch_fail;
     
-    ymlog(" plexer[%s]: initialized m[%u:%u], s[%u:%u]",YMSTR(plexer->name),
+    ymlog("initialized m[%llululu:%llu], s[%llu:%llu]",
           plexer->master ? plexer->localStreamIDMin : plexer->remoteStreamIDMin,
           plexer->master ? plexer->localStreamIDMax : plexer->remoteStreamIDMax,
           plexer->master ? plexer->remoteStreamIDMin : plexer->localStreamIDMin,
@@ -319,23 +318,23 @@ bool YMPlexerStart(YMPlexerRef plexer_)
     
     okay = YMThreadStart(plexer->localServiceThread);
     if ( ! okay ) {
-        ymerr(" plexer[%s]: error: failed to detach down service thread",YMSTR(plexer->name));
+        ymerr("failed to detach down service thread");
         goto catch_fail;
     }
     
     okay = YMThreadStart(plexer->remoteServiceThread);
     if ( ! okay ) {
-        ymerr(" plexer[%s]: error: failed to detach up service thread",YMSTR(plexer->name));
+        ymerr("failed to detach up service thread");
         goto catch_fail;
     }
     
     okay = YMThreadStart(plexer->eventDeliveryThread);
     if ( ! okay ) {
-        ymerr(" plexer[%s]: error: failed to detach event thread",YMSTR(plexer->name));
+        ymerr("failed to detach event thread");
         goto catch_fail;
     }
     
-    ymlog(" plexer[%s]: started",YMSTR(plexer->name));
+    ymlog("started");
     
 catch_fail:
     return okay;
@@ -354,8 +353,8 @@ YMStreamRef YMPlexerCreateStream(YMPlexerRef plexer_, YMStringRef name)
             plexer->localStreamIDLast++;
         
         YMPlexerStreamID newStreamID = plexer->localStreamIDLast;
-        if ( YMDictionaryContains(plexer->localStreamsByID, newStreamID) ) {
-            ymerr(" plexer[%s]: fatal: plexer ran out of streams",YMSTR(plexer->name));
+        if ( YMDictionaryContains(plexer->localStreamsByID, (YMDictionaryKey)newStreamID) ) {
+            ymerr("fatal: plexer ran out of streams");
             __YMPlexerInterrupt(plexer);
             break;
         }
@@ -363,7 +362,7 @@ YMStreamRef YMPlexerCreateStream(YMPlexerRef plexer_, YMStringRef name)
         YMStringRef userName = name ? YMRetain(name) : YMSTRC("*");
         newStream = __YMPlexerCreateStreamWithID(plexer, newStreamID, true, userName);
         
-        YMDictionaryAdd(plexer->localStreamsByID, newStreamID, (void *)newStream);
+        YMDictionaryAdd(plexer->localStreamsByID, (YMDictionaryKey)newStreamID, (void *)newStream);
         YMRetain(newStream); // retain for user
         
     } while (false);
@@ -393,7 +392,7 @@ void YMPlexerCloseStream(YMPlexerRef plexer_, YMStreamRef stream)
 #endif
     }
     
-    ymlog(" plexer[%s]: user %s stream %u", YMSTR(plexer->name), isLocal?"closing":"releasing", streamID);
+    ymlog("user %s stream %llu", isLocal?"closing":"releasing", streamID);
     YMRelease(stream); // release user
 }
 
@@ -438,10 +437,9 @@ bool __YMPlexerInitAsMaster(__YMPlexerRef plexer_)
 {
     __YMPlexerRef plexer = (__YMPlexerRef)plexer_;
     
-    char *errorTemplate = " plexer[m]: error: plexer init failed: %s";
     bool okay = YMSecurityProviderWrite(plexer->provider, (void *)YMPlexerMasterHello, strlen(YMPlexerMasterHello));
     if ( ! okay ) {
-        ymerr(errorTemplate,"master hello write");
+        ymerr("m: master hello write");
         return false;
     }
     
@@ -449,7 +447,7 @@ bool __YMPlexerInitAsMaster(__YMPlexerRef plexer_)
     char inHello[64];
     okay = YMSecurityProviderRead(plexer->provider, (void *)inHello, inHelloLen);
     if ( ! okay || memcmp(YMPlexerSlaveHello,inHello,inHelloLen) ) {
-        ymerr(errorTemplate,"slave hello read");
+        ymerr("m: slave hello read");
         return false;
     }
     
@@ -462,18 +460,18 @@ bool __YMPlexerInitAsMaster(__YMPlexerRef plexer_)
     YMPlexerMasterInitializer initializer = { YMPlexerBuiltInVersion, plexer->localStreamIDMin, plexer->localStreamIDMax };
     okay = YMSecurityProviderWrite(plexer->provider, (void *)&initializer, sizeof(initializer));
     if ( ! okay ) {
-        ymerr(errorTemplate,"master init write");
+        ymerr("m: master init write");
         return false;
     }
     
     YMPlexerSlaveAck ack;
     okay = YMSecurityProviderRead(plexer->provider, (void *)&ack, sizeof(ack));
     if ( ! okay ) {
-        ymerr(errorTemplate,"slave ack read");
+        ymerr("m: slave ack read");
         return false;
     }
     if ( ack.protocolVersion > YMPlexerBuiltInVersion ) {
-        ymerr(errorTemplate,"protocol mismatch");
+        ymerr("m: protocol mismatch");
         return false;
     }
     
@@ -482,26 +480,25 @@ bool __YMPlexerInitAsMaster(__YMPlexerRef plexer_)
 
 bool __YMPlexerInitAsSlave(__YMPlexerRef plexer)
 {
-    char *errorTemplate = " plexer[s]: error: plexer init failed: %s";
     unsigned long inHelloLen = strlen(YMPlexerMasterHello);
     char inHello[64];
     bool okay = YMSecurityProviderRead(plexer->provider, (void *)inHello, inHelloLen);
     
     if ( ! okay || memcmp(YMPlexerMasterHello,inHello,inHelloLen) ) {
-        ymerr(errorTemplate,"master hello read failed");
+        ymerr("s: master hello read");
         return false;
     }
     
     okay = YMSecurityProviderWrite(plexer->provider, (void *)YMPlexerSlaveHello, strlen(YMPlexerSlaveHello));
     if ( ! okay ) {
-        ymerr(errorTemplate,"slave hello write failed");
+        ymerr("s: slave hello write");
         return false;
     }
     
     YMPlexerMasterInitializer initializer;
     okay = YMSecurityProviderRead(plexer->provider, (void *)&initializer, sizeof(initializer));
     if ( ! okay ) {
-        ymerr(errorTemplate,"master init read failed");
+        ymerr("s: master init read");
         return false;
     }
     
@@ -516,12 +513,12 @@ bool __YMPlexerInitAsSlave(__YMPlexerRef plexer)
     YMPlexerSlaveAck ack = { YMPlexerBuiltInVersion };
     okay = YMSecurityProviderWrite(plexer->provider, (void *)&ack, sizeof(ack));
     if ( ! okay ) {
-        ymerr(errorTemplate,"slave hello read error");
+        ymerr("s: slave hello read");
         return false;
     }
     
     if ( ! supported ) {
-        ymerr(errorTemplate,"master requested protocol newer than built-in %lu",YMPlexerBuiltInVersion);
+        ymerr("s: master requested protocol newer than built-in %u",YMPlexerBuiltInVersion);
         return false;
     }
     
@@ -533,27 +530,27 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_downstream_proc(YM_TH
     __YMPlexerRef plexer = (__YMPlexerRef)ctx;
     //YMRetain(plexer); // retained on thread creation, matched at the end of this function
     
-    ymlog(" plexer[%s]: downstream service thread entered",YMSTR(plexer->name));
+    ymlog("downstream service thread entered");
     
     while( plexer->active ) {
-        ymlog(" plexer[%s-V]: awaiting signal",YMSTR(plexer->name));
+        ymlog("V awaiting signal");
         // there is only one thread consuming this semaphore, so i think it's ok not to actually lock around this loop iteration
         YMSemaphoreWait(plexer->downstreamReadySemaphore);
         
         if ( ! plexer->active ) {
-            ymerr("plexer[%s-V] signaled to exit",YMSTR(plexer->name));
+            ymerr("V signaled to exit");
             break;
         }
         
         YMStreamRef servicingStream = __YMPlexerRetainReadyStream(plexer);
         
-        ymlog(" plexer[%s-V]: signaled,",YMSTR(plexer->name));
+        ymlog("V signaled,");
         
         // todo about not locking until we've consumed as many semaphore signals as we can
         //while ( --readyStreams )
         {
             if ( ! servicingStream ) {
-                //ymlog(" plexer[%s-V]: coalescing signals",YMSTR(plexer->name));
+                //ymlog("plexer[%s-V]: coalescing signals",YMSTR(plexer->name));
                 continue;
             }
             
@@ -562,13 +559,13 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_downstream_proc(YM_TH
             YMRelease(servicingStream);
             if ( ! okay || ! plexer->active ) {
                 if ( __YMPlexerInterrupt(plexer) )
-                    ymerr(" plexer[%s-V]: perror: service downstream failed",YMSTR(plexer->name));
+                    ymerr("p: service downstream failed");
                 break;
             }
         }
     }
     
-    ymerr(" plexer[%s]: downstream service thread exiting",YMSTR(plexer->name));
+    ymerr("downstream service thread exiting");
     
     YMRelease(plexer);
 
@@ -605,24 +602,24 @@ YMStreamRef __YMPlexerRetainReadyStream(__YMPlexerRef plexer)
                 __ym_plexer_stream_user_info_ref userInfo = YM_STREAM_INFO(aStream);
                 YMPlexerStreamID aStreamID = userInfo->streamID;
                 
-                ymlog(" plexer[%s-choose]: considering %s downstream %u",YMSTR(plexer->name),listIdx==__YMOutgoingListIdx?"local":"remote",aStreamID);
+                ymlog("choose: considering %s downstream %llu",listIdx==__YMOutgoingListIdx?"local":"remote",aStreamID);
                 
                 // we are the only consumer of bytesAvailable, no need to lock here, but we will when we actually 'consume' them later on
                 uint64_t aStreamBytesAvailable = 0;
                 if ( userInfo->userClosed ) {
-                    ymlog(" plexer[%s-choose]: stream %u is closing",YMSTR(plexer->name),aStreamID);
+                    ymlog("choose: stream %llu is closing",aStreamID);
                     if ( ! userInfo->isLocallyOriginated )
                         abort();
                 }
                 else {
                     aStreamBytesAvailable = YM_STREAM_INFO(aStream)->bytesAvailable;
                     if ( aStreamBytesAvailable == 0 ) {
-                        ymlog(" plexer[%s-choose]: stream %u is empty",YMSTR(plexer->name),aStreamID);
+                        ymlog("choose: stream %llu is empty",aStreamID);
                         goto catch_continue;
                     }
                 }
                 
-                ymlog(" plexer[%s-choose]: %s stream %u is ready! %s%llub",YMSTR(plexer->name),listIdx==__YMOutgoingListIdx?"local":"remote",aStreamID,userInfo->userClosed?"(closing) ":"",aStreamBytesAvailable);
+                ymlog("choose: %s stream %llu is ready! %s%llub",listIdx==__YMOutgoingListIdx?"local":"remote",aStreamID,userInfo->userClosed?"(closing) ":"",aStreamBytesAvailable);
                 
                 struct timeval *thisStreamLastService = YM_STREAM_INFO(aStream)->lastServiceTime;
                 if ( YMTimevalCompare(thisStreamLastService, &newestTime ) != GreaterThan ) {
@@ -637,7 +634,7 @@ YMStreamRef __YMPlexerRetainReadyStream(__YMPlexerRef plexer)
             if ( aStreamsEnumPrev )
                 YMDictionaryEnumeratorEnd(aStreamsEnum);
             else
-                ymlog(" plexer[%s-choose]: %s list is empty",YMSTR(plexer->name),listIdx==__YMOutgoingListIdx?"down stream":"up stream");
+                ymlog("choose: %s list is empty",listIdx==__YMOutgoingListIdx?"down stream":"up stream");
                 
         }
         YMLockUnlock(aLock);
@@ -653,12 +650,11 @@ bool __YMPlexerServiceADownstream(__YMPlexerRef plexer, YMStreamRef stream)
     
     // update last service time on stream
     __ym_plexer_stream_user_info_ref userInfo = YM_STREAM_INFO(stream);
+    YMPlexerStreamID streamID = userInfo->streamID;
     if ( 0 != gettimeofday(userInfo->lastServiceTime, NULL) ) {
-        ymerr(" plexer[%s-V,V]: warning: error setting initial service time for stream: %d (%s)",YMSTR(plexer->name),errno,strerror(errno));
+        ymerr("V-s%llu setting initial service time for stream: %d (%s)",streamID,errno,strerror(errno));
         YMGetTheBeginningOfPosixTimeForCurrentPlatform(userInfo->lastServiceTime);
     }
-    
-    YMPlexerStreamID streamID = userInfo->streamID;
     
     bool closing = userInfo->userClosed;
     uint64_t bytesAvailable,
@@ -670,7 +666,7 @@ bool __YMPlexerServiceADownstream(__YMPlexerRef plexer, YMStreamRef stream)
         userInfo->bytesAvailable = 0;
     YMLockUnlock(userInfo->lock);
     
-    ymlog(" plexer[%s-V,s%u]: will flush %llu bytes",YMSTR(plexer->name),streamID,bytesAvailable);
+    ymlog("V-s%llu will flush %llu bytes",streamID,bytesAvailable);
     
     ymassert(bytesAvailable>0||closing,"a downstream state invalid");
     
@@ -691,7 +687,7 @@ bool __YMPlexerServiceADownstream(__YMPlexerRef plexer, YMStreamRef stream)
         _YMStreamReadDown(stream, plexer->localPlexBuffer, chunkLength);
         if ( ! plexer->active )
             return false;
-        ymlog(" plexer[%s-V,s%u]: read stream chunk",YMSTR(plexer->name),streamID);
+        ymlog("V-s%llu read stream chunk",streamID);
         
         if ( bytesRemaining - chunkLength > bytesRemaining )
             abort();
@@ -703,26 +699,26 @@ bool __YMPlexerServiceADownstream(__YMPlexerRef plexer, YMStreamRef stream)
         size_t plexMessageLen = sizeof(plexMessage);
 		bool okay = YMSecurityProviderWrite(plexer->provider, (uint8_t *)&plexMessage, plexMessageLen);
         if ( ! okay || ! plexer->active ) {
-            ymerr(" plexer[%s-V,s%u]: perror: failed writing plex message size %zub: %d (%s)",YMSTR(plexer->name),streamID,plexMessageLen,errno,strerror(errno));
+            ymerr("p: V-s%llu failed writing plex message size %zub: %d (%s)",streamID,plexMessageLen,errno,strerror(errno));
             return false;
         }
         userInfo->muxerWritten += plexMessageLen;
         
-        ymlog(" plexer[%s-V,s%u]: wrote plex header",YMSTR(plexer->name),streamID);
+        ymlog("V-s%llu wrote plex header",streamID);
         
 		okay = YMSecurityProviderWrite(plexer->provider, plexer->localPlexBuffer, chunkLength);
         if ( ! okay || ! plexer->active ) {
             bool interrupt = __YMPlexerInterrupt(plexer);
             if ( interrupt )
-                ymerr(" plexer[%s-V,s%u]: perror: failed writing plex buffer %ub: %d (%s)",YMSTR(plexer->name),streamID,plexMessage.command,errno,strerror(errno));
+                ymerr("p: V-s%llu failed writing plex buffer %ub: %d (%s)",streamID,plexMessage.command,errno,strerror(errno));
             return false;
         }
         userInfo->rawWritten += chunkLength;
         
-        ymlog(" plexer[%s-V,s%u]: wrote plex buffer %ub",YMSTR(plexer->name),streamID,plexMessage.command);
+        ymlog("V-s%llu wrote plex buffer %ub",streamID,plexMessage.command);
     }
     
-    ymlog(" plexer[%s-V,s%u]: flushed %llu chunk(s) and %llu bytes",YMSTR(plexer->name),streamID,chunksHandled,bytesAvailable);
+    ymlog("V-s%llu flushed %llu chunk(s) and %llu bytes",streamID,chunksHandled,bytesAvailable);
     
     if ( closing ) {
         if ( ! userInfo->isLocallyOriginated )
@@ -735,13 +731,13 @@ bool __YMPlexerServiceADownstream(__YMPlexerRef plexer, YMStreamRef stream)
         if ( ! okay || ! plexer->active ) {
             bool interrupt = __YMPlexerInterrupt(plexer);
             if ( interrupt )
-                ymerr(" plexer[%s-V,s%u]: perror: failed writing plex message size %zub: %d (%s)",YMSTR(plexer->name),streamID,plexMessageLen,errno,strerror(errno));
+                ymerr("V-s%llu perror: failed writing plex message size %zub: %d (%s)",streamID,plexMessageLen,errno,strerror(errno));
         }
         userInfo->muxerWritten += plexMessageLen;
         
-        ymlog(" plexer[%s-V,s%u]: stream closing (rW%llu,pW%llu,rR%llu,pR%llu): %p (%s)",YMSTR(plexer->name),streamID,userInfo->rawWritten,userInfo->muxerRead,userInfo->rawRead,userInfo->muxerRead,stream,YMSTR(_YMStreamGetName(stream)));
+        ymlog("V-s%llu stream closing (rW%llu,pW%llu,rR%llu,pR%llu): %p (%s)",streamID,userInfo->rawWritten,userInfo->muxerRead,userInfo->rawRead,userInfo->muxerRead,stream,YMSTR(_YMStreamGetName(stream)));
         
-        CHECK_REMOVE_RELEASE(true, streamID, true);
+        CHECK_REMOVE_RELEASE(true, (YMDictionaryKey)streamID, true);
         
         return okay;
     }
@@ -753,7 +749,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_upstream_proc(YM_THRE
 {
     __YMPlexerRef plexer = (__YMPlexerRef)ctx;
     
-    ymlog(" plexer[%s-^]: upstream service thread entered",YMSTR(plexer->name));
+    ymlog("^ upstream service thread entered");
     
     bool okay = true;
     while ( okay && plexer->active ) {
@@ -765,13 +761,13 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_upstream_proc(YM_THRE
         if ( ! okay || ! plexer->active || plexerMessage.command < YMPlexerCommandMin || plexerMessage.command > UINT16_MAX ) {
             bool interrupt = __YMPlexerInterrupt(plexer);
             if ( interrupt )
-                ymerr(" plexer[%s-^]: perror: failed reading plex header: %d (%s)",YMSTR(plexer->name),errno,strerror(errno));
+                ymerr("^ perror: failed reading plex header: %d (%s)",errno,strerror(errno));
             break;
         } else if ( plexerMessage.command == YMPlexerCommandCloseStream )
             streamClosing = true;
         else {
             chunkLength = plexerMessage.command;
-            ymlog(" plexer[%s-^,s%u] read plex header %zub",YMSTR(plexer->name),plexerMessage.streamID,chunkLength);
+            ymlog("^-s%llu read plex header %zub",plexerMessage.streamID,chunkLength);
         }
         
         YMPlexerStreamID streamID = plexerMessage.streamID;
@@ -779,7 +775,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_upstream_proc(YM_THRE
         if ( ! theStream || ! plexer->active ) {
             bool interrupt = __YMPlexerInterrupt(plexer);
             if ( interrupt )
-                ymerr(" plexer[%s-^,s%u]: fatal: stream lookup",YMSTR(plexer->name),streamID);
+                ymerr("fatal: ^-s%llu stream lookup",streamID);
             if ( theStream ) YMRelease(theStream);
             break;
         }
@@ -788,12 +784,12 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_upstream_proc(YM_THRE
         userInfo->muxerRead += sizeof(plexerMessage);
         
         if ( streamClosing ) {
-            YMStringRef memberName = YMStringCreateWithFormat("%s-s%u-%s",YMSTR(plexer->name),streamID,YM_TOKEN_STR(__ym_plexer_notify_stream_closing), NULL);
+            YMStringRef memberName = YMStringCreateWithFormat("%s-s%llu-%s",YMSTR(plexer->name),streamID,YM_TOKEN_STR(__ym_plexer_notify_stream_closing), NULL);
             // close 'read up', so that if client (or forward file) is reading unbounded data it will get signaled
             _YMStreamCloseWriteUp(theStream);
 			if ( plexer->closingFunc )
 				__YMPlexerDispatchFunctionWithName(plexer, theStream, plexer->eventDeliveryThread, __ym_plexer_notify_stream_closing, memberName);
-            ymlog(" plexer[%s-^,s%u] stream closing (rW%llu,pW%llu,rR%llu,pR%llu)",YMSTR(plexer->name),plexerMessage.streamID,userInfo->rawWritten,userInfo->muxerWritten,userInfo->rawRead,userInfo->muxerRead);
+            ymlog("^-s%llu stream closing (rW%llu,pW%llu,rR%llu,pR%llu)",plexerMessage.streamID,userInfo->rawWritten,userInfo->muxerWritten,userInfo->rawRead,userInfo->muxerRead);
             YMRelease(theStream);
             continue;
         }
@@ -804,27 +800,27 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_upstream_proc(YM_THRE
         if ( ! okay || ! plexer->active ) {
             bool interrupt = __YMPlexerInterrupt(plexer);
             if ( interrupt )
-                ymerr(" plexer[%s-^,s%u]: perror: failed reading plex buffer of length %zub: %d (%s)",YMSTR(plexer->name),streamID,chunkLength,errno,strerror(errno));
+                ymerr("p: ^-s%llu failed reading plex buffer of length %zub: %d (%s)",streamID,chunkLength,errno,strerror(errno));
             YMRelease(theStream);
             break;
         }
         userInfo->rawRead += chunkLength;
-        ymlog(" plexer[%s-^,s%u] read plex buffer %zub",YMSTR(plexer->name),streamID,chunkLength);
+        ymlog("^-s%llu read plex buffer %zub",streamID,chunkLength);
         
         YMIOResult result = _YMStreamWriteUp(theStream, plexer->remotePlexBuffer, (uint32_t)chunkLength);
         if ( result != YMIOSuccess || ! plexer->active ) {
             bool interrupt = __YMPlexerInterrupt(plexer);
             if ( interrupt )
-                ymerr(" plexer[%s-^,s%u]: internal fatal: failed writing plex buffer of length %zub: %d (%s)",YMSTR(plexer->name),streamID,chunkLength,errno,strerror(errno));
+                ymerr("internal fatal: ^-s%llu failed writing plex buffer of length %zub: %d (%s)",streamID,chunkLength,errno,strerror(errno));
             YMRelease(theStream);
             break;
         }
         
-        ymlog(" plexer[%s-^,s%u] wrote plex buffer %zub",YMSTR(plexer->name),streamID,chunkLength);
+        ymlog("^-s%llu wrote plex buffer %zub",streamID,chunkLength);
         YMRelease(theStream);
     }
     
-    ymerr(" plexer[%s-^]: upstream service thread exiting",YMSTR(plexer->name));
+    ymerr("upstream service thread exiting");
     
     YMRelease(plexer);
 
@@ -837,9 +833,9 @@ YMStreamRef __YMPlexerRetainOrCreateRemoteStreamWithID(__YMPlexerRef plexer, YMP
     
     YMLockLock(plexer->localAccessLock);
     {
-        theStream = (YMStreamRef)YMDictionaryGetItem(plexer->localStreamsByID,streamID);
+        theStream = (YMStreamRef)YMDictionaryGetItem(plexer->localStreamsByID,(YMDictionaryKey)streamID);
         if ( theStream ) {
-            ymlog(" plexer[%s,s%u]: found existing local stream",YMSTR(plexer->name),streamID);
+            ymlog("L-%llu found existing local stream",streamID);
             YMRetain(theStream);
         }
     }
@@ -848,9 +844,9 @@ YMStreamRef __YMPlexerRetainOrCreateRemoteStreamWithID(__YMPlexerRef plexer, YMP
     if ( ! theStream ) {
         YMLockLock(plexer->remoteAccessLock);
         {
-            theStream = (YMStreamRef)YMDictionaryGetItem(plexer->remoteStreamsByID,streamID);
+            theStream = (YMStreamRef)YMDictionaryGetItem(plexer->remoteStreamsByID,(YMDictionaryKey)streamID);
             if ( theStream ) {
-                ymlog(" plexer[%s,s%u]: found existing remote stream",YMSTR(plexer->name),streamID);
+                ymlog("L-%llu found existing remote stream",streamID);
                 YMRetain(theStream);
             }
         
@@ -860,21 +856,21 @@ YMStreamRef __YMPlexerRetainOrCreateRemoteStreamWithID(__YMPlexerRef plexer, YMP
                     YMLockUnlock(plexer->remoteAccessLock);
                     
                     if ( __YMPlexerInterrupt(plexer) )
-                        ymerr(" plexer[%s-^,s%u]: internal fatal: stream id collision",YMSTR(plexer->name),streamID);
+                        ymerr("internal: L-%llu stream id collision",streamID);
                     
                     return NULL;
                 }
                 
-                ymlog(" plexer[%s-^]: new incoming s%u, notifying",YMSTR(plexer->name),streamID);
+                ymlog("L-%llu notifying new incoming",streamID);
                 
                 YMStringRef name = YMSTRC("remote");
                 theStream = __YMPlexerCreateStreamWithID(plexer,streamID,false,name);
                 
-                YMDictionaryAdd(plexer->remoteStreamsByID, streamID, (void *)theStream);
+                YMDictionaryAdd(plexer->remoteStreamsByID, (YMDictionaryKey)streamID, theStream);
                 YMRetain(theStream); // retain for user (complements close)
                 YMRetain(theStream); // retain for function
                 
-                name = YMStringCreateWithFormat("%s-notify-new-%u",YMSTR(plexer->name),streamID,NULL);
+                name = YMStringCreateWithFormat("%s-notify-new-%llu",YMSTR(plexer->name),streamID,NULL);
 				if ( plexer->newIncomingFunc )
 					__YMPlexerDispatchFunctionWithName(plexer, theStream, plexer->eventDeliveryThread, __ym_plexer_notify_new_stream, name);
             }
@@ -893,11 +889,11 @@ YMStreamRef __YMPlexerCreateStreamWithID(__YMPlexerRef plexer, YMPlexerStreamID 
     userInfo->isLocallyOriginated = isLocal;
     userInfo->lastServiceTime = (struct timeval *)YMALLOC(sizeof(struct timeval));
     if ( 0 != gettimeofday(userInfo->lastServiceTime, NULL) ) {
-        ymlog(" plexer[%s]: warning: error setting initial service time for stream: %d (%s)",YMSTR(plexer->name),errno,strerror(errno));
+        ymlog("warning: error setting initial service time for s%llu: %d (%s)",streamID,errno,strerror(errno));
         YMGetTheBeginningOfPosixTimeForCurrentPlatform(userInfo->lastServiceTime);
     }
     
-    YMStringRef memberName = YMStringCreateWithFormat("%s-%s-s%u-%s",plexer->master?"m":"s",isLocal?">":"<",streamID,YMSTR(userNameToRelease),NULL);
+    YMStringRef memberName = YMStringCreateWithFormat("%s-%s-s%llu-%s",plexer->master?"m":"s",isLocal?">":"<",streamID,YMSTR(userNameToRelease),NULL);
     userInfo->lock = YMLockCreateWithOptionsAndName(YMInternalLockType, memberName);
     userInfo->bytesAvailable = 0;
     userInfo->userClosed = false;
@@ -928,7 +924,7 @@ void __ym_plexer_stream_data_available_proc(YMStreamRef stream, uint32_t bytes, 
     __YMPlexerRef plexer = (__YMPlexerRef)ctx;
     __ym_plexer_stream_user_info_ref userInfo = YM_STREAM_INFO(stream);
     YMPlexerStreamID streamID = userInfo->streamID;
-    ymlog("plexer[%s]: stream %u reports it has %u bytes ready !!!!!",YMSTR(plexer->name),streamID,bytes);
+    ymlog("s%llu reports it has %u bytes ready",streamID,bytes);
     YMLockLock(userInfo->lock);
         userInfo->bytesAvailable += bytes;
     YMLockUnlock(userInfo->lock);
@@ -953,7 +949,7 @@ bool __YMPlexerInterrupt(__YMPlexerRef plexer)
     if ( ! firstInterrupt )
         return false;
     
-    ymerr(" plexer[%s]: interrupted",YMSTR(plexer->name));
+    ymerr("interrupted");
     
     YMSecurityProviderClose(plexer->provider);
     
@@ -972,7 +968,7 @@ bool __YMPlexerInterrupt(__YMPlexerRef plexer)
                 YMStreamRef aStream = YMDictionaryGetItem(aList, aRandomKey);
                 YMPlexerStreamID aStreamID = YM_STREAM_INFO(aStream)->streamID;
                 YMDictionaryRemove(aList, aRandomKey);
-                ymerr("plexer[%s]: hanging up stream %u",YMSTR(plexer->name),aStreamID);
+                ymerr("hanging up s%llu",aStreamID);
                 _YMStreamCloseWriteUp(aStream);
                 YMRelease(aStream);
             }
@@ -1028,10 +1024,10 @@ void YM_CALLING_CONVENTION __ym_plexer_notify_new_stream(ym_thread_dispatch_ref 
     YMStreamRef stream = notifyDef->stream;
     YMPlexerStreamID streamID = YM_STREAM_INFO(stream)->streamID;
     
-    ymlog(" plexer[%s,s%u] ym_notify_new_stream entered", YMSTR(plexer->name), streamID);
+    ymlog("ym_notify_new_stream entered s%llu", streamID);
     if ( plexer->newIncomingFunc )
         plexer->newIncomingFunc(plexer,stream,plexer->callbackContext);
-    ymlog(" plexer[%s,s%u] ym_notify_new_stream exiting", YMSTR(plexer->name), streamID);
+    ymlog("ym_notify_new_stream exiting s%llu", streamID);
     
     YMRelease(plexer);
     YMRelease(stream);
@@ -1045,15 +1041,13 @@ void YM_CALLING_CONVENTION __ym_plexer_notify_stream_closing(ym_thread_dispatch_
     YMStreamRef stream = notifyDef->stream;
     YMPlexerStreamID streamID = YM_STREAM_INFO(stream)->streamID;
     
-    ymlog(" plexer[%s,s%u] ym_notify_stream_closing entered", YMSTR(plexer->name), streamID);
+    ymlog("ym_notify_stream_closing entered s%llu", streamID);
     if ( plexer->closingFunc )
         plexer->closingFunc(plexer,stream,plexer->callbackContext);
     
-    CHECK_REMOVE_RELEASE(false, streamID, true);
+    CHECK_REMOVE_RELEASE(false, (YMDictionaryKey)streamID, true);
     
-    ymlog(" plexer[%s,s%u]: released and removed outgoing %u",YMSTR(plexer->name),streamID,streamID);
-    
-    ymlog(" plexer[%s,s%u] ym_notify_stream_closing exiting",YMSTR(plexer->name), streamID);
+    ymlog("ym_notify_stream_closing exiting s%llu", streamID);
     
     YMRelease(plexer);
     YMRelease(stream);
@@ -1065,10 +1059,10 @@ void YM_CALLING_CONVENTION __ym_plexer_notify_interrupted(ym_thread_dispatch_ref
     _ym_dispatch_plexer_stream_def *notifyDef = (_ym_dispatch_plexer_stream_def *)dispatch->context;
     __YMPlexerRef plexer = notifyDef->plexer;
     
-    ymlog(" plexer[%s] ym_notify_interrupted entered", YMSTR(plexer->name));
+    ymlog("ym_notify_interrupted entered");
     if ( plexer->interruptedFunc )
         plexer->interruptedFunc(plexer,plexer->callbackContext);
-    ymlog(" plexer[%s] ym_notify_interrupted exiting", YMSTR(plexer->name));
+    ymlog("ym_notify_interrupted exiting");
     
     YMRelease(plexer);
     //YMRelease(dispatch->description); // done by ThreadDispatch

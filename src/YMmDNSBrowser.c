@@ -397,11 +397,11 @@ static void DNSSD_API __ym_mdns_browse_callback(__unused DNSServiceRef serviceRe
     ymlog("__ym_mdns_browse_callback: %s/%s.%s:?: r: %d if: %u flags: %04x", type, name, domain, result, ifIdx, flags);
     
     if ( result != kDNSServiceErr_NoError ) {
-        ymerr("mDNS[%s]: error: browse callback: %d", YMSTR(browser->type), result);
+        ymerr("mDNS[%s]: browse callback: %d", YMSTR(browser->type), result);
         return;
     }
     if ( domain == NULL ) {
-        ymerr("mDNS[%s]: error: service '%s' has no domain", YMSTR(browser->type), name);
+        ymerr("mDNS[%s]: service '%s' has no domain", YMSTR(browser->type), name);
         return;
     }
     
@@ -506,7 +506,7 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
             aCtx->unescapedName = YMRetain(unescapedName);
             DNSServiceErrorType err = DNSServiceGetAddrInfo(record->addrinfoSdref, kDNSServiceFlagsForceMulticast, kDNSServiceInterfaceIndexAny, kDNSServiceProtocol_IPv4|kDNSServiceProtocol_IPv6, host, __ym_mdns_addr_info_callback, aCtx);
             if ( err != kDNSServiceErr_NoError ) {
-                ymerr("mdns[%s]: error: failed to get addr info for %s",YMSTR(browser->type),YMSTR(unescapedName));
+                ymerr("mdns[%s]: failed to get addr info for %s",YMSTR(browser->type),YMSTR(unescapedName));
                 free(record->addrinfoSdref);
                 record->addrinfoSdref = NULL;
                 YMRelease(aCtx->browser);

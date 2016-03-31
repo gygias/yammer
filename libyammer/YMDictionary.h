@@ -15,8 +15,8 @@ YM_EXTERN_C_PUSH
 
 typedef const struct __ym_dictionary_t *YMDictionaryRef;
 
-typedef uint64_t YMDictionaryKey;
-typedef void *YMDictionaryValue;
+typedef const void *YMDictionaryKey;
+typedef const void *YMDictionaryValue;
 
 YMDictionaryRef YMAPI YMDictionaryCreate();
 YMDictionaryRef YMAPI YMDictionaryCreate2(bool ymtypeKeys, bool ymtypeValues);

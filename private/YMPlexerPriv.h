@@ -14,8 +14,8 @@
 YM_EXTERN_C_PUSH
 
 // shouldn't really exist outside of YMPlexer.c, but for now during development let others 'see into' the stream id
-typedef uint32_t YMPlexerStreamID;
-#define YMPlexerStreamIDMax UINT32_MAX
+typedef uint64_t YMPlexerStreamID;
+#define YMPlexerStreamIDMax UINT64_MAX
 
 typedef struct ym_plexer_stream_user_info_t
 {

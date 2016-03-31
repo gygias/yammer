@@ -33,11 +33,13 @@ YM_WPPUSH // Token pasting of ',' and __VA_ARGS__ is a GNU extension
 # define ymlog_args ""
 #endif
 
-#define ymlog(x,...)    { if ( ymlog_type & ymlog_target ) __YMLogType(ymlog_target,true,(x),##__VA_ARGS__); }
-#define ymlogi(x,...)   { if ( ymlog_type & ymlog_target ) __YMLogType(ymlog_target,false,(x),##__VA_ARGS__); }
-#define ymlogr()        { if ( ymlog_type & ymlog_target ) __YMLogReturn(ymlog_target); }
-#define ymdbg(x,...)    { if ( ymlog_type_debug & ymlog_target_debug ) __YMLogType(ymlog_type_debug,true,(x),##__VA_ARGS__); }
-#define ymerr(x,...)    __YMLogType(YMLogError,true,(x),##__VA_ARGS__)
+#define ymlogg(x,...)   { if ( ymlog_type & ymlog_target ) __YMLogType(ymlog_type,true,(x),##__VA_ARGS__); }
+#define ymlog(x,...)    { if ( ymlog_type & ymlog_target ) __YMLogType(ymlog_type,true,ymlog_pre x,ymlog_args,##__VA_ARGS__); }
+#define ymlogi(x,...)   { if ( ymlog_type & ymlog_target ) __YMLogType(ymlog_type,false,x,##__VA_ARGS__); }
+#define ymlogr()        { if ( ymlog_type & ymlog_target ) __YMLogReturn(ymlog_type); }
+#define ymdbg(x,...)    { if ( ymlog_type_debug & ymlog_target_debug ) __YMLogType(ymlog_type_debug,true,ymlog_pre x,ymlog_args,##__VA_ARGS__); }
+#define ymerr(x,...)    __YMLogType(YMLogError,true,ymlog_pre x,ymlog_args,##__VA_ARGS__)
+#define ymerrg(x,...)   __YMLogType(YMLogError,true,x,##__VA_ARGS__)
 YM_WPOP
 
 YM_EXTERN_C_PUSH
@@ -51,13 +53,18 @@ typedef enum
     YMLogSession = YMLogmDNS << 1,
     YMLogSecurity = YMLogSession << 1,
     YMLogConnection = YMLogSecurity << 1,
+    YMLogCombined1 = YMLogConnection,
     YMLogThread = YMLogConnection << 1,
     YMLogThreadDebug = YMLogThread << 1,
     YMLogThreadDispatch = YMLogThreadDebug << 1, // todo: time to split out dispatch
+    YMLogCombined2 = YMLogThreadDispatch,
     YMLogPlexer = YMLogThreadDispatch << 1,
+    YMLogCombined3 = YMLogPlexer,
     YMLogThreadSync = YMLogPlexer << 1,
     YMLogStream = YMLogThreadSync << 1,
+    YMLogCombined4 = YMLogStream,
     YMLogIO = YMLogStream << 1,
+    YMLogCombined5 = YMLogIO,
     YMLogEverything = 0xFFFF
 } YMLogLevel;
 

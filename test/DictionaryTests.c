@@ -69,15 +69,15 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _dictionary_test_proc(YM_THREAD_PARAM ctx
 {
     struct DictionaryTest *theTest = ctx;
     
-    uint32_t string_key;
-    uint32_t data_key;
+    YMDictionaryKey string_key;
+    YMDictionaryKey data_key;
     
     YMLockLock(theTest->lock);
     {
-        do { string_key = arc4random();
+        do { string_key = (YMDictionaryKey)(int64_t)arc4random();
         } while ( YMDictionaryContains(theTest->dictionary, string_key) );
         
-        do { data_key = arc4random();
+        do { data_key = (YMDictionaryKey)(int64_t)arc4random();
         } while ( YMDictionaryContains(theTest->dictionary, data_key) );
     }
     YMLockUnlock(theTest->lock);

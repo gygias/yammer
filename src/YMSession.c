@@ -277,13 +277,13 @@ bool YMSessionStartBrowsing(YMSessionRef session_)
                                                         __ym_mdns_service_removed_func,
                                                         session);
     if ( ! session->browser ) {
-        ymerr("error: failed to create browser");
+        ymerr("failed to create browser");
         return false;
     }
     
     bool startOK = YMmDNSBrowserStart(session->browser);
     if ( ! startOK ) {
-        ymerr("error: failed to start browser");
+        ymerr("failed to start browser");
         return false;
     }
     
@@ -405,12 +405,12 @@ bool YMSessionConnectToPeer(YMSessionRef session_, YMPeerRef peer, bool sync)
             if ( ! session->connectDispatchThread ) {
                 session->connectDispatchThread = YMThreadDispatchCreate(name);
                 if ( ! session->connectDispatchThread ) {
-                    ymerr("error: failed to create async connect thread");
+                    ymerr("failed to create async connect thread");
                     goto catch_fail;
                 }
                 bool okay = YMThreadStart(session->connectDispatchThread);
                 if ( ! okay ) {
-                    ymerr("error: failed to start async connect thread");
+                    ymerr("failed to start async connect thread");
                     goto catch_fail;
                 }
             }
@@ -495,13 +495,13 @@ bool YMSessionStartAdvertising(YMSessionRef session_, YMStringRef name)
     
     int32_t port = YMPortReserve(ipv4, &socket);
     if ( port < 0 || socket == -1 || socket > UINT16_MAX ) {
-        ymerr("error: failed to reserve port for server start");
+        ymerr("failed to reserve port for server start");
         return false;
     }
     
     int aResult = listen(socket, 1);
     if ( aResult != 0 ) {
-        ymerr("error: failed to listen for server start");
+        ymerr("failed to listen for server start");
 		int result, error; const char *errorStr;
         YM_CLOSE_SOCKET(socket);
         goto rewind_fail;
@@ -521,13 +521,13 @@ bool YMSessionStartAdvertising(YMSessionRef session_, YMStringRef name)
     session->acceptThread = YMThreadCreate(memberName, __ym_session_accept_proc, ctx);
     YMRelease(memberName);
     if ( ! session->acceptThread ) {
-        ymerr("error: failed to create accept thread");
+        ymerr("failed to create accept thread");
         goto rewind_fail;
     }
     session->acceptThreadExitFlag = false;
     okay = YMThreadStart(session->acceptThread);
     if ( ! okay ) {
-        ymerr("error: failed to start accept thread");
+        ymerr("failed to start accept thread");
         goto rewind_fail;
     }
     
@@ -535,23 +535,23 @@ bool YMSessionStartAdvertising(YMSessionRef session_, YMStringRef name)
     session->initConnectionDispatchThread = YMThreadDispatchCreate(memberName);
     YMRelease(memberName);
     if ( ! session->initConnectionDispatchThread ) {
-        ymerr("error: failed to create connection init thread");
+        ymerr("failed to create connection init thread");
         goto rewind_fail;
     }
     okay = YMThreadStart(session->initConnectionDispatchThread);
     if ( ! okay ) {
-        ymerr("error: failed to start start connection init thread");
+        ymerr("failed to start start connection init thread");
         goto rewind_fail;
     }
     
     session->service = YMmDNSServiceCreate(session->type, session->name, (uint16_t)port);
     if ( ! session->service ) {
-        ymerr("error: failed to create mdns service");
+        ymerr("failed to create mdns service");
         goto rewind_fail;
     }
     okay = YMmDNSServiceStart(session->service);
     if ( ! okay ) {
-        ymerr("error: failed to start mdns service");
+        ymerr("failed to start mdns service");
         goto rewind_fail;
     }
     
@@ -810,7 +810,7 @@ void __ym_session_new_stream_proc(YMConnectionRef connection, YMStreamRef stream
     
     YMAddressRef address = YMConnectionGetAddress(connection);
     YMPlexerStreamID streamID = YM_STREAM_INFO(stream)->streamID;
-    ymlog("new incoming stream %u on %s",streamID,YMSTR(YMAddressGetDescription(address)));
+    ymlog("new incoming stream %llu on %s",streamID,YMSTR(YMAddressGetDescription(address)));
     
     if ( connection != session->defaultConnection )
         ymerr("warning: new stream on non-default connection");
@@ -826,7 +826,7 @@ void __ym_session_stream_closing_proc(YMConnectionRef connection, YMStreamRef st
     
     YMAddressRef address = YMConnectionGetAddress(connection);
     YMPlexerStreamID streamID = YM_STREAM_INFO(stream)->streamID;
-    ymlog("remote stream %u closing on %s",streamID,YMSTR(YMAddressGetDescription(address)));
+    ymlog("remote stream %llu closing on %s",streamID,YMSTR(YMAddressGetDescription(address)));
     
     if ( connection != session->defaultConnection ) {
         ymerr("warning: closing remote stream on non-default connection");
@@ -880,7 +880,7 @@ void __ym_mdns_service_removed_func(__unused YMmDNSBrowserRef browser, YMStringR
     
     YMLockLock(session->knownPeersLock);
     {
-        YMDictionaryKey mysteryKey = MAX_OF(YMDictionaryKey);
+        YMDictionaryKey mysteryKey = (YMDictionaryKey)MAX_OF(uint64_t);
         bool found = false;
         YMDictionaryEnumRef myEnum = YMDictionaryEnumeratorBegin(session->knownPeers);
         while ( myEnum ) {
@@ -931,11 +931,10 @@ void __ym_mdns_service_resolved_func(__unused YMmDNSBrowserRef browser, bool suc
             myEnum = YMDictionaryEnumeratorGetNext(myEnum);
         }
         YMDictionaryEnumeratorEnd(myEnum);
+        
+        _YMPeerSetAddresses(peer, service->sockaddrList);
+        _YMPeerSetPort(peer, service->port);
     }
-	
-	_YMPeerSetAddresses(peer, service->sockaddrList);
-	_YMPeerSetPort(peer, service->port);
-    
     YMLockUnlock(session->knownPeersLock);
     
     if ( found ) {
