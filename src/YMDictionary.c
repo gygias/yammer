@@ -76,8 +76,8 @@ void _YMDictionaryFree(YMTypeRef object)
             YMRelease((YMTypeRef)itemIter->key);
         if ( dict->ymtypeValues )
             YMRelease((YMTypeRef)itemIter->value);
-        free(thisItem);
         itemIter = itemIter->next;
+        free(thisItem);
     }
 }
 
@@ -316,11 +316,10 @@ void _YMDictionaryShift(YMDictionaryRef dict_, int64_t baseIdx, bool inc)
     _YMDictionaryItemRef iter = dict->head;
     
     while ( iter ) {
-        if ( (int64_t)iter->key >= baseIdx ) { //xxx
-            if ( inc )
-                iter->key++;
-            else
-                iter->key--;
+		int64_t litKey = (int64_t)iter->key;
+        if ( litKey >= baseIdx ) { //xxx
+			litKey += inc ? 1 : -1;
+			iter->key = (YMDictionaryKey)litKey;
         }
         
         iter = iter->next;

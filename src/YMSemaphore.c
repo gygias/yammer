@@ -113,7 +113,7 @@ try_again:;
 #else
 	semaphore->sem = CreateSemaphore(NULL, 0, LONG_MAX, NULL);
 	if (semaphore->sem == NULL)
-		ymabort(YM_SEM_LOG_PREFIX "fatal: CreateSemaphore failed: %x", YM_SEM_LOG_DESC, GetLastError());
+		ymabort("fatal: CreateSemaphore failed: %x", GetLastError());
 #endif
     
     return (YMSemaphoreRef)semaphore;

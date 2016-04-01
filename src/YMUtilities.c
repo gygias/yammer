@@ -393,27 +393,36 @@ YMDictionaryRef YMCreateLocalInterfaceMap()
 
 			if ( ( apInfoIter->Type == MIB_IF_TYPE_ETHERNET ) 
 				|| ( apInfoIter->Type == IF_TYPE_IEEE80211 ) ) {
+				
+				YMStringRef name = YMSTRC(apInfoIter->AdapterName);
+                YMDictionaryRef ifInfo = YMDictionaryGetItem(map, (YMDictionaryKey)name);
+                if ( ! ifInfo ) {
+                    ifInfo = YMDictionaryCreate();
+                    YMDictionaryAdd(map, (YMDictionaryKey)name, (void *)ifInfo);
+                    YMDictionaryAdd(ifInfo, kYMIFMapTypeKey, (void *)YMInterfaceTypeForName(name));
+                }
 				YMAddressRef address = YMAddressCreateWithIPStringAndPort(ymIp, 0);
 
-				if ( address ) { // todo fairly redundant with unix/mac implementation
-					YMStringRef name = YMSTRC(apInfoIter->AdapterName);
-					if ( ! YMDictionaryContains(map, (YMDictionaryKey)name) ) {
-						YMArrayRef addresses = YMArrayCreate(true);
-						YMDictionaryAdd(map, (YMDictionaryKey)name, (void *)addresses);
+				if ( address ) {
+					YMArrayRef addresses = YMDictionaryGetItem(ifInfo, kYMIFMapAddressesKey);
+					if ( ! addresses ) {
+						addresses = YMArrayCreate2(true);
+						YMDictionaryAdd(ifInfo, kYMIFMapAddressesKey, (void *)addresses);
 					}
-					YMArrayAdd(YMDictionaryGetItem(map, (YMDictionaryKey)name), address);
-					YMRelease(name);
-				}
+					YMArrayAdd(addresses, address);
+				} else
+					ymlog("warning: failed to parse if %s address %s",YMSTR(name),YMSTR(ymIp));
+
+				YMRelease(name);
 			} else
 				ymlog("unknown windows network interface: %u: %s : %s",apInfoIter->Type,anIpString.IpAddress.String,apInfoIter->AdapterName);
-				
+			
 			YMRelease(ymIp);
 			apInfoIter = apInfoIter->Next;
 		}
 	}
 
 	free(apInfo);
-#error fix this tonight
 #else
 #error if mapping unimplemented for this platform
 #endif

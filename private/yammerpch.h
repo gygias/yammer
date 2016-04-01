@@ -174,7 +174,7 @@
 										BOOL __cp = CreatePipe(&fds[0],&fds[1],&saAttr,UINT16_MAX); if ( ! __cp) { result = -1; error = (int)GetLastError(); errorStr = GENERIC_WERROR_STR; } else result = 0; }
 	#define sleep(x) Sleep(((DWORD)x)*1000)
 	#define usleep(x) Sleep((DWORD)(x)/1000)
-	#define signal(x,y) ymerr("*** sigpipe win32 placeholder ***")
+	#define signal(x,y) ymerrg("*** sigpipe win32 placeholder ***")
 	#define strerror(x) "(strerror win32 placeholder)"
 #endif
 

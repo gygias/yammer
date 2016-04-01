@@ -1154,7 +1154,7 @@ HRESULT STDMETHODCALLTYPE ymsink_QueryInterface(__RPC__in IWbemObjectSink * This
 {
 	LPOLESTR iName;
 	StringFromIID(riid, &iName);
-	ymerr("ymsink_QueryInterface %S", iName);
+	ymerrg("ymsink_QueryInterface %S", iName);
 	CoTaskMemFree(iName);
 
 	// IMarshal:			{00000003-0000-0000-C000-000000000046}
@@ -1175,30 +1175,30 @@ HRESULT STDMETHODCALLTYPE ymsink_QueryInterface(__RPC__in IWbemObjectSink * This
 
 ULONG STDMETHODCALLTYPE ymsink_AddRef(__RPC__in IWbemObjectSink * This)
 {
-	ymerr("ymsink_AddRef");
+	ymerrg("ymsink_AddRef");
 	return 1;
 }
 
 ULONG STDMETHODCALLTYPE ymsink_Release(__RPC__in IWbemObjectSink * This)
 {
-	ymerr("ymsink_Release");
+	ymerrg("ymsink_Release");
 	return 1;
 }
 
 HRESULT STDMETHODCALLTYPE ymsink_Indicate(__RPC__in IWbemObjectSink * This,/* [in] */ long lObjectCount,/* [size_is][in] */ __RPC__in_ecount_full(lObjectCount) IWbemClassObject **apObjArray)
 {
-	ymerr("ymsink_Indicate");
+	ymerrg("ymsink_Indicate");
 	__YMSessionUpdateNetworkConfigDate(((YM_IWbemObjectSink *)This)->that);
 	return WBEM_S_NO_ERROR;
 }
 
 HRESULT STDMETHODCALLTYPE ymsink_SetStatus(__RPC__in IWbemObjectSink * This,/* [in] */ long lFlags,/* [in] */ HRESULT hResult,/* [unique][in] */ __RPC__in_opt BSTR strParam,/* [unique][in] */ __RPC__in_opt IWbemClassObject *pObjParam)
 {
-	ymerr("ymsink_SetStatus");
+	ymerrg("ymsink_SetStatus");
 	if (lFlags == WBEM_STATUS_COMPLETE) {
-		ymlog("call complete: hResult 0x%X", hResult);
+		ymlogg("call complete: hResult 0x%X", hResult);
 	} else if (lFlags == WBEM_STATUS_PROGRESS) {
-		ymlog("call in progress.");
+		ymlogg("call in progress.");
 	}
 
 	return WBEM_S_NO_ERROR;
