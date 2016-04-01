@@ -1,4 +1,3 @@
-- lead mdns,task,tls to the promised land
 - YM_ONCE_DEF-like macro for generic thread/dispatch boilerplate
 - shared "dispatch queues"
 - adopt spinlocks where appropriate

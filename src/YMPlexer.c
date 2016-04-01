@@ -550,7 +550,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_downstream_proc(YM_TH
         //while ( --readyStreams )
         {
             if ( ! servicingStream ) {
-                //ymlog("plexer[%s-V]: coalescing signals",YMSTR(plexer->name));
+                //ymlog("coalescing signals");
                 continue;
             }
             

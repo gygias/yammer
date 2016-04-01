@@ -30,6 +30,8 @@
 #define YM_EVENT_SIGNAL_CONTINUE    0xBE
 #define YM_EVENT_SIGNAL_EXIT        0xEE
 
+#define ymlog_pre "mdns%s"
+#define ymlog_args ": "
 #define ymlog_type YMLogmDNS
 #include "YMLog.h"
 
@@ -168,7 +170,7 @@ bool YMmDNSBrowserStart(YMmDNSBrowserRef browser_)
                                                   browser); // context
     
     if( result != kDNSServiceErr_NoError ) {
-        ymerr("mdns[%s]: service browse failed: %d", YMSTR(browser->type), result);
+        ymerr("service browse '%s' failed: %d", YMSTR(browser->type), result);
         return false;
     }
     
@@ -209,7 +211,7 @@ bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser_, YMStringRef serviceName)
     
     YMmDNSServiceRecord *theService = __YMmDNSBrowserGetServiceWithName(browser, serviceName, false);
     if ( ! theService ) {
-        ymerr("mdns[%s]: asked to resolve '%s' without record",YMSTR(browser->type),YMSTR(serviceName));
+        ymerr("asked to resolve '%s::%s' without record",YMSTR(browser->type),YMSTR(serviceName));
         return false;
     }
     
@@ -229,7 +231,7 @@ bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser_, YMStringRef serviceName)
                                                     __ym_mdns_resolve_callback,
                                                     ctx );
     if ( result != kDNSServiceErr_NoError ) {
-        ymerr("mdns[%s]: service resolve failed: %d",YMSTR(browser->type),result);
+        ymerr("service resolve '%s' failed: %d",YMSTR(browser->type),result);
         YMRelease(ctx->browser);
         YMRelease(ctx->unescapedName);
         free(ctx);
@@ -241,7 +243,7 @@ bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser_, YMStringRef serviceName)
         return false;
     }
     
-    ymlog("mdns[%s]: resolving %s (%s)...", YMSTR(browser->type), YMSTR(serviceName), theService->domain ? YMSTR(theService->domain) : "(NULL)");
+    ymlog("resolving '%s::%s' (%s)...", YMSTR(browser->type), YMSTR(serviceName), theService->domain ? YMSTR(theService->domain) : "(NULL)");
     
     return true;
 }
@@ -350,7 +352,7 @@ void __YMmDNSBrowserRemoveServiceNamed(__YMmDNSBrowserRef browser, YMStringRef n
 #ifdef YMmDNS_ENUMERATION
 void DNSSD_API __YMmDNSEnumerateReply(DNSServiceRef sdRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *replyDomain, void *context)
 {
-    ymlog("mdns[%s]: enumerate reply flags: %04x", YMSTR(browser->type), flags);
+    ymlog("enumerate reply '%s' flags: %04x", YMSTR(browser->type), flags);
 }
 #endif
 
@@ -397,11 +399,11 @@ static void DNSSD_API __ym_mdns_browse_callback(__unused DNSServiceRef serviceRe
     ymlog("__ym_mdns_browse_callback: %s/%s.%s:?: r: %d if: %u flags: %04x", type, name, domain, result, ifIdx, flags);
     
     if ( result != kDNSServiceErr_NoError ) {
-        ymerr("mDNS[%s]: browse callback: %d", YMSTR(browser->type), result);
+        ymerr("browse '%s' callback: %d", YMSTR(browser->type), result);
         return;
     }
     if ( domain == NULL ) {
-        ymerr("mDNS[%s]: service '%s' has no domain", YMSTR(browser->type), name);
+        ymerr("service '%s::%s' has no domain", YMSTR(browser->type), name);
         return;
     }
     
@@ -459,7 +461,7 @@ void DNSSD_API __ym_mdns_addr_info_callback
     }
         
     if ( ! ( flags & kDNSServiceFlagsMoreComing ) ) {
-        ymlog("mdns[&]: finished enumerating addresses");
+        ymlog("finished enumerating addresses");
         
         if ( browser->serviceResolved )
             browser->serviceResolved((YMmDNSBrowserRef)browser, true, record, browser->callbackContext);
@@ -506,7 +508,7 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
             aCtx->unescapedName = YMRetain(unescapedName);
             DNSServiceErrorType err = DNSServiceGetAddrInfo(record->addrinfoSdref, kDNSServiceFlagsForceMulticast, kDNSServiceInterfaceIndexAny, kDNSServiceProtocol_IPv4|kDNSServiceProtocol_IPv6, host, __ym_mdns_addr_info_callback, aCtx);
             if ( err != kDNSServiceErr_NoError ) {
-                ymerr("mdns[%s]: failed to get addr info for %s",YMSTR(browser->type),YMSTR(unescapedName));
+                ymerr("getting addr info for '%s::%s'",YMSTR(browser->type),YMSTR(unescapedName));
                 free(record->addrinfoSdref);
                 record->addrinfoSdref = NULL;
                 YMRelease(aCtx->browser);
@@ -525,7 +527,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_event_proc(YM_THREAD_PARAM ctx)
     
     __YMmDNSBrowserRef browser = ctx;
     
-    ymlog("mdns[&]: event thread entered");
+    ymlog("event thread entered");
     
     bool keepGoing = true;
     while ( keepGoing ) {
@@ -565,11 +567,11 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_event_proc(YM_THREAD_PARAM ctx)
                     DNSServiceRef *sdref = (DNSServiceRef *)YMArrayGet(browser->activeServiceRefs, i);
                     int aFd = DNSServiceRefSockFD(*sdref);
                     if ( FD_ISSET(aFd, &readfds) ) {
-                        ymerr("mdns[&]: processing service ref fd f%d",aFd);
+                        ymerr("processing service ref fd f%d",aFd);
                         
                         DNSServiceErrorType err = DNSServiceProcessResult(*(sdref));
                         if (err != kDNSServiceErr_NoError) {
-                            ymerr("mdns[&]: event thread process result on f%d failed: %d", aFd, err);
+                            ymerr("event thread process result on f%d failed: %d", aFd, err);
                             keepGoing = false;
                         }
                     }
@@ -586,14 +588,14 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_event_proc(YM_THREAD_PARAM ctx)
 			error = errno;
 			errorStr = strerror(errno);
 #endif
-            ymerr("mdns[&]: event thread select failed from n%d fds: %d: %d (%s)",nfds,result,error,errorStr);
+            ymerr("event thread select failed from n%d fds: %d: %d (%s)",nfds,result,error,errorStr);
             keepGoing = false;
         }
     }
     
     __YMmDNSBrowserRemoveServiceRef(browser, NULL);
     
-    ymlog("mdns[&] event thread exiting");
+    ymlog("event thread exiting");
 
 	YM_THREAD_END
 }
