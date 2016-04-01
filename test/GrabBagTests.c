@@ -30,7 +30,7 @@ void GrabBagTestsRun(ym_test_assert_func assert, const void *context)
 
 void _InterfacesTestRun(struct GrabBagTest *theTest)
 {    
-    YMDictionaryRef map = YMCreateLocalInterfaceMap();
+    YMDictionaryRef map = YMInterfaceMapCreateLocal();
     testassert(YMDictionaryGetCount(map)>0, "interface map is empty");
     
     YMDictionaryEnumRef denum = YMDictionaryEnumeratorBegin(map);
@@ -42,6 +42,8 @@ void _InterfacesTestRun(struct GrabBagTest *theTest)
         denum = YMDictionaryEnumeratorGetNext(denum);
     }
     YMDictionaryEnumeratorEnd(denum);
+    
+    YMRelease(map);
 }
 
 YM_EXTERN_C_POP

@@ -758,7 +758,7 @@ bool _ym_session_should_accept_func(YMSessionRef session, YMPeerRef peer, void *
 // connection
 void _ym_session_connected_func(YMSessionRef session, YMConnectionRef connection, void *context)
 {
-    ymlog("%s: s%p c%p",__FUNCTION__,session,connection);
+    ymlog("%s: s%p c%p",__FUNCTION__,(void*)session,(void*)connection);
     struct SessionTest *theTest = context;
     
     testassert(theTest,"connected context");
