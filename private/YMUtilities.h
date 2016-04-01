@@ -11,6 +11,7 @@
 
 #include "YMDictionary.h"
 #include "YMArray.h"
+#include "YMAddress.h"
 
 #define YMMIN(a,b) ( (a<b) ? (a) : (b) )
 #define YMMAX(a,b) ( (a>b) ? (a) : (b) )
@@ -36,8 +37,8 @@ ComparisonResult YMAPI YMTimevalCompare(struct timeval *a, struct timeval *b);
 void YMAPI YMGetTheBeginningOfPosixTimeForCurrentPlatform(struct timeval *time);
 void YMAPI YMGetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time);
 
-YMIOResult YMAPI YMReadFull(YMFILE fd, uint8_t *buffer, size_t bytes, size_t *outRead);
-YMIOResult YMAPI YMWriteFull(YMFILE fd, const uint8_t *buffer, size_t bytes, size_t *outWritten);
+YMIOResult YMAPI YMReadFull(YMFILE fd, void *buffer, size_t bytes, size_t *outRead);
+YMIOResult YMAPI YMWriteFull(YMFILE fd, const void *buffer, size_t bytes, size_t *outWritten);
 
 int YMAPI YMGetNumberOfOpenFilesForCurrentProcess();
 
@@ -49,7 +50,7 @@ int32_t YMAPI YMPortReserve(bool ipv4, int *outSocket);
 //        "type" : YMInterfaceType } }
 #define kYMIFMapAddressesKey ((YMDictionaryKey) 1)
 #define kYMIFMapTypeKey ((YMDictionaryKey) 2)
-YMDictionaryRef YMAPI YMCreateLocalInterfaceMap();
+YMDictionaryRef YMAPI YMInterfaceMapCreateLocal();
 YMInterfaceType YMAPI YMInterfaceTypeForName(YMStringRef ifName);
 const char YMAPI * YMInterfaceTypeDescription(YMInterfaceType type);
 

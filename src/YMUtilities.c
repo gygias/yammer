@@ -115,7 +115,7 @@ ComparisonResult YMTimevalCompare(struct timeval *a, struct timeval *b)
     return EqualTo;
 }
 
-YMIOResult YMReadFull(YMFILE fd, uint8_t *buffer, size_t bytes, size_t *outRead)
+YMIOResult YMReadFull(YMFILE fd, void *buffer, size_t bytes, size_t *outRead)
 {
     YM_IO_BOILERPLATE
     
@@ -145,7 +145,7 @@ YMIOResult YMReadFull(YMFILE fd, uint8_t *buffer, size_t bytes, size_t *outRead)
     return ioResult;
 }
 
-YMIOResult YMWriteFull(YMFILE fd, const uint8_t *buffer, size_t bytes, size_t *outWritten)
+YMIOResult YMWriteFull(YMFILE fd, const void *buffer, size_t bytes, size_t *outWritten)
 {
     YM_IO_BOILERPLATE
     
@@ -333,7 +333,7 @@ int YMGetNumberOfOpenFilesForCurrentProcess()
     return nFiles;
 }
 
-YMDictionaryRef YMCreateLocalInterfaceMap()
+YMDictionaryRef YMInterfaceMapCreateLocal()
 {
     YMDictionaryRef map = YMDictionaryCreate2(true,true);
     
