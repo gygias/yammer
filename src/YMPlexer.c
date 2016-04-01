@@ -55,12 +55,11 @@ YM_EXTERN_C_PUSH
                                                     YMLockUnlock(_lock); } \
                                                 }
 
-// initialization
 typedef struct {
     uint32_t protocolVersion;
-    YMPlexerStreamID masterStreamIDMin;
     YMPlexerStreamID masterStreamIDMax;
-} YMPlexerMasterInitializer;
+    uint8_t evenStreamIDs;
+} YMPlexerInitializer;
 
 typedef struct {
     uint32_t protocolVersion;
@@ -119,14 +118,13 @@ typedef struct __ym_plexer_t
     bool active; // intialized and happy
     bool stopped; // stop called before files start closing
     bool master;
+    bool myStreamsEven;
     
     // the downstream
     YMDictionaryRef localStreamsByID;
     YMLockRef localAccessLock;
     uint8_t *localPlexBuffer;
     uint32_t localPlexBufferSize;
-    YMPlexerStreamID localStreamIDMin;
-    YMPlexerStreamID localStreamIDMax;
     YMPlexerStreamID localStreamIDLast;
     
     // the upstream
@@ -134,8 +132,6 @@ typedef struct __ym_plexer_t
     YMLockRef remoteAccessLock;
     uint8_t *remotePlexBuffer;
     uint32_t remotePlexBufferSize;
-    YMPlexerStreamID remoteStreamIDMin;
-    YMPlexerStreamID remoteStreamIDMax;
     
     YMThreadRef localServiceThread;
     YMThreadRef remoteServiceThread;
@@ -191,6 +187,7 @@ YMPlexerRef YMPlexerCreate(YMStringRef name, YMSecurityProviderRef provider, boo
     plexer->active = false;
     plexer->master = master;
     plexer->stopped = false;
+    plexer->myStreamsEven = false;
     
     plexer->localStreamsByID = YMDictionaryCreate();
     YMStringRef aString = YMStringCreateWithFormat("%s-local",YMSTR(plexer->name), NULL);
@@ -307,11 +304,7 @@ bool YMPlexerStart(YMPlexerRef plexer_)
     if ( ! okay )
         goto catch_fail;
     
-    ymlog("initialized m[%llululu:%llu], s[%llu:%llu]",
-          plexer->master ? plexer->localStreamIDMin : plexer->remoteStreamIDMin,
-          plexer->master ? plexer->localStreamIDMax : plexer->remoteStreamIDMax,
-          plexer->master ? plexer->remoteStreamIDMin : plexer->localStreamIDMin,
-          plexer->master ? plexer->remoteStreamIDMax : plexer->localStreamIDMax);
+    ymlog("initialized as %s with %s stream ids",plexer->master?"master":"slave",plexer->myStreamsEven?"even":"odd");
     
     // this flag is used to let our threads exit, among other things
     plexer->active = true;
@@ -347,10 +340,10 @@ YMStreamRef YMPlexerCreateStream(YMPlexerRef plexer_, YMStringRef name)
     YMStreamRef newStream = NULL;
     YMLockLock(plexer->localAccessLock);
     do {
-        if ( plexer->localStreamIDLast == plexer->localStreamIDMax )
-            plexer->localStreamIDLast = plexer->localStreamIDMin;
+        if ( plexer->localStreamIDLast >= ( YMPlexerStreamIDMax - 1 ) )
+            plexer->localStreamIDLast = plexer->myStreamsEven ? 0 : 1;
         else
-            plexer->localStreamIDLast++;
+            plexer->localStreamIDLast += 2;
         
         YMPlexerStreamID newStreamID = plexer->localStreamIDLast;
         if ( YMDictionaryContains(plexer->localStreamsByID, (YMDictionaryKey)newStreamID) ) {
@@ -451,13 +444,10 @@ bool __YMPlexerInitAsMaster(__YMPlexerRef plexer_)
         return false;
     }
     
-    plexer->localStreamIDMin = 0;
-    plexer->localStreamIDMax = YMPlexerStreamIDMax / 2;
-    plexer->localStreamIDLast = plexer->localStreamIDMax;
-    plexer->remoteStreamIDMin = plexer->localStreamIDMax + 1;
-    plexer->remoteStreamIDMax = YMPlexerStreamIDMax;
+    plexer->myStreamsEven = true;
+    plexer->localStreamIDLast = YMPlexerStreamIDMax - ( plexer->myStreamsEven ? 1 : 0 );
     
-    YMPlexerMasterInitializer initializer = { YMPlexerBuiltInVersion, plexer->localStreamIDMin, plexer->localStreamIDMax };
+    YMPlexerInitializer initializer = { YMPlexerBuiltInVersion, YMPlexerStreamIDMax, plexer->myStreamsEven };
     okay = YMSecurityProviderWrite(plexer->provider, (void *)&initializer, sizeof(initializer));
     if ( ! okay ) {
         ymerr("m: master init write");
@@ -495,7 +485,7 @@ bool __YMPlexerInitAsSlave(__YMPlexerRef plexer)
         return false;
     }
     
-    YMPlexerMasterInitializer initializer;
+    YMPlexerInitializer initializer;
     okay = YMSecurityProviderRead(plexer->provider, (void *)&initializer, sizeof(initializer));
     if ( ! okay ) {
         ymerr("s: master init read");
@@ -503,11 +493,8 @@ bool __YMPlexerInitAsSlave(__YMPlexerRef plexer)
     }
     
     // todo, technically this should handle non-zero-based master min id, but doesn't
-    plexer->localStreamIDMin = initializer.masterStreamIDMax + 1;
-    plexer->localStreamIDMax = YMPlexerStreamIDMax;
-    plexer->localStreamIDLast = plexer->localStreamIDMax;
-    plexer->remoteStreamIDMin = initializer.masterStreamIDMin;
-    plexer->remoteStreamIDMax = initializer.masterStreamIDMax;
+    plexer->myStreamsEven = ! initializer.evenStreamIDs;
+    plexer->localStreamIDLast = YMPlexerStreamIDMax - ( plexer->myStreamsEven ? 1 : 0 );
     
     bool supported = initializer.protocolVersion <= YMPlexerBuiltInVersion;
     YMPlexerSlaveAck ack = { YMPlexerBuiltInVersion };
@@ -852,7 +839,7 @@ YMStreamRef __YMPlexerRetainOrCreateRemoteStreamWithID(__YMPlexerRef plexer, YMP
         
             // new stream
             if ( ! theStream ) {
-                if ( streamID < plexer->remoteStreamIDMin || streamID > plexer->remoteStreamIDMax ) {
+                if ( ( streamID % 2 == 0 ) && plexer->myStreamsEven ) {
                     YMLockUnlock(plexer->remoteAccessLock);
                     
                     if ( __YMPlexerInterrupt(plexer) )

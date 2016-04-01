@@ -337,7 +337,7 @@ YMDictionaryRef YMInterfaceMapCreateLocal()
 {
     YMDictionaryRef map = YMDictionaryCreate2(true,true);
     
-#if defined(YMAPPLE) || defined(YMLINUX) // on mac now, guessing about linux (edit: seemed to work out-of-box)
+#if defined(YMAPPLE) || defined(YMLINUX)
     struct ifaddrs *ifaddrsList = NULL, *ifaddrsIter;
     if ( getifaddrs(&ifaddrsList) != 0 ) {
         ymerr("getifaddrs failed: %d %s",errno,strerror(errno));
@@ -433,7 +433,7 @@ YMDictionaryRef YMInterfaceMapCreateLocal()
         YMStringRef ifName = (YMStringRef)denum->key;
         YMDictionaryRef ifInfo = denum->value;
         YMInterfaceType thisType = (YMInterfaceType)YMDictionaryGetItem(ifInfo, kYMIFMapTypeKey);
-        ymlogi(" %s (%s) (%p,%p):",YMSTR(ifName),YMInterfaceTypeDescription(thisType),ifName,ifInfo);
+        ymlogi(" %s (%s):",YMSTR(ifName),YMInterfaceTypeDescription(thisType));
         YMArrayRef addresses = YMDictionaryGetItem(ifInfo, kYMIFMapAddressesKey);
         if ( addresses ) {
             for ( int i = 0; i < YMArrayGetCount(addresses); i++ ) {
