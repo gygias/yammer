@@ -10,6 +10,7 @@
 
 #include "YMBase.h"
 #include "YMCompression.h"
+#include "YMPipe.h"
 
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -62,17 +63,17 @@ void _CompressionTest(CompressionTest *theTest, const char *sourcePath, YMCompre
 {
     YM_IO_BOILERPLATE
     
-    int sourceFd = open(sourcePath,O_RDONLY);
+    YM_OPEN_FILE(sourcePath, READ_FLAG);
+    YMFILE sourceFd = (YMFILE)result;
     testassert(sourceFd>=0,"open %s",sourcePath);
     
-    int pipeFds[2];
-    YM_CREATE_PIPE(pipeFds);
-    testassert(result==0,"pipe() failed");
+    YMPipeRef pipe = YMPipeCreate(NULL);
+    testassert(pipe,"pipe");
     
-    YMCompressionRef writeC = YMCompressionCreate(type, pipeFds[0], true);
+    YMCompressionRef writeC = YMCompressionCreate(type, YMPipeGetInputFile(pipe), true);
     bool okay = YMCompressionInit(writeC);
     testassert(okay,"write init");
-    YMCompressionRef readC = YMCompressionCreate(type, pipeFds[1], false);
+    YMCompressionRef readC = YMCompressionCreate(type, YMPipeGetOutputFile(pipe), false);
     okay = YMCompressionInit(readC);
     testassert(okay,"read init");
     
@@ -105,11 +106,9 @@ void _CompressionTest(CompressionTest *theTest, const char *sourcePath, YMCompre
     } while (!eof);
     
     YMRelease(writeC);
-    YMRelease(readC);
-    
-    close(sourceFd);
-    close(pipeFds[0]);
-    close(pipeFds[1]);
+    YMRelease(readC);    
+    YMRelease(pipe);
+    YM_CLOSE_FILE(sourceFd);
 }
 
 YM_EXTERN_C_POP
