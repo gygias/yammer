@@ -27,6 +27,9 @@ typedef struct CompressionTest
     
     YMCompressionRef writeC;
     YMCompressionRef readC;
+    size_t rawWritten;
+    size_t rawRead;
+    uint8_t *outBytes;
     YMFILE sourceFd;
 } CompressionTest;
 
@@ -38,7 +41,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION compression_test_read_proc(YM_THREAD_PARA
 
 void CompressionTestsRun(ym_test_assert_func assert, const void *context)
 {
-    struct CompressionTest theTest = { assert, context, NULL, NULL, NULL_FILE };
+    struct CompressionTest theTest = { assert, context, NULL, NULL, 0, 0, NULL, NULL_FILE };
     
     _GZTestRun(&theTest);
     ymerr("_GZTestRun completed");
@@ -96,8 +99,13 @@ void _CompressionTest(CompressionTest *theTest, const char *sourcePath, YMCompre
         size_t o = SIZE_T_MAX;
         ymResult = YMCompressionRead(theTest->readC, outBuf, by, &o);
         testassert(((ymResult==YMIOSuccess)&&(ssize_t)o==by)||ymResult==YMIOEOF,"read");
+        theTest->rawWritten += o;
         // todo factor low level FS stuff into library and diff this.
     } while (ymResult!=YMIOEOF);
+    
+    okay = YMCompressionClose(theTest->readC);
+    ymassert(okay,"read close");
+    ymassert(theTest->rawWritten==theTest->rawRead,"raw mismatch");
     
     YMThreadJoin(readThread);
     YMRelease(readThread);
@@ -105,6 +113,23 @@ void _CompressionTest(CompressionTest *theTest, const char *sourcePath, YMCompre
     YMRelease(theTest->writeC);
     YMRelease(theTest->readC);
     YMRelease(pipe);
+    
+    size_t idx = 0;
+    YM_REWIND_FILE(theTest->sourceFd);
+    while(true) {
+        YM_READ_FILE(theTest->sourceFd,outBuf,by);
+        testassert(aRead>=0,"compare source");
+        
+        int cmp = memcmp(theTest->outBytes + idx, outBuf, aRead);
+        testassert(cmp==0,"compare from %zd",idx);
+        
+        if ( aRead == 0 )
+            break;
+        
+        idx += aRead;
+    }
+    
+    free(theTest->outBytes);
     YM_CLOSE_FILE(theTest->sourceFd);
 }
 
@@ -112,8 +137,12 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION compression_test_read_proc(YM_THREAD_PARA
 {
     YM_IO_BOILERPLATE
     
-    uint8_t buf[by];
     CompressionTest *theTest = ctx;
+    
+    uint8_t buf[by];
+    theTest->outBytes = malloc(16384);
+    size_t idx = 0;
+    
     while(true) {
         YM_READ_FILE(theTest->sourceFd,buf,by);
         testassert(aRead>=0,"read source");
@@ -127,6 +156,11 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION compression_test_read_proc(YM_THREAD_PARA
         YMIOResult ymResult = YMCompressionWrite(theTest->writeC, buf, aRead, &o);
         testassert(ymResult==YMIOSuccess,"write");
         testassert((ssize_t)o==aRead,"o!=aRead");
+        theTest->rawRead += o;
+        
+        testassert((idx+o)<16384,"overflow");
+        memcpy(theTest->outBytes + idx,buf,o);
+        idx += o;
     }
     
     YM_THREAD_END
