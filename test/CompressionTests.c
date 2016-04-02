@@ -56,6 +56,9 @@ void _GZTestRun(CompressionTest *theTest)
 #if defined(YMAPPLE)
     const char *sourcePath = "/usr/share/man/man1/gzip.1";
 	YMCompressionType type = YMCompressionGZ;
+#elif defined(YMLINUX)
+    const char *sourcePath = "/usr/share/man/man1/gzip.1.gz";
+	YMCompressionType type = YMCompressionNone;
 #else
 	const char *sourcePath = "\\\\Windows\\system.ini";
 	YMCompressionType type = YMCompressionNone;
@@ -68,6 +71,9 @@ void _BZTestRun(CompressionTest *theTest)
 #if defined(YMAPPLE)
     const char *sourcePath = "/usr/share/man/man1/bzip2.1";
 	YMCompressionType type = YMCompressionGZ;
+#elif defined(YMLINUX)
+    const char *sourcePath = "/usr/share/man/man1/bzip2.1.gz";
+	YMCompressionType type = YMCompressionNone;
 #else
 	const char *sourcePath = TEXT("\\\\Windows\\system.ini");
 	YMCompressionType type = YMCompressionNone;
@@ -103,7 +109,7 @@ void _CompressionTest(CompressionTest *theTest, const char *sourcePath, YMCompre
     YMIOResult ymResult;
     do {
         
-        size_t o = SIZE_T_MAX;
+        size_t o = UINT32_MAX;
         ymResult = YMCompressionRead(theTest->readC, outBuf, by, &o);
         testassert(((ymResult==YMIOSuccess)&&o>0)||ymResult==YMIOEOF,"read");
         theTest->rawWritten += o;
@@ -159,7 +165,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION compression_test_read_proc(YM_THREAD_PARA
             break;
         }
         
-        size_t o = SIZE_T_MAX;
+        size_t o = UINT32_MAX;
         YMIOResult ymResult = YMCompressionWrite(theTest->writeC, buf, aRead, &o);
         testassert(ymResult==YMIOSuccess,"write");
         testassert((ssize_t)o==aRead,"o!=aRead");
