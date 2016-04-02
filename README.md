@@ -8,4 +8,4 @@ The main interface is YMSession. Users specify an mDNS service type (e.g. _myapp
 
 _(this is more or less a zeroconf dns wrapped, app-layer library inspired by Stream Control Transmission Protocol (SCTP), which is for many applications a better transport protocol than TCP, but never seemed to get enough inertia to have [exposed?] implementations on major platforms. 3rd party, in-kernel SCTP are available on the internet._
 
-_it includes a mini CF-like class library - masochistic desire to write tons of portable C code and class-posing boilerplate withstanding :)_
+_it includes a mini CF-like class library - masochistic desire to write tons of OS-portable C code and class-posing boilerplate withstanding :)_
