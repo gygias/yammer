@@ -286,7 +286,7 @@ YMIOResult __YMStreamForward(__YMStreamRef stream, YMFILE file, bool fromFileToS
                     aResult = YMIOEOF;
                     goto unbounded_no_raw_read;
                 } else if ( aCommand.command > 0 ) {
-                    if ( aCommand.command > UINT16_MAX ) abort();
+                    if ( aCommand.command > UINT16_MAX ) ymabort("stream command: %d",aCommand.command);
                     aDesiredLength = (uint16_t)aCommand.command;
                 } else
                     ymsoftassert(false,"read a forward command");
@@ -389,10 +389,8 @@ void _YMStreamSendClose(YMStreamRef stream_)
     
     _YMStreamCommand command = { YMStreamClose };
     YMIOResult result = YMWriteFull(downstreamWrite, (void *)&command, sizeof(command), NULL);
-    if ( result != YMIOSuccess ) {
-        ymerr("fatal: writing close byte to plexer: %d (%s)",errno,strerror(errno));
-        abort();
-    }
+    if ( result != YMIOSuccess )
+        ymabort("fatal: writing close byte to plexer: %d (%s)",errno,strerror(errno));
     
     ymlog("closing stream");
     stream->dataAvailableFunc(stream,sizeof(command),stream->dataAvailableContext);

@@ -158,8 +158,7 @@ YMIOResult YMWriteFull(YMFILE fd, const uint8_t *buffer, size_t bytes, size_t *o
         YM_WRITE_FILE(fd, buffer + off, bytes - off);
         switch(aWrite) {
             case 0:
-                ymerr("io: write(f%d, %p + %zu, %zu - %zu) failed 0?: %d (%s)",fd, buffer, off, bytes, off, error, errorStr);
-                abort();
+                ymabort("io: write(f%d, %p + %zu, %zu - %zu) failed 0?: %d (%s)",fd, buffer, off, bytes, off, error, errorStr);
                 //goto catch_fail;
             case -1:
                 ymerr("io: write(f%d, %p + %zu, %zu - %zu) failed: %d (%s)",fd, buffer, off, bytes, off, error, errorStr);

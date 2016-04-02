@@ -72,10 +72,8 @@ YMSemaphoreRef YMSemaphoreCreateWithName(YMStringRef name, int initialValue)
 
 YMSemaphoreRef __YMSemaphoreCreate(YMStringRef name, int initialValue)
 {
-    if (initialValue < 0) {
-        ymerrg("fatal: semaphore initial value cannot be negative");
-        abort();
-    }
+    if (initialValue < 0)
+        ymabort("fatal: semaphore initial value cannot be negative");
 
 	YM_ONCE_DO_LOCAL(__YMSemaphoreInit);
     

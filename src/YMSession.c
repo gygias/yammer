@@ -942,10 +942,8 @@ void __ym_mdns_service_resolved_func(__unused YMmDNSBrowserRef browser, bool suc
             session->resolvedFunc(session,peer,session->callbackContext);
         else
             session->resolveFailedFunc(session,peer,session->callbackContext);
-    } else {
-        ymerr("notified of resolution of unknown peer: %s",YMSTR(service->name));
-        abort();
-    }
+    } else
+        ymabort("notified of resolution of unknown peer: %s",YMSTR(service->name));
 }
 
 #pragma mark config change observing

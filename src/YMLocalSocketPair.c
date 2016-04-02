@@ -200,15 +200,12 @@ void _YMLocalSocketPairFree(YMTypeRef object)
     
 	int result, error; const char *errorStr;
     YM_CLOSE_SOCKET(pair->socketA);
-    if ( result != 0 ) {
-        ymerr("close failed (%d): %d (%s)",result,errno,strerror(errno));
-        abort();
-    }
+    if ( result != 0 )
+        ymabort("close failed (%d): %d (%s)",result,errno,strerror(errno));
+
     YM_CLOSE_SOCKET(pair->socketB);
-    if ( result != 0 ) {
-        ymerr("close failed (%d): %d (%s)",result,errno,strerror(errno));
-        abort();
-    }
+    if ( result != 0 )
+        ymabort("close failed (%d): %d (%s)",result,errno,strerror(errno));
     
     YMRelease(pair->userName);
     YMRelease(pair->socketName);

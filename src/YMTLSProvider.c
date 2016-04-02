@@ -525,10 +525,8 @@ bool __YMTLSProviderRead(__YMSecurityProviderRef provider, uint8_t *buffer, size
     __YMTLSProviderRef tls = (__YMTLSProviderRef)provider;
     
     // loop or something? hate to change the whole prototype for this, and i like having length-y things be unsigned
-    if ( bytes > INT32_MAX ) {
-        ymerr("tls[%d]: error: fix thy internal errors!",tls->isServer );
-        abort();
-    }
+    if ( bytes > INT32_MAX )
+        ymabort("tls[%d]: error: fix thy internal errors!",tls->isServer );
     
     int result = SSL_read(tls->ssl, buffer, (int)bytes);
     

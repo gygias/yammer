@@ -348,10 +348,8 @@ void YMThreadDispatchDispatch(YMThreadRef thread_, struct ym_thread_dispatch_t d
 {
     __YMThreadRef thread = (__YMThreadRef)thread_;
     
-    if ( ! thread->isDispatch ) {
-        ymerr("fatal: attempt to dispatch to non-dispatch thread");
-        abort();
-    }
+    if ( ! thread->isDispatch )
+        ymabort("fatal: attempt to dispatch to non-dispatch thread");
     
     __ym_thread_dispatch_context_ref newDispatch = NULL;
     YMLockLock(thread->dispatchListLock);
@@ -362,10 +360,8 @@ void YMThreadDispatchDispatch(YMThreadRef thread_, struct ym_thread_dispatch_t d
         newDispatch->dispatch = dispatchCopy;
         newDispatch->dispatchID = thread->dispatchIDNext++;
         
-        if ( YMDictionaryContains(thread->dispatchesByID, (YMDictionaryKey)newDispatch->dispatchID) ) {
-            ymerr("fatal: thread is out of dispatch ids (%zu)",YMDictionaryGetCount(thread->dispatchesByID));
-            abort();
-        }
+        if ( YMDictionaryContains(thread->dispatchesByID, (YMDictionaryKey)newDispatch->dispatchID) )
+            ymabort("fatal: thread is out of dispatch ids (%zu)",YMDictionaryGetCount(thread->dispatchesByID));
         
         ymdbg("adding dispatch '%s': u %p ctx %p",YMSTR(dispatchCopy->description),dispatchCopy,dispatchCopy->context);
         YMDictionaryAdd(thread->dispatchesByID, (YMDictionaryKey)newDispatch->dispatchID, newDispatch);

@@ -94,15 +94,12 @@ void YMDictionaryAdd(YMDictionaryRef dict_, YMDictionaryKey key, YMDictionaryVal
 #endif
     YM_WPOP
     
-    if ( full ) {
-        ymerr("YMDictionary is full");
-        abort();
-    }
+    if ( full )
+        ymabort("YMDictionary is full");
     
-    if ( _YMDictionaryFindItemWithIdentifier(dict->head, key, dict->ymtypeKeys, NULL) ) {
-        ymerr("YMDictionary already contains item for key %p",key);
-        abort();
-    }
+    if ( _YMDictionaryFindItemWithIdentifier(dict->head, key, dict->ymtypeKeys, NULL) )
+        ymabort("YMDictionary already contains item for key %p",key);
+
     _YMDictionaryItemRef newItem = (_YMDictionaryItemRef)YMALLOC(sizeof(struct __YMDictionaryItem));
     newItem->key = dict->ymtypeKeys ? (YMDictionaryKey)YMRetain((YMTypeRef)key) : key;
     newItem->value = dict->ymtypeValues ? (YMDictionaryValue)YMRetain((YMTypeRef)value) : value;
@@ -125,10 +122,8 @@ YMDictionaryKey YMDictionaryGetRandomKey(YMDictionaryRef dict_)
 {
     __YMDictionaryRef dict = (__YMDictionaryRef)dict_;
     CHECK_CONSISTENCY
-    if ( dict->count == 0 || dict->head == NULL ) {
-        ymerr("YMDictionary is empty and has no keys");
-        abort();
-    }
+    if ( dict->count == 0 || dict->head == NULL )
+        ymabort("YMDictionary is empty and has no keys");
     
     uint32_t chosenIdx = arc4random_uniform((uint32_t)dict->count), countdown = chosenIdx; // unsure of portability
     _YMDictionaryItemRef iter = dict->head;
@@ -174,18 +169,15 @@ YMDictionaryValue YMDictionaryRemove(YMDictionaryRef dict_, YMDictionaryKey key)
     CHECK_CONSISTENCY
     
     if ( dict->count == 0 || dict->head == NULL ) {
-        ymerr("YMDictionary is empty");
-        abort();
+        ymabort("YMDictionary is empty");
     }
     
     YMDictionaryValue outValue = NULL;
     _YMDictionaryItemRef previousItem = NULL;
     _YMDictionaryItemRef theItem = _YMDictionaryFindItemWithIdentifier(dict->head, key, dict->ymtypeKeys, &previousItem);
     if ( ! theItem ) {
-        ymerr("key does not exist to remove");
-        abort();
-    }
-    else {
+        ymabort("key does not exist to remove");
+    } else {
         if ( previousItem )
             previousItem->next = theItem->next;
         else // removed item is head
@@ -288,10 +280,8 @@ bool __Broken_YMDictionaryPopKeyValue(YMDictionaryRef dict_, bool last, YMDictio
     else
         dict->head = outItem->next;
     
-    if ( dict->count == 0 ) {
-        ymlog("ymdictionary is broken");
-        abort();
-    }
+    if ( dict->count == 0 )
+        ymabort("ymdictionary is broken");
     
     dict->count--;
     

@@ -50,7 +50,7 @@ YM_EXTERN_C_PUSH
                                                         bool _okay = ( remove ? \
                                                                         ( ( _theStream = YMDictionaryRemove(_list,streamID) ) != NULL ) : \
                                                                           YMDictionaryContains(_list,streamID) ); \
-                                                        if ( ! _okay ) { ymerr("plexer consistenty check failed"); abort(); } \
+                                                        if ( ! _okay ) { ymabort("plexer consistenty check failed"); } \
                                                         if ( remove ) { YMRelease(_theStream); } \
                                                     YMLockUnlock(_lock); } \
                                                 }
@@ -609,7 +609,7 @@ YMStreamRef __YMPlexerRetainReadyStream(__YMPlexerRef plexer)
                 if ( userInfo->userClosed ) {
                     ymlog("choose: stream %llu is closing",aStreamID);
                     if ( ! userInfo->isLocallyOriginated )
-                        abort();
+                        ymabort("remote stream %llu locally closed",aStreamID);
                 }
                 else {
                     aStreamBytesAvailable = YM_STREAM_INFO(aStream)->bytesAvailable;
@@ -690,7 +690,7 @@ bool __YMPlexerServiceADownstream(__YMPlexerRef plexer, YMStreamRef stream)
         ymlog("V-s%llu read stream chunk",streamID);
         
         if ( bytesRemaining - chunkLength > bytesRemaining )
-            abort();
+            ymabort("stream %llu overchunked",streamID);
         
         bytesRemaining -= chunkLength;
         chunksHandled++;
@@ -722,7 +722,7 @@ bool __YMPlexerServiceADownstream(__YMPlexerRef plexer, YMStreamRef stream)
     
     if ( closing ) {
         if ( ! userInfo->isLocallyOriginated )
-            abort();
+            ymabort("remote stream %llu closed locally",streamID);
         
         bool okay = true;
         YMPlexerMessage plexMessage = { YMPlexerCommandCloseStream, streamID };

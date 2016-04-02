@@ -178,7 +178,7 @@ YMmDNSTxtRecordKeyPair ** _MakeTxtRecordKeyPairs(uint16_t *inOutnKeypairs)
         if ( remaining == 0 )
             break;
         if ( remaining < 0 )
-            abort();
+            ymabort("txt record format");
     }
     
     NoisyTestLog(@"made txt record length %zu out of requested %zu (blob size %zu)",actualSize,requestedSize,debugBlobSize);
