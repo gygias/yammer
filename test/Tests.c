@@ -70,15 +70,15 @@ void RunAllTests()
     ymerr("------ misc tests start ------");
     GrabBagTestsRun(_ym_test_assert_func, NULL);
     ymerr("------ misc tests end ------");
-    ymerr("------ compression tests start ------");
-    CompressionTestsRun(_ym_test_assert_func, NULL);
-    ymerr("------ compression tests end ------");
     ymerr("------ task tests start ------");
     TaskTestsRun(_ym_test_assert_func, NULL);
     ymerr("------ task tests end ------");
     ymerr("------ thread tests start ------");
     ThreadTestsRun(_ym_test_assert_func, NULL);
     ymerr("------ thread tests end ------");
+    ymerr("------ compression tests start ------");
+    CompressionTestsRun(_ym_test_assert_func, NULL);
+    ymerr("------ compression tests end ------");
 	ymerr("------ dictionary tests start ------");
 	DictionaryTestsRun(_ym_test_assert_func, NULL);
 	ymerr("------ dictionary tests end ------");

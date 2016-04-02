@@ -18,6 +18,7 @@
 #import "TLSTests.h"
 #import "PlexerTests.h"
 #import "SessionTests.h"
+#import "ThreadTests.h"
 
 #import "YMDictionary.h"
 #import "YMUtilities.h"
@@ -111,29 +112,35 @@ bool ym_test_diff_proc(const void *ctx, const char *path1, const char *path2, bo
 
 // this is the best way of ordering XCTestCase classes that i could find, at the time
 #define testMisc                test_B_Misc
-#define testCompression         test_C_Compression
-#define testTask                test_D_Task
-#define testDictionary          test_E_Dictionary
-#define testCrypto              test_F_Crypto
-#define testLocalSocketPair     test_G_LocalSocketPair
-#define testmDNS                test_H_mDNS
-#define testTLS                 test_I_TLS
-#define testPlexer              test_J_Plexer
-#define testSession             test_K_Session
+#define testTask                test_C_Task
+#define testThread              test_D_Thread
+#define testCompression         test_E_Compression
+#define testDictionary          test_F_Dictionary
+#define testCrypto              test_G_Crypto
+#define testLocalSocketPair     test_H_LocalSocketPair
+#define testmDNS                test_I_mDNS
+#define testTLS                 test_J_TLS
+#define testPlexer              test_K_Plexer
+#define testSession             test_L_Session
 
 - (void)testMisc {
     const void *SELF = (__bridge const void *)(self);
     GrabBagTestsRun(ym_test_assert_proc, SELF);
 }
 
-- (void)testCompression {
-    const void *SELF = (__bridge const void *)(self);
-    CompressionTestsRun(ym_test_assert_proc, SELF);
-}
-
 - (void)testTask {
     const void *SELF = (__bridge const void *)(self);
     TaskTestsRun(ym_test_assert_proc, SELF);
+}
+
+- (void)testThread {
+    const void *SELF = (__bridge const void *)(self);
+    ThreadTestsRun(ym_test_assert_proc, SELF);
+}
+
+- (void)testCompression {
+    const void *SELF = (__bridge const void *)(self);
+    CompressionTestsRun(ym_test_assert_proc, SELF);
 }
 
 - (void)testDictionary {
