@@ -104,6 +104,8 @@
 		63476A531BEB319000D10081 /* YMSemaphore.c in Sources */ = {isa = PBXBuildFile; fileRef = 63476A511BEB319000D10081 /* YMSemaphore.c */; };
 		63476A541BEB319000D10081 /* YMSemaphore.h in Headers */ = {isa = PBXBuildFile; fileRef = 63476A521BEB319000D10081 /* YMSemaphore.h */; };
 		63500B191CAF7381009E5514 /* YMCompression.c in Sources */ = {isa = PBXBuildFile; fileRef = 63500B181CAF7381009E5514 /* YMCompression.c */; };
+		63500B1E1CAF9245009E5514 /* libbz2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 63500B1D1CAF9245009E5514 /* libbz2.tbd */; };
+		63500B1F1CAF925D009E5514 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 63500B1B1CAF8FF8009E5514 /* libz.tbd */; };
 		636166DE1C18DC1100D17172 /* ThreadTests.c in Sources */ = {isa = PBXBuildFile; fileRef = 636166DD1C18DC1100D17172 /* ThreadTests.c */; };
 		636166DF1C18DC1100D17172 /* ThreadTests.c in Sources */ = {isa = PBXBuildFile; fileRef = 636166DD1C18DC1100D17172 /* ThreadTests.c */; };
 		636166EE1C18DFB500D17172 /* libyammer.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63225D421BE9026200C28F05 /* libyammer.dylib */; };
@@ -319,6 +321,8 @@
 		634A87491C17A4DB00C7CA99 /* Makefile */ = {isa = PBXFileReference; explicitFileType = sourcecode.make; fileEncoding = 4; name = Makefile; path = ../Makefile; sourceTree = "<group>"; };
 		63500B171CAF7361009E5514 /* YMCompression.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMCompression.h; path = ../private/YMCompression.h; sourceTree = "<group>"; };
 		63500B181CAF7381009E5514 /* YMCompression.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMCompression.c; path = ../src/YMCompression.c; sourceTree = "<group>"; };
+		63500B1B1CAF8FF8009E5514 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
+		63500B1D1CAF9245009E5514 /* libbz2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libbz2.tbd; path = usr/lib/libbz2.tbd; sourceTree = SDKROOT; };
 		6351A1881CAAF37F007AEF68 /* link_bundle.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = link_bundle.sh; sourceTree = "<group>"; };
 		636166DD1C18DC1100D17172 /* ThreadTests.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ThreadTests.c; sourceTree = "<group>"; };
 		636166E01C18DC1D00D17172 /* ThreadTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ThreadTests.h; sourceTree = "<group>"; };
@@ -402,6 +406,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				63500B1F1CAF925D009E5514 /* libz.tbd in Frameworks */,
+				63500B1E1CAF9245009E5514 /* libbz2.tbd in Frameworks */,
 				6346BBD21C1F827000437E21 /* SystemConfiguration.framework in Frameworks */,
 				6346BBD01C1F826C00437E21 /* CoreFoundation.framework in Frameworks */,
 				638E1D661C098AF900BA2FA4 /* libcrypto.tbd in Frameworks */,
@@ -497,6 +503,8 @@
 		63225D391BE9026200C28F05 = {
 			isa = PBXGroup;
 			children = (
+				63500B1D1CAF9245009E5514 /* libbz2.tbd */,
+				63500B1B1CAF8FF8009E5514 /* libz.tbd */,
 				6334656B1C029A84007343B1 /* todo */,
 				634A87491C17A4DB00C7CA99 /* Makefile */,
 				631916461BFD069A001475FC /* libyammer */,

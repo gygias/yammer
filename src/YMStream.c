@@ -90,8 +90,8 @@ YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_ref userInfo, 
     stream->userInfo = userInfo;
     stream->freeUserInfoFunc = callback;
     
-    stream->downCompression = YMCompressionCreate(YMCompressionNone,YMPipeGetInputFile(stream->downstreamPipe));
-    stream->upCompression = YMCompressionCreate(YMCompressionNone,YMPipeGetOutputFile(stream->upstreamPipe));
+    stream->downCompression = YMCompressionCreate(YMCompressionNone,YMPipeGetInputFile(stream->downstreamPipe),true);
+    stream->upCompression = YMCompressionCreate(YMCompressionNone,YMPipeGetOutputFile(stream->upstreamPipe),false);
     
     LOG_STREAM_LIFECYCLE(true);
     
@@ -125,11 +125,11 @@ bool _YMStreamSetCompression(YMStreamRef stream_, YMCompressionType type)
 {
     __YMStreamRef stream = (__YMStreamRef)stream_;
     
-    YMCompressionRef downCompression = YMCompressionCreate(type,YMPipeGetInputFile(stream->downstreamPipe));
+    YMCompressionRef downCompression = YMCompressionCreate(type,YMPipeGetInputFile(stream->downstreamPipe),true);
     bool okay = YMCompressionInit(downCompression);
     
     if ( okay ) {
-        YMCompressionRef upCompression = YMCompressionCreate(type,YMPipeGetOutputFile(stream->upstreamPipe));
+        YMCompressionRef upCompression = YMCompressionCreate(type,YMPipeGetOutputFile(stream->upstreamPipe),false);
         okay = YMCompressionInit(upCompression);
         if ( okay ) {
             YMRelease(stream->downCompression); // nocompression on create

@@ -11,11 +11,11 @@
 
 typedef const struct __ym_compression_t *YMCompressionRef;
 
-YMCompressionRef YMCompressionCreate(YMCompressionType, YMFILE);
+YMCompressionRef YMCompressionCreate(YMCompressionType, YMFILE, bool);
 
 bool YMAPI YMCompressionInit(YMCompressionRef c);
-bool YMAPI YMCompressionRead(YMCompressionRef c, uint8_t *b, size_t l);
-bool YMAPI YMCompressionWrite(YMCompressionRef c, const uint8_t *b, size_t l);
+YMIOResult YMAPI YMCompressionRead(YMCompressionRef c, uint8_t *b, size_t l, size_t *o);
+YMIOResult YMAPI YMCompressionWrite(YMCompressionRef c, const uint8_t *b, size_t l, size_t *o);
 bool YMAPI YMCompressionClose(YMCompressionRef c);
 
 YM_EXTERN_C_POP
