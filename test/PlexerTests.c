@@ -297,7 +297,7 @@ void _SendMessage(__unused struct PlexerTest *theTest, YMStreamRef stream, uint8
 uint8_t *_ReceiveMessage(struct PlexerTest *theTest, YMStreamRef stream, uint16_t *outLen)
 {
     uint16_t length, outLength = 0;
-    YMIOResult result = YMStreamReadUp(stream, &length, sizeof(length), &outLength);
+    YMIOResult result = YMStreamReadUp(stream, (uint8_t *)&length, sizeof(length), &outLength);
     if ( theTest->timeBasedTimeOver )
         return NULL;
     testassert(result==YMIOSuccess,"failed to read header");
