@@ -53,7 +53,6 @@ YMIOResult YMAPI _YMStreamReadDown(YMStreamRef stream, void *buffer, uint32_t le
 YMIOResult YMAPI _YMStreamWriteUp(YMStreamRef stream, const void *buffer, uint32_t length);
 
 void YMAPI _YMStreamCloseWriteUp(YMStreamRef stream);
-void YMAPI _YMStreamSendClose(YMStreamRef stream);
 
 ym_stream_user_info_ref YMAPI _YMStreamGetUserInfo(YMStreamRef);
 YMStringRef YMAPI _YMStreamGetName(YMStreamRef stream);

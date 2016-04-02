@@ -378,11 +378,7 @@ void YMPlexerCloseStream(YMPlexerRef plexer_, YMStreamRef stream)
     if ( plexer->active && isLocal ) {
         userInfo->userClosed = true;
         // when stream commands were a thing
-#ifdef USE_STREAM_COMMANDS
-        _YMStreamSendClose(stream);
-#else
         YMSemaphoreSignal(plexer->downstreamReadySemaphore);
-#endif
     }
     
     ymlog("user %s stream %llu", isLocal?"closing":"releasing", streamID);

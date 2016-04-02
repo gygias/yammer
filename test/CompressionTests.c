@@ -98,7 +98,7 @@ void _CompressionTest(CompressionTest *theTest, const char *sourcePath, YMCompre
         
         size_t o = SIZE_T_MAX;
         ymResult = YMCompressionRead(theTest->readC, outBuf, by, &o);
-        testassert(((ymResult==YMIOSuccess)&&(ssize_t)o==by)||ymResult==YMIOEOF,"read");
+        testassert(((ymResult==YMIOSuccess)&&o>0)||ymResult==YMIOEOF,"read");
         theTest->rawWritten += o;
         // todo factor low level FS stuff into library and diff this.
     } while (ymResult!=YMIOEOF);

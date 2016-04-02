@@ -155,7 +155,7 @@ YMIOResult YMNoCompressionRead(__YMCompressionRef c, uint8_t *b, size_t l, size_
         *o = aRead;
     if ( aRead == -1 )
         return YMIOError;
-    else if ( aRead < (ssize_t)l )
+    else if ( aRead == 0 )
         return YMIOEOF;
     return YMIOSuccess;
 }
@@ -166,7 +166,7 @@ YMIOResult YMNoCompressionWrite(__YMCompressionRef c, const uint8_t *b, size_t l
     YM_WRITE_FILE(c->file, b, l);
     if ( o )
         *o = aWrite;
-    if ( aWrite < (ssize_t)l )
+    if ( aWrite != (ssize_t)l )
         return YMIOError;
     return YMIOSuccess;
 }
@@ -200,7 +200,7 @@ YMIOResult YMGZRead(__YMCompressionRef c, uint8_t *b, size_t l, size_t *o)
     if ( result == -1 ) {
         ymerr("gzread: %d (%s)",errno,strerror(errno));
         return YMIOError;
-    } else if ( result < (int)l )
+    } else if ( result == 0 )
         return YMIOEOF;
     return YMIOSuccess;
 }
@@ -229,6 +229,8 @@ bool YMGZClose(__YMCompressionRef c)
             ymerr("gzclose: Z_STREAM_ERROR");
         else if ( result == Z_ERRNO )
             ymerr("gzclose: %d (%s)",errno,strerror(errno));
+        else
+            ymerr("gzclose: %d?",result);
         return false;
     }
     return true;
@@ -258,7 +260,7 @@ YMIOResult YMBZRead(__YMCompressionRef c, uint8_t *b, size_t l, size_t *o)
     if ( result == -1 ) {
         ymerr("bzread: %d (%s)",errno,strerror(errno));
         return YMIOError;
-    } else if ( result < (int)l )
+    } else if ( result == 0 )
         return YMIOEOF;
     return YMIOSuccess;
 }

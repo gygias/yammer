@@ -52,7 +52,7 @@ YM_WPOP
 #endif
 
 YM_WPPUSH
-#define ymassert(x,y,...) { if (!(x)) { ymerrg("hard assert: "y,##__VA_ARGS__); abort(); } }
+#define ymassert(x,y,...) { if (!(x)) { ymerrg("assert: "y,##__VA_ARGS__); abort(); } }
 #define ymabort(x,...) ymassert(false,x,##__VA_ARGS__)
 YM_WPOP
 
