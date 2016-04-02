@@ -184,6 +184,7 @@
     <ClInclude Include="..\libyammer\YMString.h" />
     <ClInclude Include="..\private\arc4random.h" />
     <ClInclude Include="..\private\YMArray.h" />
+    <ClInclude Include="..\private\YMCompression.h" />
     <ClInclude Include="..\private\YMConnectionPriv.h" />
     <ClInclude Include="..\private\YMDebug.h" />
     <ClInclude Include="..\private\YMInternal.h" />
@@ -223,6 +224,7 @@
     <ClCompile Include="..\src\YMAddress.c" />
     <ClCompile Include="..\src\YMArray.c" />
     <ClCompile Include="..\src\YMBase.c" />
+    <ClCompile Include="..\src\YMCompression.c" />
     <ClCompile Include="..\src\YMConnection.c" />
     <ClCompile Include="..\src\YMDebug.c" />
     <ClCompile Include="..\src\YMDictionary.c" />

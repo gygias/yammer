@@ -11,7 +11,7 @@
 
 typedef const struct __ym_compression_t *YMCompressionRef;
 
-YMCompressionRef YMCompressionCreate(YMCompressionType, YMFILE, bool);
+YMCompressionRef YMAPI YMCompressionCreate(YMCompressionType, YMFILE, bool);
 
 bool YMAPI YMCompressionInit(YMCompressionRef c);
 YMIOResult YMAPI YMCompressionRead(YMCompressionRef c, uint8_t *b, size_t l, size_t *o);

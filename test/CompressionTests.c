@@ -14,8 +14,10 @@
 #include "YMThread.h"
 
 #include <sys/types.h>
+#if !defined(YMWIN32)
 #include <sys/uio.h>
 #include <unistd.h>
+#endif
 #include <fcntl.h>
 
 YM_EXTERN_C_PUSH
@@ -53,20 +55,24 @@ void _GZTestRun(CompressionTest *theTest)
 {
 #if defined(YMAPPLE)
     const char *sourcePath = "/usr/share/man/man1/gzip.1";
+	YMCompressionType type = YMCompressionGZ;
 #else
-#error implement me 4/1/2016
+	const char *sourcePath = "\\\\Windows\\system.ini";
+	YMCompressionType type = YMCompressionNone;
 #endif
-    _CompressionTest(theTest, sourcePath, YMCompressionGZ);
+    _CompressionTest(theTest, sourcePath, type);
 }
 
 void _BZTestRun(CompressionTest *theTest)
 {
 #if defined(YMAPPLE)
     const char *sourcePath = "/usr/share/man/man1/bzip2.1";
+	YMCompressionType type = YMCompressionGZ;
 #else
-#error implement me 4/1/2016
+	const char *sourcePath = TEXT("\\\\Windows\\system.ini");
+	YMCompressionType type = YMCompressionNone;
 #endif
-    _CompressionTest(theTest, sourcePath, YMCompressionBZ2);
+    _CompressionTest(theTest, sourcePath, type);
 }
 
 void _CompressionTest(CompressionTest *theTest, const char *sourcePath, YMCompressionType type)
@@ -75,6 +81,7 @@ void _CompressionTest(CompressionTest *theTest, const char *sourcePath, YMCompre
     
     YM_OPEN_FILE(sourcePath, READ_FLAG);
     theTest->sourceFd = (YMFILE)result;
+	testassert(result!=-1,"open %s",sourcePath);
     testassert(theTest->sourceFd>=0,"open %s",sourcePath);
     
     YMPipeRef pipe = YMPipeCreate(NULL);
@@ -145,7 +152,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION compression_test_read_proc(YM_THREAD_PARA
     
     while(true) {
         YM_READ_FILE(theTest->sourceFd,buf,by);
-        testassert(aRead>=0,"read source");
+        testassert(result!=-1&&aRead>=0,"read source");
         if ( aRead == 0 ) {
             bool okay = YMCompressionClose(theTest->writeC);
             testassert(okay,"write close");

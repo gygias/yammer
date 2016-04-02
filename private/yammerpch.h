@@ -61,6 +61,9 @@
 # define unlink _unlink
 # define mkdir(p,m) _mkdir(p)
 # define rmdir _rmdir // ( ( RemoveDirectory(x) == 0 ) ? -1 : 0 )
+# define in_addr_t struct in_addr
+# define in_port_t USHORT
+# define SIZE_T_MAX SIZE_MAX
 #endif
 
 #if defined(YMWIN32) || defined(YMLINUX)

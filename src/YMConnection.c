@@ -315,7 +315,7 @@ bool __YMConnectionDoIFExchange(__YMConnectionRef connection, YMSOCKET socket, b
     
     for( int i = 0; i < 2; i++ ) {
         if ( (( i == 0 ) && asServer) || (( i == 1 ) && ! asServer) ) {
-            okay = YMWriteFull(socket, &myPrefix, sizeof(myPrefix), NULL);
+            okay = YMWriteFull(socket, (uint8_t *)&myPrefix, sizeof(myPrefix), NULL);
             if ( ! okay ) { whyFailed = "write prefix"; goto catch_return; }
             
             // todo implemented localhost<->localhost does endianness matter streaming this?

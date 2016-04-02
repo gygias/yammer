@@ -27,7 +27,7 @@ namespace Yammer {
 		YMStringRef ymstr = YMStringCreateWithCString(uName);
 		Marshal::FreeHGlobal( (IntPtr)uName );
 
-		YMStreamRef streamRef = YMConnectionCreateStream(this->connectionRef, ymstr);
+		YMStreamRef streamRef = YMConnectionCreateStream(this->connectionRef, ymstr, YMCompressionNone);
 		YMRelease(ymstr);
 
 		Stream ^stream = gcnew Stream(streamRef);

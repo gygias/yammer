@@ -108,9 +108,11 @@ typedef enum
 
 typedef enum YMCompressionType {
     YMCompressionNone = 0,
+#if defined(YMAPPLE)
     YMCompressionGZ = 100,
     YMCompressionBZ2 = 200,
     YMCompressionLZ = 300
+#endif
 } YMCompressionType;
 
 void YMAPI YMFreeGlobalResources();

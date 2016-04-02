@@ -17,7 +17,7 @@
 #include <zlib.h>
 #include <bzlib.h>
 #else
-#error implement me, it's 4/1/2016
+// compression for win32, linux
 #endif
 
 YM_EXTERN_C_PUSH
@@ -40,9 +40,10 @@ typedef struct __ym_compression_t
     ym_compression_read_func   readFunc;
     ym_compression_write_func  writeFunc;
     ym_compression_close_func  closeFunc;
-    
+#if defined(YMAPPLE)
     gzFile gzfile;
     BZFILE * bzfile;
+#endif
 } __ym_compression_t;
 
 bool YMNoCompressionInit(__YMCompressionRef compression);
@@ -70,6 +71,7 @@ YMCompressionRef YMCompressionCreate(YMCompressionType type, YMFILE file, bool i
     __YMCompressionRef compression = (__YMCompressionRef)_YMAlloc(_YMCompressionTypeID,sizeof(struct __ym_compression_t));
     
     switch(type) {
+#if defined(YMAPPLE)
         case YMCompressionGZ:
             compression->initFunc = YMGZInit;
             compression->readFunc = YMGZRead;
@@ -88,6 +90,7 @@ YMCompressionRef YMCompressionCreate(YMCompressionType type, YMFILE file, bool i
             compression->writeFunc = YMLZWrite;
             compression->closeFunc = YMLZClose;
             break;
+#endif
         default:
             compression->initFunc = YMNoCompressionInit;
             compression->readFunc = YMNoCompressionRead;
@@ -100,9 +103,10 @@ YMCompressionRef YMCompressionCreate(YMCompressionType type, YMFILE file, bool i
     compression->type = type;
     compression->input = input;
     
+#if defined(YMAPPLE)
     compression->gzfile = NULL;
     compression->bzfile = NULL;
-    
+#endif
     return compression;
 }
 
@@ -176,6 +180,7 @@ bool YMNoCompressionClose(__unused __YMCompressionRef c)
     return true;
 }
 
+#if defined(YMAPPLE)
 bool YMGZInit(__YMCompressionRef c)
 {
     const char *mode = "r";
@@ -315,5 +320,6 @@ bool YMLZClose(__YMCompressionRef c)
     ymabort("someone set up is the \"expert\"");
     return false;
 }
+#endif
 
 YM_EXTERN_C_POP

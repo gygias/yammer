@@ -15,8 +15,8 @@ YM_EXTERN_C_PUSH
 
 typedef const struct __ym_stream_t *YMStreamRef;
 
-YMAPI YMIOResult YMStreamWriteDown(YMStreamRef stream, const void *buffer, uint16_t length);
-YMAPI YMIOResult YMStreamReadUp(YMStreamRef stream_, void *buffer, uint16_t length, uint16_t *outLength);
+YMAPI YMIOResult YMStreamWriteDown(YMStreamRef stream, const uint8_t *buffer, uint16_t length);
+YMAPI YMIOResult YMStreamReadUp(YMStreamRef stream_, uint8_t *buffer, uint16_t length, uint16_t *outLength);
 YMAPI YMIOResult YMStreamReadFromFile(YMStreamRef stream, YMFILE file, uint64_t *inBytes, uint64_t *outBytes);
 YMAPI YMIOResult YMStreamWriteToFile(YMStreamRef stream, YMFILE file, uint64_t *inBytes, uint64_t *outBytes);
 

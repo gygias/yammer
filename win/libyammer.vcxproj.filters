@@ -156,6 +156,9 @@
     <ClInclude Include="..\private\YMArray.h">
       <Filter>private</Filter>
     </ClInclude>
+    <ClInclude Include="..\private\YMCompression.h">
+      <Filter>private</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -249,6 +252,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\src\YMDebug.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMCompression.c">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

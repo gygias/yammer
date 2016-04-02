@@ -467,7 +467,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteSparseFiles(YM_THREAD_PARAM c
         theTest->lastClientBounded = arc4random_uniform(2); // also tell remote whether we're bounding the file or pretending we don't know for testing
         struct SparseFileHeader header = { theTest->lastClientFileSize , {0}, theTest->lastClientBounded };
         strncpy(header.name, aFile, NAME_MAX+1);
-        YMStreamWriteDown(stream, &header, sizeof(header));
+        YMStreamWriteDown(stream, (uint8_t *)&header, sizeof(header));
         if ( theTest->stopping ) {
             YMConnectionCloseStream(connection, stream);
             YM_CLOSE_FILE(aSparseFd);
@@ -487,7 +487,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteSparseFiles(YM_THREAD_PARAM c
         
         struct SparseFileThanks thx;
         uint16_t outLength = 0, length = sizeof(thx);
-        result = YMStreamReadUp(stream, &thx, length, &outLength);
+        result = YMStreamReadUp(stream, (uint8_t *)&thx, length, &outLength);
         if ( theTest->stopping ) {
             YMConnectionCloseStream(connection, stream);
             YM_CLOSE_FILE(aSparseFd);
@@ -533,7 +533,7 @@ void YM_CALLING_CONVENTION _EatASparseFile(ym_thread_dispatch_ref ctx_)
     
     struct SparseFileHeader header;
     uint16_t outLength = 0, length = sizeof(header);
-    YMIOResult ymResult = YMStreamReadUp(stream, &header, length, &outLength);
+    YMIOResult ymResult = YMStreamReadUp(stream, (uint8_t *)&header, length, &outLength);
     if ( theTest->stopping )
         goto catch_release;
     
@@ -564,7 +564,7 @@ void YM_CALLING_CONVENTION _EatASparseFile(ym_thread_dispatch_ref ctx_)
     YMStringRef thxStr = YMSTRCF(THXFORSPARSETEMPLATE,header.name);
     strncpy(thx.thx4Sparse,YMSTR(thxStr),sizeof(thx.thx4Sparse));
     YMRelease(thxStr);
-    YMStreamWriteDown(stream, &thx, sizeof(thx));
+    YMStreamWriteDown(stream, (uint8_t *)&thx, sizeof(thx));
     
 catch_release:
     // todo randomize whether we close here, during streamClosing, after streamClosing, dispatch_after?

@@ -161,6 +161,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\private\yammerpch.h" />
+    <ClInclude Include="..\..\test\CompressionTests.h" />
     <ClInclude Include="..\..\test\CryptoTests.h" />
     <ClInclude Include="..\..\test\DictionaryTests.h" />
     <ClInclude Include="..\..\test\GrabBagTests.h" />
@@ -177,6 +178,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\test\CompressionTests.c" />
     <ClCompile Include="..\..\test\CryptoTests.c" />
     <ClCompile Include="..\..\test\DictionaryTests.c" />
     <ClCompile Include="..\..\test\GrabBagTests.c" />
