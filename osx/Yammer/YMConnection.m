@@ -102,7 +102,7 @@
 - (YMStream *)newStreamWithName:(NSString *)name
 {
     YMStringRef ymstr = YMStringCreateWithCString([name UTF8String]);
-    YMStreamRef ymstream = YMConnectionCreateStream(self.connectionRef, ymstr);
+    YMStreamRef ymstream = YMConnectionCreateStream(self.connectionRef, ymstr, YMCompressionNone);
     YMRelease(ymstr);
     
     YMStream *stream = [[YMStream alloc] _initWithStreamRef:ymstream];

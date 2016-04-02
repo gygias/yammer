@@ -52,7 +52,7 @@ YM_WPOP
 #endif
 
 YM_WPPUSH
-#define ymassert(x,y,...) { if (!(x)) { ymerrg("hard assert: "y,##__VA_ARGS__); abort(); } }
+#define ymassert(x,y,...) { if (!(x)) { ymerrg("assert: "y,##__VA_ARGS__); abort(); } }
 #define ymabort(x,...) ymassert(false,x,##__VA_ARGS__)
 YM_WPOP
 
@@ -92,6 +92,7 @@ extern YMTypeID _YMPeerTypeID;
 extern YMTypeID _YMStringTypeID;
 extern YMTypeID _YMTaskTypeID;
 extern YMTypeID _YMArrayTypeID;
+extern YMTypeID _YMCompressionTypeID;
 
 typedef bool (*ym_read_func)(int,const uint8_t*,size_t);
 typedef bool (*ym_write_func)(int,const uint8_t*,size_t);

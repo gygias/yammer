@@ -44,6 +44,8 @@
 // *                  RFC 1035 doesn't allow a TXT record to contain *zero* strings, so a single empty
 // *                  string is the smallest legal DNS TXT record.
 
+#define ymlog_pre "mdns%s"
+#define ymlog_args ": "
 #define ymlog_type YMLogmDNS
 #include "YMLog.h"
 
@@ -106,7 +108,7 @@ void _YMmDNSServiceRecordSetTxtRecord(YMmDNSServiceRecord *record, const unsigne
     if ( txtRecord && txtLength > 1 ) {
         txtList = _YMmDNSTxtKeyPairsCreate(txtRecord, txtLength, &txtSize);
         if ( ! txtList ) {
-            ymerr("mdns[&]: failed to parse txt record for '%s:%s'",YMSTR(record->type),YMSTR(record->name));
+            ymerr("parsing txt record for '%s:%s'",YMSTR(record->type),YMSTR(record->name));
             return;
         }
     }
@@ -117,7 +119,7 @@ void _YMmDNSServiceRecordSetTxtRecord(YMmDNSServiceRecord *record, const unsigne
     record->txtRecordKeyPairsSize = txtSize;
     record->txtRecordKeyPairs = txtList;
     
-    ymerr("mdns[&]: updated txt record of '%s:%s' to n%zu",YMSTR(record->type),YMSTR(record->name),txtSize);
+    ymerr("updated txt record of '%s:%s' to n%zu",YMSTR(record->type),YMSTR(record->name),txtSize);
 }
 
 void _YMmDNSServiceRecordAppendSockaddr(YMmDNSServiceRecord *record, const void *mdnsPortlessSockaddr_)
@@ -214,7 +216,7 @@ YMmDNSTxtRecordKeyPair **_YMmDNSTxtKeyPairsCreate(const unsigned char *txtRecord
         aKeyPair->valueLen = (uint8_t)valueLength;
         keyPairList[listSize] = aKeyPair;
         
-        ymlog("mdns: parsed [%zd][%zu] <- [%zu]'%s'",listSize,valueLength,keyLength,keyBuf);
+        ymlog("parsed [%zd][%zu] <- [%zu]'%s'",listSize,valueLength,keyLength,keyBuf);
         
         listSize++;
         
@@ -228,7 +230,7 @@ YMmDNSTxtRecordKeyPair **_YMmDNSTxtKeyPairsCreate(const unsigned char *txtRecord
     if ( outSize )
         *outSize = listSize;
     
-    ymlog("mdns: created list size %zd from blob length %u",listSize,txtLength);
+    ymlog("created list size %zd from blob length %u",listSize,txtLength);
     
     return keyPairList;
 }
@@ -256,19 +258,19 @@ unsigned char  *_YMmDNSTxtBlobCreate(YMmDNSTxtRecordKeyPair **keyPairList, uint1
     for( size_t i = 0; i < listSize; i++ ) {
         size_t keyLen = YMStringGetLength(keyPairList[i]->key);
         if ( keyLen > keyValueLenMax ) {
-            ymerr("mdns: key is too long for txt record (%zd)",keyLen);
+            ymerr("key is too long for txt record (%zd)",keyLen);
             return NULL;
         }
         
         uint8_t valueLen = keyPairList[i]->valueLen;
         if ( keyLen + valueLen > keyValueLenMax ) {
-            ymerr("mdns: key+value are too long for txt record (%zd+%u)",keyLen,valueLen);
+            ymerr("key+value are too long for txt record (%zd+%u)",keyLen,valueLen);
             return NULL;
         }
         
         uint16_t aBlobSize = (uint8_t)keyLen + valueLen + 2;
         if ( ( blobSize + aBlobSize ) > UINT16_MAX ) {
-            ymerr("mdns: keyPairList exceeds uint16 max");
+            ymerr("keyPairList exceeds uint16 max");
             return NULL;
         }
         blobSize += aBlobSize;

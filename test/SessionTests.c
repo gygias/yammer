@@ -297,7 +297,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteLargeFile(YM_THREAD_PARAM ctx
     testassert(result==0, "rewind src: %d %s",error,errorStr);
     
     YMStringRef name = YMSTRCF("test-server-write-%s",ServerTestFile);
-    YMStreamRef stream = YMConnectionCreateStream(connection, name);
+    YMStreamRef stream = YMConnectionCreateStream(connection, name, YMCompressionNone);
     YMRelease(name);
     testassert(stream,"server create stream");
     
@@ -455,7 +455,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteSparseFiles(YM_THREAD_PARAM c
 		testassert(aSparseFd >= 0, "client file handle %s", fullPath);
         
         YMStringRef name = YMSTRCF("test-client-write-%s",aFile);
-        YMStreamRef stream = YMConnectionCreateStream(connection, name);
+        YMStreamRef stream = YMConnectionCreateStream(connection, name, YMCompressionNone);
         YMRelease(name);
         testassert(stream,"client stream %s",fullPath);
         
@@ -758,7 +758,7 @@ bool _ym_session_should_accept_func(YMSessionRef session, YMPeerRef peer, void *
 // connection
 void _ym_session_connected_func(YMSessionRef session, YMConnectionRef connection, void *context)
 {
-    ymlog("%s: s%p c%p",__FUNCTION__,session,connection);
+    ymlog("%s: s%p c%p",__FUNCTION__,(void*)session,(void*)connection);
     struct SessionTest *theTest = context;
     
     testassert(theTest,"connected context");

@@ -6,11 +6,11 @@ OUT=out
 LSRC=YMAddress.c YMBase.c YMConnection.c YMDictionary.c YMLinkedList.c YMLocalSocketPair.c YMLock.c YMLog.c YMmDNS.c \
 				 YMmDNSBrowser.c YMmDNSService.c YMPeer.c YMPipe.c YMPlexer.c YMRSAKeyPair.c YMSecurityProvider.c \
 				 YMSemaphore.c YMSession.c YMStream.c YMString.c YMThread.c YMTLSProvider.c YMUtilities.c \
-				 YMX509Certificate.c YMTask.c YMArray.c
+				 YMX509Certificate.c YMTask.c YMArray.c YMCompression.c
 LTGT=libyammer.a
 
 TSRC=CryptoTests.c DictionaryTests.c LocalSocketPairTests.c mDNSTests.c PlexerTests.c SessionTests.c Tests.c TLSTests.c \
-	TaskTests.c ThreadTests.c GrabBagTests.c
+	TaskTests.c ThreadTests.c GrabBagTests.c CompressionTests.c
 TOBJ=$(TSRC:%.c=%.o)
 TDEP=$(TOBJ:%.o=%.o)
 
@@ -26,7 +26,7 @@ ifeq ($(ARCH),macos)
     IEX=-I/opt/local/include
     LLEX=-arch x86_64 -dynamiclib -install_name /usr/local/lib/libyammer.dylib -single_module -compatibility_version 1 -current_version 1 \
             -L/opt/local/lib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk \
-	 -framework CoreFoundation -framework SystemConfiguration
+	 -framework CoreFoundation -framework SystemConfiguration -lbz2 -lz
 else
 	LSRC+= arc4random.c interface.c
 	DEFS=-DYMLINUX

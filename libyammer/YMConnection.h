@@ -29,7 +29,7 @@ YMInterfaceType YMAPI YMConnectionGetRemoteInterface(YMConnectionRef connection)
 int64_t YMAPI YMConnectionGetSample(YMConnectionRef connection);
 YMAddressRef YMAPI YMConnectionGetAddress(YMConnectionRef connection);
 
-YMStreamRef YMAPI YMConnectionCreateStream(YMConnectionRef connection, YMStringRef name);
+YMStreamRef YMAPI YMConnectionCreateStream(YMConnectionRef connection, YMStringRef name, YMCompressionType compression);
 void YMAPI YMConnectionCloseStream(YMConnectionRef connection, YMStreamRef stream);
     
 typedef void (*ym_connection_forward_callback)(YMConnectionRef, YMStreamRef, YMIOResult, uint64_t, void *);

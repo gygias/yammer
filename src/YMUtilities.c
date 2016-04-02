@@ -115,7 +115,7 @@ ComparisonResult YMTimevalCompare(struct timeval *a, struct timeval *b)
     return EqualTo;
 }
 
-YMIOResult YMReadFull(YMFILE fd, uint8_t *buffer, size_t bytes, size_t *outRead)
+YMIOResult YMReadFull(YMFILE fd, void *buffer, size_t bytes, size_t *outRead)
 {
     YM_IO_BOILERPLATE
     
@@ -145,7 +145,7 @@ YMIOResult YMReadFull(YMFILE fd, uint8_t *buffer, size_t bytes, size_t *outRead)
     return ioResult;
 }
 
-YMIOResult YMWriteFull(YMFILE fd, const uint8_t *buffer, size_t bytes, size_t *outWritten)
+YMIOResult YMWriteFull(YMFILE fd, const void *buffer, size_t bytes, size_t *outWritten)
 {
     YM_IO_BOILERPLATE
     
@@ -332,11 +332,11 @@ int YMGetNumberOfOpenFilesForCurrentProcess()
     return nFiles;
 }
 
-YMDictionaryRef YMCreateLocalInterfaceMap()
+YMDictionaryRef YMInterfaceMapCreateLocal()
 {
     YMDictionaryRef map = YMDictionaryCreate2(true,true);
     
-#if defined(YMAPPLE) || defined(YMLINUX) // on mac now, guessing about linux (edit: seemed to work out-of-box)
+#if defined(YMAPPLE) || defined(YMLINUX)
     struct ifaddrs *ifaddrsList = NULL, *ifaddrsIter;
     if ( getifaddrs(&ifaddrsList) != 0 ) {
         ymerr("getifaddrs failed: %d %s",errno,strerror(errno));
@@ -432,7 +432,7 @@ YMDictionaryRef YMCreateLocalInterfaceMap()
         YMStringRef ifName = (YMStringRef)denum->key;
         YMDictionaryRef ifInfo = denum->value;
         YMInterfaceType thisType = (YMInterfaceType)YMDictionaryGetItem(ifInfo, kYMIFMapTypeKey);
-        ymlogi(" %s (%s) (%p,%p):",YMSTR(ifName),YMInterfaceTypeDescription(thisType),ifName,ifInfo);
+        ymlogi(" %s (%s):",YMSTR(ifName),YMInterfaceTypeDescription(thisType));
         YMArrayRef addresses = YMDictionaryGetItem(ifInfo, kYMIFMapAddressesKey);
         if ( addresses ) {
             for ( int i = 0; i < YMArrayGetCount(addresses); i++ ) {

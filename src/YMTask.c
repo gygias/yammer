@@ -17,6 +17,8 @@
 # define pid_t int32_t
 #endif
 
+#define ymlog_pre "task[%s]: "
+#define ymlog_args YMSTR(task->path)
 #define ymlog_type YMLogDefault
 #include "YMLog.h"
 
@@ -100,7 +102,7 @@ bool YMTaskLaunch(YMTaskRef task_)
     
     if ( task->save ) {
         task->outputPipe = YMPipeCreate(NULL);
-        ymlog("task[%s]: output pipe %d -> %d",YMSTR(task->path),YMPipeGetInputFile(task->outputPipe),YMPipeGetOutputFile(task->outputPipe));
+        ymlog("output pipe %d -> %d",YMPipeGetInputFile(task->outputPipe),YMPipeGetOutputFile(task->outputPipe));
         task->outputThread = YMThreadCreate(task->path, __ym_task_read_output_proc, (void *)YMRetain(task));
     }
 
@@ -121,22 +123,22 @@ bool YMTaskLaunch(YMTaskRef task_)
         argv[0] = YMSTR(task->path);
         argv[argvSize - 1] = NULL;
         
-        fprintf(stderr,"task[%s]: %s",YMSTR(task->path),argv[0]);
+        ymlogi("%s",argv[0]);
         for(int64_t i = 0; i < nArgs; i++) {
             argv[i + 1] = YMArrayGet(task->args, i);
-            fprintf(stderr," %s",argv[i + 1]);
+            ymlogi(" %s",argv[i + 1]);
         }
-        fprintf(stderr,"\n");
+        ymlogr();
 
         if ( task->save ) {
             int pipeIn = YMPipeGetInputFile(task->outputPipe);
             result = dup2(pipeIn, STDOUT_FILENO);
-            if ( result == -1 ) { fprintf(stderr,"task[%s]: dup2(%d<-%d) failed: %d %s",YMSTR(task->path),pipeIn,STDOUT_FILENO,errno,strerror(errno)); abort(); }
+            if ( result == -1 ) { ymerr("dup2(%d<-%d): %d %s",pipeIn,STDOUT_FILENO,errno,strerror(errno)); abort(); }
             YMRelease(task->outputPipe); // closes in and out
         }
 
         execv(argv[0], (char * const *)argv);
-        fprintf(stderr,"task[%s]: execv failed: %d %s",YMSTR(task->path),errno,strerror(errno));
+        ymerr("execv: %d %s",errno,strerror(errno));
         exit(EXIT_FAILURE);
     }
     _YMLogUnlock();
@@ -192,7 +194,7 @@ bool YMTaskLaunch(YMTaskRef task_)
 	if (task->save)
 		YMThreadStart(task->outputThread);
 
-	ymlog("task[%s]: forked: p%d", YMSTR(task->path), task->childPid);
+	ymlog("forked: p%d", task->childPid);
 
 	return okay;
 }
@@ -200,7 +202,7 @@ bool YMTaskLaunch(YMTaskRef task_)
 void YMTaskWait(YMTaskRef task_)
 {
     __YMTaskRef task = (__YMTaskRef)task_;
-    ymassert(task->childPid!=NULL_PID,"task[%s]: asked to wait on non-existant child",YMSTR(task->path));
+    ymassert(task->childPid!=NULL_PID,ymlog_pre "asked to wait on non-existant child",YMSTR(task->path));
 
 #if !defined(YMWIN32)
 
@@ -209,9 +211,9 @@ void YMTaskWait(YMTaskRef task_)
     do {
         result = waitpid(task->childPid, &stat_loc, 0);
     } while ( result != task->childPid );
-    ymerr("task[%s]: p%d exited%s with %d", YMSTR(task->path), task->childPid, WIFEXITED(result) ?
-                                                                                "" :
-                                                                                (WIFSIGNALED(result) ? " signaled," : " (*)"), stat_loc);
+    ymerr("p%d exited%s with %d", task->childPid, WIFEXITED(result) ?
+                                                        "" :
+                                                        (WIFSIGNALED(result) ? " signaled," : " (*)"), stat_loc);
     task->result = stat_loc;
 
 #else
@@ -221,12 +223,12 @@ void YMTaskWait(YMTaskRef task_)
 		DWORD exitCode = 0;
 		BOOL okay = GetExitCodeProcess(task->childHandle, &exitCode);
 		if ( okay ) {
-			ymerr("task[%s]: p%d exited with %d",YMSTR(task->path), task->childPid, exitCode);
+			ymerr("p%d exited with %d", task->childPid, exitCode);
 			task->result = exitCode;
 		} else
-			ymerr("task[%s]: GetExitCodeProcess(p%d) failed: %x",YMSTR(task->path),task->childPid,GetLastError());
+			ymerr("GetExitCodeProcess(p%d) failed: %x",task->childPid,GetLastError());
 	} else
-		ymerr("task[%s]: WaitForSingleObject(p%d) failed: %d %x",YMSTR(task->path),task->childPid,result,GetLastError());
+		ymerr("WaitForSingleObject(p%d) failed: %d %x",task->childPid,result,GetLastError());
 
 #endif
     
@@ -241,7 +243,7 @@ void YMTaskWait(YMTaskRef task_)
 int YMTaskGetExitStatus(YMTaskRef task_)
 {
     __YMTaskRef task = (__YMTaskRef)task_;
-    ymassert(task->exited,"task[%s]: hasn't exited",YMSTR(task->path));
+    ymassert(task->exited,ymlog_pre "hasn't exited",YMSTR(task->path));
     return task->result;
 }
 
@@ -254,6 +256,7 @@ unsigned char *YMTaskGetOutput(YMTaskRef task_, uint32_t *outLength)
     return task->output;
 }
 
+// printf: lazily avoid log chicken-and-egg
 void __ym_task_prepare_atfork() {
     fprintf(stderr,"__ym_task_prepare_atfork happened\n");
 }
@@ -270,7 +273,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_task_read_output_proc(YM_THREAD_PARA
 {
     __YMTaskRef task = ctx_;
     
-    ymlog("task[%s]: flush output started...",YMSTR(task->path));
+    ymlog("flush output started...");
     
     YM_IO_BOILERPLATE
     
@@ -289,13 +292,13 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_task_read_output_proc(YM_THREAD_PARA
         }
         YM_READ_FILE(outFd, task->output + outputOff, OUTPUT_BUF_INIT_SIZE);
         if ( aRead == -1 ) {
-            ymerr("task[%s]: error reading output: %d %s",YMSTR(task->path),error,errorStr);
+            ymerr("reading output: %d %s",error,errorStr);
             break;
         } else if ( aRead == 0 ) {
-            ymlog("task[%s]: finished reading output: %db",YMSTR(task->path),(int)outputOff);
+            ymlog("finished reading output: %db",(int)outputOff);
             break;
         } else {
-            ymdbg("task[%s]: flushed %d bytes...",YMSTR(task->path),(int)aRead);
+            ymdbg("flushed %d bytes...",(int)aRead);
             outputOff += aRead;
         }
     }
@@ -316,7 +319,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_task_read_output_proc(YM_THREAD_PARA
     YMRelease(task->outputPipe);
     task->outputPipe = NULL;
     
-    ymlog("task[%s]: flush output exiting",YMSTR(task->path));
+    ymlog("flush output exiting");
     
     YM_THREAD_END
 }

@@ -159,7 +159,7 @@ void _ym_session_connected_func(__unused YMSessionRef session,YMConnectionRef co
     printf("connected to %s\n", YMSTR(YMAddressGetDescription(YMConnectionGetAddress(connection))));
     
     if ( ! gIsServer ) {
-        YMStreamRef stream = YMConnectionCreateStream(connection, YMSTRC("outgoing"));
+        YMStreamRef stream = YMConnectionCreateStream(connection, YMSTRC("outgoing"), YMCompressionNone);
         YMStreamWriteDown(stream, "!", 1);
         thread(run_chat, stream);
         thread(print_incoming, stream);
