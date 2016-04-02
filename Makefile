@@ -10,7 +10,7 @@ LSRC=YMAddress.c YMBase.c YMConnection.c YMDictionary.c YMLinkedList.c YMLocalSo
 LTGT=libyammer.a
 
 TSRC=CryptoTests.c DictionaryTests.c LocalSocketPairTests.c mDNSTests.c PlexerTests.c SessionTests.c Tests.c TLSTests.c \
-	TaskTests.c ThreadTests.c GrabBagTests.c
+	TaskTests.c ThreadTests.c GrabBagTests.c CompressionTests.c
 TOBJ=$(TSRC:%.c=%.o)
 TDEP=$(TOBJ:%.o=%.o)
 

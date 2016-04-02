@@ -101,6 +101,7 @@ YMCompressionRef YMCompressionCreate(YMCompressionType type, YMFILE file, bool i
     compression->input = input;
     
     compression->gzfile = NULL;
+    compression->bzfile = NULL;
     
     return compression;
 }
@@ -196,9 +197,10 @@ YMIOResult YMGZRead(__YMCompressionRef c, uint8_t *b, size_t l, size_t *o)
     int result = gzread(c->gzfile, b, (unsigned)l);
     if ( o )
         *o = result;
-    if ( result == -1 )
+    if ( result == -1 ) {
+        ymerr("gzread: %d (%s)",errno,strerror(errno));
         return YMIOError;
-    else if ( result < (int)l )
+    } else if ( result < (int)l )
         return YMIOEOF;
     return YMIOSuccess;
 }
@@ -211,8 +213,10 @@ YMIOResult YMGZWrite(__YMCompressionRef c, const uint8_t *b, size_t l, size_t *o
     int result = gzwrite(c->gzfile, b, (unsigned)l);
     if ( o )
         *o = result;
-    if ( result <= 0 )
+    if ( result <= 0 ) {
+        ymerr("gzwrite: %d (%s)",errno,strerror(errno));
         return YMIOError;
+    }
     return YMIOSuccess;
 }
 
@@ -251,9 +255,10 @@ YMIOResult YMBZRead(__YMCompressionRef c, uint8_t *b, size_t l, size_t *o)
     int result = BZ2_bzread(c->bzfile, b, (int)l);
     if ( o )
         *o = result;
-    if ( result == -1 )
+    if ( result == -1 ) {
+        ymerr("bzread: %d (%s)",errno,strerror(errno));
         return YMIOError;
-    else if ( result < (int)l )
+    } else if ( result < (int)l )
         return YMIOEOF;
     return YMIOSuccess;
 }
@@ -266,8 +271,10 @@ YMIOResult YMBZWrite(__YMCompressionRef c, const uint8_t *b, size_t l, size_t *o
     int result = BZ2_bzwrite(c->bzfile, (void *)b, (int)l);
     if ( o )
         *o = result;
-    if ( result <= 0 )
+    if ( result <= 0 ) {
+        ymerr("bzwrite: %d (%s)",errno,strerror(errno));
         return YMIOError;
+    }
     return YMIOSuccess;
 }
 

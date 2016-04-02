@@ -15,6 +15,7 @@
 YM_EXTERN_C_PUSH
 
 #include "GrabBagTests.h"
+#include "CompressionTests.h"
 #include "TaskTests.h"
 #include "ThreadTests.h"
 #include "CryptoTests.h"
@@ -69,6 +70,9 @@ void RunAllTests()
     ymerr("------ misc tests start ------");
     GrabBagTestsRun(_ym_test_assert_func, NULL);
     ymerr("------ misc tests end ------");
+    ymerr("------ compression tests start ------");
+    CompressionTestsRun(_ym_test_assert_func, NULL);
+    ymerr("------ compression tests end ------");
     ymerr("------ task tests start ------");
     TaskTestsRun(_ym_test_assert_func, NULL);
     ymerr("------ task tests end ------");
