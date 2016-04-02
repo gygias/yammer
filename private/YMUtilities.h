@@ -37,8 +37,8 @@ ComparisonResult YMAPI YMTimevalCompare(struct timeval *a, struct timeval *b);
 void YMAPI YMGetTheBeginningOfPosixTimeForCurrentPlatform(struct timeval *time);
 void YMAPI YMGetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time);
 
-YMIOResult YMAPI YMReadFull(YMFILE fd, void *buffer, size_t bytes, size_t *outRead);
-YMIOResult YMAPI YMWriteFull(YMFILE fd, const void *buffer, size_t bytes, size_t *outWritten);
+YMIOResult YMAPI YMReadFull(YMFILE fd, uint8_t *buffer, size_t bytes, size_t *outRead);
+YMIOResult YMAPI YMWriteFull(YMFILE fd, const uint8_t *buffer, size_t bytes, size_t *outWritten);
 
 int YMAPI YMGetNumberOfOpenFilesForCurrentProcess();
 

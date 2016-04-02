@@ -320,20 +320,20 @@ bool __YMConnectionDoIFExchange(__YMConnectionRef connection, YMSOCKET socket, b
             
             // todo implemented localhost<->localhost does endianness matter streaming this?
             if ( mySockaddr->sa_family == AF_INET ) {
-                okay = YMWriteFull(socket,&((struct sockaddr_in *)mySockaddr)->sin_addr.s_addr, sizeof(in_addr_t), NULL);
+                okay = YMWriteFull(socket,(uint8_t *)&((struct sockaddr_in *)mySockaddr)->sin_addr.s_addr, sizeof(in_addr_t), NULL);
                 if ( ! okay ) { whyFailed = "write ipv4 addr"; goto catch_return; }
-                okay = YMWriteFull(socket,&((struct sockaddr_in *)mySockaddr)->sin_port, sizeof(in_port_t), NULL);
+                okay = YMWriteFull(socket,(uint8_t *)&((struct sockaddr_in *)mySockaddr)->sin_port, sizeof(in_port_t), NULL);
                 if ( ! okay ) { whyFailed = "write ipv6 port"; goto catch_return; }
             } else if ( mySockaddr->sa_family == AF_INET6 ) {
-                okay = YMWriteFull(socket,&((struct sockaddr_in6 *)mySockaddr)->sin6_addr,sizeof(struct in6_addr), NULL);
+                okay = YMWriteFull(socket,(uint8_t *)&((struct sockaddr_in6 *)mySockaddr)->sin6_addr,sizeof(struct in6_addr), NULL);
                 if ( ! okay ) { whyFailed = "write ipv6 addr"; goto catch_return; }
-                okay = YMWriteFull(socket,&((struct sockaddr_in6 *)mySockaddr)->sin6_port,sizeof(in_port_t), NULL);
+                okay = YMWriteFull(socket,(uint8_t *)&((struct sockaddr_in6 *)mySockaddr)->sin6_port,sizeof(in_port_t), NULL);
                 if ( ! okay ) { whyFailed = "write ipv6 port"; goto catch_return; }
             }
         }
         
         if ( (( i == 1 ) && asServer) || (( i == 0 ) && ! asServer) ) {
-            okay = YMReadFull(socket, &theirPrefix, sizeof(theirPrefix), NULL);
+            okay = YMReadFull(socket, (uint8_t *)&theirPrefix, sizeof(theirPrefix), NULL);
             if ( ! okay )  { whyFailed = "read prefix"; goto catch_return; }
             
             int32_t addrLen = 0;

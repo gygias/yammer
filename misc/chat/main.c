@@ -96,7 +96,7 @@ void run_chat(YMStreamRef stream)
 {
     char aChar;
     while ( ( aChar = (char)getc(stdin) ) != EOF ) {
-        YMStreamWriteDown(stream, &aChar, sizeof(aChar));
+        YMStreamWriteDown(stream, (uint8_t *)&aChar, sizeof(aChar));
    }
 }
 
@@ -104,7 +104,7 @@ void print_incoming(YMStreamRef stream)
 {
     char aChar;
     while ( true ) {
-        YMIOResult result = YMStreamReadUp(stream, &aChar, sizeof(aChar), NULL);
+        YMIOResult result = YMStreamReadUp(stream, (uint8_t *)&aChar, sizeof(aChar), NULL);
         if ( result != YMIOSuccess ) {
             printf("peer left\n");
             exit(1);
@@ -160,7 +160,7 @@ void _ym_session_connected_func(__unused YMSessionRef session,YMConnectionRef co
     
     if ( ! gIsServer ) {
         YMStreamRef stream = YMConnectionCreateStream(connection, YMSTRC("outgoing"), YMCompressionNone);
-        YMStreamWriteDown(stream, "!", 1);
+        YMStreamWriteDown(stream, (uint8_t *)"!", 1);
         thread(run_chat, stream);
         thread(print_incoming, stream);
     }
@@ -177,7 +177,7 @@ void _ym_session_new_stream_func(__unused YMSessionRef session, __unused YMConne
 {
     printf("stream arrived\n");
     char hello;
-    YMStreamReadUp(stream, &hello, 1, NULL);
+    YMStreamReadUp(stream, (uint8_t *)&hello, 1, NULL);
     if ( gIsServer ) {
         thread(run_chat, stream);
         thread(print_incoming, stream);
