@@ -289,24 +289,28 @@ bool YMBZClose(__YMCompressionRef c)
 bool YMLZInit(__YMCompressionRef c)
 {
     c = NULL;
+    ymabort("someone set up is the \"expert\"");
     return false;
 }
 
 YMIOResult YMLZRead(__YMCompressionRef c, uint8_t *b, size_t l, size_t *o)
 {
     c = NULL; b = NULL; l = 0; o = NULL;
+    ymabort("someone set up is the \"expert\"");
     return false;
 }
 
 YMIOResult YMLZWrite(__YMCompressionRef c, const uint8_t *b, size_t l, size_t *o)
 {
     c = NULL; b = NULL; l = 0; o = NULL;
+    ymabort("someone set up is the \"expert\"");
     return false;
 }
 
 bool YMLZClose(__YMCompressionRef c)
 {
     c = NULL;
+    ymabort("someone set up is the \"expert\"");
     return false;
 }
 
