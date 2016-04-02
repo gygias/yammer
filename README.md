@@ -1,6 +1,6 @@
 # yammer
 
-Yammer is a C library simplifying creation of secure, concurrent multi-stream connections over the local network. It also profiles available routes between hosts with multiple network interfaces, allowing the user to adopt a faster connection method should one become available after the initial connection is made.
+Yammer is a C library simplifying concurrent, multi-stream connections over the local network, with configurable encryption and per-stream compression. It also profiles available routes between hosts with multiple network interfaces, allowing the user to adopt a faster connection method should one become available after the initial connection is made, and seamlessly reconnects if a disconnection occurs.
 
 The library aims to be fully platform-agnostic, supporting Windows, OS X, iOS, Linux (and ostensibly Android, though I don't have access to one). VS2015 solution, Xcode project, makefile, Cocoa & .NET (work in progress) wrapper frameworks and fairly comprehensive test suite are included. It depends on OpenSSL and mDNSResponder, which are included on Apple and available for Linux & Windows platforms. 32-bit OpenSSL dlls for Windows, pre-built by me using Microsoft VC are included in the project source.
 
