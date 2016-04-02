@@ -162,7 +162,7 @@ YMIOResult YMStreamReadUp(YMStreamRef stream_, void *buffer, uint16_t length, ui
         iters++;
     } while ( (off < length) && result == YMIOSuccess );
     ymassert(off<=UINT16_MAX,"fatal: compression read %zu",off);
-    if(off!=length)ymerr("readup %u != %zu after %zu",length,off,iters);
+    
     if ( outLength )
         *outLength = (uint16_t)off;
     if ( result == YMIOError )
@@ -191,7 +191,6 @@ YMIOResult YMStreamWriteDown(YMStreamRef stream_, const void *buffer, uint16_t l
         iters++;
     } while ( (off < length) && result == YMIOSuccess );
     
-    if(off!=length)ymerr("writedown %u != %zu after %zu",length,off,iters);
     if ( result != YMIOSuccess ) {
         ymerr("failed writing stream chunk with size %ub",length);
         return result;

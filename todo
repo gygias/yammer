@@ -1,3 +1,4 @@
+- journaled streams
 - ensure over-the-wire enums are explicitly sized
 - YM_ONCE_DEF-like macro for generic thread/dispatch boilerplate
 - shared "dispatch queues"
