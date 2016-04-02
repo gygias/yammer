@@ -11,6 +11,7 @@
 #include "YMBase.h"
 #include "YMCompression.h"
 #include "YMPipe.h"
+#include "YMThread.h"
 
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -23,15 +24,21 @@ typedef struct CompressionTest
 {
     ym_test_assert_func assert;
     const void *context;
+    
+    YMCompressionRef writeC;
+    YMCompressionRef readC;
+    YMFILE sourceFd;
 } CompressionTest;
 
 void _GZTestRun(CompressionTest *);
 void _BZTestRun(CompressionTest *);
 void _CompressionTest(CompressionTest *theTest, const char *sourcePath, YMCompressionType type);
 
+YM_THREAD_RETURN YM_CALLING_CONVENTION compression_test_read_proc(YM_THREAD_PARAM);
+
 void CompressionTestsRun(ym_test_assert_func assert, const void *context)
 {
-    struct CompressionTest theTest = { assert, context };
+    struct CompressionTest theTest = { assert, context, NULL, NULL, NULL_FILE };
     
     _GZTestRun(&theTest);
     ymerr("_GZTestRun completed");
@@ -64,51 +71,65 @@ void _CompressionTest(CompressionTest *theTest, const char *sourcePath, YMCompre
     YM_IO_BOILERPLATE
     
     YM_OPEN_FILE(sourcePath, READ_FLAG);
-    YMFILE sourceFd = (YMFILE)result;
-    testassert(sourceFd>=0,"open %s",sourcePath);
+    theTest->sourceFd = (YMFILE)result;
+    testassert(theTest->sourceFd>=0,"open %s",sourcePath);
     
     YMPipeRef pipe = YMPipeCreate(NULL);
     testassert(pipe,"pipe");
     
-    YMCompressionRef writeC = YMCompressionCreate(type, YMPipeGetInputFile(pipe), true);
-    bool okay = YMCompressionInit(writeC);
+    theTest->writeC = YMCompressionCreate(type, YMPipeGetInputFile(pipe), true);
+    bool okay = YMCompressionInit(theTest->writeC);
     testassert(okay,"write init");
-    YMCompressionRef readC = YMCompressionCreate(type, YMPipeGetOutputFile(pipe), false);
-    okay = YMCompressionInit(readC);
+    theTest->readC = YMCompressionCreate(type, YMPipeGetOutputFile(pipe), false);
+    okay = YMCompressionInit(theTest->readC);
     testassert(okay,"read init");
     
-#define by 128
-    uint8_t buf[by], outBuf[by];
-    bool eof = false;
     
+    YMThreadRef readThread = YMThreadCreate(NULL, compression_test_read_proc, theTest);
+    YMThreadStart(readThread);
+    
+#define by 128
+    uint8_t outBuf[by];
+    YMIOResult ymResult;
     do {
-        YM_READ_FILE(sourceFd,buf,by);
+        
+        size_t o = SIZE_T_MAX;
+        ymResult = YMCompressionRead(theTest->readC, outBuf, by, &o);
+        testassert(((ymResult==YMIOSuccess)&&(ssize_t)o==by)||ymResult==YMIOEOF,"read");
+        // todo factor low level FS stuff into library and diff this.
+    } while (ymResult!=YMIOEOF);
+    
+    YMThreadJoin(readThread);
+    YMRelease(readThread);
+    
+    YMRelease(theTest->writeC);
+    YMRelease(theTest->readC);
+    YMRelease(pipe);
+    YM_CLOSE_FILE(theTest->sourceFd);
+}
+
+YM_THREAD_RETURN YM_CALLING_CONVENTION compression_test_read_proc(YM_THREAD_PARAM ctx)
+{
+    YM_IO_BOILERPLATE
+    
+    uint8_t buf[by];
+    CompressionTest *theTest = ctx;
+    while(true) {
+        YM_READ_FILE(theTest->sourceFd,buf,by);
         testassert(aRead>=0,"read source");
         if ( aRead == 0 ) {
-            okay = YMCompressionClose(writeC);
+            bool okay = YMCompressionClose(theTest->writeC);
             testassert(okay,"write close");
-            eof = true;
+            break;
         }
         
         size_t o = SIZE_T_MAX;
-        YMIOResult ymResult = YMCompressionWrite(writeC, buf, aRead, &o);
+        YMIOResult ymResult = YMCompressionWrite(theTest->writeC, buf, aRead, &o);
         testassert(ymResult==YMIOSuccess,"write");
         testassert((ssize_t)o==aRead,"o!=aRead");
-        
-        o = SIZE_T_MAX;
-        ymResult = YMCompressionRead(readC, outBuf, aRead, &o);
-        testassert(ymResult==YMIOSuccess||(eof&&ymResult==YMIOEOF),"read");
-        testassert((ssize_t)o==aRead,"o!=aRead");
-        
-        int compare = memcmp(buf, outBuf, aRead);
-        testassert(compare==0,"compare");
-        
-    } while (!eof);
+    }
     
-    YMRelease(writeC);
-    YMRelease(readC);    
-    YMRelease(pipe);
-    YM_CLOSE_FILE(sourceFd);
+    YM_THREAD_END
 }
 
 YM_EXTERN_C_POP
