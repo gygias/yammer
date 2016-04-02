@@ -45,6 +45,7 @@ typedef struct _ym_stream_user_info_t *ym_stream_user_info_ref;
 typedef void (*_ym_stream_free_user_info_func)(YMStreamRef);
 
 YMStreamRef YMAPI _YMStreamCreate(YMStringRef name, ym_stream_user_info_ref userInfo, _ym_stream_free_user_info_func callback);
+bool YMAPI _YMStreamSetCompression(YMStreamRef stream, YMCompressionType compression);
 typedef void (*_ym_stream_data_available_func)(YMStreamRef,uint32_t,void *);
 void YMAPI _YMStreamSetDataAvailableCallback(YMStreamRef stream, _ym_stream_data_available_func, void *ctx);
 

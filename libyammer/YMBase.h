@@ -106,6 +106,13 @@ typedef enum
     YMInterfaceThunderbolt = 500
 } YMInterfaceType;
 
+typedef enum YMCompressionType {
+    YMCompressionNone = 0,
+    YMCompressionGZ,
+    YMCompressionBZ2,
+    YMCompressionLZ
+} YMCompressionType;
+
 void YMAPI YMFreeGlobalResources();
 
 YM_EXTERN_C_POP

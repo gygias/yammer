@@ -333,7 +333,7 @@ catch_fail:
     return okay;
 }
 
-YMStreamRef YMPlexerCreateStream(YMPlexerRef plexer_, YMStringRef name)
+YMStreamRef YMAPI YMPlexerCreateStream(YMPlexerRef plexer_, YMStringRef name)
 {
     __YMPlexerRef plexer = (__YMPlexerRef)plexer_;
     

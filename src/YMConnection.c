@@ -15,6 +15,8 @@
 #include "YMUtilities.h"
 #include "YMThread.h"
 
+#include "YMStreamPriv.h"
+
 #define ymlog_type YMLogConnection
 #define ymlog_pre "connection[%s]: "
 #define ymlog_args (connection->address ? YMSTR(YMAddressGetDescription(connection->address)) : "*")
@@ -611,14 +613,20 @@ YMAddressRef YMConnectionGetAddress(YMConnectionRef connection_)
     return connection->address;
 }
 
-YMStreamRef YMConnectionCreateStream(YMConnectionRef connection_, YMStringRef name)
+YMStreamRef YMAPI YMConnectionCreateStream(YMConnectionRef connection_, YMStringRef name, YMCompressionType compression)
 {
     __YMConnectionRef connection = (__YMConnectionRef)connection_;
     
     if ( NOT_CONNECTED )
         return NULL;
     
-    return YMPlexerCreateStream(connection->plexer, name);
+    YMStreamRef stream = YMPlexerCreateStream(connection->plexer, name);
+    bool compressionOK = _YMStreamSetCompression(stream,compression);
+    if ( ! compressionOK ) {
+        ymerr("initializing compression for stream %s",YMSTR(name));
+    }
+    
+    return stream;
 }
 
 void YMConnectionCloseStream(YMConnectionRef connection_, YMStreamRef stream)

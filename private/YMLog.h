@@ -63,7 +63,8 @@ typedef enum
     YMLogThreadSync = YMLogPlexer << 1,
     YMLogStream = YMLogThreadSync << 1,
     YMLogCombined4 = YMLogStream,
-    YMLogIO = YMLogStream << 1,
+    YMLogCompression = YMLogCombined4 << 1,
+    YMLogIO = YMLogCompression << 1,
     YMLogCombined5 = YMLogIO,
     YMLogEverything = 0xFFFF
 } YMLogLevel;

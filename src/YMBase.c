@@ -22,6 +22,7 @@ YMTypeID _YMAddressTypeID = 'a';
 YMTypeID _YMArrayTypeID = 'A';
 YMTypeID _YMmDNSBrowserTypeID = 'b';
 YMTypeID _YMConnectionTypeID = 'c';
+YMTypeID _YMCompressionTypeID = 'C';
 YMTypeID _YMTaskTypeID = 'f';
 YMTypeID _YMPipeTypeID = 'i';
 YMTypeID _YMLockTypeID = 'k';
@@ -63,6 +64,7 @@ extern void _YMPeerFree(YMTypeRef);
 extern void _YMStringFree(YMTypeRef);
 extern void _YMTaskFree(YMTypeRef);
 extern void _YMArrayFree(YMTypeRef);
+extern void _YMCompressionFree(YMTypeRef);
 
 typedef struct __ym_type
 {
@@ -131,7 +133,7 @@ YM_RELEASE_RETURN_TYPE YMRelease(YMTypeRef object_)
     
     if ( dealloc ) {
         __YMFree(object);
-        YMDestroyMutex(object->__mutex); // todo CRASH 2
+        YMDestroyMutex(object->__mutex);
         free(object);
     }
     
@@ -187,6 +189,8 @@ void __YMFree(__YMTypeRef object)
         _YMTaskFree(object);
     else if ( type == _YMArrayTypeID )
         _YMArrayFree(object);
+    else if ( type == _YMCompressionTypeID )
+        _YMCompressionFree(object);
     else
         ymabort("base: fatal: free type unknown %c",type);
 }

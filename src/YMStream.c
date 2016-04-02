@@ -12,6 +12,7 @@
 #include "YMPipe.h"
 #include "YMPipePriv.h"
 #include "YMLock.h"
+#include "YMCompression.h"
 
 #include "YMUtilities.h"
 #include "YMSemaphore.h"
@@ -48,6 +49,9 @@ typedef struct __ym_stream_t
     bool downstreamWriteClosed;
     bool downstreamReadClosed;
     YMStringRef name;
+    
+    YMCompressionRef downCompression;
+    YMCompressionRef upCompression;
     
     _ym_stream_data_available_func dataAvailableFunc;
     void *dataAvailableContext;
@@ -86,6 +90,9 @@ YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_ref userInfo, 
     stream->userInfo = userInfo;
     stream->freeUserInfoFunc = callback;
     
+    stream->downCompression = YMCompressionCreate(YMCompressionNone,YMPipeGetInputFile(stream->downstreamPipe));
+    stream->upCompression = YMCompressionCreate(YMCompressionNone,YMPipeGetOutputFile(stream->upstreamPipe));
+    
     LOG_STREAM_LIFECYCLE(true);
     
     return (YMStreamRef)stream;
@@ -110,6 +117,28 @@ void _YMStreamFree(YMTypeRef object)
     YMRelease(stream->downstreamPipe);
     YMRelease(stream->upstreamPipe);
     YMRelease(stream->name);
+    YMRelease(stream->downCompression);
+    YMRelease(stream->upCompression);
+}
+
+bool _YMStreamSetCompression(YMStreamRef stream_, YMCompressionType type)
+{
+    __YMStreamRef stream = (__YMStreamRef)stream_;
+    
+    YMCompressionRef downCompression = YMCompressionCreate(type,YMPipeGetInputFile(stream->downstreamPipe));
+    bool okay = YMCompressionInit(downCompression);
+    
+    if ( okay ) {
+        YMCompressionRef upCompression = YMCompressionCreate(type,YMPipeGetOutputFile(stream->upstreamPipe));
+        okay = YMCompressionInit(upCompression);
+        if ( okay ) {
+            YMRelease(stream->downCompression); // nocompression on create
+            stream->downCompression = downCompression;
+            YMRelease(stream->upCompression);
+            stream->upCompression = upCompression;
+        }
+    }
+    return okay;
 }
 
 // because user data is opaque (even to user), this should expose eof
