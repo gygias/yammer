@@ -177,7 +177,11 @@ YMIOResult YMNoCompressionWrite(__YMCompressionRef c, const uint8_t *b, size_t l
 
 bool YMNoCompressionClose(__unused __YMCompressionRef c)
 {
-    return true;
+  int result = 0;
+#if defined(YMLINUX)
+  result = close(c->file);
+#endif
+  return ( result == 0 );
 }
 
 #if defined(YMAPPLE)
