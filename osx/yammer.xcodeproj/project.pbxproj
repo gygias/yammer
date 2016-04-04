@@ -168,6 +168,20 @@
 			remoteGlobalIDString = 631916301BFCFF13001475FC;
 			remoteInfo = Yammer;
 		};
+		63500B241CB2D950009E5514 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 63225D3A1BE9026200C28F05 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 636166E61C18DFA300D17172;
+			remoteInfo = "ym-dispatch-main-test";
+		};
+		63500B261CB2D95A009E5514 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 63225D3A1BE9026200C28F05 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 636166E61C18DFA300D17172;
+			remoteInfo = "ym-dispatch-main-test";
+		};
 		636166EF1C18DFBB00D17172 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 63225D3A1BE9026200C28F05 /* Project object */;
@@ -779,6 +793,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				63500B251CB2D950009E5514 /* PBXTargetDependency */,
 				630A5D071BE96CE9003292EE /* PBXTargetDependency */,
 			);
 			name = YammerTests;
@@ -816,6 +831,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				63500B271CB2D95A009E5514 /* PBXTargetDependency */,
 				631F0D431C151BB400C141D4 /* PBXTargetDependency */,
 			);
 			name = ymtest;
@@ -1180,6 +1196,16 @@
 			isa = PBXTargetDependency;
 			target = 631916301BFCFF13001475FC /* Yammer */;
 			targetProxy = 6329D3321C9F685A0087988D /* PBXContainerItemProxy */;
+		};
+		63500B251CB2D950009E5514 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 636166E61C18DFA300D17172 /* ym-dispatch-main-test */;
+			targetProxy = 63500B241CB2D950009E5514 /* PBXContainerItemProxy */;
+		};
+		63500B271CB2D95A009E5514 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 636166E61C18DFA300D17172 /* ym-dispatch-main-test */;
+			targetProxy = 63500B261CB2D95A009E5514 /* PBXContainerItemProxy */;
 		};
 		636166F01C18DFBB00D17172 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
