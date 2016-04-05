@@ -27,7 +27,7 @@
 # include <pthread.h>
 #endif
 
-#define ymlog_pre "tls[%d]"
+#define ymlog_pre "tls[%d]: "
 #define ymlog_args tls->isServer
 #define ymlog_type YMLogSecurity
 #include "YMLog.h"

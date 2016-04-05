@@ -54,6 +54,9 @@ YMDictionaryRef YMAPI YMInterfaceMapCreateLocal();
 YMInterfaceType YMAPI YMInterfaceTypeForName(YMStringRef ifName);
 const char YMAPI * YMInterfaceTypeDescription(YMInterfaceType type);
 
+// filesystem stuff
+bool YMAPI YMRecursiveDelete(YMStringRef path);
+
 // in utilities for YMAlloc
 #include "YMLock.h"
 

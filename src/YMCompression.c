@@ -85,11 +85,14 @@ YMCompressionRef YMCompressionCreate(YMCompressionType type, YMFILE file, bool i
             compression->closeFunc = YMBZClose;
             break;
         case YMCompressionLZ:
+            if ( true || false ) goto lz_not_implemented;
             compression->initFunc = YMLZInit;
             compression->readFunc = YMLZRead;
             compression->writeFunc = YMLZWrite;
             compression->closeFunc = YMLZClose;
             break;
+        lz_not_implemented:
+            ymerr("lzma is not implemented, will not use compression");
 #endif
         default:
             compression->initFunc = YMNoCompressionInit;

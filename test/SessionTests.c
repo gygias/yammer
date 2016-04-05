@@ -8,17 +8,20 @@
 
 #include "SessionTests.h"
 
-#include <fcntl.h>
-
+#include "YMBase.h"
 #include "YMSession.h"
 #include "YMThread.h"
 #include "YMStreamPriv.h" // todo need an 'internal' header
 #include "YMPipe.h"
 #include "YMPipePriv.h"
 #include "YMSemaphore.h"
+#include "YMUtilities.h"
 
-#ifdef YMWIN32
-#include "dirent.h"
+#include <fcntl.h>
+#if defined(YMWIN32)
+# include "windirent.h"
+#else
+# include <dirent.h>
 #endif
 
 YM_EXTERN_C_PUSH
@@ -28,25 +31,25 @@ uint64_t gSomeLength = 5678900;
 
 #ifndef YMWIN32
 # if defined(YMAPPLE)
-# define ServerTestFile		"install.log"
-# define ServerTestPath		"/private/var/log/" ServerTestFile
+#  define ServerTestFile		"install.log"
+#  define ServerTestPath		"/private/var/log/" ServerTestFile
 # else
-# define ServerTestFile          "syslog"
-# define ServerTestPath          "/var/log/" ServerTestFile
+#  define ServerTestFile          "syslog"
+#  define ServerTestPath          "/var/log/" ServerTestFile
 # endif
-#define ClientSparsePath	"/usr/share/man/man2"
-#define OutSparseDir		"/tmp/ymsessiontest-sparse"
-#define LargeSrcTemplate	"/tmp/ymsessiontest-%s-orig"
-#define LargeDestTemplate	"/tmp/ymsessiontest-%s-dest"
+# define ClientSparsePath	"/usr/share/man/man2"
+# define OutSparseDir		"/tmp/ymsessiontest-sparse"
+# define LargeSrcTemplate	"/tmp/ymsessiontest-%s-orig"
+# define LargeDestTemplate	"/tmp/ymsessiontest-%s-dest"
 #else
-#include <tchar.h> // gonna have to deal with this shit eventually
-#define ServerTestFile		L"WindowsUpdate.txt"
-#define ServerTestPath		L"c:\\Windows\\WindowsUpdate.log"
-#define ClientSparsePath	"c:\\Windows\\inf"
-#define ClientSparsePathW	L"c:\\Windows\\inf"
-#define OutSparseDir		"ymsessiontest-inf"
-#define LargeSrcTemplate	"ymsessiontest-%s-orig"
-#define LargeDestTemplate	"ymsessiontest-%s-dest"
+# include <tchar.h> // gonna have to deal with this shit eventually
+# define ServerTestFile		L"WindowsUpdate.txt"
+# define ServerTestPath		L"c:\\Windows\\WindowsUpdate.log"
+# define ClientSparsePath	"c:\\Windows\\inf"
+# define ClientSparsePathW	L"c:\\Windows\\inf"
+# define OutSparseDir		"ymsessiontest-inf"
+# define LargeSrcTemplate	"ymsessiontest-%s-orig"
+# define LargeDestTemplate	"ymsessiontest-%s-dest"
 #endif
 
 struct SessionTest
@@ -380,30 +383,8 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteSparseFiles(YM_THREAD_PARAM c
 	int result, error = 0;
 	const char *errorStr = NULL;
     
-    DIR *dir = opendir(YMSTR(theTest->tempSparseDir));
-    struct dirent *dir_ent = NULL;
-    if ( dir ) {
-        for ( int i = 0 ; ; i++ ) {
-            dir_ent = readdir(dir);
-            if ( ! dir_ent )
-                break;
-            if ( dir_ent->d_type != DT_REG )
-                continue;
-            
-            char *aFile = dir_ent->d_name;
-            char fullPath[PATH_MAX];
-            strcpy(fullPath, YMSTR(theTest->tempSparseDir));
-            strcat(fullPath, "/");
-            strcat(fullPath, aFile);
-            
-            result = unlink(fullPath);
-            testassert(result==0,"delete %s %d %s",fullPath,errno,strerror(errno));
-        }
-        closedir(dir);
-    }
-    
-    result = rmdir(YMSTR(theTest->tempSparseDir));
-    testassert(result==0||errno==ENOENT, "rmdir failed %d %s",errno,strerror(errno));
+    bool okay = YMRecursiveDelete(theTest->tempSparseDir);
+    testassert(okay,"delete temp sparse failed");
 
 #ifdef YMWIN32
     for ( int i = 0; i < 5; i++ ) {
@@ -418,11 +399,11 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteSparseFiles(YM_THREAD_PARAM c
     testassert(result==0, "mkdir failed %d %s",errno,strerror(errno));
     
     uint64_t actuallyWritten = 0;
-    dir = opendir(ClientSparsePath);
+    DIR *dir = opendir(ClientSparsePath);
     testassert(dir, "opendir");
     
     for ( int i = 0 ; ; i++ ) {
-        dir_ent = readdir(dir);
+        struct dirent *dir_ent = readdir(dir);
         if ( ! dir_ent )
             break;
         
@@ -482,7 +463,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteSparseFiles(YM_THREAD_PARAM c
         }
         
         ymlog("writing sparse file '%s' %sbounded, %ssync from f%d",aFile,theTest->lastClientBounded?"":"un",theTest->lastClientAsync?"a":"",aSparseFd);
-        bool okay = YMConnectionForwardFile(connection, aSparseFd, stream, theTest->lastClientBounded ? &theTest->lastClientFileSize : NULL, !theTest->lastClientAsync, ctx);
+        okay = YMConnectionForwardFile(connection, aSparseFd, stream, theTest->lastClientBounded ? &theTest->lastClientFileSize : NULL, !theTest->lastClientAsync, ctx);
         testassert(okay,"forwardfile failed");
         
         struct SparseFileThanks thx;

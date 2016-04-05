@@ -24,6 +24,7 @@
 # include <sys/types.h>
 # include <sys/socket.h>
 # include <ifaddrs.h>
+# include <dirent.h>
 # if defined(YMLINUX)
 #  include <sys/resource.h>
 #  include <signal.h>
@@ -53,6 +54,7 @@
 # include <Winternl.h> // NtQuery
 # include <Processthreadsapi.h> // GetCurrentProcessId
 # include <VersionHelpers.h> // IsWindows*
+# include "dirent.h"
 #endif
 
 YM_EXTERN_C_PUSH
@@ -574,6 +576,44 @@ const char *YMInterfaceTypeDescription(YMInterfaceType type)
 			return "unknown";
 			break;
     }
+}
+
+bool YMRecursiveDelete(YMStringRef rootPath)
+{
+    bool okay = true;
+    int result;
+    DIR *dir = opendir(YMSTR(rootPath));
+    struct dirent *dir_ent = NULL;
+    if ( dir ) {
+        for ( int i = 0 ; ; i++ ) {
+            dir_ent = readdir(dir);
+            if ( ! dir_ent )
+                break;
+            if ( dir_ent->d_type != DT_REG )
+                continue;
+            
+            char *aFile = dir_ent->d_name;
+            char fullPath[PATH_MAX];
+            strcpy(fullPath, YMSTR(rootPath));
+            strcat(fullPath, "/");
+            strcat(fullPath, aFile);
+            
+            result = unlink(fullPath);
+            if ( result != 0 ) {
+                ymerr("delete %s %d %s",fullPath,errno,strerror(errno));
+                okay = false;
+            }
+        }
+        closedir(dir);
+    }
+    
+    result = rmdir(YMSTR(rootPath));
+    if ( result != 0 && errno != ENOENT ) {
+        ymerr("rmdir failed %d %s",errno,strerror(errno));
+        okay = false;
+    }
+    
+    return okay;
 }
 
 #if !defined(YMWIN32)

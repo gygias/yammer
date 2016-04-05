@@ -14,7 +14,7 @@
 #include <stdint.h>
 #include <limits.h>
 #ifndef YMWIN32
-#include <unistd.h>
+# include <unistd.h>
 #endif
 #include <stdlib.h>
 #include <stdarg.h>
@@ -22,7 +22,7 @@
 #include <time.h>
 #include <sys/stat.h>
 #ifndef YMWIN32
-#include <dirent.h>
+# include <dirent.h>
 #endif
 #include <errno.h>
 
