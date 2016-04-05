@@ -50,7 +50,7 @@
         *outData = nil;
     
     uint16_t bufLen = 16384;
-    uint8 *buf = malloc(bufLen);
+    uint8_t *buf = malloc(bufLen);
     while ( idx < length ) {
         uint16_t outLen = 0;
         NSUInteger remaining = ( length - idx );
@@ -64,7 +64,7 @@
                 break;
             }
         } else {
-            NSLog(@"%s: read %zu-%zu failed with %d",__PRETTY_FUNCTION__,idx,idx+bufLen,result);
+            NSLog(@"%s: read %u-%u failed with %d",__PRETTY_FUNCTION__,(unsigned long)idx,(unsigned long)(idx+bufLen),result);
             goto catch_return;
         }
         
@@ -84,9 +84,9 @@ catch_return:
     while ( idx < [data length] ) {
         NSUInteger remaining = [data length] - idx;
         uint16_t aLength = remaining < UINT16_MAX ? (uint16_t)remaining : UINT16_MAX;
-        YMIOResult result = YMStreamWriteDown(self.streamRef, (uint8 *)[data bytes] + idx, aLength);
+        YMIOResult result = YMStreamWriteDown(self.streamRef, (uint8_t *)[data bytes] + idx, aLength);
         if ( result != YMIOSuccess ) {
-            NSLog(@"%s: write %zu-%zu failed with %d",__PRETTY_FUNCTION__,idx,idx + aLength,result);
+            NSLog(@"%s: write %u-%u failed with %d",__PRETTY_FUNCTION__,(unsigned long)idx,(unsigned long)(idx + aLength),result);
             return NO;
         }
         

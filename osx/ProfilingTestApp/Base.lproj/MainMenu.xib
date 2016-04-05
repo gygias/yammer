@@ -842,14 +842,14 @@
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                         <connections>
-                            <binding destination="Voe-Tx-rLC" name="hidden" keyPath="self.connectionState" id="q4t-Pz-gBr">
-                                <dictionary key="options">
-                                    <string key="NSValueTransformerName">NSNegateBoolean</string>
-                                </dictionary>
-                            </binding>
                             <binding destination="Voe-Tx-rLC" name="value" keyPath="self.connectionState" id="cPf-mw-82T">
                                 <dictionary key="options">
                                     <string key="NSValueTransformerName">StateTransformer</string>
+                                </dictionary>
+                            </binding>
+                            <binding destination="Voe-Tx-rLC" name="hidden" keyPath="self.connectionState" id="q4t-Pz-gBr">
+                                <dictionary key="options">
+                                    <string key="NSValueTransformerName">NSNegateBoolean</string>
                                 </dictionary>
                             </binding>
                         </connections>

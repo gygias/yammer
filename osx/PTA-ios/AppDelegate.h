@@ -1,0 +1,17 @@
+//
+//  AppDelegate.h
+//  PTA-ios
+//
+//  Created by david on 4/4/16.
+//  Copyright © 2016 combobulated. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+@interface AppDelegate : UIResponder <UIApplicationDelegate>
+
+@property (strong, nonatomic) UIWindow *window;
+
+
+@end
+

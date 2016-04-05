@@ -9,6 +9,11 @@
 			<key>orderHint</key>
 			<integer>3</integer>
 		</dict>
+		<key>PTA-ios.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>9</integer>
+		</dict>
 		<key>ProfilingTestApp.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
@@ -23,6 +28,11 @@
 		<dict>
 			<key>orderHint</key>
 			<integer>2</integer>
+		</dict>
+		<key>YammeriOS.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>10</integer>
 		</dict>
 		<key>libyammer-ios.xcscheme</key>
 		<dict>
@@ -98,6 +108,16 @@
 			<true/>
 		</dict>
 		<key>636166E61C18DFA300D17172</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>63B17D5C1CB34441005B662B</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>63B17D7D1CB44062005B662B</key>
 		<dict>
 			<key>primary</key>
 			<true/>

@@ -122,6 +122,26 @@
 		637E3D5E1BF262EE00D702ED /* YMX509Certificate.h in Headers */ = {isa = PBXBuildFile; fileRef = 637E3D5C1BF262EE00D702ED /* YMX509Certificate.h */; };
 		638E1D661C098AF900BA2FA4 /* libcrypto.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 638E1D651C098AF900BA2FA4 /* libcrypto.tbd */; };
 		63957E8F1C137AFB00960961 /* windirent.h in Headers */ = {isa = PBXBuildFile; fileRef = 63957E8E1C137AFB00960961 /* windirent.h */; };
+		63B17D611CB34442005B662B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 63B17D601CB34442005B662B /* main.m */; };
+		63B17D641CB34442005B662B /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 63B17D631CB34442005B662B /* AppDelegate.m */; };
+		63B17D671CB34442005B662B /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 63B17D661CB34442005B662B /* ViewController.m */; };
+		63B17D6A1CB34442005B662B /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 63B17D681CB34442005B662B /* Main.storyboard */; };
+		63B17D6C1CB34442005B662B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 63B17D6B1CB34442005B662B /* Assets.xcassets */; };
+		63B17D6F1CB34442005B662B /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 63B17D6D1CB34442005B662B /* LaunchScreen.storyboard */; };
+		63B17D751CB3482B005B662B /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 63B17D741CB3482B005B662B /* UIKit.framework */; };
+		63B17D781CB34BEE005B662B /* libyammer-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6346BBAC1C1F7FE800437E21 /* libyammer-ios.a */; };
+		63B17D851CB44062005B662B /* YammeriOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 63B17D7E1CB44062005B662B /* YammeriOS.framework */; };
+		63B17D861CB44062005B662B /* YammeriOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 63B17D7E1CB44062005B662B /* YammeriOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		63B17D8B1CB4409B005B662B /* YMConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 6319163E1BFCFFAA001475FC /* YMConnection.m */; };
+		63B17D8C1CB4409B005B662B /* YMPeer.m in Sources */ = {isa = PBXBuildFile; fileRef = 6319164C1BFE94AF001475FC /* YMPeer.m */; };
+		63B17D8D1CB4409B005B662B /* YMSession.m in Sources */ = {isa = PBXBuildFile; fileRef = 6319163A1BFCFF93001475FC /* YMSession.m */; };
+		63B17D8E1CB4409B005B662B /* YMStream.m in Sources */ = {isa = PBXBuildFile; fileRef = 631916421BFCFFB4001475FC /* YMStream.m */; };
+		63B17D8F1CB440AE005B662B /* Yammer.h in Headers */ = {isa = PBXBuildFile; fileRef = 631916331BFCFF13001475FC /* Yammer.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		63B17D901CB440AE005B662B /* YMConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = 6319163D1BFCFFAA001475FC /* YMConnection.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		63B17D911CB440AE005B662B /* YMPeer.h in Headers */ = {isa = PBXBuildFile; fileRef = 6319164B1BFE94AF001475FC /* YMPeer.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		63B17D921CB440AE005B662B /* YMSession.h in Headers */ = {isa = PBXBuildFile; fileRef = 631916391BFCFF93001475FC /* YMSession.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		63B17D931CB440AE005B662B /* YMStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 631916411BFCFFB4001475FC /* YMStream.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		63B17D961CB4440A005B662B /* libyammer-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6346BBAC1C1F7FE800437E21 /* libyammer-ios.a */; };
 		63B594071C1B895E0041121A /* YMArray.h in Headers */ = {isa = PBXBuildFile; fileRef = 63BA70A61C174AA700210D2E /* YMArray.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		63BA70A21C17493600210D2E /* YMTask.c in Sources */ = {isa = PBXBuildFile; fileRef = 63BA70A11C17493600210D2E /* YMTask.c */; };
 		63BA70A51C174A9900210D2E /* YMArray.c in Sources */ = {isa = PBXBuildFile; fileRef = 63BA70A41C174A9900210D2E /* YMArray.c */; };
@@ -203,6 +223,20 @@
 			remoteGlobalIDString = 63225D411BE9026200C28F05;
 			remoteInfo = libyammer;
 		};
+		63B17D831CB44062005B662B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 63225D3A1BE9026200C28F05 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 63B17D7D1CB44062005B662B;
+			remoteInfo = YammeriOS;
+		};
+		63B17D941CB441E1005B662B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 63225D3A1BE9026200C28F05 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6346BBAB1C1F7FE800437E21;
+			remoteInfo = "libyammer-ios";
+		};
 		63C8F27C1CA321E3009C0140 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 63225D3A1BE9026200C28F05 /* Project object */;
@@ -239,6 +273,17 @@
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 1;
+		};
+		63B17D8A1CB44062005B662B /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				63B17D861CB44062005B662B /* YammeriOS.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 		63EEC7541BFB6AA400990ECE /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -361,6 +406,19 @@
 		638E1D651C098AF900BA2FA4 /* libcrypto.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libcrypto.tbd; path = usr/lib/libcrypto.tbd; sourceTree = SDKROOT; };
 		63957E8E1C137AFB00960961 /* windirent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = windirent.h; path = ../win/windirent.h; sourceTree = "<group>"; };
 		63A40EF81BEC239C0085ABD0 /* YMThreadPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMThreadPriv.h; path = ../private/YMThreadPriv.h; sourceTree = "<group>"; };
+		63B17D5D1CB34441005B662B /* PTA-ios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PTA-ios.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		63B17D601CB34442005B662B /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		63B17D621CB34442005B662B /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		63B17D631CB34442005B662B /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		63B17D651CB34442005B662B /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
+		63B17D661CB34442005B662B /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+		63B17D691CB34442005B662B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		63B17D6B1CB34442005B662B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		63B17D6E1CB34442005B662B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		63B17D701CB34442005B662B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		63B17D741CB3482B005B662B /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.3.sdk/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
+		63B17D7E1CB44062005B662B /* YammeriOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = YammeriOS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		63B17D821CB44062005B662B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		63BA70A11C17493600210D2E /* YMTask.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMTask.c; path = ../src/YMTask.c; sourceTree = "<group>"; };
 		63BA70A31C17494700210D2E /* YMTask.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMTask.h; path = ../private/YMTask.h; sourceTree = "<group>"; };
 		63BA70A41C174A9900210D2E /* YMArray.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMArray.c; path = ../src/YMArray.c; sourceTree = "<group>"; };
@@ -457,6 +515,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		63B17D5A1CB34441005B662B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				63B17D851CB44062005B662B /* YammeriOS.framework in Frameworks */,
+				63B17D781CB34BEE005B662B /* libyammer-ios.a in Frameworks */,
+				63B17D751CB3482B005B662B /* UIKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		63B17D7A1CB44062005B662B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				63B17D961CB4440A005B662B /* libyammer-ios.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		63EEC7531BFB6AA400990ECE /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -482,6 +558,7 @@
 		631916321BFCFF13001475FC /* Yammer (Cocoa) */ = {
 			isa = PBXGroup;
 			children = (
+				63B17D7F1CB44062005B662B /* YammeriOS */,
 				631916351BFCFF13001475FC /* Info.plist */,
 				631916451BFD02A1001475FC /* Yammer-pch.h */,
 				631916331BFCFF13001475FC /* Yammer.h */,
@@ -533,6 +610,7 @@
 				634A87481C17A4C600C7CA99 /* linux */,
 				63957E8D1C137ADE00960961 /* win */,
 				6329D3211C9F646A0087988D /* ProfilingTestApp */,
+				63B17D5E1CB34442005B662B /* PTA-ios */,
 				63225D9C1BE9314100C28F05 /* apple dependencies */,
 				63225D431BE9026200C28F05 /* Products */,
 			);
@@ -549,6 +627,8 @@
 				636166E71C18DFA300D17172 /* ym-dispatch-main-test */,
 				6346BBAC1C1F7FE800437E21 /* libyammer-ios.a */,
 				6329D3201C9F646A0087988D /* ProfilingTestApp.app */,
+				63B17D5D1CB34441005B662B /* PTA-ios.app */,
+				63B17D7E1CB44062005B662B /* YammeriOS.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -560,6 +640,7 @@
 				63F8A1861CA4519700D48581 /* AppKit.framework */,
 				6346BBCF1C1F826C00437E21 /* CoreFoundation.framework */,
 				6346BBD11C1F827000437E21 /* SystemConfiguration.framework */,
+				63B17D741CB3482B005B662B /* UIKit.framework */,
 				63500B1D1CAF9245009E5514 /* libbz2.tbd */,
 				638E1D651C098AF900BA2FA4 /* libcrypto.tbd */,
 				63500B1B1CAF8FF8009E5514 /* libz.tbd */,
@@ -696,6 +777,38 @@
 			name = win;
 			sourceTree = "<group>";
 		};
+		63B17D5E1CB34442005B662B /* PTA-ios */ = {
+			isa = PBXGroup;
+			children = (
+				63B17D621CB34442005B662B /* AppDelegate.h */,
+				63B17D631CB34442005B662B /* AppDelegate.m */,
+				63B17D651CB34442005B662B /* ViewController.h */,
+				63B17D661CB34442005B662B /* ViewController.m */,
+				63B17D681CB34442005B662B /* Main.storyboard */,
+				63B17D6B1CB34442005B662B /* Assets.xcassets */,
+				63B17D6D1CB34442005B662B /* LaunchScreen.storyboard */,
+				63B17D701CB34442005B662B /* Info.plist */,
+				63B17D5F1CB34442005B662B /* Supporting Files */,
+			);
+			path = "PTA-ios";
+			sourceTree = "<group>";
+		};
+		63B17D5F1CB34442005B662B /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				63B17D601CB34442005B662B /* main.m */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		63B17D7F1CB44062005B662B /* YammeriOS */ = {
+			isa = PBXGroup;
+			children = (
+				63B17D821CB44062005B662B /* Info.plist */,
+			);
+			path = YammeriOS;
+			sourceTree = SOURCE_ROOT;
+		};
 		63DD2E051C0F7C4200D822D1 /* test */ = {
 			isa = PBXGroup;
 			children = (
@@ -776,6 +889,18 @@
 				630A5CEE1BE9428C003292EE /* YMmDNSService.h in Headers */,
 				63225D651BE90A6400C28F05 /* YMSecurityProvider.h in Headers */,
 				63BD75CF1BF3F0E700D01F70 /* YMLocalSocketPair.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		63B17D7B1CB44062005B662B /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				63B17D911CB440AE005B662B /* YMPeer.h in Headers */,
+				63B17D901CB440AE005B662B /* YMConnection.h in Headers */,
+				63B17D921CB440AE005B662B /* YMSession.h in Headers */,
+				63B17D931CB440AE005B662B /* YMStream.h in Headers */,
+				63B17D8F1CB440AE005B662B /* Yammer.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -911,6 +1036,44 @@
 			productReference = 636166E71C18DFA300D17172 /* ym-dispatch-main-test */;
 			productType = "com.apple.product-type.tool";
 		};
+		63B17D5C1CB34441005B662B /* PTA-ios */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 63B17D711CB34442005B662B /* Build configuration list for PBXNativeTarget "PTA-ios" */;
+			buildPhases = (
+				63B17D591CB34441005B662B /* Sources */,
+				63B17D5A1CB34441005B662B /* Frameworks */,
+				63B17D5B1CB34441005B662B /* Resources */,
+				63B17D8A1CB44062005B662B /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				63B17D841CB44062005B662B /* PBXTargetDependency */,
+			);
+			name = "PTA-ios";
+			productName = "PTA-ios";
+			productReference = 63B17D5D1CB34441005B662B /* PTA-ios.app */;
+			productType = "com.apple.product-type.application";
+		};
+		63B17D7D1CB44062005B662B /* YammeriOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 63B17D871CB44062005B662B /* Build configuration list for PBXNativeTarget "YammeriOS" */;
+			buildPhases = (
+				63B17D791CB44062005B662B /* Sources */,
+				63B17D7A1CB44062005B662B /* Frameworks */,
+				63B17D7B1CB44062005B662B /* Headers */,
+				63B17D7C1CB44062005B662B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				63B17D951CB441E1005B662B /* PBXTargetDependency */,
+			);
+			name = YammeriOS;
+			productName = YammeriOS;
+			productReference = 63B17D7E1CB44062005B662B /* YammeriOS.framework */;
+			productType = "com.apple.product-type.framework";
+		};
 		63EEC7551BFB6AA400990ECE /* ymchat */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 63EEC75A1BFB6AA400990ECE /* Build configuration list for PBXNativeTarget "ymchat" */;
@@ -960,6 +1123,12 @@
 					636166E61C18DFA300D17172 = {
 						CreatedOnToolsVersion = 7.1;
 					};
+					63B17D5C1CB34441005B662B = {
+						CreatedOnToolsVersion = 7.3;
+					};
+					63B17D7D1CB44062005B662B = {
+						CreatedOnToolsVersion = 7.3;
+					};
 					63EEC7551BFB6AA400990ECE = {
 						CreatedOnToolsVersion = 7.1;
 					};
@@ -981,11 +1150,13 @@
 				63225D411BE9026200C28F05 /* libyammer */,
 				6346BBAB1C1F7FE800437E21 /* libyammer-ios */,
 				631916301BFCFF13001475FC /* Yammer */,
+				63B17D7D1CB44062005B662B /* YammeriOS */,
 				630A5CFF1BE96CE9003292EE /* YammerTests */,
 				63EEC7551BFB6AA400990ECE /* ymchat */,
 				631F0D311C141EE500C141D4 /* ymtest */,
 				636166E61C18DFA300D17172 /* ym-dispatch-main-test */,
 				6329D31F1C9F646A0087988D /* ProfilingTestApp */,
+				63B17D5C1CB34441005B662B /* PTA-ios */,
 			);
 		};
 /* End PBXProject section */
@@ -1012,6 +1183,23 @@
 			files = (
 				6329D3291C9F646A0087988D /* Assets.xcassets in Resources */,
 				6329D32C1C9F646A0087988D /* MainMenu.xib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		63B17D5B1CB34441005B662B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				63B17D6F1CB34442005B662B /* LaunchScreen.storyboard in Resources */,
+				63B17D6C1CB34442005B662B /* Assets.xcassets in Resources */,
+				63B17D6A1CB34442005B662B /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		63B17D7C1CB44062005B662B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1171,6 +1359,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		63B17D591CB34441005B662B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				63B17D671CB34442005B662B /* ViewController.m in Sources */,
+				63B17D641CB34442005B662B /* AppDelegate.m in Sources */,
+				63B17D611CB34442005B662B /* main.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		63B17D791CB44062005B662B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				63B17D8B1CB4409B005B662B /* YMConnection.m in Sources */,
+				63B17D8D1CB4409B005B662B /* YMSession.m in Sources */,
+				63B17D8C1CB4409B005B662B /* YMPeer.m in Sources */,
+				63B17D8E1CB4409B005B662B /* YMStream.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		63EEC7521BFB6AA400990ECE /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1222,6 +1431,16 @@
 			target = 63225D411BE9026200C28F05 /* libyammer */;
 			targetProxy = 636166F31C18DFC400D17172 /* PBXContainerItemProxy */;
 		};
+		63B17D841CB44062005B662B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 63B17D7D1CB44062005B662B /* YammeriOS */;
+			targetProxy = 63B17D831CB44062005B662B /* PBXContainerItemProxy */;
+		};
+		63B17D951CB441E1005B662B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6346BBAB1C1F7FE800437E21 /* libyammer-ios */;
+			targetProxy = 63B17D941CB441E1005B662B /* PBXContainerItemProxy */;
+		};
 		63C8F27D1CA321E3009C0140 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 63225D411BE9026200C28F05 /* libyammer */;
@@ -1236,6 +1455,22 @@
 				6329D32B1C9F646A0087988D /* Base */,
 			);
 			name = MainMenu.xib;
+			sourceTree = "<group>";
+		};
+		63B17D681CB34442005B662B /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				63B17D691CB34442005B662B /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		63B17D6D1CB34442005B662B /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				63B17D6E1CB34442005B662B /* Base */,
+			);
+			name = LaunchScreen.storyboard;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
@@ -1629,6 +1864,110 @@
 			};
 			name = Release;
 		};
+		63B17D721CB34442005B662B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = NO;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				GCC_WARN_UNUSED_PARAMETER = NO;
+				INFOPLIST_FILE = "PTA-ios/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.combobulated.PTA-ios";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				WARNING_CFLAGS = "";
+			};
+			name = Debug;
+		};
+		63B17D731CB34442005B662B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = NO;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				GCC_WARN_UNUSED_PARAMETER = NO;
+				INFOPLIST_FILE = "PTA-ios/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.combobulated.PTA-ios";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+				WARNING_CFLAGS = "";
+			};
+			name = Release;
+		};
+		63B17D881CB44062005B662B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GCC_PREFIX_HEADER = "Yammer/Yammer-pch.h";
+				HEADER_SEARCH_PATHS = (
+					"\"$SRCROOT\"/**",
+					"\"$SRCROOT/../\"",
+					/opt/local/include,
+					"\"$SRCROOT/../src\"",
+				);
+				INFOPLIST_FILE = YammeriOS/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.combobulated.YammeriOS;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				USER_HEADER_SEARCH_PATHS = /usr/local/include;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		63B17D891CB44062005B662B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GCC_PREFIX_HEADER = "Yammer/Yammer-pch.h";
+				HEADER_SEARCH_PATHS = (
+					"\"$SRCROOT\"/**",
+					"\"$SRCROOT/../\"",
+					/opt/local/include,
+					"\"$SRCROOT/../src\"",
+				);
+				INFOPLIST_FILE = YammeriOS/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.combobulated.YammeriOS;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				USER_HEADER_SEARCH_PATHS = /usr/local/include;
+				VALIDATE_PRODUCT = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
 		63EEC75B1BFB6AA400990ECE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1721,6 +2060,22 @@
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
+		};
+		63B17D711CB34442005B662B /* Build configuration list for PBXNativeTarget "PTA-ios" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				63B17D721CB34442005B662B /* Debug */,
+				63B17D731CB34442005B662B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		63B17D871CB44062005B662B /* Build configuration list for PBXNativeTarget "YammeriOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				63B17D881CB44062005B662B /* Debug */,
+				63B17D891CB44062005B662B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
 		};
 		63EEC75A1BFB6AA400990ECE /* Build configuration list for PBXNativeTarget "ymchat" */ = {
 			isa = XCConfigurationList;
