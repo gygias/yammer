@@ -44,11 +44,6 @@
 			<key>orderHint</key>
 			<integer>0</integer>
 		</dict>
-		<key>openssl-ios.xcscheme</key>
-		<dict>
-			<key>orderHint</key>
-			<integer>11</integer>
-		</dict>
 		<key>ym-dispatch-main-test.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
