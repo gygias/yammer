@@ -64,7 +64,7 @@
                 break;
             }
         } else {
-            NSLog(@"%s: read %u-%u failed with %d",__PRETTY_FUNCTION__,(unsigned long)idx,(unsigned long)(idx+bufLen),result);
+            NSLog(@"%s: read %lu-%lu failed with %d",__PRETTY_FUNCTION__,(unsigned long)idx,(unsigned long)(idx+bufLen),result);
             goto catch_return;
         }
         
@@ -86,7 +86,7 @@ catch_return:
         uint16_t aLength = remaining < UINT16_MAX ? (uint16_t)remaining : UINT16_MAX;
         YMIOResult result = YMStreamWriteDown(self.streamRef, (uint8_t *)[data bytes] + idx, aLength);
         if ( result != YMIOSuccess ) {
-            NSLog(@"%s: write %u-%u failed with %d",__PRETTY_FUNCTION__,(unsigned long)idx,(unsigned long)(idx + aLength),result);
+            NSLog(@"%s: write %lu-%lu failed with %d",__PRETTY_FUNCTION__,(unsigned long)idx,(unsigned long)(idx + aLength),result);
             return NO;
         }
         

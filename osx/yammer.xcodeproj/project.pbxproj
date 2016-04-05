@@ -142,6 +142,12 @@
 		63B17D921CB440AE005B662B /* YMSession.h in Headers */ = {isa = PBXBuildFile; fileRef = 631916391BFCFF93001475FC /* YMSession.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		63B17D931CB440AE005B662B /* YMStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 631916411BFCFFB4001475FC /* YMStream.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		63B17D961CB4440A005B662B /* libyammer-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6346BBAC1C1F7FE800437E21 /* libyammer-ios.a */; };
+		63B17DA91CB45315005B662B /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 63B17DA51CB452EA005B662B /* libcrypto.a */; };
+		63B17DAA1CB45315005B662B /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 63B17DA61CB452EA005B662B /* libssl.a */; };
+		63B17DAE1CB45335005B662B /* YMCompression.c in Sources */ = {isa = PBXBuildFile; fileRef = 63500B181CAF7381009E5514 /* YMCompression.c */; };
+		63B17DB31CB45377005B662B /* libbz2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 63B17DAF1CB4534C005B662B /* libbz2.tbd */; };
+		63B17DB71CB4555B005B662B /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 63B17DB61CB4555B005B662B /* libz.tbd */; };
+		63B17DB81CB45704005B662B /* YMDebug.c in Sources */ = {isa = PBXBuildFile; fileRef = 63DFAB541C221EA50076BF27 /* YMDebug.c */; };
 		63B594071C1B895E0041121A /* YMArray.h in Headers */ = {isa = PBXBuildFile; fileRef = 63BA70A61C174AA700210D2E /* YMArray.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		63BA70A21C17493600210D2E /* YMTask.c in Sources */ = {isa = PBXBuildFile; fileRef = 63BA70A11C17493600210D2E /* YMTask.c */; };
 		63BA70A51C174A9900210D2E /* YMArray.c in Sources */ = {isa = PBXBuildFile; fileRef = 63BA70A41C174A9900210D2E /* YMArray.c */; };
@@ -419,6 +425,12 @@
 		63B17D741CB3482B005B662B /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.3.sdk/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		63B17D7E1CB44062005B662B /* YammeriOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = YammeriOS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		63B17D821CB44062005B662B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		63B17DA51CB452EA005B662B /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libcrypto.a; sourceTree = "<group>"; };
+		63B17DA61CB452EA005B662B /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libssl.a; sourceTree = "<group>"; };
+		63B17DAF1CB4534C005B662B /* libbz2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libbz2.tbd; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.3.sdk/usr/lib/libbz2.tbd; sourceTree = DEVELOPER_DIR; };
+		63B17DB11CB45368005B662B /* libbz2.1.0.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libbz2.1.0.tbd; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.3.sdk/usr/lib/libbz2.1.0.tbd; sourceTree = DEVELOPER_DIR; };
+		63B17DB41CB4551B005B662B /* liblzma.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = liblzma.tbd; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.3.sdk/usr/lib/liblzma.tbd; sourceTree = DEVELOPER_DIR; };
+		63B17DB61CB4555B005B662B /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS9.3.sdk/usr/lib/libz.tbd; sourceTree = DEVELOPER_DIR; };
 		63BA70A11C17493600210D2E /* YMTask.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMTask.c; path = ../src/YMTask.c; sourceTree = "<group>"; };
 		63BA70A31C17494700210D2E /* YMTask.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMTask.h; path = ../private/YMTask.h; sourceTree = "<group>"; };
 		63BA70A41C174A9900210D2E /* YMArray.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMArray.c; path = ../src/YMArray.c; sourceTree = "<group>"; };
@@ -529,7 +541,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				63B17DB71CB4555B005B662B /* libz.tbd in Frameworks */,
+				63B17DB31CB45377005B662B /* libbz2.tbd in Frameworks */,
 				63B17D961CB4440A005B662B /* libyammer-ios.a in Frameworks */,
+				63B17DA91CB45315005B662B /* libcrypto.a in Frameworks */,
+				63B17DAA1CB45315005B662B /* libssl.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -612,6 +628,7 @@
 				6329D3211C9F646A0087988D /* ProfilingTestApp */,
 				63B17D5E1CB34442005B662B /* PTA-ios */,
 				63225D9C1BE9314100C28F05 /* apple dependencies */,
+				63B17D9C1CB4486D005B662B /* openssl-ios */,
 				63225D431BE9026200C28F05 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -641,8 +658,12 @@
 				6346BBCF1C1F826C00437E21 /* CoreFoundation.framework */,
 				6346BBD11C1F827000437E21 /* SystemConfiguration.framework */,
 				63B17D741CB3482B005B662B /* UIKit.framework */,
+				63B17DB11CB45368005B662B /* libbz2.1.0.tbd */,
+				63B17DAF1CB4534C005B662B /* libbz2.tbd */,
 				63500B1D1CAF9245009E5514 /* libbz2.tbd */,
 				638E1D651C098AF900BA2FA4 /* libcrypto.tbd */,
+				63B17DB41CB4551B005B662B /* liblzma.tbd */,
+				63B17DB61CB4555B005B662B /* libz.tbd */,
 				63500B1B1CAF8FF8009E5514 /* libz.tbd */,
 			);
 			name = "apple dependencies";
@@ -808,6 +829,15 @@
 			);
 			path = YammeriOS;
 			sourceTree = SOURCE_ROOT;
+		};
+		63B17D9C1CB4486D005B662B /* openssl-ios */ = {
+			isa = PBXGroup;
+			children = (
+				63B17DA51CB452EA005B662B /* libcrypto.a */,
+				63B17DA61CB452EA005B662B /* libssl.a */,
+			);
+			path = "openssl-ios";
+			sourceTree = "<group>";
 		};
 		63DD2E051C0F7C4200D822D1 /* test */ = {
 			isa = PBXGroup;
@@ -1329,6 +1359,7 @@
 				6346BBB91C1F802500437E21 /* YMAddress.c in Sources */,
 				6346BBBA1C1F802500437E21 /* YMPeer.c in Sources */,
 				6346BBBB1C1F802500437E21 /* YMStream.c in Sources */,
+				63B17DAE1CB45335005B662B /* YMCompression.c in Sources */,
 				6346BBBC1C1F802500437E21 /* YMConnection.c in Sources */,
 				6346BBBD1C1F802500437E21 /* YMSession.c in Sources */,
 				6346BBBE1C1F802500437E21 /* YMSecurityProvider.c in Sources */,
@@ -1342,6 +1373,7 @@
 				6346BBC61C1F802500437E21 /* YMX509Certificate.c in Sources */,
 				6346BBC71C1F802500437E21 /* YMThread.c in Sources */,
 				6346BBC81C1F802500437E21 /* YMPipe.c in Sources */,
+				63B17DB81CB45704005B662B /* YMDebug.c in Sources */,
 				6346BBC91C1F802500437E21 /* YMUtilities.c in Sources */,
 				6346BBCA1C1F802500437E21 /* YMLock.c in Sources */,
 				6346BBCB1C1F802500437E21 /* YMLinkedList.c in Sources */,
@@ -1802,6 +1834,11 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				EXECUTABLE_PREFIX = "";
 				GCC_PREFIX_HEADER = ../private/yammerpch.h;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+					"YMIOS=1",
+				);
 				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
 					"YMAPPLE=1",
 					"YMIOS=1",
@@ -1827,6 +1864,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				EXECUTABLE_PREFIX = "";
 				GCC_PREFIX_HEADER = ../private/yammerpch.h;
+				GCC_PREPROCESSOR_DEFINITIONS = "YMIOS=1";
 				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
 					"YMAPPLE=1",
 					"YMIOS=1",
@@ -1907,13 +1945,19 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = NO;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
-				DEFINES_MODULE = YES;
+				DEFINES_MODULE = NO;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				GCC_PREFIX_HEADER = "Yammer/Yammer-pch.h";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+					"YMIOS=1",
+				);
 				HEADER_SEARCH_PATHS = (
 					"\"$SRCROOT\"/**",
 					"\"$SRCROOT/../\"",
@@ -1924,6 +1968,10 @@
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/openssl-ios",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.combobulated.YammeriOS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -1939,13 +1987,15 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = NO;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
-				DEFINES_MODULE = YES;
+				DEFINES_MODULE = NO;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				GCC_PREFIX_HEADER = "Yammer/Yammer-pch.h";
+				GCC_PREPROCESSOR_DEFINITIONS = "YMIOS=1";
 				HEADER_SEARCH_PATHS = (
 					"\"$SRCROOT\"/**",
 					"\"$SRCROOT/../\"",
@@ -1956,6 +2006,10 @@
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/openssl-ios",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.combobulated.YammeriOS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
