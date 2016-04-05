@@ -628,7 +628,6 @@
 				6329D3211C9F646A0087988D /* ProfilingTestApp */,
 				63B17D5E1CB34442005B662B /* PTA-ios */,
 				63225D9C1BE9314100C28F05 /* apple dependencies */,
-				63B17D9C1CB4486D005B662B /* openssl-ios */,
 				63225D431BE9026200C28F05 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -653,6 +652,7 @@
 		63225D9C1BE9314100C28F05 /* apple dependencies */ = {
 			isa = PBXGroup;
 			children = (
+				63B17D9C1CB4486D005B662B /* openssl-ios */,
 				63225D9D1BE9372800C28F05 /* libssl.1.0.0.dylib */,
 				63F8A1861CA4519700D48581 /* AppKit.framework */,
 				6346BBCF1C1F826C00437E21 /* CoreFoundation.framework */,
