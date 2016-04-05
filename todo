@@ -1,3 +1,4 @@
+- add netmask to if map
 - awdl support
 - compression handshake, all or nothing
 - samples should be time-based
