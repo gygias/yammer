@@ -36,7 +36,7 @@ typedef NS_ENUM(NSInteger,ConnectionState) { // mayhaps this be a library attrib
 
 @property IBOutlet UITextField *typeField;
 @property IBOutlet UITextField *nameField;
-@property IBOutlet UISlider *asServerCheckbox;
+@property IBOutlet UISwitch *asServerCheckbox;
 @property IBOutlet UIButton *startStopButton;
 
 @property IBOutlet UIActivityIndicatorView *connectionSpinner;

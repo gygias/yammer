@@ -988,8 +988,9 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_macos_sc_runloop_proc(YM_THR
     ymerr("network interface change observer exiting");
     
 #else
+    // todo Reachability?
     storeCtx.version = 6969;
-    ymabort("network interface change observing unimplemented on ios");
+    ymerr("warning: network interface change observing unimplemented on ios");
 #endif
     
     YM_THREAD_END

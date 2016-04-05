@@ -1,7 +1,9 @@
+- awdl support
 - compression handshake, all or nothing
 - samples should be time-based
 - journaled streams
 - ensure over-the-wire enums are explicitly sized
+- 'direct connect' (bypass mdns/support "internet")
 - YM_ONCE_DEF-like macro for generic thread/dispatch boilerplate
 - shared "dispatch queues"
 - adopt spinlocks where appropriate

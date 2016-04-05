@@ -458,8 +458,10 @@ YMInterfaceType YMInterfaceTypeForName(YMStringRef ifName)
     
     if ( YMStringHasPrefix2(ifName, "lo") ) {
         return YMInterfaceLoopback;
+    } else if ( YMStringHasPrefix2(ifName, "pdp_ip") ) {
+        return YMInterfaceCellular;
     } else if ( YMStringHasPrefix2(ifName, "en") ) {
-        
+# if !defined(YMIOS)
         // the only proper interface i know of for this is obj-c and CoreWLAN/CWInterface.h#interfaceName
         // so we'd either need an objc helper library for apple platforms, or maybe this is good enough
         YMStringRef path = YMSTRC("/usr/sbin/networksetup");
@@ -481,6 +483,13 @@ YMInterfaceType YMInterfaceTypeForName(YMStringRef ifName)
         if ( status == 0 )
             return YMInterfaceWirelessEthernet;
         return YMInterfaceWiredEthernet;
+# else
+        return YMInterfaceWirelessEthernet;
+# endif
+    } else if ( YMStringHasPrefix2(ifName, "awdl") ) {
+        return YMInterfaceAWDL;
+    } else if ( YMStringHasPrefix2(ifName, "ipsec") ) {
+        return YMInterfaceIPSEC;
     } else if ( YMStringHasPrefix2(ifName, "fw") ) {
         return YMInterfaceFirewire400;
     } else
@@ -552,6 +561,15 @@ const char *YMInterfaceTypeDescription(YMInterfaceType type)
     {
         case YMInterfaceLoopback:
             return "loopback";
+            break;
+        case YMInterfaceAWDL:
+            return "awdl";
+            break;
+        case YMInterfaceIPSEC:
+            return "ipsec";
+            break;
+        case YMInterfaceCellular:
+            return "cellular";
             break;
         case YMInterfaceWirelessEthernet:
             return "wifi";

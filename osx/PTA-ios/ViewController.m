@@ -12,11 +12,36 @@
 
 @end
 
+@interface StateTransformer : NSValueTransformer
+@end
+
+@interface InterfaceTransformer : NSValueTransformer
+@end
+
 @implementation ViewController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view, typically from a nib.
+    
+    self.state = OffState;
+    self.activeLabel.text = @"";
+    self.tputLabel.text = @"";
+    self.sampleLabel.text = @"";
+    self.othersLabel.text = @"";
+    self.connectionState = IdleState;
+    
+    // no bindings on ios
+    self.connectionStateLabel.text = @"";
+    [self.connectionSpinner stopAnimating];
+    
+    //    // twiddle server checkbox if 2 instances running
+    //    int count = 0;
+    //    for ( NSRunningApplication *app in [[NSWorkspace sharedWorkspace] runningApplications] ) {
+    //        if ( [app.localizedName isEqualToString:@"ProfilingTestApp"] )
+    //            count++;
+    //    }
+    //    if ( count > 1 )
+    //        self.asServerCheckbox.state = NSOffState;
 }
 
 - (void)didReceiveMemoryWarning {
@@ -27,115 +52,121 @@
 #define SingleStreamLength ( 512 * 1024 * 1024 )
 #define NoInterface -1
 
-
-- (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
-    // Insert code here to initialize your application
-    
-    self.state = OffState;
-    self.activeLabel.text = @"";
-    self.tputLabel.text = @"";
-    self.sampleLabel.text = @"";
-    self.othersLabel.text = @"";
-    self.connectionState = IdleState;
-    self.connectionStateLabel.text = @"";
-    
-//    // twiddle server checkbox if 2 instances running
-//    int count = 0;
-//    for ( NSRunningApplication *app in [[NSWorkspace sharedWorkspace] runningApplications] ) {
-//        if ( [app.localizedName isEqualToString:@"ProfilingTestApp"] )
-//            count++;
-//    }
-//    if ( count > 1 )
-//        self.asServerCheckbox.state = NSOffState;
-}
-
-- (void)applicationWillTerminate:(NSNotification *)aNotification {
-    // Insert code here to tear down your application
+- (void)_setState:(ConnectionState)state
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        self.connectionState = InitializingState;
+        
+        StateTransformer *t = [StateTransformer new];
+        NSNumber *num = @(state);
+        self.connectionStateLabel.text = [t transformedValue:num];
+        BOOL appIsOn = (self.state == OnState);
+        if ( appIsOn )
+            [self.connectionSpinner startAnimating];
+        else
+            [self.connectionSpinner stopAnimating];
+        
+        if ( self.currentConnection ) {
+            InterfaceTransformer *i = [InterfaceTransformer new];
+            self.activeLabel.text = [i transformedValue:self.currentConnection];
+        }
+    });
 }
 
 - (IBAction)startStopPressed:(id)sender {
     
-    BOOL stateOK = YES;
-    RunningState newState = ( self.state == OnState ) ? OffState : OnState;
-    
-    if ( newState == OnState ) {
-        NSLog(@"starting");
+    dispatch_async(dispatch_get_main_queue(), ^{
+        BOOL stateOK = YES;
+        RunningState newState = ( self.state == OnState ) ? OffState : OnState;
         
-        __unsafe_unretained typeof(self) weakSelf = self;
-        self.session = [[YMSession alloc] initWithType:self.typeField.text name:[[NSProcessInfo processInfo] processName]];
-        [self.session setStandardHandlers:^(YMSession *session) {
-            weakSelf.connectionState = InitializingState;
-        } :^(YMSession *session, YMConnection *connection, YMStream *stream) {
-            if ( self.asServerCheckbox.state != UIControlStateSelected ) {
-                [[NSException exceptionWithName:@"client incoming stream" reason:@"shouldn't happen" userInfo:nil] raise];
-            } else {
-                [weakSelf _consumeServerIncomingStream:stream];
-            }
-        } :^(YMSession *session, YMConnection *connection, YMStream *stream) {
-            NSLog(@"%@: %@: stream closing: %@",session,connection,stream);
-        } :^(YMSession *session) {
-            NSLog(@"%@: interrupted",session);
-            weakSelf.connectionState = InterruptedState;
-        }];
-        if ( self.session ) {
+        if ( newState == OnState ) {
+            NSLog(@"starting");
             
-            if ( self.asServerCheckbox.state == UIControlStateSelected ) {
-                self.connectionState = AdvertisingState;
-                stateOK = [self.session startAdvertisingWithName:self.nameField.text
-                                                   acceptHandler:^bool(YMSession *session, YMPeer *connection) {
-                                                       return true;
-                                                   }
-                                               connectionHandler:^(YMSession *session, YMConnection *connection) {
-                                                   NSLog(@"connected over %@",connection);
-                                                   self.connectionState = ConnectedState;
-                                                   [self _incomingConnection:connection];
-                                               }];
-            } else {
-                self.connectionState = SearchingState;
-                stateOK = [self.session browsePeersWithHandler:^(YMSession *session, YMPeer *peer) {
-                    [self.session resolvePeer:peer withHandler:^(YMSession *session_, YMPeer *peer_, BOOL resolved) {
-                        if ( resolved ) {
-                            NSLog(@"resolved %@",peer_);
-                            [self.session connectToPeer:peer_ connectionHandler:^(YMSession *session__, YMConnection *connection) {
-                                NSLog(@"connected over %@",connection);
-                                self.connectionState = ConnectedState;
-                                [self _outgoingConnection:connection];
-                            } failureHandler:^(YMSession *session__, YMPeer *peer__) {
-                                NSLog(@"outgoing connection failed: %@",peer__);
-                                dispatch_async(dispatch_get_main_queue(), ^{ [self startStopPressed:nil]; });
-                            }];
-                        } else
-                            NSLog(@"resolve failed: %@",peer_);
+            __unsafe_unretained typeof(self) weakSelf = self;
+            self.session = [[YMSession alloc] initWithType:self.typeField.text name:[[NSProcessInfo processInfo] processName]];
+            [self.session setStandardHandlers:^(YMSession *session) {
+                [weakSelf _setState:InitializingState];
+            } :^(YMSession *session, YMConnection *connection, YMStream *stream) {
+                if ( ! weakSelf.asServerCheckbox.on ) {
+                    [[NSException exceptionWithName:@"client incoming stream" reason:@"shouldn't happen" userInfo:nil] raise];
+                } else {
+                    [weakSelf _consumeServerIncomingStream:stream];
+                }
+            } :^(YMSession *session, YMConnection *connection, YMStream *stream) {
+                NSLog(@"%@: %@: stream closing: %@",session,connection,stream);
+            } :^(YMSession *session) {
+                NSLog(@"%@: interrupted",session);
+                [weakSelf _setState:InterruptedState];
+            }];
+            if ( self.session ) {
+                
+                if ( self.asServerCheckbox.on ) {
+                    [self _setState:AdvertisingState];
+                    stateOK = [self.session startAdvertisingWithName:self.nameField.text
+                                                       acceptHandler:^bool(YMSession *session, YMPeer *connection) {
+                                                           return true;
+                                                       }
+                                                   connectionHandler:^(YMSession *session, YMConnection *connection) {
+                                                       NSLog(@"connected over %@",connection);
+                                                       [self _setState:ConnectedState];
+                                                       [self _incomingConnection:connection];
+                                                   }];
+                } else {
+                    [self _setState:SearchingState];
+                    stateOK = [self.session browsePeersWithHandler:^(YMSession *session, YMPeer *peer) {
+                        [self.session resolvePeer:peer withHandler:^(YMSession *session_, YMPeer *peer_, BOOL resolved) {
+                            if ( resolved ) {
+                                NSLog(@"resolved %@",peer_);
+                                [self.session connectToPeer:peer_ connectionHandler:^(YMSession *session__, YMConnection *connection) {
+                                    NSLog(@"connected over %@",connection);
+                                    [self _setState:ConnectedState];
+                                    [self _outgoingConnection:connection];
+                                } failureHandler:^(YMSession *session__, YMPeer *peer__) {
+                                    NSLog(@"outgoing connection failed: %@",peer__);
+                                    dispatch_async(dispatch_get_main_queue(), ^{ [self startStopPressed:nil]; });
+                                }];
+                            } else
+                                NSLog(@"resolve failed: %@",peer_);
+                        }];
+                    } disappearanceHandler:^(YMSession *session, YMPeer *peer) {
+                        NSLog(@"peer disappeared: %@",peer);
                     }];
-                } disappearanceHandler:^(YMSession *session, YMPeer *peer) {
-                    NSLog(@"peer disappeared: %@",peer);
-                }];
-            }
+                }
+                
+                if ( stateOK ) {
+                    [self.startStopButton setTitle:@"stop" forState:UIControlStateNormal];
+                    self.typeField.enabled = NO;
+                    self.nameField.enabled = NO;
+                    self.asServerCheckbox.enabled = NO;
+                }
+                // various enabled states bound in xib
+            } else
+                ;//NSBeep();
+            
+        } else if ( newState == OffState ) {
+            NSLog(@"stopping");
+            
+            [self.session stop];
+            self.session = nil;
+            [self _setState:IdleState];
             
             if ( stateOK )
-                self.startStopButton.titleLabel.text = @"stop";
-            // various enabled states bound in xib
-        } else
-            ;//NSBeep();
-        
-    } else if ( newState == OffState ) {
-        NSLog(@"stopping");
-        
-        [self.session stop];
-        self.session = nil;
-        self.connectionState = IdleState;
+                [self.startStopButton setTitle:@"start" forState:UIControlStateNormal];
+            
+            self.typeField.enabled = YES;
+            self.nameField.enabled = YES;
+            self.asServerCheckbox.enabled = YES;
+        }
         
         if ( stateOK )
-            self.startStopButton.titleLabel.text = @"start";
-    }
-    
-    if ( stateOK )
-        self.state = newState;
+            self.state = newState;
+    });
 }
 
 - (void)_incomingConnection:(YMConnection *)connection {
     NSLog(@"incoming connection: %@",connection);
     self.currentConnection = connection;
+    [self _setState:ConnectedState];
 }
 
 - (void)_outgoingConnection:(YMConnection *)connection {
@@ -203,8 +234,9 @@
                                     100 * ((self.currentConnection.sample.doubleValue > 0) ?
                                            ((double)self.bytesSinceLastTput / self.currentConnection.sample.doubleValue)
                                            : (double)self.bytesSinceLastTput)];
-            self.tputLabel.text = tputString;
-            
+            dispatch_async(dispatch_get_main_queue(), ^{
+                self.tputLabel.text = tputString;
+            });
             self.lastTputDate = [NSDate date];
             self.bytesSinceLastTput = 0;
         }
@@ -216,9 +248,6 @@
     NSLog(@"server finished reading stream with length %0.1fmb",(float)idx / 1024 / 1024);
 }
 
-@end
-
-@interface InterfaceTransformer : NSValueTransformer
 @end
 
 @implementation InterfaceTransformer
@@ -240,9 +269,6 @@
     return [NSString stringWithFormat:@"%0.2f mb/s",[(YMConnection *)value sample].doubleValue / 1024 / 1024];
 }
 
-@end
-
-@interface StateTransformer : NSValueTransformer
 @end
 
 @implementation StateTransformer
