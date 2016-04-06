@@ -680,20 +680,20 @@ void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(ym_thread_
     socklen_t addrLen = initCtx->addrLen;
     __unused bool ipv4 = initCtx->ipv4;
     
-    YMAddressRef address = NULL;
+    YMAddressRef peerAddress = NULL;
     YMPeerRef peer = NULL;
     YMConnectionRef newConnection = NULL;
     
     ymlog("__ym_session_init_connection entered: sf%d %d %d",socket,addrLen,ipv4);
     
-    address = YMAddressCreate(addr,ipv4?ntohs(((struct sockaddr_in *)addr)->sin_port):ntohs(((struct sockaddr_in6 *)addr)->sin6_port));
-    peer = _YMPeerCreateWithAddress(address);
+    peerAddress = YMAddressCreate(addr,ipv4?ntohs(((struct sockaddr_in *)addr)->sin_port):ntohs(((struct sockaddr_in6 *)addr)->sin6_port));
+    peer = _YMPeerCreateWithAddress(peerAddress);
     if ( ! session->shouldAcceptFunc(session, peer, session->callbackContext) ) {
-        ymlog("client rejected peer %s",YMSTR(YMAddressGetDescription(address)));
+        ymlog("client rejected peer %s",YMSTR(YMAddressGetDescription(peerAddress)));
         goto catch_release;
     }
     
-    newConnection = YMConnectionCreateIncoming(socket, address, YMConnectionStream, YMTLS, true);
+    newConnection = YMConnectionCreateIncoming(socket, peerAddress, YMConnectionStream, YMTLS, true);
     if ( ! newConnection ) {
         ymlog("failed to create new connection");
 		if ( session->connectFailedFunc ) 
@@ -701,7 +701,7 @@ void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(ym_thread_
         goto catch_release;
     }
     
-    ymlog("new connection %s",YMSTR(YMAddressGetDescription(address)));
+    ymlog("new connection %s",YMSTR(YMAddressGetDescription(peerAddress)));
     
     __YMSessionAddConnection(session, newConnection);
     ymassert(session->defaultConnection,"connection init incoming");
@@ -709,8 +709,8 @@ void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(ym_thread_
     
 catch_release:
     
-    if ( address )
-        YMRelease(address);
+    if ( peerAddress )
+        YMRelease(peerAddress);
     if ( peer )
         YMRelease(peer);
     if ( newConnection )

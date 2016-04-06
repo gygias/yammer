@@ -100,7 +100,7 @@ void ym_connection_new_stream_proc(YMPlexerRef plexer, YMStreamRef stream, void 
 void ym_connection_stream_closing_proc(YMPlexerRef plexer, YMStreamRef stream, void *context);
 void ym_connection_interrupted_proc(YMPlexerRef plexer, void *context);
 
-__YMConnectionRef __YMConnectionCreate(bool isIncoming, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType, bool closeWhenDone);
+__YMConnectionRef __YMConnectionCreate(bool isIncoming, YMAddressRef peerAddress, YMConnectionType type, YMConnectionSecurityType securityType, bool closeWhenDone);
 bool __YMConnectionDestroy(__YMConnectionRef connection, bool explicit);
 int64_t __YMConnectionDoSample(__YMConnectionRef connection, YMSOCKET socket, uint32_t length, bool asServer);
 bool __YMConnectionDoIFExchange(__unused __YMConnectionRef connection, YMSOCKET socket, bool asServer);
@@ -109,16 +109,16 @@ bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, 
 bool __YMConnectionForward(YMConnectionRef connection, bool toFile, YMStreamRef stream, YMFILE file, const uint64_t *nBytesPtr, bool sync, ym_connection_forward_context_t*);
 void _ym_connection_forward_callback_proc(void *context, YMIOResult result, uint64_t bytesForwarded);
 
-YMConnectionRef YMConnectionCreate(YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType, bool closeWhenDone)
+YMConnectionRef YMConnectionCreate(YMAddressRef peerAddress, YMConnectionType type, YMConnectionSecurityType securityType, bool closeWhenDone)
 {
-    __YMConnectionRef c = __YMConnectionCreate(false, address, type, securityType, closeWhenDone);
+    __YMConnectionRef c = __YMConnectionCreate(false, peerAddress, type, securityType, closeWhenDone);
     c->socket = NULL_SOCKET;
     return c;
 }
 
-YMConnectionRef YMConnectionCreateIncoming(YMSOCKET socket, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType, bool closeWhenDone)
+YMConnectionRef YMConnectionCreateIncoming(YMSOCKET socket, YMAddressRef peerAddress, YMConnectionType type, YMConnectionSecurityType securityType, bool closeWhenDone)
 {
-    __YMConnectionRef connection = __YMConnectionCreate(true, address, type, securityType, closeWhenDone);
+    __YMConnectionRef connection = __YMConnectionCreate(true, peerAddress, type, securityType, closeWhenDone);
     bool commonInitOK = __YMConnectionInitCommon(connection, socket, true);
     if ( ! commonInitOK ) {
         ymlog("server init failed");
@@ -155,40 +155,6 @@ __YMConnectionRef __YMConnectionCreate(bool isIncoming, YMAddressRef address, YM
     
     connection->isConnected = false;
     connection->plexer = NULL;
-    
-    YMDictionaryRef localIFMap = YMInterfaceMapCreateLocal();
-    if ( localIFMap ) {
-        YMDictionaryEnumRef denum = YMDictionaryEnumeratorBegin(localIFMap);
-        bool matched = false;
-        while ( denum ) {
-            YMStringRef ifName = (YMStringRef)denum->key;
-            YMDictionaryRef ifInfo = (YMDictionaryRef)denum->value;
-            YMArrayRef ifAddrs = (YMArrayRef)YMDictionaryGetItem(ifInfo, kYMIFMapAddressesKey);
-            for ( int i = 0; i < YMArrayGetCount(ifAddrs); i++ ) {
-                YMAddressRef aLocalAddress = (YMAddressRef)YMArrayGet(ifAddrs, i);                    
-                if ( YMAddressIsEqualIncludingPort(address, aLocalAddress, false) ) {
-                    connection->localIFName = YMRetain(ifName);
-                    connection->localIFType = YMInterfaceTypeForName(ifName);
-                    ymlog("allocated %s (%s)",YMSTR(ifName),YMInterfaceTypeDescription(connection->localIFType));
-                    matched = true;
-                    break;
-                }
-                
-                ymdbg("%s != %s",YMSTR(YMAddressGetDescription(address)),YMSTR(YMAddressGetDescription(aLocalAddress)));
-            }
-            if ( matched )
-                break;
-            denum = YMDictionaryEnumeratorGetNext(denum);
-        }
-        YMDictionaryEnumeratorEnd(denum);
-        
-        if ( ! matched ) {
-            connection->localIFName = YMSTRC("?");
-            connection->localIFType = YMInterfaceUnknown;
-        }
-        
-        YMRelease(localIFMap);
-    }
     
     // remote gets set during 'initialization' later
     connection->remoteIFType = YMInterfaceUnknown;
@@ -419,6 +385,49 @@ bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, 
     YMPlexerRef plexer = NULL;
     struct __ym_connection_command command;
     bool conCmdOkay = true;
+    
+    // determine local interface
+#if defined(YMAPPLE)
+    struct sockaddr_in6 saddr;
+    socklen_t slen = sizeof(saddr);
+    bool matched = false;
+    result = getsockname(newSocket, (struct sockaddr *)&saddr, &slen);
+    YMAddressRef localAddr = YMAddressCreate(&saddr, 0);
+    if ( result == 0 ) {
+        YMDictionaryRef localIFMap = YMInterfaceMapCreateLocal();
+        if ( localIFMap ) {
+            YMDictionaryEnumRef denum = YMDictionaryEnumeratorBegin(localIFMap);
+            while ( denum ) {
+                YMStringRef ifName = (YMStringRef)denum->key;
+                YMDictionaryRef ifInfo = (YMDictionaryRef)denum->value;
+                YMArrayRef ifAddrs = (YMArrayRef)YMDictionaryGetItem(ifInfo, kYMIFMapAddressesKey);
+                for ( int i = 0; i < YMArrayGetCount(ifAddrs); i++ ) {
+                    YMAddressRef aLocalAddress = (YMAddressRef)YMArrayGet(ifAddrs, i);
+                    ymerr("%s: %s ?= %s",YMSTR(ifName),YMSTR(YMAddressGetDescription(localAddr)),YMSTR(YMAddressGetDescription(aLocalAddress)));
+                    if ( YMAddressIsEqualIncludingPort(localAddr, aLocalAddress, false) ) {
+                        connection->localIFName = YMRetain(ifName);
+                        connection->localIFType = YMInterfaceTypeForName(ifName);
+                        ymlog("allocated %s (%s)",YMSTR(ifName),YMInterfaceTypeDescription(connection->localIFType));
+                        matched = true;
+                        break;
+                    }
+                }
+                if ( matched )
+                    break;
+                denum = YMDictionaryEnumeratorGetNext(denum);
+            }
+            YMDictionaryEnumeratorEnd(denum);
+            
+            YMRelease(localIFMap);
+        }
+    }
+    if ( result == -1 || ! matched ) {
+        connection->localIFName = YMSTRC("?");
+        connection->localIFType = YMInterfaceUnknown;
+    }
+#else
+#error implement me, getsockname is a BSD thing
+#endif
     
     if ( asServer ) {
         // if ( clientWantsSamplingFastestEtc )

@@ -441,14 +441,46 @@
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "../src/YMConnection.c"
-            timestampString = "481587084.609124"
+            filePath = "../src/YMTLSProvider.c"
+            timestampString = "481662033.764148"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "309"
-            endingLineNumber = "309"
-            landmarkName = "__YMConnectionDoIFExchange()"
+            startingLineNumber = "539"
+            endingLineNumber = "539"
+            landmarkName = "__YMTLSProviderRead()"
             landmarkType = "7">
+            <Locations>
+               <Location
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "__YMTLSProviderRead"
+                  moduleName = "libyammer.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/david/sandbox/yammer/src/YMTLSProvider.c"
+                  timestampString = "481662034.082968"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "543"
+                  endingLineNumber = "543"
+                  offsetFromSymbolStart = "202">
+               </Location>
+               <Location
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "__YMTLSProviderRead"
+                  moduleName = "libyammer.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/david/sandbox/yammer/src/YMTLSProvider.c"
+                  timestampString = "481662034.191199"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "539"
+                  endingLineNumber = "539"
+                  offsetFromSymbolStart = "327">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -457,14 +489,46 @@
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "../src/YMConnection.c"
-            timestampString = "481587978.468305"
+            filePath = "../src/YMTLSProvider.c"
+            timestampString = "481662009.585945"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "186"
-            endingLineNumber = "186"
-            landmarkName = "__YMConnectionCreate()"
+            startingLineNumber = "557"
+            endingLineNumber = "557"
+            landmarkName = "__YMTLSProviderWrite()"
             landmarkType = "7">
+            <Locations>
+               <Location
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "__YMTLSProviderWrite"
+                  moduleName = "libyammer.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/david/sandbox/yammer/src/YMTLSProvider.c"
+                  timestampString = "481662034.084064"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "561"
+                  endingLineNumber = "561"
+                  offsetFromSymbolStart = "202">
+               </Location>
+               <Location
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "__YMTLSProviderWrite"
+                  moduleName = "libyammer.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/david/sandbox/yammer/src/YMTLSProvider.c"
+                  timestampString = "481662034.191547"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "557"
+                  endingLineNumber = "557"
+                  offsetFromSymbolStart = "308">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

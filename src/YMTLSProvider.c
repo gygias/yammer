@@ -498,6 +498,7 @@ bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
     if ( result != openssl_success ) {
         sslError = SSL_get_error(tls->ssl, result);
         ymerr("SSL_do_handshake: %d: ssl err: %lu (%s)",result,sslError,ERR_error_string(sslError,NULL));
+        if ( sslError == SSL_ERROR_SYSCALL ) ymerr("          errno: %d (%s)",errno,strerror(errno));
         goto catch_return;
     }
 
@@ -533,8 +534,9 @@ bool __YMTLSProviderRead(__YMSecurityProviderRef provider, uint8_t *buffer, size
     int result = SSL_read(tls->ssl, buffer, (int)bytes);
     
     if ( result <= 0 ) {
-        unsigned long sslError = ERR_get_error();
+        unsigned long sslError = SSL_get_error(tls->ssl, result);
         ymerr("SSL_read: %d: ssl err: %lu (%s)",result,sslError,ERR_error_string(sslError, NULL));
+        if ( sslError == SSL_ERROR_SYSCALL ) ymerr("          errno: %d (%s)",errno,strerror(errno));
         return false;
     }
     return true;
@@ -550,8 +552,9 @@ bool __YMTLSProviderWrite(__YMSecurityProviderRef provider, const uint8_t *buffe
     int result = SSL_write(tls->ssl, buffer, (int)bytes);
     
     if ( result <= 0 ) {
-        unsigned long sslError = ERR_get_error();
+        unsigned long sslError = SSL_get_error(tls->ssl, result);
         ymerr("SSL_write failed: %d: ssl err: %lu (%s)",result,sslError,ERR_error_string(sslError, NULL));
+        if ( sslError == SSL_ERROR_SYSCALL ) ymerr("          errno: %d (%s)",errno,strerror(errno));
         return false;
     }
     
