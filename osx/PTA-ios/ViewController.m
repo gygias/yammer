@@ -207,7 +207,7 @@
             [connection closeStream:aStream];
             
             idx++;
-            NSLog(@"client finished writing %zuth stream of length %0.1fmb",idx,(float)SingleStreamLength / 1024 / 1024);
+            NSLog(@"client finished writing %luth stream of length %0.1fmb",(unsigned long)idx,(float)SingleStreamLength / 1024 / 1024);
         }
         
     });

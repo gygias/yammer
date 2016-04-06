@@ -55,7 +55,6 @@ typedef struct __ym_thread_t
     YMSemaphoreRef dispatchSemaphore;
     YMSemaphoreRef dispatchExitSemaphore;
     YMDictionaryRef dispatchesByID;
-    YMLockRef dispatchListLock;
 } __ym_thread_t;
 typedef struct __ym_thread_t *__YMThreadRef;
 
@@ -168,12 +167,8 @@ YMThreadRef YMThreadDispatchCreate(YMStringRef name)
     }
     YMLockUnlock(gDispatchThreadListLock);
     
-    YMStringRef memberName = YMSTRC("dispatch-list");
-    thread->dispatchListLock = YMLockCreateWithOptionsAndName(YMInternalLockType,memberName);
-    YMRelease(memberName);
-    
     thread->dispatchesByID = YMDictionaryCreate();
-    memberName = YMSTRCF("%s-dispatch",name ? YMSTR(name) : "*");
+    YMStringRef memberName = YMSTRCF("%s-dispatch",name ? YMSTR(name) : "*");
     thread->dispatchSemaphore = YMSemaphoreCreateWithName(memberName,0);
     YMRelease(memberName);
     
@@ -193,7 +188,6 @@ void _YMThreadFree(YMTypeRef object)
     if ( thread->isDispatch ) {
         __YMThreadDispatchJoin(thread); // join if not already done
         
-        YMRelease(thread->dispatchListLock);
         YMRelease(thread->dispatchesByID);
         YMRelease(thread->dispatchSemaphore);
         YMRelease(thread->dispatchExitSemaphore);
@@ -352,7 +346,7 @@ void YMThreadDispatchDispatch(YMThreadRef thread_, struct ym_thread_dispatch_t d
         ymabort("fatal: attempt to dispatch to non-dispatch thread");
     
     __ym_thread_dispatch_context_ref newDispatch = NULL;
-    YMLockLock(thread->dispatchListLock);
+    YMSelfLock(thread);
     {
         newDispatch = (__ym_thread_dispatch_context_ref)YMALLOC(sizeof(struct __ym_thread_dispatch_context_t));
         ym_thread_dispatch_ref dispatchCopy = __YMThreadDispatchCopy(&dispatch);
@@ -366,7 +360,7 @@ void YMThreadDispatchDispatch(YMThreadRef thread_, struct ym_thread_dispatch_t d
         ymdbg("adding dispatch '%s': u %p ctx %p",YMSTR(dispatchCopy->description),dispatchCopy,dispatchCopy->context);
         YMDictionaryAdd(thread->dispatchesByID, (YMDictionaryKey)newDispatch->dispatchID, newDispatch);
     }
-    YMLockUnlock(thread->dispatchListLock);
+    YMSelfUnlock(thread);
     
     YMSemaphoreSignal(thread->dispatchSemaphore);
 }
@@ -387,12 +381,12 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_dispatch_dispatch_thread_proc
         ymdbg("n%llu begin dispatch loop",_YMThreadGetCurrentThreadNumber());
         YMSemaphoreWait(thread->dispatchSemaphore);
         
-        YMLockLock(thread->dispatchListLock);
+        YMSelfLock(thread);
         {
             // check if we were signaled to exit
             if ( *stopFlag && ( YMDictionaryGetCount(thread->dispatchesByID) == 0 ) ) {
                 ymlog("n%llu woke for exit", _YMThreadGetCurrentThreadNumber());
-                YMLockUnlock(thread->dispatchListLock);
+                YMSelfUnlock(thread);
                 break;
             }
             
@@ -403,7 +397,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_dispatch_dispatch_thread_proc
             aDispatch = (__ym_thread_dispatch_context_ref)YMDictionaryRemove(thread->dispatchesByID,randomKey);
             ymassert(aDispatch,"fatal: n%llu thread signaled without target", _YMThreadGetCurrentThreadNumber());
         }
-        YMLockUnlock(thread->dispatchListLock);
+        YMSelfUnlock(thread);
         
         ymdbg("n%llu entering dispatch %llu '%s': u %p ctx %p", _YMThreadGetCurrentThreadNumber(), aDispatchID, YMSTR(aDispatch->dispatch->description),aDispatch->dispatch,aDispatch->dispatch->context);
         aDispatch->dispatch->dispatchProc(aDispatch->dispatch);

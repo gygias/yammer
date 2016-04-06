@@ -75,6 +75,7 @@ YM_RELEASE_RETURN_TYPE YMAPI YMRelease(YMTypeRef object);
 
 bool YMAPI YMIsEqual(YMTypeRef a, YMTypeRef b);
 
+// exposes the recursive lock used for retain/release, as a convenience/optimization for "objects"
 void YMAPI YMSelfLock(YMTypeRef object);
 void YMAPI YMSelfUnlock(YMTypeRef object);
 

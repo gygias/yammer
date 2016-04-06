@@ -47,7 +47,6 @@ typedef struct __ym_mdns_browser_t
     bool browsing;
     YMThreadRef browseEventThread;
     YMArrayRef activeServiceRefs;
-    YMLockRef activeServiceRefsLock;
     
     bool resolving;
     
@@ -91,7 +90,6 @@ YMmDNSBrowserRef YMmDNSBrowserCreateWithCallbacks(YMStringRef type,
     browser->type = YMRetain(type);
     browser->serviceList = NULL;
     browser->activeServiceRefs = YMArrayCreate();
-    browser->activeServiceRefsLock = YMLockCreateWithOptions(YMLockRecursive);
     YMmDNSBrowserSetServiceAppearedFunc(browser, serviceAppeared);
     YMmDNSBrowserSetServiceUpdatedFunc(browser, serviceUpdated);
     YMmDNSBrowserSetServiceResolvedFunc(browser, serviceResolved);
@@ -111,7 +109,6 @@ void _YMmDNSBrowserFree(YMTypeRef object)
         YMRelease(browser->type);
     
     YMRelease(browser->activeServiceRefs);
-    YMRelease(browser->activeServiceRefsLock);
         
     //free(browser->browseServiceRef); // released by event thread
     if ( browser->browseEventThread )
@@ -236,9 +233,9 @@ bool YMmDNSBrowserResolve(YMmDNSBrowserRef browser_, YMStringRef serviceName)
         YMRelease(ctx->unescapedName);
         free(ctx);
         
-        YMLockLock(browser->activeServiceRefsLock);
+        YMSelfLock(browser);
             YMArrayRemoveObject(browser->activeServiceRefs, sdref);
-        YMLockUnlock(browser->activeServiceRefsLock);
+        YMSelfUnlock(browser);
         free(sdref);
         return false;
     }
@@ -358,15 +355,15 @@ void DNSSD_API __YMmDNSEnumerateReply(DNSServiceRef sdRef, DNSServiceFlags flags
 
 void __YMmDNSBrowserAddServiceRef(__YMmDNSBrowserRef browser, DNSServiceRef *serviceRef)
 {
-    YMLockLock(browser->activeServiceRefsLock);
+    YMSelfLock(browser);
     YMArrayAdd(browser->activeServiceRefs, serviceRef);
-    YMLockUnlock(browser->activeServiceRefsLock);
+    YMSelfUnlock(browser);
     ymerr("added active sdref: %p",serviceRef); // socketFD is probably not valid at this point
 }
 
 void __YMmDNSBrowserRemoveServiceRef(__YMmDNSBrowserRef browser, DNSServiceRef serviceRef)
 {
-    YMLockLock(browser->activeServiceRefsLock);
+    YMSelfLock(browser);
     bool removed = false;
     for ( int i = 0; i < YMArrayGetCount(browser->activeServiceRefs); i++ ) {
         DNSServiceRef *sdref = (DNSServiceRef *)YMArrayGet(browser->activeServiceRefs, i);
@@ -381,7 +378,7 @@ void __YMmDNSBrowserRemoveServiceRef(__YMmDNSBrowserRef browser, DNSServiceRef s
         }
     }
     ymassert(!serviceRef||removed,"failed to find sdref to remove");
-    YMLockUnlock(browser->activeServiceRefsLock);
+    YMSelfUnlock(browser);
 }
 
 static void DNSSD_API __ym_mdns_browse_callback(__unused DNSServiceRef serviceRef,
@@ -545,7 +542,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_event_proc(YM_THREAD_PARAM ctx)
         FD_ZERO(&readfds);
         
         // 2. Add the fds to the fd_set
-        YMLockLock(browser->activeServiceRefsLock);
+        YMSelfLock(browser);
         {
             for ( int i = 0; i < YMArrayGetCount(browser->activeServiceRefs); i++ ) {
                 DNSServiceRef *sdref = (DNSServiceRef *)YMArrayGet(browser->activeServiceRefs, i);
@@ -556,12 +553,12 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_event_proc(YM_THREAD_PARAM ctx)
                 nfds++;
             }
         }
-        YMLockUnlock(browser->activeServiceRefsLock);
+        YMSelfUnlock(browser);
         
         // wait for pending data or .5 secs to elapse:
         result = select(maxFd + 1, &readfds, nullFd, nullFd, &tv);
         if (result > 0) {
-            YMLockLock(browser->activeServiceRefsLock);
+            YMSelfLock(browser);
             {
                 for ( int i = 0; i < YMArrayGetCount(browser->activeServiceRefs); i++ ) {
                     DNSServiceRef *sdref = (DNSServiceRef *)YMArrayGet(browser->activeServiceRefs, i);
@@ -577,7 +574,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_event_proc(YM_THREAD_PARAM ctx)
                     }
                 }
             }
-            YMLockUnlock(browser->activeServiceRefsLock);
+            YMSelfUnlock(browser);
         } else if (result == 0) {
             // timeout elapsed but no fd-s were signalled.
         } else {

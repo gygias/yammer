@@ -26,7 +26,6 @@ opaque_thing_that_closes_input_file
                                                     V
                                             Plexer:StreamReadDown -> medium -> ...
 
-- 'self lock'
 - connection ownership/lifetime not clear
 - inlines
 - convenience for "my user data is length-prefixed with x width, too"

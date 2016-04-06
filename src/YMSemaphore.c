@@ -42,7 +42,6 @@ typedef struct __ym_semaphore
     
     YMStringRef userName;
     YMStringRef semName;
-    YMLockRef lock;
     YM_SEMAPHORE_TYPE *sem;
 } ___ym_semaphore;
 typedef struct __ym_semaphore __YMSemaphore;
@@ -80,9 +79,6 @@ YMSemaphoreRef __YMSemaphoreCreate(YMStringRef name, int initialValue)
     __YMSemaphoreRef semaphore = (__YMSemaphoreRef)_YMAlloc(_YMSemaphoreTypeID,sizeof(__YMSemaphore));
     
     semaphore->userName = YMStringCreateWithFormat("%s-%p",name?YMSTR(name):"*",semaphore, NULL);
-    YMStringRef memberName = YMSTRC("__ymsemaphore_mutex");
-    semaphore->lock = YMLockCreateWithOptionsAndName(YMInternalLockType, memberName);
-    YMRelease(memberName);
     
     YMLockLock(gYMSemaphoreIndexLock);
     uint16_t thisIndex = gYMSemaphoreIndex++;
@@ -128,7 +124,6 @@ void _YMSemaphoreFree(YMTypeRef object)
 	if (result == -1)
 		ymerr("warning: sem_unlink failed: %d (%s)", error, errorStr);
     
-    YMRelease(semaphore->lock);
     YMRelease(semaphore->userName);
     YMRelease(semaphore->semName);
 }
