@@ -54,7 +54,7 @@
 # include <Winternl.h> // NtQuery
 # include <Processthreadsapi.h> // GetCurrentProcessId
 # include <VersionHelpers.h> // IsWindows*
-# include "dirent.h"
+# include "windirent.h"
 #endif
 
 YM_EXTERN_C_PUSH
