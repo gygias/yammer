@@ -835,11 +835,12 @@ void __ym_session_connection_interrupted_proc(YMConnectionRef connection, void *
 {
     __YMSessionRef session = context;
     
+    YMConnectionRef savedDefault = session->defaultConnection;
     bool first = __YMSessionInterrupt(session, connection);
     if ( ! first )
         return;
     
-    bool isDefault = ( connection == session->defaultConnection );
+    bool isDefault = ( connection == savedDefault );
     
 	    ymerr("connection interrupted: %s",YMSTR(YMAddressGetDescription(YMConnectionGetAddress(connection))));
     
