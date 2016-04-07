@@ -622,6 +622,14 @@ YMAddressRef YMConnectionGetAddress(YMConnectionRef connection_)
     return connection->address;
 }
 
+#define YMStreamInitBuiltinVersion 1
+typedef struct _ymconnection_stream_init
+{
+    uint16_t version;
+    YMCompressionType compressionType;
+} _ymconnection_stream_init;
+typedef struct _ymconnection_stream_init _ymconnection_stream_init_t;
+
 YMStreamRef YMAPI YMConnectionCreateStream(YMConnectionRef connection_, YMStringRef name, YMCompressionType compression)
 {
     __YMConnectionRef connection = (__YMConnectionRef)connection_;
@@ -630,10 +638,13 @@ YMStreamRef YMAPI YMConnectionCreateStream(YMConnectionRef connection_, YMString
         return NULL;
     
     YMStreamRef stream = YMPlexerCreateStream(connection->plexer, name);
-    bool compressionOK = _YMStreamSetCompression(stream,compression);
-    if ( ! compressionOK ) {
-        ymerr("initializing compression for stream %s",YMSTR(name));
-    }
+    bool okay = _YMStreamSetCompression(stream,compression);
+    ymassert(okay,"set compression for outgoing stream %s",YMSTR(name));
+    
+    _ymconnection_stream_init_t init = { YMStreamInitBuiltinVersion, compression };
+    YMIOResult ymResult = YMStreamWriteDown(stream, (const uint8_t *)&init, sizeof(init));
+    if ( ymResult != YMIOSuccess )
+        ymerr("outgoing stream init failed");
     
     return stream;
 }
@@ -716,6 +727,16 @@ void _ym_connection_forward_callback_proc(void *context, YMIOResult result, uint
 void ym_connection_new_stream_proc(__unused YMPlexerRef plexer,YMStreamRef stream, void *context)
 {
     __YMConnectionRef connection = (__YMConnectionRef)context;
+    
+    _ymconnection_stream_init_t init = { 0, 0 };
+    uint16_t outLen = 0;
+    YMIOResult ymResult = YMStreamReadUp(stream, (uint8_t *)&init, sizeof(init), &outLen);
+    if ( ymResult != YMIOSuccess || outLen != sizeof(init) )
+        ymerr("incoming stream init failed");
+    ymassert(init.version == YMStreamInitBuiltinVersion, "the installed version of yammer doesn't support stream init %u",init.version);
+    bool okay = _YMStreamSetCompression(stream, init.compressionType);
+    ymassert(okay,"set compression for outgoing stream");
+    
     if ( connection->newFunc )
         connection->newFunc(connection, stream, connection->newFuncContext);
 }

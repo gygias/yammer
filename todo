@@ -2,7 +2,6 @@
   ``NOTE WELL:'' PHILZ IN SANTA MONICA DOESNT SERVE BAGELS DUE TO HEALTH REGULATIONS
 - add netmask to if map
 - awdl support
-- compression handshake, all or nothing
 - samples should be time-based
 - journaled streams
 - ensure over-the-wire enums are explicitly sized

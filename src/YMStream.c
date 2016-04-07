@@ -58,7 +58,6 @@ typedef struct __ym_stream_t
     _ym_stream_free_user_info_func freeUserInfoFunc; // made necessary because clients can hold stream objs longer than we do
     
     bool direct;
-    bool dirty; // user has done i/o
     
     ym_stream_user_info_ref userInfo; // weak, plexer
 } __ym_stream_t;
@@ -89,7 +88,6 @@ YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_ref userInfo, 
     stream->dataAvailableContext = NULL;
     
     stream->direct = false;
-    stream->dirty = false;
     
     stream->userInfo = userInfo;
     stream->freeUserInfoFunc = callback;
@@ -128,7 +126,6 @@ void _YMStreamFree(YMTypeRef object)
 bool _YMStreamSetCompression(YMStreamRef stream_, YMCompressionType type)
 {
     __YMStreamRef stream = (__YMStreamRef)stream_;
-    ymassert(!stream->dirty,"compression must be set before using stream");
     
     YMCompressionRef downCompression = YMCompressionCreate(type,YMPipeGetInputFile(stream->downstreamPipe),true);
     bool okay = YMCompressionInit(downCompression);
@@ -150,7 +147,6 @@ bool _YMStreamSetCompression(YMStreamRef stream_, YMCompressionType type)
 YMIOResult YMStreamReadUp(YMStreamRef stream_, uint8_t *buffer, uint16_t length, uint16_t *outLength)
 {
     __YMStreamRef stream = (__YMStreamRef)stream_;
-    stream->dirty = true;
     
     ymlog("reading %ub user data",length);
     size_t off = 0, iters = 0;
@@ -180,7 +176,6 @@ YMIOResult YMStreamWriteDown(YMStreamRef stream_, const uint8_t *buffer, uint16_
     YM_DEBUG_CHUNK_SIZE(length);
     
     __YMStreamRef stream = (__YMStreamRef)stream_;
-    stream->dirty = true;
     
     size_t off = 0, iters = 0;
     YMIOResult result;
@@ -236,14 +231,12 @@ YMIOResult _YMStreamWriteUp(YMStreamRef stream_, const void *buffer, uint32_t le
 YMIOResult YMStreamWriteToFile(YMStreamRef stream_, YMFILE file, uint64_t *inBytes, uint64_t *outBytes)
 {
     __YMStreamRef stream = (__YMStreamRef)stream_;
-    stream->dirty = true;
     return __YMStreamForward(stream, file, false, inBytes, outBytes);
 }
 
 YMIOResult YMStreamReadFromFile(YMStreamRef stream_, YMFILE file, uint64_t *inBytes, uint64_t *outBytes)
 {
     __YMStreamRef stream = (__YMStreamRef)stream_;
-    stream->dirty = true;
     return __YMStreamForward(stream, file, true, inBytes, outBytes);
 }
 
