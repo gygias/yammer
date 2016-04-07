@@ -194,6 +194,20 @@
 			remoteGlobalIDString = 631916301BFCFF13001475FC;
 			remoteInfo = Yammer;
 		};
+		634F5B841CB70119008CF20C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 63225D3A1BE9026200C28F05 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 63B17D5C1CB34441005B662B;
+			remoteInfo = "PTA-ios";
+		};
+		634F5B861CB7011D008CF20C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 63225D3A1BE9026200C28F05 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6329D31F1C9F646A0087988D;
+			remoteInfo = ProfilingTestApp;
+		};
 		63500B241CB2D950009E5514 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 63225D3A1BE9026200C28F05 /* Project object */;
@@ -1023,6 +1037,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				634F5B851CB70119008CF20C /* PBXTargetDependency */,
 				63C8F27D1CA321E3009C0140 /* PBXTargetDependency */,
 				6329D3331C9F685A0087988D /* PBXTargetDependency */,
 			);
@@ -1078,6 +1093,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				634F5B871CB7011D008CF20C /* PBXTargetDependency */,
 				63B17D841CB44062005B662B /* PBXTargetDependency */,
 			);
 			name = "PTA-ios";
@@ -1437,6 +1453,16 @@
 			isa = PBXTargetDependency;
 			target = 631916301BFCFF13001475FC /* Yammer */;
 			targetProxy = 6329D3321C9F685A0087988D /* PBXContainerItemProxy */;
+		};
+		634F5B851CB70119008CF20C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 63B17D5C1CB34441005B662B /* PTA-ios */;
+			targetProxy = 634F5B841CB70119008CF20C /* PBXContainerItemProxy */;
+		};
+		634F5B871CB7011D008CF20C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6329D31F1C9F646A0087988D /* ProfilingTestApp */;
+			targetProxy = 634F5B861CB7011D008CF20C /* PBXContainerItemProxy */;
 		};
 		63500B251CB2D950009E5514 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -2122,6 +2148,7 @@
 				63B17D731CB34442005B662B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		63B17D871CB44062005B662B /* Build configuration list for PBXNativeTarget "YammeriOS" */ = {
 			isa = XCConfigurationList;
@@ -2130,6 +2157,7 @@
 				63B17D891CB44062005B662B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		63EEC75A1BFB6AA400990ECE /* Build configuration list for PBXNativeTarget "ymchat" */ = {
 			isa = XCConfigurationList;

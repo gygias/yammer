@@ -158,13 +158,15 @@
                                             100 * ((self.currentConnection.sample.doubleValue > 0) ?
                                                    ((double)self.bytesSinceLastTput / self.currentConnection.sample.doubleValue)
                                                    : (double)self.bytesSinceLastTput)];
-                    self.tputLabel.stringValue = tputString;
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        self.tputLabel.stringValue = tputString;
+                    });
                     
                     self.lastTputDate = [NSDate date];
                     self.bytesSinceLastTput = 0;
                 }
                 
-                if ( streamIdx % 16384 == 0 ) NSLog(@"c[%zu]: wrote %zu-%u",idx,streamIdx,thisLength);
+                if ( ( streamIdx % 1048576 ) == 0 ) NSLog(@"c[%zu]: wrote %zu-%u",idx,streamIdx,thisLength);
                 streamIdx += thisLength;
             }
             [connection closeStream:aStream];
@@ -203,8 +205,8 @@
             self.bytesSinceLastTput = 0;
         }
         
-        NSLog(@"s[*]: read %zu-%u: %zu",idx,aRead,[data length]);
         idx += aRead;
+        if ( ( idx % 1048576 ) == 0 ) NSLog(@"s[*]: read %zu-%u: %zu",idx,aRead,[data length]);
     }
     
     NSLog(@"server finished reading stream with length %0.1fmb",(float)idx / 1024 / 1024);
