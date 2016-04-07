@@ -403,7 +403,7 @@ bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, 
                 YMArrayRef ifAddrs = (YMArrayRef)YMDictionaryGetItem(ifInfo, kYMIFMapAddressesKey);
                 for ( int i = 0; i < YMArrayGetCount(ifAddrs); i++ ) {
                     YMAddressRef aLocalAddress = (YMAddressRef)YMArrayGet(ifAddrs, i);
-                    ymerr("%s: %s ?= %s",YMSTR(ifName),YMSTR(YMAddressGetDescription(localAddr)),YMSTR(YMAddressGetDescription(aLocalAddress)));
+                    ymdbg("%s: %s ?= %s",YMSTR(ifName),YMSTR(YMAddressGetDescription(localAddr)),YMSTR(YMAddressGetDescription(aLocalAddress)));
                     if ( YMAddressIsEqualIncludingPort(localAddr, aLocalAddress, false) ) {
                         connection->localIFName = YMRetain(ifName);
                         connection->localIFType = YMInterfaceTypeForName(ifName);

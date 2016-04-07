@@ -38,6 +38,10 @@
 # endif
 # include <pthread.h>
 # if defined (YMAPPLE)
+#  if !defined(YMIOS)
+#   include <dlfcn.h>
+#  endif
+#  include <SystemConfiguration/SystemConfiguration.h>
 #  include <sys/time.h>
 #  define YM_PORT_MAX IPPORT_HILASTAUTO
 # else
@@ -462,6 +466,39 @@ YMInterfaceType YMInterfaceTypeForName(YMStringRef ifName)
         return YMInterfaceCellular;
     } else if ( YMStringHasPrefix2(ifName, "en") ) {
 # if !defined(YMIOS)
+#  define YM_SCNETWORKINTERFACE 1
+#  if defined(YM_SCNETWORKINTERFACE)
+        bool matched = false;
+        CFStringRef cfIfName = CFStringCreateWithCString(NULL, YMSTR(ifName), kCFStringEncodingASCII);
+        if ( cfIfName ) {
+            CFArrayRef scInterfaces = SCNetworkInterfaceCopyAll();
+            if ( scInterfaces ) {
+                for ( CFIndex idx = 0; idx < CFArrayGetCount(scInterfaces); idx++ ) {
+                    SCNetworkInterfaceRef scInterface = CFArrayGetValueAtIndex(scInterfaces, idx);
+                    if ( scInterface ) {
+                        CFStringRef scName = SCNetworkInterfaceGetBSDName(scInterface);
+                        if ( scName && CFEqual(scName, cfIfName) ) {
+                            CFStringRef scType = SCNetworkInterfaceGetInterfaceType(scInterface);
+                            if ( scType && CFEqual(scType, kSCNetworkInterfaceTypeIEEE80211) ) {
+                                matched = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                CFRelease(scInterfaces);
+            }
+            CFRelease(cfIfName);
+        }
+        
+        if ( matched )
+            return YMInterfaceWirelessEthernet;
+#  elif defined(YM_DLAPPLE80211)
+#define Apple80211FrameworkBinaryPath "/System/Library/PrivateFrameworks/Apple80211.framework/Apple80211"
+        void *dl = dlopen(Apple80211FrameworkBinaryPath,RTLD_LAZY);
+        void (*functionstub)();
+        functionstub = dlsym(dlhandle, "Apple80211Open"); // Apple80211GetIfListCopy ...
+#  else
         // the only proper interface i know of for this is obj-c and CoreWLAN/CWInterface.h#interfaceName
         // so we'd either need an objc helper library for apple platforms, or maybe this is good enough
         YMStringRef path = YMSTRC("/usr/sbin/networksetup");
@@ -482,6 +519,7 @@ YMInterfaceType YMInterfaceTypeForName(YMStringRef ifName)
         
         if ( status == 0 )
             return YMInterfaceWirelessEthernet;
+#endif
         return YMInterfaceWiredEthernet;
 # else
         return YMInterfaceWirelessEthernet;

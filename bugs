@@ -1,2 +1,1 @@
-- localhost <-> localhost test, networksetup run concurrently seems to deadlock sometimes
 - resolve whether compression should/must close media per platform
