@@ -30,7 +30,6 @@ opaque_thing_that_closes_input_file
 - convenience for "my user data is length-prefixed with x width, too"
 - mDNS filter local services
 - muxer protocol renegotiate
-- plexer chunk-chunk instead of realloc (and test large single user i/o vs plex buf)
 - service all ready downstreams in single loop, lock optimization
 - {h,n}to{n,h}
 - awkward to mix [un]managed types in collections
