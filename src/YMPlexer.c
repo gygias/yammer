@@ -41,17 +41,18 @@
 YM_EXTERN_C_PUSH
 
 #define CHECK_REMOVE_RELEASE(local,streamID,remove) {   \
-                                                YMSelfLock(plexer); bool _interrupted = ! plexer->active; YMSelfUnlock(plexer); \
+                                                YMLockLock(plexer->interruptionLock); bool _interrupted = ! plexer->active; YMLockUnlock(plexer->interruptionLock); \
                                                 if ( ! _interrupted ) { \
+                                                    YMLockRef _lock = local ? plexer->localAccessLock : plexer->remoteAccessLock; \
                                                     YMDictionaryRef _list = local ? plexer->localStreamsByID : plexer->remoteStreamsByID; \
-                                                    if ( local ) YMSelfLock(plexer); else YMLockLock(plexer->remoteStreamsLock); \
-                                                    YMStreamRef _theStream; \
-                                                    bool _okay = ( remove ? \
-                                                                    ( ( _theStream = YMDictionaryRemove(_list,streamID) ) != NULL ) : \
-                                                                      YMDictionaryContains(_list,streamID) ); \
-                                                    if ( ! _okay ) { ymabort("plexer consistenty check failed"); } \
-                                                    if ( remove ) { YMRelease(_theStream); } \
-                                                    if ( local ) YMSelfUnlock(plexer); else YMLockUnlock(plexer->remoteStreamsLock); } \
+                                                        YMLockLock(_lock); \
+                                                        YMStreamRef _theStream; \
+                                                        bool _okay = ( remove ? \
+                                                                        ( ( _theStream = YMDictionaryRemove(_list,streamID) ) != NULL ) : \
+                                                                          YMDictionaryContains(_list,streamID) ); \
+                                                        if ( ! _okay ) { ymabort("plexer consistenty check failed"); } \
+                                                        if ( remove ) { YMRelease(_theStream); } \
+                                                    YMLockUnlock(_lock); } \
                                                 }
 
 typedef struct {
@@ -121,19 +122,21 @@ typedef struct __ym_plexer_t
     
     // the downstream
     YMDictionaryRef localStreamsByID;
+    YMLockRef localAccessLock;
     uint8_t *localPlexBuffer;
     uint32_t localPlexBufferSize;
     YMPlexerStreamID localStreamIDLast;
     
     // the upstream
     YMDictionaryRef remoteStreamsByID;
-    YMLockRef remoteStreamsLock;
+    YMLockRef remoteAccessLock;
     uint8_t *remotePlexBuffer;
     uint32_t remotePlexBufferSize;
     
     YMThreadRef localServiceThread;
     YMThreadRef remoteServiceThread;
     YMThreadRef eventDeliveryThread;
+    YMLockRef interruptionLock;
     YMSemaphoreRef downstreamReadySemaphore;
     
     // user
@@ -187,13 +190,15 @@ YMPlexerRef YMPlexerCreate(YMStringRef name, YMSecurityProviderRef provider, boo
     plexer->myStreamsEven = false;
     
     plexer->localStreamsByID = YMDictionaryCreate();
-    
+    YMStringRef aString = YMStringCreateWithFormat("%s-local",YMSTR(plexer->name), NULL);
+    plexer->localAccessLock = YMLockCreateWithOptionsAndName(YMInternalLockType,aString);
+    YMRelease(aString);
     plexer->localPlexBufferSize = YMPlexerDefaultBufferSize;
     plexer->localPlexBuffer = YMALLOC(plexer->localPlexBufferSize);
     
     plexer->remoteStreamsByID = YMDictionaryCreate();
-    YMStringRef aString = YMStringCreateWithFormat("%s-remote",YMSTR(plexer->name),NULL);
-    plexer->remoteStreamsLock = YMLockCreateWithOptionsAndName(YMInternalLockType,aString);
+    aString = YMStringCreateWithFormat("%s-remote",YMSTR(plexer->name),NULL);
+    plexer->remoteAccessLock = YMLockCreateWithOptionsAndName(YMInternalLockType,aString);
     YMRelease(aString);
     plexer->remotePlexBufferSize = YMPlexerDefaultBufferSize;
     plexer->remotePlexBuffer = YMALLOC(plexer->remotePlexBufferSize);
@@ -208,6 +213,10 @@ YMPlexerRef YMPlexerCreate(YMStringRef name, YMSecurityProviderRef provider, boo
     
     aString = YMStringCreateWithFormat("%s-event",YMSTR(plexer->name),NULL);
     plexer->eventDeliveryThread = YMThreadDispatchCreate(aString);
+    YMRelease(aString);
+    
+    aString = YMStringCreateWithFormat("%s-interrupt",YMSTR(plexer->name),NULL);
+    plexer->interruptionLock = YMLockCreateWithOptionsAndName(YMInternalLockType,aString);
     YMRelease(aString);
     
     aString = YMStringCreateWithFormat("%s-down-signal",YMSTR(plexer->name),NULL);
@@ -241,13 +250,15 @@ void _YMPlexerFree(YMPlexerRef plexer_)
     
     free(plexer->localPlexBuffer);
     YMRelease(plexer->localStreamsByID);
+    YMRelease(plexer->localAccessLock);
     YMRelease(plexer->localServiceThread);
     free(plexer->remotePlexBuffer);
     YMRelease(plexer->remoteStreamsByID);
-    YMRelease(plexer->remoteStreamsLock);
+    YMRelease(plexer->remoteAccessLock);
     YMRelease(plexer->remoteServiceThread);
     
     YMRelease(plexer->eventDeliveryThread);
+    YMRelease(plexer->interruptionLock);
 }
 
 void YMPlexerSetInterruptedFunc(YMPlexerRef plexer_, ym_plexer_interrupted_func func)
@@ -327,7 +338,7 @@ YMStreamRef YMAPI YMPlexerCreateStream(YMPlexerRef plexer_, YMStringRef name)
     __YMPlexerRef plexer = (__YMPlexerRef)plexer_;
     
     YMStreamRef newStream = NULL;
-    YMSelfLock(plexer);
+    YMLockLock(plexer->localAccessLock);
     do {
         if ( plexer->localStreamIDLast >= ( YMPlexerStreamIDMax - 1 ) )
             plexer->localStreamIDLast = plexer->myStreamsEven ? 0 : 1;
@@ -348,7 +359,7 @@ YMStreamRef YMAPI YMPlexerCreateStream(YMPlexerRef plexer_, YMStringRef name)
         YMRetain(newStream); // retain for user
         
     } while (false);
-    YMSelfUnlock(plexer);
+    YMLockUnlock(plexer->localAccessLock);
     
     return newStream;
 }
@@ -550,10 +561,20 @@ YMStreamRef __YMPlexerRetainReadyStream(__YMPlexerRef plexer)
     struct timeval newestTime = {0,0};
     YMGetTheEndOfPosixTimeForCurrentPlatform(&newestTime);
     
-    for( int i = 0; i < 2; i++ ) {
-        YMDictionaryRef aStreamsById = ( i == 0 ) ? plexer->localStreamsByID : plexer->remoteStreamsByID;
+#define __YMOutgoingListIdx 0
+#define __YMIncomingListIdx 1
+#define __YMListMax 2
+#define __YMLockListIdx 0
+#define __YMListListIdx 1
+    YMTypeRef *list[] = { (YMTypeRef[]) { plexer->localAccessLock, plexer->localStreamsByID },
+        (YMTypeRef[]) { plexer->remoteAccessLock, plexer->remoteStreamsByID } };
+    
+    int listIdx = 0;
+    for( ; listIdx < __YMListMax; listIdx++ ) {
+        YMLockRef aLock = (YMLockRef)list[listIdx][__YMLockListIdx];
+        YMDictionaryRef aStreamsById = (YMDictionaryRef)list[listIdx][__YMListListIdx];
         
-        if ( i == 0 ) YMSelfLock(plexer) ; else YMLockLock(plexer->remoteStreamsLock);
+        YMLockLock(aLock);
         {
             YMDictionaryEnumRef aStreamsEnum = YMDictionaryEnumeratorBegin(aStreamsById);
             YMDictionaryEnumRef aStreamsEnumPrev = NULL;
@@ -564,7 +585,7 @@ YMStreamRef __YMPlexerRetainReadyStream(__YMPlexerRef plexer)
                 __ym_plexer_stream_user_info_ref userInfo = YM_STREAM_INFO(aStream);
                 YMPlexerStreamID aStreamID = userInfo->streamID;
                 
-                ymlog("choose: considering %s downstream %llu",(i==0)?"local":"remote",aStreamID);
+                ymlog("choose: considering %s downstream %llu",listIdx==__YMOutgoingListIdx?"local":"remote",aStreamID);
                 
                 // we are the only consumer of bytesAvailable, no need to lock here, but we will when we actually 'consume' them later on
                 uint64_t aStreamBytesAvailable = 0;
@@ -581,7 +602,7 @@ YMStreamRef __YMPlexerRetainReadyStream(__YMPlexerRef plexer)
                     }
                 }
                 
-                ymlog("choose: %s stream %llu is ready! %s%llub",(i==0)?"local":"remote",aStreamID,userInfo->userClosed?"(closing) ":"",aStreamBytesAvailable);
+                ymlog("choose: %s stream %llu is ready! %s%llub",listIdx==__YMOutgoingListIdx?"local":"remote",aStreamID,userInfo->userClosed?"(closing) ":"",aStreamBytesAvailable);
                 
                 struct timeval *thisStreamLastService = YM_STREAM_INFO(aStream)->lastServiceTime;
                 if ( YMTimevalCompare(thisStreamLastService, &newestTime ) != GreaterThan ) {
@@ -596,10 +617,10 @@ YMStreamRef __YMPlexerRetainReadyStream(__YMPlexerRef plexer)
             if ( aStreamsEnumPrev )
                 YMDictionaryEnumeratorEnd(aStreamsEnum);
             else
-                ymlog("choose: %s list is empty",(i==0)?"down stream":"up stream");
+                ymlog("choose: %s list is empty",listIdx==__YMOutgoingListIdx?"down stream":"up stream");
                 
         }
-        if ( i == 0 ) YMSelfUnlock(plexer); else YMLockUnlock(plexer->remoteStreamsLock);
+        YMLockUnlock(aLock);
     }
     
     if ( oldestStream ) YM_DEBUG_ASSERT_MALLOC(oldestStream);
@@ -793,7 +814,7 @@ YMStreamRef __YMPlexerRetainOrCreateRemoteStreamWithID(__YMPlexerRef plexer, YMP
 {
     YMStreamRef theStream = NULL;
     
-    YMSelfLock(plexer);
+    YMLockLock(plexer->localAccessLock);
     {
         theStream = (YMStreamRef)YMDictionaryGetItem(plexer->localStreamsByID,(YMDictionaryKey)streamID);
         if ( theStream ) {
@@ -801,10 +822,10 @@ YMStreamRef __YMPlexerRetainOrCreateRemoteStreamWithID(__YMPlexerRef plexer, YMP
             YMRetain(theStream);
         }
     }
-    YMSelfUnlock(plexer);
+    YMLockUnlock(plexer->localAccessLock);
     
     if ( ! theStream ) {
-        YMLockLock(plexer->remoteStreamsLock);
+        YMLockLock(plexer->remoteAccessLock);
         {
             theStream = (YMStreamRef)YMDictionaryGetItem(plexer->remoteStreamsByID,(YMDictionaryKey)streamID);
             if ( theStream ) {
@@ -815,7 +836,7 @@ YMStreamRef __YMPlexerRetainOrCreateRemoteStreamWithID(__YMPlexerRef plexer, YMP
             // new stream
             if ( ! theStream ) {
                 if ( ( streamID % 2 == 0 ) && plexer->myStreamsEven ) {
-                    YMLockUnlock(plexer->remoteStreamsLock);
+                    YMLockUnlock(plexer->remoteAccessLock);
                     
                     if ( __YMPlexerInterrupt(plexer) )
                         ymerr("internal: L-%llu stream id collision",streamID);
@@ -837,7 +858,7 @@ YMStreamRef __YMPlexerRetainOrCreateRemoteStreamWithID(__YMPlexerRef plexer, YMP
 					__YMPlexerDispatchFunctionWithName(plexer, theStream, plexer->eventDeliveryThread, __ym_plexer_notify_new_stream, name);
             }
         }    
-        YMLockUnlock(plexer->remoteStreamsLock);
+        YMLockUnlock(plexer->remoteAccessLock);
     }
     
     return theStream;
@@ -899,14 +920,14 @@ void __ym_plexer_stream_data_available_proc(YMStreamRef stream, uint32_t bytes, 
 bool __YMPlexerInterrupt(__YMPlexerRef plexer)
 {
     bool firstInterrupt = false;
-    YMSelfLock(plexer);
+    YMLockLock(plexer->interruptionLock);
     {
         firstInterrupt = plexer->active;
         
         // before closing fds to ensure up/down threads wake up and exit, flag them
         plexer->active = false;
     }
-    YMSelfLock(plexer);
+    YMLockUnlock(plexer->interruptionLock);
     
     if ( ! firstInterrupt )
         return false;
@@ -917,9 +938,13 @@ bool __YMPlexerInterrupt(__YMPlexerRef plexer)
     
     YMSemaphoreSignal(plexer->downstreamReadySemaphore);
 
-    for ( int i = 0; i < 2; i++ ) {
-        YMDictionaryRef aList = ( i == 0 ) ? plexer->localStreamsByID : plexer->remoteStreamsByID;
-        if ( i == 0 ) YMSelfLock(plexer); else YMLockLock(plexer->remoteStreamsLock);
+	YMTypeRef *listOfLocksAndLists[] = { (YMTypeRef[]) { plexer->localAccessLock, plexer->localStreamsByID },
+		(YMTypeRef[]) { plexer->remoteAccessLock, plexer->remoteStreamsByID } };
+
+    for ( int i = 0; i < __YMListMax; i++ ) {
+        YMLockRef aLock = listOfLocksAndLists[i][__YMLockListIdx];
+        YMDictionaryRef aList = listOfLocksAndLists[i][__YMListListIdx];
+        YMLockLock(aLock);
         {
             while ( YMDictionaryGetCount(aList) > 0 ) {
                 YMDictionaryKey aRandomKey = YMDictionaryGetRandomKey(aList);
@@ -931,7 +956,7 @@ bool __YMPlexerInterrupt(__YMPlexerRef plexer)
                 YMRelease(aStream);
             }
         }
-        if ( i == 0 ) YMSelfUnlock(plexer); else YMLockUnlock(plexer->remoteStreamsLock);
+        YMLockUnlock(aLock);
     }
     
     // if the client stops us, they don't expect a callback
