@@ -387,7 +387,7 @@ bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, 
     bool conCmdOkay = true;
     
     // determine local interface
-#if defined(YMAPPLE)
+#if defined(YMAPPLE) || defined(YMWIN32)
     struct sockaddr_in6 saddr;
     socklen_t slen = sizeof(saddr);
     bool matched = false;

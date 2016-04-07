@@ -44,11 +44,12 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION compression_test_read_proc(YM_THREAD_PARA
 void CompressionTestsRun(ym_test_assert_func assert, const void *context)
 {
     struct CompressionTest theTest = { assert, context, NULL, NULL, 0, 0, NULL, NULL_FILE };
-    
+#if !defined(YMWIN32)
     _GZTestRun(&theTest);
     ymerr("_GZTestRun completed");
     _BZTestRun(&theTest);
     ymerr("_BZTestRun completed");
+#endif
 }
 
 void _GZTestRun(CompressionTest *theTest)
