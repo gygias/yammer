@@ -3,10 +3,10 @@
 
 OUT=out
 
-LSRC=YMAddress.c YMBase.c YMConnection.c YMDictionary.c YMLinkedList.c YMLocalSocketPair.c YMLock.c YMLog.c YMmDNS.c \
-				 YMmDNSBrowser.c YMmDNSService.c YMPeer.c YMPipe.c YMPlexer.c YMRSAKeyPair.c YMSecurityProvider.c \
+LSRC=YMAddress.c YMArray.c YMBase.c YMCompression.c YMConnection.c YMDictionary.c YMLocalSocketPair.c YMLock.c YMLog.c \
+				 YMmDNS.c YMmDNSBrowser.c YMmDNSService.c YMPeer.c YMPipe.c YMPlexer.c YMRSAKeyPair.c YMSecurityProvider.c \
 				 YMSemaphore.c YMSession.c YMStream.c YMString.c YMThread.c YMTLSProvider.c YMUtilities.c \
-				 YMX509Certificate.c YMTask.c YMArray.c YMCompression.c
+				 YMX509Certificate.c YMTask.c
 LTGT=libyammer.a
 
 TSRC=CryptoTests.c DictionaryTests.c LocalSocketPairTests.c mDNSTests.c PlexerTests.c SessionTests.c Tests.c TLSTests.c \

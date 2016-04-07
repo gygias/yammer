@@ -27,7 +27,6 @@ YMTypeID _YMTaskTypeID = 'f';
 YMTypeID _YMPipeTypeID = 'i';
 YMTypeID _YMLockTypeID = 'k';
 YMTypeID _YMRSAKeyPairTypeID = 'K';
-YMTypeID _YMLinkedListTypeID = 'l';
 YMTypeID _YMmDNSServiceTypeID = 'm';
 YMTypeID _YMLocalSocketPairTypeID = 'o';
 YMTypeID _YMSemaphoreTypeID = 'p';
@@ -53,7 +52,6 @@ extern void _YMmDNSBrowserFree(YMTypeRef);
 extern void _YMThreadFree(YMTypeRef);
 extern void _YMLockFree(YMTypeRef);
 extern void _YMSemaphoreFree(YMTypeRef);
-extern void _YMLinkedListFree(YMTypeRef);
 extern void _YMDictionaryFree(YMTypeRef);
 extern void _YMRSAKeyPairFree(YMTypeRef);
 extern void _YMX509CertificateFree(YMTypeRef);
@@ -167,8 +165,6 @@ void __YMFree(__YMTypeRef object)
         _YMLockFree(object);
     else if ( type == _YMSemaphoreTypeID )
         _YMSemaphoreFree(object);
-    else if ( type == _YMLinkedListTypeID )
-        _YMLinkedListFree(object);
     else if ( type == _YMDictionaryTypeID )
         _YMDictionaryFree(object);
     else if ( type == _YMRSAKeyPairTypeID )

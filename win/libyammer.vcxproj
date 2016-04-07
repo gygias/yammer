@@ -188,7 +188,6 @@
     <ClInclude Include="..\private\YMConnectionPriv.h" />
     <ClInclude Include="..\private\YMDebug.h" />
     <ClInclude Include="..\private\YMInternal.h" />
-    <ClInclude Include="..\private\YMLinkedList.h" />
     <ClInclude Include="..\private\YMLocalSocketPair.h" />
     <ClInclude Include="..\private\YMLock.h" />
     <ClInclude Include="..\private\YMLockPriv.h" />
@@ -228,7 +227,6 @@
     <ClCompile Include="..\src\YMConnection.c" />
     <ClCompile Include="..\src\YMDebug.c" />
     <ClCompile Include="..\src\YMDictionary.c" />
-    <ClCompile Include="..\src\YMLinkedList.c" />
     <ClCompile Include="..\src\YMLocalSocketPair.c" />
     <ClCompile Include="..\src\YMLock.c" />
     <ClCompile Include="..\src\YMLog.c" />
