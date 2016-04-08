@@ -37,7 +37,7 @@ typedef enum
 #define YMInternalLockType YMLockNone
 #endif
 
-typedef const struct __ym_lock *YMLockRef;
+typedef const struct __ym_lock * YMLockRef;
 
 YMLockRef YMAPI YMLockCreate();
 YMLockRef YMAPI YMLockCreateWithOptions(YMLockOptions options);

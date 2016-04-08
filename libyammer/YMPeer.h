@@ -15,7 +15,7 @@ YM_EXTERN_C_PUSH
 #include <libyammer/YMPeer.h>
 #include <libyammer/YMAddress.h>
 
-typedef const struct __ym_peer_t *YMPeerRef;
+typedef const struct __ym_peer * YMPeerRef;
 
 YMStringRef YMAPI YMPeerGetName(YMPeerRef peer);
 YMArrayRef YMAPI YMPeerGetAddresses(YMPeerRef peer);

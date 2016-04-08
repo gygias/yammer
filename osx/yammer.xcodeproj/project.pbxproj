@@ -402,6 +402,8 @@
 		634F5B8C1CB7117D008CF20C /* chat.vcxproj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; name = chat.vcxproj; path = ../win/chat/chat.vcxproj; sourceTree = "<group>"; };
 		634F5B8D1CB7118C008CF20C /* ProfilingTestApp.csproj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; name = ProfilingTestApp.csproj; path = ../win/ProfilingTestApp/ProfilingTestApp.csproj; sourceTree = "<group>"; };
 		634F5B8E1CB71197008CF20C /* tests.vcxproj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; name = tests.vcxproj; path = ../win/tests/tests.vcxproj; sourceTree = "<group>"; };
+		634F5B8F1CB8124B008CF20C /* YMObject.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMObject.h; path = ../private/YMObject.h; sourceTree = "<group>"; };
+		634F5B901CB812A0008CF20C /* YMObject.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMObject.c; path = ../src/YMObject.c; sourceTree = "<group>"; };
 		63500B171CAF7361009E5514 /* YMCompression.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMCompression.h; path = ../private/YMCompression.h; sourceTree = "<group>"; };
 		63500B181CAF7381009E5514 /* YMCompression.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMCompression.c; path = ../src/YMCompression.c; sourceTree = "<group>"; };
 		63500B1B1CAF8FF8009E5514 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
@@ -746,6 +748,7 @@
 				631799691BF9B05B0086EB05 /* YMPipePriv.h */,
 				63225D5F1BE909BB00C28F05 /* YMPlexer.h */,
 				637816C41BF684D300BF79E2 /* YMPlexerPriv.h */,
+				634F5B8F1CB8124B008CF20C /* YMObject.h */,
 				63FD5B591BF1899800174824 /* YMRSAKeyPair.h */,
 				63225D631BE90A6400C28F05 /* YMSecurityProvider.h */,
 				637E3D621BF2D12100D702ED /* YMSecurityProviderInternal.h */,
@@ -781,6 +784,7 @@
 				6335CAC31BF480DC00412CC9 /* YMPeer.c */,
 				63225D521BE9074700C28F05 /* YMPipe.c */,
 				63225D5E1BE909BB00C28F05 /* YMPlexer.c */,
+				634F5B901CB812A0008CF20C /* YMObject.c */,
 				63FD5B581BF1899800174824 /* YMRSAKeyPair.c */,
 				63225D621BE90A6400C28F05 /* YMSecurityProvider.c */,
 				63476A511BEB319000D10081 /* YMSemaphore.c */,

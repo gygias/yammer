@@ -70,10 +70,9 @@ typedef struct __ym_type
     int __retainCount; // todo find a better way to preallocate this
     MUTEX_PTR_TYPE __mutex;
 } ___ym_type;
-typedef struct __ym_type __YMType;
-typedef __YMType *__YMTypeRef;
+typedef struct __ym_type __ym_type_t;
 
-void __YMFree(__YMTypeRef object);
+void __YMFree(__ym_type_t *object);
 
 #include "YMUtilities.h"
 
@@ -81,7 +80,7 @@ YMTypeRef _YMAlloc(YMTypeID type, size_t size)
 {
     ymassert(size >= sizeof(_YMType),"base: fatal: bad alloc '%c'",type);
     
-    __YMTypeRef object = YMALLOC(size);
+    __ym_type_t *object = YMALLOC(size);
     object->__type = type;
     object->__retainCount = 1;
     
@@ -96,16 +95,16 @@ YMTypeRef _YMAlloc(YMTypeID type, size_t size)
     return object;
 }
 
-YMTypeRef YMRetain(YMTypeRef object_)
+YMTypeRef YMRetain(YMTypeRef o_)
 {
-    __YMTypeRef object = (__YMTypeRef)object_;
-    YMLockMutex(object->__mutex);
-    ymassert(object->__retainCount >= 1, "base: fatal: retain count inconsistent for %p",object);
+    __ym_type_t *o = (__ym_type_t *)o_;
+    YMLockMutex(o->__mutex);
+    ymassert(o->__retainCount >= 1, "base: fatal: retain count inconsistent for %p",o);
 
-    object->__retainCount++;
-    YMUnlockMutex(object->__mutex);
+    o->__retainCount++;
+    YMUnlockMutex(o->__mutex);
     
-    return object;
+    return o;
 }
 
 YMTypeRef YMAutorelease(YMTypeRef object)
@@ -113,26 +112,26 @@ YMTypeRef YMAutorelease(YMTypeRef object)
     return object; // todo, lol
 }
 
-YM_RELEASE_RETURN_TYPE YMRelease(YMTypeRef object_)
+YM_RELEASE_RETURN_TYPE YMRelease(YMTypeRef o_)
 {
-    __YMTypeRef object = (__YMTypeRef)object_;
+    __ym_type_t *o = (__ym_type_t *)o_;
     
-    ymsoftassert(object, "released null");
+    ymsoftassert(o, "released null");
     
     bool dealloc = false;
-    YMLockMutex(object->__mutex);
+    YMLockMutex(o->__mutex);
     {
-        ymassert(object->__retainCount >= 1, "base: fatal: something has overreleased %p (%c)",object,object->__type);
+        ymassert(o->__retainCount >= 1, "base: fatal: something has overreleased %p (%c)",o,o->__type);
         
-        if ( object->__retainCount-- == 1 )
+        if ( o->__retainCount-- == 1 )
             dealloc = true;
     }
-    YMUnlockMutex(object->__mutex);
+    YMUnlockMutex(o->__mutex);
     
     if ( dealloc ) {
-        __YMFree(object);
-        YMDestroyMutex(object->__mutex);
-        free(object);
+        __YMFree(o);
+        YMDestroyMutex(o->__mutex);
+        free(o);
     }
     
 #ifdef YMDEBUG
@@ -140,68 +139,68 @@ YM_RELEASE_RETURN_TYPE YMRelease(YMTypeRef object_)
 #endif
 }
 
-void __YMFree(__YMTypeRef object)
+void __YMFree(__ym_type_t *o)
 {
-    YMTypeID type = object->__type;
+    YMTypeID type = o->__type;
     if ( type == _YMPipeTypeID )
-        _YMPipeFree(object);
+        _YMPipeFree(o);
     else if ( type == _YMStreamTypeID )
-        _YMStreamFree(object);
+        _YMStreamFree(o);
     else if ( type == _YMConnectionTypeID )
-        _YMConnectionFree(object);
+        _YMConnectionFree(o);
     else if ( type == _YMSecurityProviderTypeID )
-        _YMSecurityProviderFree(object);
+        _YMSecurityProviderFree(o);
     else if ( type == _YMPlexerTypeID )
-        _YMPlexerFree(object);
+        _YMPlexerFree(o);
     else if ( type == _YMSessionTypeID )
-        _YMSessionFree(object);
+        _YMSessionFree(o);
     else if ( type == _YMmDNSServiceTypeID )
-        _YMmDNSServiceFree(object);
+        _YMmDNSServiceFree(o);
     else if ( type == _YMmDNSBrowserTypeID )
-        _YMmDNSBrowserFree(object);
+        _YMmDNSBrowserFree(o);
     else if ( type == _YMThreadTypeID )
-        _YMThreadFree(object);
+        _YMThreadFree(o);
     else if ( type == _YMLockTypeID )
-        _YMLockFree(object);
+        _YMLockFree(o);
     else if ( type == _YMSemaphoreTypeID )
-        _YMSemaphoreFree(object);
+        _YMSemaphoreFree(o);
     else if ( type == _YMDictionaryTypeID )
-        _YMDictionaryFree(object);
+        _YMDictionaryFree(o);
     else if ( type == _YMRSAKeyPairTypeID )
-        _YMRSAKeyPairFree(object);
+        _YMRSAKeyPairFree(o);
     else if ( type == _YMX509CertificateTypeID )
-        _YMX509CertificateFree(object);
+        _YMX509CertificateFree(o);
     else if ( type == _YMTLSProviderTypeID )
-        _YMTLSProviderFree(object);
+        _YMTLSProviderFree(o);
     else if ( type == _YMLocalSocketPairTypeID )
-        _YMLocalSocketPairFree(object);
+        _YMLocalSocketPairFree(o);
     else if ( type == _YMAddressTypeID )
-        _YMAddressFree(object);
+        _YMAddressFree(o);
     else if ( type == _YMPeerTypeID )
-        _YMPeerFree(object);
+        _YMPeerFree(o);
     else if ( type == _YMStringTypeID )
-        _YMStringFree(object);
+        _YMStringFree(o);
     else if ( type == _YMTaskTypeID )
-        _YMTaskFree(object);
+        _YMTaskFree(o);
     else if ( type == _YMArrayTypeID )
-        _YMArrayFree(object);
+        _YMArrayFree(o);
     else if ( type == _YMCompressionTypeID )
-        _YMCompressionFree(object);
+        _YMCompressionFree(o);
     else
         ymabort("base: fatal: free type unknown %c",type);
 }
 
 bool YMAPI YMIsEqual(YMTypeRef a_, YMTypeRef b_)
 {
-    __YMTypeRef a = (__YMTypeRef)a_,
-                b = (__YMTypeRef)b_;
+    __ym_type_t *a = (__ym_type_t *)a_,
+                *b = (__ym_type_t *)b_;
     if ( ! a || ! b )
         return false;
     if ( a->__type != b->__type )
         return false;
     
     if ( a->__type == _YMStringTypeID )
-        return YMStringEquals(a_, b_);
+        return YMStringEquals((YMStringRef)a, (YMStringRef)b);
     else if ( a->__type == _YMAddressTypeID )
         return YMAddressIsEqual((YMAddressRef)a, (YMAddressRef)b);
     else
@@ -209,14 +208,14 @@ bool YMAPI YMIsEqual(YMTypeRef a_, YMTypeRef b_)
     return false;
 }
 
-void YMSelfLock(YMTypeRef object)
+void YMSelfLock(YMTypeRef o_)
 {
-    YMLockMutex(((__YMTypeRef)object)->__mutex);
+    YMLockMutex(((__ym_type_t *)o_)->__mutex);
 }
 
-void YMSelfUnlock(YMTypeRef object)
+void YMSelfUnlock(YMTypeRef o_)
 {
-    YMUnlockMutex(((__YMTypeRef)object)->__mutex);
+    YMUnlockMutex(((__ym_type_t *)o_)->__mutex);
 }
 
 #include "YMTLSProvider.h"

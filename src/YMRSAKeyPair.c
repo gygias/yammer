@@ -33,7 +33,7 @@ YM_EXTERN_C_PUSH
 // private key (d)
 // message^e must be greater than N
 
-typedef struct __ym_rsa_keypair_t
+typedef struct __ym_rsa_keypair
 {
     _YMType _typeID;
     
@@ -41,8 +41,8 @@ typedef struct __ym_rsa_keypair_t
     int moduloNBits;
     
     RSA *rsa;
-} __ym_rsa_keypair_t;
-typedef struct __ym_rsa_keypair_t *__YMRSAKeyPairRef;
+} __ym_rsa_keypair;
+typedef struct __ym_rsa_keypair __ym_rsa_keypair_t;
 
 void __YMRSAKeyPairSeed();
 
@@ -61,12 +61,12 @@ YMRSAKeyPairRef YMRSAKeyPairCreateWithModuloSize(int moduloBits, int publicExpon
         return NULL;
     }
     
-    __YMRSAKeyPairRef keyPair = (__YMRSAKeyPairRef)_YMAlloc(_YMRSAKeyPairTypeID,sizeof(struct __ym_rsa_keypair_t));
+    __ym_rsa_keypair_t *k = (__ym_rsa_keypair_t *)_YMAlloc(_YMRSAKeyPairTypeID,sizeof(__ym_rsa_keypair_t));
     
-    keyPair->rsa = rsa;
-    keyPair->moduloNBits = moduloBits;
-    keyPair->publicE = publicExponent;
-    return keyPair;
+    k->rsa = rsa;
+    k->moduloNBits = moduloBits;
+    k->publicE = publicExponent;
+    return k;
 }
 
 YMRSAKeyPairRef YMRSAKeyPairCreate()
@@ -74,10 +74,9 @@ YMRSAKeyPairRef YMRSAKeyPairCreate()
     return YMRSAKeyPairCreateWithModuloSize(4096, RSA_F4);
 }
 
-void _YMRSAKeyPairFree(YMTypeRef object)
+void _YMRSAKeyPairFree(YMRSAKeyPairRef k)
 {
-    __YMRSAKeyPairRef keyPair = (__YMRSAKeyPairRef)object;
-    RSA_free(keyPair->rsa);
+    RSA_free(k->rsa);
 }
 
 // e.g.
@@ -126,9 +125,9 @@ void _YMRSAKeyPairFree(YMTypeRef object)
 //    int flags;
 //};
 
-bool YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair_)
+bool YMRSAKeyPairGenerate(YMRSAKeyPairRef k_)
 {
-    __YMRSAKeyPairRef keyPair = (__YMRSAKeyPairRef)keyPair_;
+    __ym_rsa_keypair_t *k = (__ym_rsa_keypair_t *)k_;
     
     // "OpenSSL makes sure that the PRNG state is unique for each thread.
     // On systems that provide /dev/urandom, the randomness device is used to seed the PRNG transparently."
@@ -150,16 +149,16 @@ bool YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair_)
         goto catch_return;
     }
     
-    result = BN_set_word(e, keyPair->publicE);
+    result = BN_set_word(e, k->publicE);
     if ( ERR_LIB_NONE != result ) {
         rsaErrFunc = "BN_set_word";
         goto catch_return;
     }
     
-    BN_set_word(e, keyPair->publicE);
+    BN_set_word(e, k->publicE);
     
     // os x man page doesn't actually state that 1 is success for _ex #yolo
-    result = RSA_generate_key_ex(keyPair->rsa, keyPair->moduloNBits, e, NULL /*BN_GENCB *cb callback struct*/);
+    result = RSA_generate_key_ex(k->rsa, k->moduloNBits, e, NULL /*BN_GENCB *cb callback struct*/);
     if ( ERR_LIB_NONE != result ) {
         rsaErrFunc = "RSA_generate_key_ex";
         goto catch_return;
@@ -170,7 +169,7 @@ bool YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair_)
     if ( timeResult == 0 ) {
         timeResult = gettimeofday(&now, NULL);
         if ( timeResult == 0 )
-            ymlog("rsa: it took %ld seconds to generate rsa keypair with %d modulo bits",now.tv_sec - then.tv_sec,keyPair->moduloNBits);
+            ymlog("rsa: it took %ld seconds to generate rsa keypair with %d modulo bits",now.tv_sec - then.tv_sec,k->moduloNBits);
     }
     if ( timeResult != 0 )
         ymerr("rsa: gettimeofday failed");
@@ -214,10 +213,9 @@ void __YMRSAKeyPairSeed()
 #endif
 }
 
-void *YMRSAKeyPairGetRSA(YMRSAKeyPairRef keyPair_)
+void *YMRSAKeyPairGetRSA(YMRSAKeyPairRef k)
 {
-    __YMRSAKeyPairRef keyPair = (__YMRSAKeyPairRef)keyPair_;
-    return keyPair->rsa;
+    return k->rsa;
 }
 
 YM_EXTERN_C_POP

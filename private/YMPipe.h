@@ -11,7 +11,7 @@
 
 YM_EXTERN_C_PUSH
 
-typedef const struct __ym_pipe_t *YMPipeRef;
+typedef const struct __ym_pipe * YMPipeRef;
 
 YMPipeRef YMAPI YMPipeCreate(YMStringRef name);
 

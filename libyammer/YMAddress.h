@@ -15,7 +15,7 @@
 
 YM_EXTERN_C_PUSH
 
-typedef struct __YMAddressRef *YMAddressRef;
+typedef struct __ym_address * YMAddressRef;
 
 typedef enum
 {

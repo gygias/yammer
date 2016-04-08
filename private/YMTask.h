@@ -15,7 +15,7 @@
 
 YM_EXTERN_C_PUSH
 
-typedef const struct __ym_task_t *YMTaskRef;
+typedef const struct __ym_task * YMTaskRef;
 
 YMTaskRef YMAPI YMTaskCreate(YMStringRef path, YMArrayRef args, bool saveOutput);
 

@@ -13,7 +13,7 @@
 
 YM_EXTERN_C_PUSH
 
-typedef const struct __ym_x509_certificate_t *YMX509CertificateRef;
+typedef const struct __ym_x509_certificate * YMX509CertificateRef;
 
 YMX509CertificateRef YMAPI YMX509CertificateCreate(YMRSAKeyPairRef);
 

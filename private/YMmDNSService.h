@@ -14,7 +14,7 @@
 
 YM_EXTERN_C_PUSH
 
-typedef const struct __ym_mdns_service_t *YMmDNSServiceRef;
+typedef const struct __ym_mdns_service * YMmDNSServiceRef;
 
 YMmDNSServiceRef YMAPI YMmDNSServiceCreate(YMStringRef type, YMStringRef name, uint16_t port);
 

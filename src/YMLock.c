@@ -20,8 +20,7 @@ typedef struct __ym_lock
 	MUTEX_PTR_TYPE mutex;
     YMStringRef name;
 } ___ym_lock;
-typedef struct __ym_lock __YMLock;
-typedef __YMLock *__YMLockRef;
+typedef struct __ym_lock __ym_lock_t;
 
 YM_EXTERN_C_PUSH
 
@@ -41,39 +40,35 @@ YMLockRef YMLockCreateWithOptionsAndName(YMLockOptions options, YMStringRef name
     if ( ! mutex )
         return NULL;
     
-    __YMLockRef lock = (__YMLockRef)_YMAlloc(_YMLockTypeID,sizeof(__YMLock));
+    __ym_lock_t *l = (__ym_lock_t *)_YMAlloc(_YMLockTypeID,sizeof(__ym_lock_t));
     
-    lock->mutex = mutex;
-    lock->name = name ? YMRetain(name) : YMSTRC("*");
+    l->mutex = mutex;
+    l->name = name ? YMRetain(name) : YMSTRC("*");
     
-    return (YMLockRef)lock;
+    return l;
 }
 
-void YMLockLock(YMLockRef lock_)
+void YMLockLock(YMLockRef l)
 {
-    __YMLockRef lock = (__YMLockRef)lock_;
-    
-    bool okay = YMLockMutex(lock->mutex);
-    ymassert(okay,"fatal: failed to lock mutex");
+    bool okay = YMLockMutex(l->mutex);
+    ymassert(okay,"fatal: failed to lock mutex: %p",l->mutex);
 }
 
-void YMLockUnlock(YMLockRef lock_)
+void YMLockUnlock(YMLockRef l)
 {
-    __YMLockRef lock = (__YMLockRef)lock_;
-    
-    bool okay = YMUnlockMutex(lock->mutex);
-    ymassert(okay,"fatal: mutex unlock failed: %p",lock->mutex);
+    bool okay = YMUnlockMutex(l->mutex);
+    ymassert(okay,"fatal: mutex unlock failed: %p",l->mutex);
 }
 
-void _YMLockFree(YMTypeRef object)
+void _YMLockFree(YMTypeRef o_)
 {
-    __YMLockRef lock = (__YMLockRef)object;
+    __ym_lock_t *l = (__ym_lock_t *)o_;
     
-    bool okay = YMDestroyMutex(lock->mutex);
+    bool okay = YMDestroyMutex(l->mutex);
     if ( ! okay )
-        ymerr("warning: cannot destroy mutex (%s), something may deadlock", YMSTR(lock->name));
+        ymerr("warning: cannot destroy mutex (%s), something may deadlock", YMSTR(l->name));
     
-    YMRelease(lock->name);
+    YMRelease(l->name);
 }
 
 YM_EXTERN_C_POP

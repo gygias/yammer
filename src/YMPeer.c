@@ -10,7 +10,7 @@
 
 YM_EXTERN_C_PUSH
 
-typedef struct __ym_peer_t
+typedef struct __ym_peer
 {
     _YMType _type;
     
@@ -18,8 +18,8 @@ typedef struct __ym_peer_t
     YMArrayRef addresses;
     uint16_t port;
     YMArrayRef certificates;
-} __ym_peer_t;
-typedef struct __ym_peer_t *__YMPeerRef;
+} __ym_peer;
+typedef struct __ym_peer __ym_peer_t;
 
 YMPeerRef __YMPeerCreate(YMStringRef name, YMArrayRef addresses, YMArrayRef certificates);
 
@@ -40,78 +40,70 @@ YMPeerRef _YMPeerCreate(YMStringRef name, YMArrayRef addresses, YMArrayRef certi
 
 YMPeerRef __YMPeerCreate(YMStringRef name, YMArrayRef addresses, YMArrayRef certificates)
 {
-    __YMPeerRef peer = (__YMPeerRef)_YMAlloc(_YMPeerTypeID,sizeof(struct __ym_peer_t));
+    __ym_peer_t *p = (__ym_peer_t *)_YMAlloc(_YMPeerTypeID,sizeof(__ym_peer_t));
     
-    peer->name = name ? YMRetain(name) : YMSTRC("unnamed-peer");
-    peer->addresses = addresses ? YMRetain(addresses) : NULL;
-    peer->certificates = certificates ? YMRetain(certificates) : NULL;
+    p->name = name ? YMRetain(name) : YMSTRC("unnamed-peer");
+    p->addresses = addresses ? YMRetain(addresses) : NULL;
+    p->certificates = certificates ? YMRetain(certificates) : NULL;
     
-    return peer;
+    return p;
 }
 
-void _YMPeerFree(YMTypeRef object)
+void _YMPeerFree(YMTypeRef o_)
 {
-    __YMPeerRef peer = (__YMPeerRef)object;
+    __ym_peer_t *p = (__ym_peer_t *)o_;
     
-    if ( peer->addresses ) {
-        _YMArrayRemoveAll(peer->addresses, true, false);
-        YMRelease(peer->addresses);
+    if ( p->addresses ) {
+        _YMArrayRemoveAll(p->addresses, true, false);
+        YMRelease(p->addresses);
     }
     
-    if ( peer->certificates ) {
-        _YMArrayRemoveAll(peer->certificates, true, false);
-        YMRelease(peer->certificates);
+    if ( p->certificates ) {
+        _YMArrayRemoveAll(p->certificates, true, false);
+        YMRelease(p->certificates);
     }
     
-    YMRelease(peer->name);
+    YMRelease(p->name);
 }
 
-YMStringRef YMPeerGetName(YMPeerRef peer_)
+YMStringRef YMPeerGetName(YMPeerRef p)
 {
-    __YMPeerRef peer = (__YMPeerRef)peer_;
-    return peer->name;
+    return p->name;
 }
 
-YMArrayRef YMPeerGetAddresses(YMPeerRef peer_)
+YMArrayRef YMPeerGetAddresses(YMPeerRef p)
 {
-    __YMPeerRef peer = (__YMPeerRef)peer_;
-    return peer->addresses;
+    return p->addresses;
 }
 
-uint16_t YMPeerGetPort(YMPeerRef peer_)
+uint16_t YMPeerGetPort(YMPeerRef p)
 {
-    __YMPeerRef peer = (__YMPeerRef)peer_;
-    return peer->port;
+    return p->port;
 }
 
-YMArrayRef YMPeerGetCertificates(YMPeerRef peer_)
+YMArrayRef YMPeerGetCertificates(YMPeerRef p)
 {
-    __YMPeerRef peer = (__YMPeerRef)peer_;
-    return peer->certificates;
+    return p->certificates;
 }
 
-void _YMPeerSetName(YMPeerRef peer_, YMStringRef name)
+void _YMPeerSetName(YMPeerRef p, YMStringRef name)
 {
-    __YMPeerRef peer = (__YMPeerRef)peer_;
-    peer->name = YMRetain(name);
+    ((__ym_peer_t *)p)->name = YMRetain(name);
 }
 
-void _YMPeerSetAddresses(YMPeerRef peer_, YMArrayRef addresses)
+void _YMPeerSetAddresses(YMPeerRef p, YMArrayRef addresses)
 {
-    __YMPeerRef peer = (__YMPeerRef)peer_;
-    peer->addresses = YMRetain(addresses);
+    ((__ym_peer_t *)p)->addresses = YMRetain(addresses);
 }
 
-void _YMPeerSetPort(YMPeerRef peer_, uint16_t port)
+void _YMPeerSetPort(YMPeerRef p, uint16_t port)
 {
-    __YMPeerRef peer = (__YMPeerRef)peer_;
-    peer->port = port;
+    ((__ym_peer_t *)p)->port = port;
 }
 
-void _YMPeerSetCertificates(YMPeerRef peer_, YMArrayRef certificates)
+void _YMPeerSetCertificates(YMPeerRef p, YMArrayRef certificates)
 {
-    __YMPeerRef peer = (__YMPeerRef)peer_;
-    peer->certificates = YMRetain(certificates);
+    ((__ym_peer_t *)p)->certificates = YMRetain(certificates);
 }
 
 YM_EXTERN_C_POP

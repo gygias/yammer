@@ -13,7 +13,7 @@
 
 YM_EXTERN_C_PUSH
 
-typedef const struct __ym_mdns_browser_t *YMmDNSBrowserRef;
+typedef const struct __ym_mdns_browser * YMmDNSBrowserRef;
 
 // callback definitions
 typedef void (*ym_mdns_service_appeared_func)(YMmDNSBrowserRef browser, YMmDNSServiceRecord * service, void *context);

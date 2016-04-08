@@ -14,7 +14,7 @@
 
 #define ymlog_type YMLogIO
 #define ymlog_pre "local-socket[%s]: "
-#define ymlog_args ( pair->userName ? YMSTR(pair->userName) : "&" )
+#define ymlog_args ( p->userName ? YMSTR(p->userName) : "&" )
 #include "YMLog.h"
 
 #if !defined(YMWIN32)
@@ -41,7 +41,7 @@
 
 YM_EXTERN_C_PUSH
 
-typedef struct __ym_local_socket_pair_t
+typedef struct __ym_local_socket_pair
 {
     _YMType _type;
     
@@ -50,8 +50,8 @@ typedef struct __ym_local_socket_pair_t
     YMSOCKET socketA;
 	YMSOCKET socketB;
     bool shutdown;
-} __ym_local_socket_pair_t;
-typedef struct __ym_local_socket_pair_t *__YMLocalSocketPairRef;
+} __ym_local_socket_pair;
+typedef struct __ym_local_socket_pair __ym_local_socket_pair_t;
 
 int __YMLocalSocketPairCreateClient();
 YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_local_socket_accept_proc(YM_THREAD_PARAM);
@@ -154,61 +154,57 @@ YMLocalSocketPairRef YMLocalSocketPairCreate(YMStringRef name, bool moreComing)
         return NULL;
     }
     
-    __YMLocalSocketPairRef pair = (__YMLocalSocketPairRef)_YMAlloc(_YMLocalSocketPairTypeID,sizeof(struct __ym_local_socket_pair_t));
+    __ym_local_socket_pair_t *p = (__ym_local_socket_pair_t *)_YMAlloc(_YMLocalSocketPairTypeID,sizeof(__ym_local_socket_pair_t));
     
-    pair->userName = YMSTRCF("ls:%s:sf%d<->cf%d",name_str,serverSocket,clientSocket);
-    pair->socketName = YMRetain(gYMLocalSocketPairName);
-    pair->socketA = serverSocket;
-    pair->socketB = clientSocket;
-    pair->shutdown = false;
+    p->userName = YMSTRCF("ls:%s:sf%d<->cf%d",name_str,serverSocket,clientSocket);
+    p->socketName = YMRetain(gYMLocalSocketPairName);
+    p->socketA = serverSocket;
+    p->socketB = clientSocket;
+    p->shutdown = false;
     
     if ( ! moreComing )
         YMLocalSocketPairStop(); // eat your own dogfood
     
-    return pair;
+    return p;
 }
 
-YMSOCKET YMLocalSocketPairGetA(YMLocalSocketPairRef pair_)
+YMSOCKET YMLocalSocketPairGetA(YMLocalSocketPairRef p)
 {
-    __YMLocalSocketPairRef pair = (__YMLocalSocketPairRef)pair_;
-    return pair->socketA;
+    return p->socketA;
 }
-YMSOCKET YMLocalSocketPairGetB(YMLocalSocketPairRef pair_)
+YMSOCKET YMLocalSocketPairGetB(YMLocalSocketPairRef p)
 {
-    __YMLocalSocketPairRef pair = (__YMLocalSocketPairRef)pair_;
-    return pair->socketB;
+    return p->socketB;
 }
 
-bool YMLocalSocketPairShutdown(YMLocalSocketPairRef pair_)
+bool YMLocalSocketPairShutdown(YMLocalSocketPairRef p)
 {
-    __YMLocalSocketPairRef pair = (__YMLocalSocketPairRef)pair_;
-    
     bool okay = false;
-    if ( ! pair->shutdown ) {
+    if ( ! p->shutdown ) {
         ymlog("shutting down");
-        int result = shutdown(pair->socketA, SHUT_RDWR);
+        int result = shutdown(p->socketA, SHUT_RDWR);
         okay = ( result == 0 );
-        shutdown(pair->socketB, SHUT_RDWR);
+        shutdown(p->socketB, SHUT_RDWR);
         okay = okay && ( result == 0 );
     }
     return okay;
 }
 
-void _YMLocalSocketPairFree(YMTypeRef object)
+void _YMLocalSocketPairFree(YMTypeRef o_)
 {
-    __YMLocalSocketPairRef pair = (__YMLocalSocketPairRef)object;
+    __ym_local_socket_pair_t *p = (__ym_local_socket_pair_t *)o_;
     
 	int result, error; const char *errorStr;
-    YM_CLOSE_SOCKET(pair->socketA);
+    YM_CLOSE_SOCKET(p->socketA);
     if ( result != 0 )
         ymabort("close failed (%d): %d (%s)",result,errno,strerror(errno));
 
-    YM_CLOSE_SOCKET(pair->socketB);
+    YM_CLOSE_SOCKET(p->socketB);
     if ( result != 0 )
         ymabort("close failed (%d): %d (%s)",result,errno,strerror(errno));
     
-    YMRelease(pair->userName);
-    YMRelease(pair->socketName);
+    YMRelease(p->userName);
+    YMRelease(p->socketName);
 }
 
 int __YMLocalSocketPairCreateClient()

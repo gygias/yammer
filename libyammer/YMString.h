@@ -13,7 +13,7 @@ YM_EXTERN_C_PUSH
 
 #include <libyammer/YMBase.h>
 
-typedef const struct __ym_string *YMStringRef;
+typedef const struct __ym_string * YMStringRef;
 
 YMStringRef YMAPI YMStringCreate();
 YMStringRef YMAPI YMStringCreateWithCString(const char *cString);

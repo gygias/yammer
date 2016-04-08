@@ -16,80 +16,75 @@
 
 YM_EXTERN_C_PUSH
 
-bool YMNoSecurityInit(__YMSecurityProviderRef provider);
-bool YMNoSecurityRead(__YMSecurityProviderRef provider,uint8_t*,size_t);
-bool YMNoSecurityWrite(__YMSecurityProviderRef provider,const uint8_t*,size_t);
-bool YMNoSecurityClose(__YMSecurityProviderRef provider);
+bool YMNoSecurityInit(__ym_security_provider_t *);
+bool YMNoSecurityRead(__ym_security_provider_t *,uint8_t*,size_t);
+bool YMNoSecurityWrite(__ym_security_provider_t *,const uint8_t*,size_t);
+bool YMNoSecurityClose(__ym_security_provider_t *);
 
 YMSecurityProviderRef YMSecurityProviderCreateWithSocket(YMSOCKET socket)
 {
-    __YMSecurityProviderRef provider = (__YMSecurityProviderRef)_YMAlloc(_YMSecurityProviderTypeID,sizeof(struct __ym_security_provider_t));
+    __ym_security_provider_t *p = (__ym_security_provider_t *)_YMAlloc(_YMSecurityProviderTypeID,sizeof(__ym_security_provider_t));
     
-    provider->socket = socket;
-    provider->initFunc = YMNoSecurityInit;
-    provider->readFunc = YMNoSecurityRead;
-    provider->writeFunc = YMNoSecurityWrite;
-    provider->closeFunc = YMNoSecurityClose;
+    p->socket = socket;
+    p->initFunc = YMNoSecurityInit;
+    p->readFunc = YMNoSecurityRead;
+    p->writeFunc = YMNoSecurityWrite;
+    p->closeFunc = YMNoSecurityClose;
     
-    return provider;
+    return p;
 }
 
-void _YMSecurityProviderFree(YMSecurityProviderRef provider_)
+void _YMSecurityProviderFree(YMSecurityProviderRef p_)
 {
-    __unused __YMSecurityProviderRef provider = (__YMSecurityProviderRef)provider_;
+    __unused __ym_security_provider_t *p = (__ym_security_provider_t *)p_;
 }
 
-void YMSecurityProviderSetInitFunc(YMSecurityProviderRef provider_, ym_security_init_func func)
+void YMSecurityProviderSetInitFunc(YMSecurityProviderRef p, ym_security_init_func func)
 {
-    __YMSecurityProviderRef provider = (__YMSecurityProviderRef)provider_;
-    provider->initFunc = func;
+    ((__ym_security_provider_t *)p)->initFunc = func;
 }
 
-bool YMSecurityProviderInit(YMSecurityProviderRef provider_)
+bool YMSecurityProviderInit(YMSecurityProviderRef p)
 {
-    __YMSecurityProviderRef provider = (__YMSecurityProviderRef)provider_;
-    return provider->initFunc(provider);
+    return p->initFunc((__ym_security_provider_t *)p);
 }
 
-bool YMSecurityProviderRead(YMSecurityProviderRef provider_, uint8_t *buffer, size_t bytes)
+bool YMSecurityProviderRead(YMSecurityProviderRef p, uint8_t *buffer, size_t bytes)
 {
-    __YMSecurityProviderRef provider = (__YMSecurityProviderRef)provider_;
-    return provider->readFunc(provider, buffer, bytes);
+    return p->readFunc((__ym_security_provider_t *)p, buffer, bytes);
 }
 
-bool YMSecurityProviderWrite(YMSecurityProviderRef provider_, const uint8_t *buffer, size_t bytes)
+bool YMSecurityProviderWrite(YMSecurityProviderRef p, const uint8_t *buffer, size_t bytes)
 {
-    __YMSecurityProviderRef provider = (__YMSecurityProviderRef)provider_;
-    return provider->writeFunc(provider, buffer, bytes);
+    return p->writeFunc((__ym_security_provider_t *)p, buffer, bytes);
 }
 
-bool YMSecurityProviderClose(YMSecurityProviderRef provider_)
+bool YMSecurityProviderClose(YMSecurityProviderRef p)
 {
-    __YMSecurityProviderRef provider = (__YMSecurityProviderRef)provider_;
-    return provider->closeFunc(provider);
+    return p->closeFunc((__ym_security_provider_t *)p);
 }
 
 // passthrough
-bool YMNoSecurityInit(__unused __YMSecurityProviderRef provider)
+bool YMNoSecurityInit(__unused __ym_security_provider_t *p)
 {
     return true;
 }
 
-bool YMNoSecurityRead(__YMSecurityProviderRef provider, uint8_t *buffer, size_t bytes)
+bool YMNoSecurityRead(__ym_security_provider_t *p, uint8_t *buffer, size_t bytes)
 {
 	YM_IO_BOILERPLATE
-    YM_READ_SOCKET(provider->socket, buffer, bytes);
+    YM_READ_SOCKET(p->socket, buffer, bytes);
     return ( (size_t)aRead == bytes );
 }
 
-bool YMNoSecurityWrite(__YMSecurityProviderRef provider, const uint8_t *buffer, size_t bytes)
+bool YMNoSecurityWrite(__ym_security_provider_t *p, const uint8_t *buffer, size_t bytes)
 {
     YM_IO_BOILERPLATE
-    YM_WRITE_SOCKET(provider->socket, buffer, bytes);
+    YM_WRITE_SOCKET(p->socket, buffer, bytes);
     return ( (size_t)aWrite == bytes );
 }
 
-bool YMNoSecurityClose(__unused __YMSecurityProviderRef provider_)
+bool YMNoSecurityClose(__unused __ym_security_provider_t *p)
 {
     return true;
 }

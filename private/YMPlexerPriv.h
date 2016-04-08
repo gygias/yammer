@@ -17,12 +17,12 @@ YM_EXTERN_C_PUSH
 typedef uint64_t YMPlexerStreamID;
 #define YMPlexerStreamIDMax UINT64_MAX
 
-typedef struct ym_plexer_stream_user_info_t
+typedef struct ym_pstream_user_info
 {
     const char *name;
     YMPlexerStreamID streamID;
-} ym_plexer_stream_user_info_t;
-typedef struct ym_plexer_stream_user_info_t * ym_plexer_stream_user_info_ref;
+} ym_pstream_user_info;
+typedef struct ym_pstream_user_info ym_pstream_user_info_t;
 
 YM_EXTERN_C_POP
 

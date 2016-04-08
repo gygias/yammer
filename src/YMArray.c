@@ -15,18 +15,18 @@
 
 YM_EXTERN_C_PUSH
 
-typedef struct __ym_array_t
+typedef struct __ym_array
 {
     _YMType _type;
     
     YMDictionaryRef dict;
     int64_t count;
-} __ym_array_t;
-typedef struct __ym_array_t *__YMArrayRef;
+} __ym_array;
+typedef struct __ym_array __ym_array_t;
 
 #define NULL_INDEX (-1)
 
-int64_t __YMArrayFind(__YMArrayRef array, const void *value);
+int64_t __YMArrayFind(__ym_array_t *array, const void *value);
 
 YMArrayRef YMArrayCreate()
 {
@@ -35,46 +35,44 @@ YMArrayRef YMArrayCreate()
 
 YMArrayRef YMArrayCreate2(bool ymtypes)
 {
-    __YMArrayRef array = (__YMArrayRef)_YMAlloc(_YMArrayTypeID, sizeof(struct __ym_array_t));
-    array->dict = YMDictionaryCreate2(false,ymtypes);
-    array->count = 0;
-    return array;
+    __ym_array_t *a = (__ym_array_t *)_YMAlloc(_YMArrayTypeID, sizeof(__ym_array_t));
+    a->dict = YMDictionaryCreate2(false,ymtypes);
+    a->count = 0;
+    return a;
 }
 
-void _YMArrayFree(YMArrayRef array_)
+void _YMArrayFree(YMArrayRef a)
 {
-    __YMArrayRef array = (__YMArrayRef)array_;
-    YMRelease(array->dict);
+    YMRelease(a->dict);
 }
 
-void YMArrayAdd(YMArrayRef array_, const void *value)
+void YMArrayAdd(YMArrayRef a, const void *value)
 {
-    __YMArrayRef array = (__YMArrayRef)array_;
-    YMDictionaryAdd(array->dict, (YMDictionaryKey)array->count, (YMDictionaryValue)value);
-    array->count++;
+    YMDictionaryAdd(a->dict, (YMDictionaryKey)a->count, (YMDictionaryValue)value);
+    ((__ym_array_t *)a)->count++;
 }
 
-void YMArrayInsert(YMArrayRef array_, int64_t idx, const void *value)
+void YMArrayInsert(YMArrayRef a_, int64_t idx, const void *value)
 {
-    __YMArrayRef array = (__YMArrayRef)array_;
-    ymassert(idx<=array->count,"cannot insert at %llu in array with count %llu",idx,array->count);
+    __ym_array_t *a = (__ym_array_t *)a_;
+    ymassert(idx<=a->count,"cannot insert at %llu in array with count %llu",idx,a->count);
     
-    _YMDictionaryShift(array->dict, idx, true);
-    YMDictionaryAdd(array->dict, (YMDictionaryKey)idx, (YMDictionaryValue)value);
-    array->count++;
+    _YMDictionaryShift(a->dict, idx, true);
+    YMDictionaryAdd(a->dict, (YMDictionaryKey)idx, (YMDictionaryValue)value);
+    a->count++;
 }
 
-void YMArrayReplace(YMArrayRef array_, int64_t idx, const void * value)
+void YMArrayReplace(YMArrayRef a_, int64_t idx, const void * value)
 {
-    __YMArrayRef array = (__YMArrayRef)array_;
-    YMDictionaryRemove(array->dict, (YMDictionaryKey)idx);
-    YMDictionaryAdd(array->dict, (YMDictionaryKey)idx, (YMDictionaryValue)value);
+    __ym_array_t *a = (__ym_array_t *)a_;
+    YMDictionaryRemove(a->dict, (YMDictionaryKey)idx);
+    YMDictionaryAdd(a->dict, (YMDictionaryKey)idx, (YMDictionaryValue)value);
 }
 
-int64_t __YMArrayFind(__YMArrayRef array, const void *value)
+int64_t __YMArrayFind(__ym_array_t *a, const void *value)
 {
     int64_t idx = NULL_INDEX;
-    YMDictionaryEnumRef dEnum = YMDictionaryEnumeratorBegin(array->dict);
+    YMDictionaryEnumRef dEnum = YMDictionaryEnumeratorBegin(a->dict);
     while ( dEnum ) {
         if ( dEnum->value == value ) {
             idx = (int64_t)dEnum->key;
@@ -87,60 +85,60 @@ int64_t __YMArrayFind(__YMArrayRef array, const void *value)
     return idx;
 }
 
-bool YMArrayContains(YMArrayRef array_, const void *value)
+bool YMArrayContains(YMArrayRef a_, const void *value)
 {
-    __YMArrayRef array = (__YMArrayRef)array_;    
-    return ( __YMArrayFind(array, value) != NULL_INDEX );
+    __ym_array_t *a = (__ym_array_t *)a_;
+    return ( __YMArrayFind(a, value) != NULL_INDEX );
 }
 
 
-int64_t YMArrayIndexOf(YMArrayRef array_, const void *value)
+int64_t YMArrayIndexOf(YMArrayRef a_, const void *value)
 {
-    __YMArrayRef array = (__YMArrayRef)array_;
-    return __YMArrayFind(array, value);
+    __ym_array_t *a = (__ym_array_t *)a_;
+    return __YMArrayFind(a, value);
 }
 
 
-const void *YMArrayGet(YMArrayRef array_, int64_t idx)
+const void *YMArrayGet(YMArrayRef a_, int64_t idx)
 {
-    __YMArrayRef array = (__YMArrayRef)array_;
-    return YMDictionaryGetItem(array->dict, (YMDictionaryKey)idx);
+    __ym_array_t *a = (__ym_array_t *)a_;
+    return YMDictionaryGetItem(a->dict, (YMDictionaryKey)idx);
 }
 
-int64_t YMArrayGetCount(YMArrayRef array_)
+int64_t YMArrayGetCount(YMArrayRef a_)
 {
-    __YMArrayRef array = (__YMArrayRef)array_;
-    return array->count;
+    __ym_array_t *a = (__ym_array_t *)a_;
+    return a->count;
 }
 
-void YMArrayRemove(YMArrayRef array_, int64_t idx)
+void YMArrayRemove(YMArrayRef a_, int64_t idx)
 {
-    __YMArrayRef array = (__YMArrayRef)array_;
-    YMDictionaryRemove(array->dict, (YMDictionaryKey)idx);
-    _YMDictionaryShift(array->dict, idx, false);
-    array->count--;
+    __ym_array_t *a = (__ym_array_t *)a_;
+    YMDictionaryRemove(a->dict, (YMDictionaryKey)idx);
+    _YMDictionaryShift(a->dict, idx, false);
+    a->count--;
 }
 
-void YMArrayRemoveObject(YMArrayRef array_, const void *value)
+void YMArrayRemoveObject(YMArrayRef a_, const void *value)
 {
-    __YMArrayRef array = (__YMArrayRef)array_;
+    __ym_array_t *a = (__ym_array_t *)a_;
     
-    int64_t idx = __YMArrayFind(array, value);
+    int64_t idx = __YMArrayFind(a, value);
     ymassert(idx!=NULL_INDEX,"array does not contain object %p",value);
-    YMDictionaryRemove(array->dict, (YMDictionaryKey)idx);
-    array->count--;
+    YMDictionaryRemove(a->dict, (YMDictionaryKey)idx);
+    a->count--;
 }
 
-void _YMArrayRemoveAll(YMArrayRef array_, bool ymRelease, bool free_)
+void _YMArrayRemoveAll(YMArrayRef a_, bool ymRelease, bool free_)
 {
-    __YMArrayRef array = (__YMArrayRef)array_;
+    __ym_array_t *a = (__ym_array_t *)a_;
     
-    while ( array->count-- ) {
-        int64_t aKey = (int64_t)YMDictionaryGetRandomKey(array->dict);
-        const void *object = YMDictionaryGetItem(array->dict, (YMDictionaryKey)aKey);
+    while ( a->count-- ) {
+        int64_t aKey = (int64_t)YMDictionaryGetRandomKey(a->dict);
+        const void *object = YMDictionaryGetItem(a->dict, (YMDictionaryKey)aKey);
         if ( ymRelease ) YMRelease(object);
         else if ( free_ ) free((void *)object);
-        YMDictionaryRemove(array->dict, (YMDictionaryKey)aKey);
+        YMDictionaryRemove(a->dict, (YMDictionaryKey)aKey);
     }
 }
 

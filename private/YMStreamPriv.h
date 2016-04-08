@@ -37,14 +37,14 @@ typedef struct _ym_stream_command_t _YMStreamCommand;
 //} __ym_stream_bounded_command_t;
 //typedef struct _ym_stream_bounded_command_t _YMStreamBoundedCommand;
 
-typedef struct _ym_stream_user_info_t
+typedef struct _ym_stream_user_info
 {
     YMStringRef name;
-} _ym_stream_user_info_t;
-typedef struct _ym_stream_user_info_t *ym_stream_user_info_ref;
+} _ym_stream_user_info;
+typedef struct _ym_stream_user_info ym_stream_user_info_t;
 typedef void (*_ym_stream_free_user_info_func)(YMStreamRef);
 
-YMStreamRef YMAPI _YMStreamCreate(YMStringRef name, ym_stream_user_info_ref userInfo, _ym_stream_free_user_info_func callback);
+YMStreamRef YMAPI _YMStreamCreate(YMStringRef name, ym_stream_user_info_t *userInfo, _ym_stream_free_user_info_func callback);
 bool YMAPI _YMStreamSetCompression(YMStreamRef stream, YMCompressionType compression);
 typedef void (*_ym_stream_data_available_func)(YMStreamRef,uint32_t,void *);
 void YMAPI _YMStreamSetDataAvailableCallback(YMStreamRef stream, _ym_stream_data_available_func, void *ctx);
@@ -54,7 +54,7 @@ YMIOResult YMAPI _YMStreamWriteUp(YMStreamRef stream, const void *buffer, uint32
 
 void YMAPI _YMStreamCloseWriteUp(YMStreamRef stream);
 
-ym_stream_user_info_ref YMAPI _YMStreamGetUserInfo(YMStreamRef);
+ym_stream_user_info_t YMAPI * _YMStreamGetUserInfo(YMStreamRef);
 YMStringRef YMAPI _YMStreamGetName(YMStreamRef stream);
 
 YM_EXTERN_C_POP

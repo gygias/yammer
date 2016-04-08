@@ -11,24 +11,24 @@
 #include "YMUtilities.h"
 
 #define ymlog_pre "pipe[%s]: "
-#define ymlog_args YMSTR(pipe->name)
+#define ymlog_args YMSTR(p->name)
 #define ymlog_type YMLogIO
 #include "YMLog.h"
 
 YM_EXTERN_C_PUSH
 
-typedef struct __ym_pipe_t
+typedef struct __ym_pipe
 {
     _YMType _type;
     
     YMStringRef name;
 	YMFILE inFd;
 	YMFILE outFd;
-} __ym_pipe_t;
-typedef struct __ym_pipe_t *__YMPipeRef;
+} __ym_pipe;
+typedef struct __ym_pipe __ym_pipe_t;
 
-void __YMPipeCloseOutputFile(YMPipeRef pipe_);
-void __YMPipeCloseFile(__YMPipeRef pipe, YMFILE *fdPtr);
+void __YMPipeCloseOutputFile(__ym_pipe_t *);
+void __YMPipeCloseFile(__ym_pipe_t *, YMFILE *);
 
 YMPipeRef YMPipeCreate(YMStringRef name)
 {
@@ -65,60 +65,54 @@ YMPipeRef YMPipeCreate(YMStringRef name)
 	ymsoftassert(openFiles<TOO_MANY_FILES, "too many open files");
 #endif
 
-	__YMPipeRef aPipe = (__YMPipeRef)_YMAlloc(_YMPipeTypeID, sizeof(struct __ym_pipe_t));
+	__ym_pipe_t *p = (__ym_pipe_t *)_YMAlloc(_YMPipeTypeID, sizeof(__ym_pipe_t));
 
-	aPipe->name = name ? YMRetain(name) : YMSTRC("*");
+	p->name = name ? YMRetain(name) : YMSTRC("*");
 
-    aPipe->outFd = fds[0];
-    aPipe->inFd = fds[1];
+    p->outFd = fds[0];
+    p->inFd = fds[1];
     
-    return aPipe;
+    return p;
 }
 
-void _YMPipeFree(YMTypeRef object)
+void _YMPipeFree(YMTypeRef o_)
 {
-    __YMPipeRef pipe = (__YMPipeRef)object;
+    YMPipeRef p = (YMPipeRef)o_;
     
-    _YMPipeCloseInputFile(pipe);
-    __YMPipeCloseOutputFile(pipe);
+    _YMPipeCloseInputFile(p);
+    __YMPipeCloseOutputFile((__ym_pipe_t *)p);
     
-    YMRelease(pipe->name);
+    YMRelease(p->name);
 }
 
-YMFILE YMPipeGetInputFile(YMPipeRef pipe_)
+YMFILE YMPipeGetInputFile(YMPipeRef p)
 {
-    __YMPipeRef pipe = (__YMPipeRef)pipe_;
-    ymassert(pipe->inFd!=NULL_FILE,"input file is closed");
-    return pipe->inFd;
+    ymassert(p->inFd!=NULL_FILE,"input file is closed");
+    return p->inFd;
 }
     
-YMFILE YMPipeGetOutputFile(YMPipeRef pipe_)
+YMFILE YMPipeGetOutputFile(YMPipeRef p)
 {
-    __YMPipeRef pipe = (__YMPipeRef)pipe_;
-    ymassert(pipe->outFd!=NULL_FILE,"output file is closed");
-    return pipe->outFd;
+    ymassert(p->outFd!=NULL_FILE,"output file is closed");
+    return p->outFd;
 }
     
-void __YMPipeCloseOutputFile(YMPipeRef pipe_)
+void __YMPipeCloseOutputFile(__ym_pipe_t * p)
 {
-    __YMPipeRef pipe = (__YMPipeRef)pipe_;
-    
-    YMSelfLock(pipe);
-    __YMPipeCloseFile(pipe, &pipe->outFd);
-    YMSelfUnlock(pipe);
+    YMSelfLock(p);
+    __YMPipeCloseFile(p, &p->outFd);
+    YMSelfUnlock(p);
 }
 
-void _YMPipeCloseInputFile(YMPipeRef pipe_)
+void _YMPipeCloseInputFile(YMPipeRef p)
 {
-    __YMPipeRef pipe = (__YMPipeRef)pipe_;
-    
     // todo: not sure we need to be guarding here, but erring on the side of not inadvertently closing newly recycled fds due to a race
-    YMSelfLock(pipe);
-    __YMPipeCloseFile(pipe, &pipe->inFd);
-    YMSelfUnlock(pipe);
+    YMSelfLock(p);
+    __YMPipeCloseFile((__ym_pipe_t *)p, &((__ym_pipe_t *)p)->inFd);
+    YMSelfUnlock(p);
 }
 
-void __YMPipeCloseFile(__YMPipeRef pipe, YMFILE *fdPtr)
+void __YMPipeCloseFile(__ym_pipe_t *p, YMFILE *fdPtr)
 {
     YMFILE fd = *fdPtr;
     *fdPtr = NULL_FILE;

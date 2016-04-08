@@ -16,7 +16,7 @@
 
 YM_EXTERN_C_PUSH
 
-typedef const struct __ym_plexer_t *YMPlexerRef; // CF defines const, how to shadow writeable struct?
+typedef const struct __ym_plexer * YMPlexerRef;
 
 typedef void (*ym_plexer_interrupted_func)      (YMPlexerRef,void*);
 typedef void (*ym_plexer_new_upstream_func)     (YMPlexerRef,YMStreamRef,void*);

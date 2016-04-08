@@ -22,14 +22,14 @@
 
 YM_EXTERN_C_PUSH
 
-typedef struct __ym_compression_t *__YMCompressionRef;
+typedef struct __ym_compression __ym_compression_t;
 
-typedef bool (*ym_compression_init_func)(__YMCompressionRef compression);
-typedef YMIOResult (*ym_compression_read_func)(__YMCompressionRef compression,uint8_t*,size_t,size_t*);
-typedef YMIOResult (*ym_compression_write_func)(__YMCompressionRef compression,const uint8_t*,size_t,size_t*);
-typedef bool (*ym_compression_close_func)(__YMCompressionRef compression);
+typedef bool (*ym_compression_init_func)(__ym_compression_t *);
+typedef YMIOResult (*ym_compression_read_func)(__ym_compression_t *,uint8_t*,size_t,size_t*);
+typedef YMIOResult (*ym_compression_write_func)(__ym_compression_t *,const uint8_t*,size_t,size_t*);
+typedef bool (*ym_compression_close_func)(__ym_compression_t *);
 
-typedef struct __ym_compression_t
+typedef struct __ym_compression
 {
     _YMType _typeID;
     
@@ -44,117 +44,117 @@ typedef struct __ym_compression_t
     gzFile gzfile;
     BZFILE * bzfile;
 #endif
-} __ym_compression_t;
+} __ym_compression;
 
-bool YMNoCompressionInit(__YMCompressionRef compression);
-YMIOResult YMNoCompressionRead(__YMCompressionRef compression,uint8_t*,size_t,size_t*);
-YMIOResult YMNoCompressionWrite(__YMCompressionRef compression,const uint8_t*,size_t,size_t*);
-bool YMNoCompressionClose(__YMCompressionRef compression);
+bool YMNoCompressionInit(__ym_compression_t *);
+YMIOResult YMNoCompressionRead(__ym_compression_t *,uint8_t*,size_t,size_t*);
+YMIOResult YMNoCompressionWrite(__ym_compression_t *,const uint8_t*,size_t,size_t*);
+bool YMNoCompressionClose(__ym_compression_t *);
 
-bool YMGZInit(__YMCompressionRef compression);
-YMIOResult YMGZRead(__YMCompressionRef compression,uint8_t*,size_t,size_t*);
-YMIOResult YMGZWrite(__YMCompressionRef compression,const uint8_t*,size_t,size_t*);
-bool YMGZClose(__YMCompressionRef compression);
+bool YMGZInit(__ym_compression_t *);
+YMIOResult YMGZRead(__ym_compression_t *,uint8_t*,size_t,size_t*);
+YMIOResult YMGZWrite(__ym_compression_t *,const uint8_t*,size_t,size_t*);
+bool YMGZClose(__ym_compression_t *);
 
-bool YMBZInit(__YMCompressionRef compression);
-YMIOResult YMBZRead(__YMCompressionRef compression,uint8_t*,size_t,size_t*);
-YMIOResult YMBZWrite(__YMCompressionRef compression,const uint8_t*,size_t,size_t*);
-bool YMBZClose(__YMCompressionRef compression);
+bool YMBZInit(__ym_compression_t *);
+YMIOResult YMBZRead(__ym_compression_t *,uint8_t*,size_t,size_t*);
+YMIOResult YMBZWrite(__ym_compression_t *,const uint8_t*,size_t,size_t*);
+bool YMBZClose(__ym_compression_t *);
 
-bool YMLZInit(__YMCompressionRef compression);
-YMIOResult YMLZRead(__YMCompressionRef compression,uint8_t*,size_t,size_t*);
-YMIOResult YMLZWrite(__YMCompressionRef compression,const uint8_t*,size_t,size_t*);
-bool YMLZClose(__YMCompressionRef compression);
+bool YMLZInit(__ym_compression_t *);
+YMIOResult YMLZRead(__ym_compression_t *,uint8_t*,size_t,size_t*);
+YMIOResult YMLZWrite(__ym_compression_t *,const uint8_t*,size_t,size_t*);
+bool YMLZClose(__ym_compression_t *);
 
 YMCompressionRef YMCompressionCreate(YMCompressionType type, YMFILE file, bool input)
 {
-    __YMCompressionRef compression = (__YMCompressionRef)_YMAlloc(_YMCompressionTypeID,sizeof(struct __ym_compression_t));
+    __ym_compression_t *c = (__ym_compression_t *)_YMAlloc(_YMCompressionTypeID,sizeof(__ym_compression_t));
     
     switch(type) {
 #if defined(YMAPPLE)
         case YMCompressionGZ:
-            compression->initFunc = YMGZInit;
-            compression->readFunc = YMGZRead;
-            compression->writeFunc = YMGZWrite;
-            compression->closeFunc = YMGZClose;
+            c->initFunc = YMGZInit;
+            c->readFunc = YMGZRead;
+            c->writeFunc = YMGZWrite;
+            c->closeFunc = YMGZClose;
             break;
         case YMCompressionBZ2:
-            compression->initFunc = YMBZInit;
-            compression->readFunc = YMBZRead;
-            compression->writeFunc = YMBZWrite;
-            compression->closeFunc = YMBZClose;
+            c->initFunc = YMBZInit;
+            c->readFunc = YMBZRead;
+            c->writeFunc = YMBZWrite;
+            c->closeFunc = YMBZClose;
             break;
         case YMCompressionLZ:
             if ( true || false ) goto lz_not_implemented;
-            compression->initFunc = YMLZInit;
-            compression->readFunc = YMLZRead;
-            compression->writeFunc = YMLZWrite;
-            compression->closeFunc = YMLZClose;
+            c->initFunc = YMLZInit;
+            c->readFunc = YMLZRead;
+            c->writeFunc = YMLZWrite;
+            c->closeFunc = YMLZClose;
             break;
         lz_not_implemented:
             ymerr("lzma is not implemented, will not use compression");
 #endif
         default:
-            compression->initFunc = YMNoCompressionInit;
-            compression->readFunc = YMNoCompressionRead;
-            compression->writeFunc = YMNoCompressionWrite;
-            compression->closeFunc = YMNoCompressionClose;
+            c->initFunc = YMNoCompressionInit;
+            c->readFunc = YMNoCompressionRead;
+            c->writeFunc = YMNoCompressionWrite;
+            c->closeFunc = YMNoCompressionClose;
             break;
     }
     
-    compression->file = file;
-    compression->type = type;
-    compression->input = input;
+    c->file = file;
+    c->type = type;
+    c->input = input;
     
 #if defined(YMAPPLE)
-    compression->gzfile = NULL;
-    compression->bzfile = NULL;
+    c->gzfile = NULL;
+    c->bzfile = NULL;
 #endif
-    return compression;
+    return c;
 }
 
 void _YMCompressionFree(YMCompressionRef c_)
 {
-    __unused __YMCompressionRef c = (__YMCompressionRef)c_;
+    __unused __ym_compression_t *c = (__ym_compression_t *)c_;
 }
 
 void YMCompressionSetInitFunc(YMCompressionRef c_, ym_compression_init_func func)
 {
-    __YMCompressionRef c = (__YMCompressionRef)c_;
+    __ym_compression_t *c = (__ym_compression_t *)c_;
     c->initFunc = func;
 }
 
 bool YMCompressionInit(YMCompressionRef c_)
 {
-    __YMCompressionRef c = (__YMCompressionRef)c_;
+    __ym_compression_t *c = (__ym_compression_t *)c_;
     return c->initFunc(c);
 }
 
 YMIOResult YMCompressionRead(YMCompressionRef c_, uint8_t *b, size_t l, size_t *o)
 {
-    __YMCompressionRef c = (__YMCompressionRef)c_;
+    __ym_compression_t *c = (__ym_compression_t *)c_;
     return c->readFunc(c, b, l, o);
 }
 
 YMIOResult YMCompressionWrite(YMCompressionRef c_, const uint8_t *b, size_t l, size_t *o)
 {
-    __YMCompressionRef c = (__YMCompressionRef)c_;
+    __ym_compression_t *c = (__ym_compression_t *)c_;
     return c->writeFunc(c, b, l, o);
 }
 
 bool YMCompressionClose(YMCompressionRef c_)
 {
-    __YMCompressionRef c = (__YMCompressionRef)c_;
+    __ym_compression_t *c = (__ym_compression_t *)c_;
     return c->closeFunc(c);
 }
 
 // passthrough
-bool YMNoCompressionInit(__unused __YMCompressionRef c)
+bool YMNoCompressionInit(__unused __ym_compression_t *c)
 {
     return true;
 }
 
-YMIOResult YMNoCompressionRead(__YMCompressionRef c, uint8_t *b, size_t l, size_t *o)
+YMIOResult YMNoCompressionRead(__ym_compression_t *c, uint8_t *b, size_t l, size_t *o)
 {
     YM_IO_BOILERPLATE
     YM_READ_FILE(c->file, b, l);
@@ -167,7 +167,7 @@ YMIOResult YMNoCompressionRead(__YMCompressionRef c, uint8_t *b, size_t l, size_
     return YMIOSuccess;
 }
 
-YMIOResult YMNoCompressionWrite(__YMCompressionRef c, const uint8_t *b, size_t l, size_t *o)
+YMIOResult YMNoCompressionWrite(__ym_compression_t *c, const uint8_t *b, size_t l, size_t *o)
 {
     YM_IO_BOILERPLATE
     YM_WRITE_FILE(c->file, b, l);
@@ -178,7 +178,7 @@ YMIOResult YMNoCompressionWrite(__YMCompressionRef c, const uint8_t *b, size_t l
     return YMIOSuccess;
 }
 
-bool YMNoCompressionClose(__unused __YMCompressionRef c)
+bool YMNoCompressionClose(__unused __ym_compression_t *c)
 {
   int result = 0;
 #if defined(YMLINUX)
@@ -188,7 +188,7 @@ bool YMNoCompressionClose(__unused __YMCompressionRef c)
 }
 
 #if defined(YMAPPLE)
-bool YMGZInit(__YMCompressionRef c)
+bool YMGZInit(__ym_compression_t *c)
 {
     const char *mode = "r";
     if ( c->input )
@@ -201,7 +201,7 @@ bool YMGZInit(__YMCompressionRef c)
     return true;
 }
 
-YMIOResult YMGZRead(__YMCompressionRef c, uint8_t *b, size_t l, size_t *o)
+YMIOResult YMGZRead(__ym_compression_t *c, uint8_t *b, size_t l, size_t *o)
 {
     ymassert(!c->input,"reading from input compression stream");
     ymassert(c->gzfile,"gzfile is not initialized");
@@ -217,7 +217,7 @@ YMIOResult YMGZRead(__YMCompressionRef c, uint8_t *b, size_t l, size_t *o)
     return YMIOSuccess;
 }
 
-YMIOResult YMGZWrite(__YMCompressionRef c, const uint8_t *b, size_t l, size_t *o)
+YMIOResult YMGZWrite(__ym_compression_t *c, const uint8_t *b, size_t l, size_t *o)
 {
     ymassert(c->input,"writing to output compression stream");
     ymassert(c->gzfile,"gzfile is not initialized");
@@ -232,7 +232,7 @@ YMIOResult YMGZWrite(__YMCompressionRef c, const uint8_t *b, size_t l, size_t *o
     return YMIOSuccess;
 }
 
-bool YMGZClose(__YMCompressionRef c)
+bool YMGZClose(__ym_compression_t *c)
 {
     ymassert(c->gzfile,"gzfile is not initialized");
     int result = gzclose(c->gzfile); // we go both ways, so _r _w variants buy nothing?
@@ -248,7 +248,7 @@ bool YMGZClose(__YMCompressionRef c)
     return true;
 }
 
-bool YMBZInit(__YMCompressionRef c)
+bool YMBZInit(__ym_compression_t * c)
 {
     const char *mode = "r";
     if ( c->input )
@@ -261,7 +261,7 @@ bool YMBZInit(__YMCompressionRef c)
     return true;
 }
 
-YMIOResult YMBZRead(__YMCompressionRef c, uint8_t *b, size_t l, size_t *o)
+YMIOResult YMBZRead(__ym_compression_t *c, uint8_t *b, size_t l, size_t *o)
 {
     ymassert(!c->input,"reading from input compression stream");
     ymassert(c->bzfile,"bzfile is not initialized");
@@ -277,7 +277,7 @@ YMIOResult YMBZRead(__YMCompressionRef c, uint8_t *b, size_t l, size_t *o)
     return YMIOSuccess;
 }
 
-YMIOResult YMBZWrite(__YMCompressionRef c, const uint8_t *b, size_t l, size_t *o)
+YMIOResult YMBZWrite(__ym_compression_t *c, const uint8_t *b, size_t l, size_t *o)
 {
     ymassert(c->input,"writing to output compression stream");
     ymassert(c->bzfile,"bzfile is not initialized");
@@ -292,7 +292,7 @@ YMIOResult YMBZWrite(__YMCompressionRef c, const uint8_t *b, size_t l, size_t *o
     return YMIOSuccess;
 }
 
-bool YMBZClose(__YMCompressionRef c)
+bool YMBZClose(__ym_compression_t *c)
 {
     ymassert(c->bzfile,"bzfile is not initialized");
     // todo need to flush before close? find updated manual
@@ -300,28 +300,28 @@ bool YMBZClose(__YMCompressionRef c)
     return true;
 }
 
-bool YMLZInit(__YMCompressionRef c)
+bool YMLZInit(__ym_compression_t *c)
 {
     c = NULL;
     ymabort("someone set up is the \"expert\"");
     return false;
 }
 
-YMIOResult YMLZRead(__YMCompressionRef c, uint8_t *b, size_t l, size_t *o)
+YMIOResult YMLZRead(__ym_compression_t *c, uint8_t *b, size_t l, size_t *o)
 {
     c = NULL; b = NULL; l = 0; o = NULL;
     ymabort("someone set up is the \"expert\"");
     return false;
 }
 
-YMIOResult YMLZWrite(__YMCompressionRef c, const uint8_t *b, size_t l, size_t *o)
+YMIOResult YMLZWrite(__ym_compression_t *c, const uint8_t *b, size_t l, size_t *o)
 {
     c = NULL; b = NULL; l = 0; o = NULL;
     ymabort("someone set up is the \"expert\"");
     return false;
 }
 
-bool YMLZClose(__YMCompressionRef c)
+bool YMLZClose(__ym_compression_t *c)
 {
     c = NULL;
     ymabort("someone set up is the \"expert\"");

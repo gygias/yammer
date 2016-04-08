@@ -96,7 +96,7 @@ extern YMTypeID _YMCompressionTypeID;
 typedef bool (*ym_read_func)(int,const uint8_t*,size_t);
 typedef bool (*ym_write_func)(int,const uint8_t*,size_t);
 
-#define YM_STREAM_INFO(x) ((ym_plexer_stream_user_info_ref)_YMStreamGetUserInfo(x))
+#define YM_STREAM_INFO(x) ((ym_pstream_user_info_t *)_YMStreamGetUserInfo(x))
 
 YM_EXTERN_C_POP
 

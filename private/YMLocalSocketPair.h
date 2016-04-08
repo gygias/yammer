@@ -13,7 +13,7 @@
 
 YM_EXTERN_C_PUSH
 
-typedef const struct __ym_local_socket_pair_t *YMLocalSocketPairRef;
+typedef const struct __ym_local_socket_pair * YMLocalSocketPairRef;
 
 YMLocalSocketPairRef YMAPI YMLocalSocketPairCreate(YMStringRef name, bool moreComing);
 

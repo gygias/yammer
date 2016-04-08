@@ -14,7 +14,7 @@ YM_EXTERN_C_PUSH
 #if defined(YMDEBUG)
 
 extern YMAPI int64_t gYMFirstConnectionFakeSample;
-#define YM_DEBUG_SAMPLE { if ( gYMFirstConnectionFakeSample ) connection->sample = gYMFirstConnectionFakeSample; ymerr("debug: sample %lldb",gYMFirstConnectionFakeSample); }
+#define YM_DEBUG_SAMPLE { if ( gYMFirstConnectionFakeSample ) c->sample = gYMFirstConnectionFakeSample; ymerr("debug: sample %lldb",gYMFirstConnectionFakeSample); }
 
 #else
 

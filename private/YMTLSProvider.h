@@ -18,7 +18,7 @@
 
 YM_EXTERN_C_PUSH
 
-typedef const struct __ym_tls_provider_t *YMTLSProviderRef;
+typedef const struct __ym_tls_provider * YMTLSProviderRef;
 
 YMTLSProviderRef YMAPI YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isServer);
 

@@ -21,8 +21,7 @@ typedef struct __ym_string
     const char *cString;
     size_t length;
 } ___ym_string;
-typedef struct __ym_string __YMString;
-typedef __YMString *__YMStringRef;
+typedef struct __ym_string __ym_string_t;
 
 YMStringRef __YMStringCreate(const char *allocdString, size_t length);
 
@@ -42,10 +41,10 @@ YMStringRef YMStringCreateWithCString(const char *cString)
 
 YMStringRef __YMStringCreate(const char *allocdString, size_t length)
 {
-    __YMStringRef string = (__YMStringRef)_YMAlloc(_YMStringTypeID,sizeof(__YMString));
-    string->cString = allocdString;
-    string->length = length;
-    return string;
+    __ym_string_t *s = (__ym_string_t *)_YMAlloc(_YMStringTypeID,sizeof(__ym_string_t));
+    s->cString = allocdString;
+    s->length = length;
+    return s;
 }
 
 YMStringRef YMStringCreateByAppendingString(YMStringRef base, YMStringRef append)
@@ -229,22 +228,20 @@ catch_fail:
 }
 #endif
 
-void _YMStringFree(YMTypeRef object)
+void _YMStringFree(YMTypeRef o_)
 {
-    __YMStringRef string = (__YMStringRef)object;
-    free((void *)string->cString);
+    YMStringRef s = (YMStringRef)o_;
+    free((void *)s->cString);
 }
 
-size_t YMStringGetLength(YMStringRef string_)
+size_t YMStringGetLength(YMStringRef s)
 {
-    __YMStringRef string = (__YMStringRef)string_;
-    return string->length;
+    return s->length;
 }
 
-const char *YMStringGetCString(YMStringRef string_)
+const char *YMStringGetCString(YMStringRef s)
 {
-    __YMStringRef string = (__YMStringRef)string_;
-    return string->cString;
+    return s->cString;
 }
 
 bool YMStringEquals(YMStringRef stringA, YMStringRef stringB)

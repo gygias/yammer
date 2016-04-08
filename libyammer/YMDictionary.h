@@ -13,7 +13,7 @@ YM_EXTERN_C_PUSH
 
 #include <libyammer/YMBase.h>
 
-typedef const struct __ym_dictionary_t *YMDictionaryRef;
+typedef const struct __ym_dictionary * YMDictionaryRef;
 
 typedef const void *YMDictionaryKey;
 typedef const void *YMDictionaryValue;

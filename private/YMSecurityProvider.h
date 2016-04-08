@@ -11,7 +11,7 @@
 
 YM_EXTERN_C_PUSH
 
-typedef const struct __ym_security_provider_t *YMSecurityProviderRef;
+typedef const struct __ym_security_provider * YMSecurityProviderRef;
 
 YMSecurityProviderRef YMAPI YMSecurityProviderCreateWithSocket(YMSOCKET socket);
 

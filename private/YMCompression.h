@@ -9,7 +9,7 @@
 #ifndef YMCompression_h
 #define YMCompression_h
 
-typedef const struct __ym_compression_t *YMCompressionRef;
+typedef const struct __ym_compression * YMCompressionRef;
 
 YMCompressionRef YMAPI YMCompressionCreate(YMCompressionType, YMFILE, bool);
 

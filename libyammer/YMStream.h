@@ -13,7 +13,7 @@ YM_EXTERN_C_PUSH
 
 #include <libyammer/YMBase.h>
 
-typedef const struct __ym_stream_t *YMStreamRef;
+typedef const struct __ym_stream * YMStreamRef;
 
 YMAPI YMIOResult YMStreamWriteDown(YMStreamRef stream, const uint8_t *buffer, uint16_t length);
 YMAPI YMIOResult YMStreamReadUp(YMStreamRef stream_, uint8_t *buffer, uint16_t length, uint16_t *outLength);

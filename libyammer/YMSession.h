@@ -18,7 +18,7 @@
 
 YM_EXTERN_C_PUSH
 
-typedef const struct __ym_session_t *YMSessionRef;
+typedef const struct __ym_session * YMSessionRef;
 
 // browsing, discover & connection
 typedef void(*ym_session_added_peer_func)(YMSessionRef,YMPeerRef,void*);

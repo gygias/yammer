@@ -20,13 +20,13 @@
 
 YM_EXTERN_C_PUSH
 
-typedef struct __ym_x509_certificate_t
+typedef struct __ym_x509_certificate
 {
     _YMType _type;
     
     X509 *x509;
-} __ym_x509_certificate_t;
-typedef struct __ym_x509_certificate_t *__YMX509CertificateRef;
+} __ym_x509_certificate;
+typedef struct __ym_x509_certificate __ym_x509_certificate_t;
 
 X509* __YMX509CertificateCreateX509(YMRSAKeyPairRef keyPair)
 {
@@ -183,17 +183,17 @@ YMX509CertificateRef YMX509CertificateCreate(YMRSAKeyPairRef keyPair)
 
 YMX509CertificateRef _YMX509CertificateCreateWithX509(X509 *x509, bool copy)
 {
-    __YMX509CertificateRef certificate = (__YMX509CertificateRef)_YMAlloc(_YMX509CertificateTypeID,sizeof(struct __ym_x509_certificate_t));
+    __ym_x509_certificate_t *c = (__ym_x509_certificate_t *)_YMAlloc(_YMX509CertificateTypeID,sizeof(__ym_x509_certificate_t));
     
-    certificate->x509 = copy ? X509_dup(x509) : x509;
+    c->x509 = copy ? X509_dup(x509) : x509;
     
-    return certificate;
+    return c;
 }
 
-void _YMX509CertificateFree(YMTypeRef object)
+void _YMX509CertificateFree(YMTypeRef o)
 {
-    __YMX509CertificateRef cert = (__YMX509CertificateRef)object;
-    X509_free(cert->x509);
+    __ym_x509_certificate_t *c = (__ym_x509_certificate_t *)o;
+    X509_free(c->x509);
 }
 
 size_t YMX509CertificateGetPublicKeyData(void *buffer)
@@ -202,10 +202,9 @@ size_t YMX509CertificateGetPublicKeyData(void *buffer)
     return 0;
 }
 
-X509 *_YMX509CertificateGetX509(YMX509CertificateRef cert_)
+X509 *_YMX509CertificateGetX509(YMX509CertificateRef c)
 {
-    __YMX509CertificateRef cert = (__YMX509CertificateRef)cert_;
-    return cert->x509;
+    return c->x509;
 }
 
 YM_EXTERN_C_POP

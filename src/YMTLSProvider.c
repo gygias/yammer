@@ -50,9 +50,9 @@ void __ym_tls_lock_callback(int mode, int type, const char *file, int line);
 static YMDictionaryRef gYMTLSExDataList; // maps ssl, which we can get without knowing the 'index', to its index...
 static YMLockRef gYMTLSExDataLock;
 
-typedef struct __ym_tls_provider_t
+typedef struct __ym_tls_provider
 {
-    struct __ym_security_provider_t _common;
+    __ym_security_provider_t _common;
     
     bool isServer;
     bool isWrappingSocket;
@@ -70,13 +70,13 @@ typedef struct __ym_tls_provider_t
     void *localCertsContext;
     ym_tls_provider_should_accept peerCertsFunc;
     void *peerCertsContext;
-} __ym_tls_provider_t;
-typedef struct __ym_tls_provider_t *__YMTLSProviderRef;
+} __ym_tls_provider;
+typedef struct __ym_tls_provider __ym_tls_provider_t;
 
-bool __YMTLSProviderInit(__YMSecurityProviderRef provider);
-bool __YMTLSProviderRead(__YMSecurityProviderRef provider, uint8_t *buffer, size_t bytes);
-bool __YMTLSProviderWrite(__YMSecurityProviderRef provider, const uint8_t *buffer, size_t bytes);
-bool __YMTLSProviderClose(__YMSecurityProviderRef provider);
+bool __YMTLSProviderInit(__ym_security_provider_t *);
+bool __YMTLSProviderRead(__ym_security_provider_t *, uint8_t *, size_t);
+bool __YMTLSProviderWrite(__ym_security_provider_t *, const uint8_t *, size_t );
+bool __YMTLSProviderClose(__ym_security_provider_t *);
 
 void ym_tls_thread_id_callback(CRYPTO_THREADID *threadId)
 {
@@ -123,7 +123,7 @@ YMTLSProviderRef __YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isWrappin
     }
 #endif
     
-    __YMTLSProviderRef tls = (__YMTLSProviderRef)_YMAlloc(_YMTLSProviderTypeID,sizeof(struct __ym_tls_provider_t));
+    __ym_tls_provider_t *tls = (__ym_tls_provider_t *)_YMAlloc(_YMTLSProviderTypeID,sizeof(__ym_tls_provider_t));
     
     tls->_common.socket = socket;
     tls->isWrappingSocket = isWrappingSocket;
@@ -154,22 +154,20 @@ YMTLSProviderRef __YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isWrappin
 
 void YMTLSProviderSetLocalCertsFunc(YMTLSProviderRef tls_, ym_tls_provider_get_certs func, void *context)
 {
-    __YMTLSProviderRef tls = (__YMTLSProviderRef)tls_;
+    __ym_tls_provider_t *tls = (__ym_tls_provider_t *)tls_;
     tls->localCertsFunc = func;
     tls->localCertsContext = context;
 }
 
 void YMTLSProviderSetAcceptPeerCertsFunc(YMTLSProviderRef tls_, ym_tls_provider_should_accept func, void *context)
 {
-    __YMTLSProviderRef tls = (__YMTLSProviderRef)tls_;
+    __ym_tls_provider_t *tls = (__ym_tls_provider_t *)tls_;
     tls->peerCertsFunc = func;
     tls->peerCertsContext = context;
 }
 
-void _YMTLSProviderFree(YMTypeRef object)
+void _YMTLSProviderFree(YMTLSProviderRef tls)
 {
-    __YMTLSProviderRef tls = (__YMTLSProviderRef)object;
-    
     YMLockLock(gYMTLSExDataLock);
     if ( YMDictionaryContains(gYMTLSExDataList, (YMDictionaryKey)tls->ssl) )
         YMDictionaryRemove(gYMTLSExDataList, (YMDictionaryKey)tls->ssl);
@@ -292,7 +290,7 @@ void __ym_tls_info_client_callback(const SSL *ssl, int type, int val)
 
 int __ym_tls_certificate_verify_callback(int preverify_ok, X509_STORE_CTX *x509_store_ctx)
 {
-    __YMTLSProviderRef tls;
+    __ym_tls_provider_t *tls;
     YMX509CertificateRef ymCert = NULL;
     SSL *ssl = X509_STORE_CTX_get_ex_data(x509_store_ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
     //int state = SSL_get_state(ssl);
@@ -342,7 +340,7 @@ int __ym_tls_certificate_verify_callback(int preverify_ok, X509_STORE_CTX *x509_
     return 1;
 }
 
-void __YMTLSProviderInitSslCtx(__YMTLSProviderRef tls)
+void __YMTLSProviderInitSslCtx(__ym_tls_provider_t *tls)
 {
     int result;
     unsigned long sslError = SSL_ERROR_NONE;
@@ -427,9 +425,9 @@ success_return:
         YMRelease(rsa);
 }
 
-bool __YMTLSProviderInit(__YMSecurityProviderRef provider)
+bool __YMTLSProviderInit(__ym_security_provider_t *p)
 {
-    __YMTLSProviderRef tls = (__YMTLSProviderRef)provider;
+    __ym_tls_provider_t * tls = (__ym_tls_provider_t *)p;
     unsigned long sslError = SSL_ERROR_NONE;
     bool initOkay = false;
     int result;
@@ -523,9 +521,9 @@ catch_return:
     return initOkay;
 }
 
-bool __YMTLSProviderRead(__YMSecurityProviderRef provider, uint8_t *buffer, size_t bytes)
+bool __YMTLSProviderRead(__ym_security_provider_t *p, uint8_t *buffer, size_t bytes)
 {
-    __YMTLSProviderRef tls = (__YMTLSProviderRef)provider;
+    __ym_tls_provider_t *tls = (__ym_tls_provider_t *)p;
     
     // loop or something? hate to change the whole prototype for this, and i like having length-y things be unsigned
     if ( bytes > INT32_MAX )
@@ -543,9 +541,9 @@ bool __YMTLSProviderRead(__YMSecurityProviderRef provider, uint8_t *buffer, size
     
 }
 
-bool __YMTLSProviderWrite(__YMSecurityProviderRef provider, const uint8_t *buffer, size_t bytes)
+bool __YMTLSProviderWrite(__ym_security_provider_t *p, const uint8_t *buffer, size_t bytes)
 {
-    __YMTLSProviderRef tls = (__YMTLSProviderRef)provider;
+    __ym_tls_provider_t *tls = (__ym_tls_provider_t *)p;
     
     ymassert(bytes <= INT32_MAX,"fix thy internal errors!");
     
@@ -561,9 +559,9 @@ bool __YMTLSProviderWrite(__YMSecurityProviderRef provider, const uint8_t *buffe
     return true;
 }
 
-bool __YMTLSProviderClose(__YMSecurityProviderRef provider)
+bool __YMTLSProviderClose(__ym_security_provider_t *p)
 {
-    __YMTLSProviderRef tls = (__YMTLSProviderRef)provider;
+    __ym_tls_provider_t *tls = (__ym_tls_provider_t *)p;
     
     int result = SSL_shutdown(tls->ssl); // TODO
     if ( result ) {

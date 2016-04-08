@@ -50,9 +50,8 @@ typedef struct __ym_address
     int family;
     
     YMStringRef description;
-} ___ym_address;
-typedef struct __ym_address __YMAddress;
-typedef __YMAddress *__YMAddressRef;
+} __ym_address;
+typedef struct __ym_address __ym_address_t;
 
 YMAddressRef YMAddressCreate(const void *sockaddr_, uint16_t port)
 {
@@ -79,7 +78,7 @@ YMAddressRef YMAddressCreate(const void *sockaddr_, uint16_t port)
         return NULL;
     }
     
-    __YMAddressRef address = (__YMAddressRef)_YMAlloc(_YMAddressTypeID,sizeof(__YMAddress));
+    __ym_address_t *address = (__ym_address_t *)_YMAlloc(_YMAddressTypeID,sizeof(__ym_address_t));
     
     address->type = type;
     address->address = YMALLOC(length);
@@ -104,7 +103,7 @@ YMAddressRef YMAddressCreate(const void *sockaddr_, uint16_t port)
         address->description = YMStringCreateWithFormat("%s:%u",ipString,ntohs(port),NULL);
     }
     
-    return (YMAddressRef)address;
+    return address;
     
 rewind_fail:
     free(address->address);
@@ -154,7 +153,7 @@ YMAddressRef YMAddressCreateWithIPStringAndPort(YMStringRef ipString, uint16_t p
 
 void _YMAddressFree(YMTypeRef object)
 {
-    __YMAddressRef address = (__YMAddressRef)object;
+    __ym_address_t *address = (__ym_address_t *)object;
     free((void *)address->address);
     YMRelease(address->description);
 }
@@ -198,28 +197,28 @@ bool YMAPI YMAddressIsEqualIncludingPort(YMAddressRef a, YMAddressRef b, bool in
     return false;
 }
 
-const void *YMAddressGetAddressData(YMAddressRef address_)
+const void *YMAddressGetAddressData(YMAddressRef a_)
 {
-    __YMAddressRef address = (__YMAddressRef)address_;
-    return address->address;
+    __ym_address_t *a = (__ym_address_t *)a_;
+    return a->address;
 }
 
-int YMAddressGetLength(YMAddressRef address_)
+int YMAddressGetLength(YMAddressRef a_)
 {
-    __YMAddressRef address = (__YMAddressRef)address_;
-    return address->length;
+    __ym_address_t *a = (__ym_address_t *)a_;
+    return a->length;
 }
 
-YMStringRef YMAddressGetDescription(YMAddressRef address_)
+YMStringRef YMAddressGetDescription(YMAddressRef a_)
 {
-    __YMAddressRef address = (__YMAddressRef)address_;
-    return address->description;
+    __ym_address_t *a = (__ym_address_t *)a_;
+    return a->description;
 }
 
-int YMAddressGetDomain(YMAddressRef address_)
+int YMAddressGetDomain(YMAddressRef a_)
 {
-    __YMAddressRef address = (__YMAddressRef)address_;
-    switch(address->type) {
+    __ym_address_t *a = (__ym_address_t *)a_;
+    switch(a->type) {
         case YMAddressIPV4:
             return PF_INET;
         case YMAddressIPV6:
@@ -229,10 +228,10 @@ int YMAddressGetDomain(YMAddressRef address_)
     return -1;
 }
 
-int YMAddressGetAddressFamily(YMAddressRef address_)
+int YMAddressGetAddressFamily(YMAddressRef a_)
 {
-    __YMAddressRef address = (__YMAddressRef)address_;
-    switch(address->type) {
+    __ym_address_t *a = (__ym_address_t *)a_;
+    switch(a->type) {
         case YMAddressIPV4:
             return AF_INET;
         case YMAddressIPV6:

@@ -61,7 +61,7 @@ YM_EXTERN_C_PUSH
 # define YMFILE int
 #endif
 
-typedef const void *YMTypeRef;
+typedef const void * YMTypeRef;
 typedef char YMTypeID;
 
 YMTypeRef YMAPI YMRetain(YMTypeRef object);

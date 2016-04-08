@@ -21,7 +21,7 @@
 
 #define ymlog_type YMLogSession
 #define ymlog_pre "session[%s]: "
-#define ymlog_args YMSTR(session->logDescription)
+#define ymlog_args YMSTR(s->logDescription)
 #include "YMLog.h"
 
 #if !defined(YMWIN32)
@@ -59,7 +59,7 @@ typedef struct YM_IWbemObjectSink
 
 YM_EXTERN_C_PUSH
 
-typedef struct __ym_session_t
+typedef struct __ym_session
 {
     _YMType _type;
     
@@ -108,20 +108,20 @@ typedef struct __ym_session_t
     ym_session_new_stream_func newStreamFunc;
     ym_session_stream_closing_func streamClosingFunc;
     void *callbackContext;
-} __ym_session_t;
-typedef struct __ym_session_t *__YMSessionRef;
+} __ym_session;
+typedef struct __ym_session __ym_session_t;
 
 #pragma mark setup
 
-__YMSessionRef __YMSessionCreateShared(YMStringRef type, bool isServer);
-bool __YMSessionObserveNetworkInterfaceChanges(__YMSessionRef session, bool startStop);
-void __YMSessionUpdateNetworkConfigDate(__YMSessionRef sesison);
-bool __YMSessionInterrupt(__YMSessionRef session, YMConnectionRef floatConnection);
-bool __YMSessionCloseAllConnections(__YMSessionRef session);
-void __YMSessionAddConnection(__YMSessionRef session, YMConnectionRef connection);
+__ym_session_t *__YMSessionCreateShared(YMStringRef type, bool isServer);
+bool __YMSessionObserveNetworkInterfaceChanges(__ym_session_t *, bool startStop);
+void __YMSessionUpdateNetworkConfigDate(__ym_session_t *);
+bool __YMSessionInterrupt(__ym_session_t *, YMConnectionRef floatConnection);
+bool __YMSessionCloseAllConnections(__ym_session_t *);
+void __YMSessionAddConnection(__ym_session_t *, YMConnectionRef connection);
 YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_accept_proc(YM_THREAD_PARAM);
-void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(ym_thread_dispatch_ref);
-void YM_CALLING_CONVENTION __ym_session_connect_async_proc(ym_thread_dispatch_ref);
+void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(YM_THREAD_PARAM context);
+void YM_CALLING_CONVENTION __ym_session_connect_async_proc(YM_THREAD_PARAM context);
 
 void __ym_session_new_stream_proc(YMConnectionRef connection, YMStreamRef stream, void *context);
 void __ym_session_stream_closing_proc(YMConnectionRef connection, YMStreamRef stream, void *context);
@@ -136,7 +136,7 @@ YMSessionRef YMSessionCreate(YMStringRef type)
 {
 	YMNetworkingInit();
 
-    __YMSessionRef session = (__YMSessionRef)_YMAlloc(_YMSessionTypeID,sizeof(struct __ym_session_t));
+    __ym_session_t *session = (__ym_session_t *)_YMAlloc(_YMSessionTypeID,sizeof(__ym_session_t));
     session->type = YMRetain(type);
     session->ipv4ListenSocket = NULL_SOCKET;
     session->ipv6ListenSocket = NULL_SOCKET;
@@ -170,11 +170,11 @@ YMSessionRef YMSessionCreate(YMStringRef type)
     return session;
 }
 
-void YMSessionSetBrowsingCallbacks(YMSessionRef session_, ym_session_added_peer_func added, ym_session_removed_peer_func removed,
+void YMSessionSetBrowsingCallbacks(YMSessionRef s_, ym_session_added_peer_func added, ym_session_removed_peer_func removed,
                                  ym_session_resolve_failed_func rFailed, ym_session_resolved_peer_func resolved,
                                  ym_session_connect_failed_func cFailed, void *context)
 {
-    __YMSessionRef session = (__YMSessionRef)session_;
+    __ym_session_t * session = (__ym_session_t *)s_;
     
     session->addedFunc = added;
     session->removedFunc = removed;
@@ -184,67 +184,67 @@ void YMSessionSetBrowsingCallbacks(YMSessionRef session_, ym_session_added_peer_
     session->callbackContext = context;
 }
 
-void YMSessionSetAdvertisingCallbacks(YMSessionRef session_,ym_session_should_accept_func should, void* context)
+void YMSessionSetAdvertisingCallbacks(YMSessionRef s_,ym_session_should_accept_func should, void* context)
 {
-    __YMSessionRef session = (__YMSessionRef)session_;
+    __ym_session_t *s = (__ym_session_t *)s_;
     
-    session->shouldAcceptFunc = should;
-    session->callbackContext = context;
+    s->shouldAcceptFunc = should;
+    s->callbackContext = context;
 }
 
-void YMSessionSetCommonCallbacks(YMSessionRef session_, ym_session_initializing_func initializing, ym_session_connected_func connected,
+void YMSessionSetCommonCallbacks(YMSessionRef s_, ym_session_initializing_func initializing, ym_session_connected_func connected,
                                                         ym_session_interrupted_func interrupted,
                                                         ym_session_new_stream_func new_, ym_session_stream_closing_func closing)
 {
-    __YMSessionRef session = (__YMSessionRef)session_;
+    __ym_session_t *s = (__ym_session_t *)s_;
     
-    session->initializingFunc = initializing;
-    session->connectedFunc = connected;
-    session->interruptedFunc = interrupted;
-    session->newStreamFunc = new_;
-    session->streamClosingFunc = closing;
+    s->initializingFunc = initializing;
+    s->connectedFunc = connected;
+    s->interruptedFunc = interrupted;
+    s->newStreamFunc = new_;
+    s->streamClosingFunc = closing;
 }
 
-void _YMSessionFree(YMTypeRef object)
+void _YMSessionFree(YMTypeRef o_)
 {
-    __YMSessionRef session = (__YMSessionRef)object;
+    __ym_session_t *s = (__ym_session_t *)o_;
     
-    __YMSessionInterrupt(session, NULL);
+    __YMSessionInterrupt(s, NULL);
     
     // release these first, threads join on their exit flag when they're deallocated,
     // and we have async stuff that depends on other session members below
-    session->acceptThreadExitFlag = false;
-    if ( session->acceptThread )
-        YMRelease(session->acceptThread);
-    if ( session->initConnectionDispatchThread ) {
-        YMThreadDispatchJoin(session->initConnectionDispatchThread);
-        YMRelease(session->initConnectionDispatchThread);
+    s->acceptThreadExitFlag = false;
+    if ( s->acceptThread )
+        YMRelease(s->acceptThread);
+    if ( s->initConnectionDispatchThread ) {
+        YMThreadDispatchJoin(s->initConnectionDispatchThread);
+        YMRelease(s->initConnectionDispatchThread);
     }
-    if ( session->connectDispatchThread ) {
-        YMThreadDispatchJoin(session->connectDispatchThread);
-        YMRelease(session->connectDispatchThread);
+    if ( s->connectDispatchThread ) {
+        YMThreadDispatchJoin(s->connectDispatchThread);
+        YMRelease(s->connectDispatchThread);
     }
     
     // shared
-    YMRelease(session->type);
-    YMRelease(session->connectionsByAddress);
-    YMRelease(session->logDescription);
+    YMRelease(s->type);
+    YMRelease(s->connectionsByAddress);
+    YMRelease(s->logDescription);
     
     // server
-    if ( session->name )
-        YMRelease(session->name);
-    if ( session->service ) {
-        YMmDNSServiceStop(session->service, true); // xxx
-        __YMSessionObserveNetworkInterfaceChanges(session, false);
-        YMRelease(session->service);
+    if ( s->name )
+        YMRelease(s->name);
+    if ( s->service ) {
+        YMmDNSServiceStop(s->service, true); // xxx
+        __YMSessionObserveNetworkInterfaceChanges(s, false);
+        YMRelease(s->service);
     }
     
-    if ( session->browser ) {
-        YMmDNSBrowserStop(session->browser);
-        YMRelease(session->browser);
+    if ( s->browser ) {
+        YMmDNSBrowserStop(s->browser);
+        YMRelease(s->browser);
     }
     
-    YMDictionaryEnumRef aEnum = YMDictionaryEnumeratorBegin(session->knownPeers);
+    YMDictionaryEnumRef aEnum = YMDictionaryEnumeratorBegin(s->knownPeers);
     while ( aEnum ) {
         YMPeerRef aPeer = aEnum->value;
         YMRelease(aPeer);
@@ -252,70 +252,68 @@ void _YMSessionFree(YMTypeRef object)
     }
     if ( aEnum ) YMDictionaryEnumeratorEnd(aEnum);
     
-    YMRelease(session->knownPeers);
+    YMRelease(s->knownPeers);
 }
 
 #pragma mark client
 
-bool YMSessionStartBrowsing(YMSessionRef session_)
+bool YMSessionStartBrowsing(YMSessionRef s_)
 {
-    __YMSessionRef session = (__YMSessionRef)session_;
+    __ym_session_t *s = (__ym_session_t *)s_;
     
-    if ( session->browser || session->defaultConnection )
+    if ( s->browser || s->defaultConnection )
         return false;
     
-    session->browser = YMmDNSBrowserCreateWithCallbacks(session->type,
-                                                        __ym_mdns_service_appeared_func,
-                                                        __ym_mdns_service_updated_func,
-                                                        __ym_mdns_service_resolved_func,
-                                                        __ym_mdns_service_removed_func,
-                                                        session);
-    if ( ! session->browser ) {
+    s->browser = YMmDNSBrowserCreateWithCallbacks(s->type,
+                                                  __ym_mdns_service_appeared_func,
+                                                  __ym_mdns_service_updated_func,
+                                                  __ym_mdns_service_resolved_func,
+                                                  __ym_mdns_service_removed_func,
+                                                  s);
+    if ( ! s->browser ) {
         ymerr("failed to create browser");
         return false;
     }
     
-    bool startOK = YMmDNSBrowserStart(session->browser);
+    bool startOK = YMmDNSBrowserStart(s->browser);
     if ( ! startOK ) {
         ymerr("failed to start browser");
         return false;
     }
     
-    ymlog("client started for '%s'",YMSTR(session->type));
+    ymlog("client started for '%s'",YMSTR(s->type));
     
     return true;
 }
 
-bool YMSessionStopBrowsing(YMSessionRef session_)
+bool YMSessionStopBrowsing(YMSessionRef s_)
 {
-    __YMSessionRef session = (__YMSessionRef)session_;
+    __ym_session_t *s = (__ym_session_t *)s_;
     
     bool okay = true;
     
-    if ( session->browser ) {
-        okay = YMmDNSBrowserStop(session->browser);
-        YMRelease(session->browser);
-        session->browser = NULL;
+    if ( s->browser ) {
+        okay = YMmDNSBrowserStop(s->browser);
+        YMRelease(s->browser);
+        s->browser = NULL;
     }
     
     return okay;
 }
 
-bool YMSessionCloseAllConnections(YMSessionRef session_)
+bool YMSessionCloseAllConnections(YMSessionRef s)
 {
-    __YMSessionRef session = (__YMSessionRef)session_;
-    bool okay = __YMSessionInterrupt(session, NULL);
+    bool okay = __YMSessionInterrupt((__ym_session_t *)s, NULL);
     return okay;
 }
 
-YMPeerRef YMSessionGetPeerNamed(YMSessionRef session_, YMStringRef peerName)
+YMPeerRef YMSessionGetPeerNamed(YMSessionRef s, YMStringRef peerName)
 {
-    __YMSessionRef session = (__YMSessionRef)session_;
     YMPeerRef thePeer = NULL;
     
-    YMSelfLock(session);
+    YMSelfLock(s);
     {
-        YMDictionaryEnumRef peerEnum = YMDictionaryEnumeratorBegin(session->knownPeers);
+        YMDictionaryEnumRef peerEnum = YMDictionaryEnumeratorBegin(s->knownPeers);
         while ( peerEnum ) {
             if ( YMStringEquals(YMPeerGetName((YMPeerRef)peerEnum->value), peerName) ) {
                 thePeer = peerEnum->value;
@@ -325,57 +323,54 @@ YMPeerRef YMSessionGetPeerNamed(YMSessionRef session_, YMStringRef peerName)
         }
         YMDictionaryEnumeratorEnd(peerEnum);
     }
-    YMSelfUnlock(session);
+    YMSelfUnlock(s);
     
     return thePeer;
 }
 
-bool YMSessionResolvePeer(YMSessionRef session_, YMPeerRef peer)
+bool YMSessionResolvePeer(YMSessionRef s, YMPeerRef peer)
 {
-    __YMSessionRef session = (__YMSessionRef)session_;
-    
-    YMSelfLock(session);
+    YMSelfLock(s);
     YMStringRef peerName = YMPeerGetName(peer);
     bool knownPeer = true;
-    if ( ! YMDictionaryContains(session->knownPeers, (YMDictionaryKey)peer) ) {
+    if ( ! YMDictionaryContains(s->knownPeers, (YMDictionaryKey)peer) ) {
         ymerr("requested resolve of unknown peer: %s",YMSTR(peerName));
         knownPeer = false;
     }
-    YMSelfUnlock(session);
+    YMSelfUnlock(s);
     
     if ( ! knownPeer )
         return false;
     
-    return YMmDNSBrowserResolve(session->browser, peerName);
+    return YMmDNSBrowserResolve(s->browser, peerName);
 }
 
-typedef struct __ym_session_connect_async_context_t
+typedef struct __ym_session_connect
 {
-    __YMSessionRef session;
+    YMSessionRef session;
     YMPeerRef peer;
     YMConnectionRef connection;
     bool moreComing;
     bool userSync;
-} ___ym_session_connect_async_context_t;
-typedef struct __ym_session_connect_async_context_t __ym_session_connect_async_context;
-typedef __ym_session_connect_async_context *__ym_session_connect_async_context_ref;
+} __ym_session_connect;
+typedef struct __ym_session_connect __ym_session_connect_t;
 
-bool YMSessionConnectToPeer(YMSessionRef session_, YMPeerRef peer, bool sync)
+bool YMSessionConnectToPeer(YMSessionRef s_, YMPeerRef peer, bool sync)
 {
-    __YMSessionRef session = (__YMSessionRef)session_;
+    __ym_session_t *s = (__ym_session_t *)s_;
     
     YMStringRef name = NULL;
-    __ym_session_connect_async_context_ref context = NULL;
+    __ym_session_connect_t *context = NULL;
     YMDictionaryEnumRef addrEnum = NULL;
     
     bool knownPeer = true;
-    YMSelfLock(session);
+    YMSelfLock(s);
     YMStringRef peerName = YMPeerGetName(peer);
-    if ( ! YMDictionaryContains(session->knownPeers, (YMDictionaryKey)peer) ) {
+    if ( ! YMDictionaryContains(s->knownPeers, (YMDictionaryKey)peer) ) {
         ymerr("requested connect to unknown peer: %s",YMSTR(peerName));
         knownPeer = false;
     }
-    YMSelfUnlock(session);
+    YMSelfUnlock(s);
     
     if ( ! knownPeer )
         return false;
@@ -385,34 +380,34 @@ bool YMSessionConnectToPeer(YMSessionRef session_, YMPeerRef peer, bool sync)
         YMAddressRef address = (YMAddressRef)YMArrayGet(addresses, i);
         YMConnectionRef newConnection = YMConnectionCreate(address, YMConnectionStream, YMTLS, true);
         
-        context = (__ym_session_connect_async_context_ref)YMALLOC(sizeof(__ym_session_connect_async_context));
-        context->session = (__YMSessionRef)YMRetain(session);
+        context = (__ym_session_connect_t *)YMALLOC(sizeof(__ym_session_connect_t));
+        context->session = YMRetain(s);
         context->peer = (YMPeerRef)YMRetain(peer);
         context->connection = (YMConnectionRef)YMRetain(newConnection);
         context->moreComing = ( i < YMArrayGetCount(addresses) - 1 );
         context->userSync = sync;
         
         name = YMSTRC("session-async-connect");
-        struct ym_thread_dispatch_t connectDispatch = {__ym_session_connect_async_proc, 0, 0, context, name};
+        ym_thread_dispatch_user_t connectDispatch = {__ym_session_connect_async_proc, 0, 0, context, name};
         
         if ( ! sync ) {
-            if ( ! session->connectDispatchThread ) {
-                session->connectDispatchThread = YMThreadDispatchCreate(name);
-                if ( ! session->connectDispatchThread ) {
+            if ( ! s->connectDispatchThread ) {
+                s->connectDispatchThread = YMThreadDispatchCreate(name);
+                if ( ! s->connectDispatchThread ) {
                     ymerr("failed to create async connect thread");
                     goto catch_fail;
                 }
-                bool okay = YMThreadStart(session->connectDispatchThread);
+                bool okay = YMThreadStart(s->connectDispatchThread);
                 if ( ! okay ) {
                     ymerr("failed to start async connect thread");
                     goto catch_fail;
                 }
             }
             
-            YMThreadDispatchDispatch(session->connectDispatchThread, connectDispatch);
+            YMThreadDispatchDispatch(s->connectDispatchThread, connectDispatch);
         }
         else
-            __ym_session_connect_async_proc(&connectDispatch);
+            __ym_session_connect_async_proc(context);
         
         YMRelease(newConnection);
         YMRelease(name);
@@ -429,36 +424,35 @@ catch_fail:
     return false;
 }
 
-void YM_CALLING_CONVENTION __ym_session_connect_async_proc(ym_thread_dispatch_ref dispatch)
+void YM_CALLING_CONVENTION __ym_session_connect_async_proc(YM_THREAD_PARAM ctx)
 {
-    __ym_session_connect_async_context_ref context = (__ym_session_connect_async_context_ref)dispatch->context;
-    __YMSessionRef session = context->session;
+    __ym_session_connect_t *context = ctx;
+    YMSessionRef s = context->session;
     YMPeerRef peer = context->peer;
     YMConnectionRef connection = context->connection;
     bool moreComing = context->moreComing;
     bool userSync = context->userSync;
-    free(context);
     
     ymlog("__ym_session_connect_async_proc entered");
     
     bool okay = YMConnectionConnect(connection);
     
-    if ( okay && session->initializingFunc )
-        session->initializingFunc(session, session->callbackContext);
+    if ( okay && s->initializingFunc )
+        s->initializingFunc(s, s->callbackContext);
     
     okay = YMConnectionInit(connection);
     
     if ( okay ) {
-        __YMSessionAddConnection(session, connection);
+        __YMSessionAddConnection((__ym_session_t *)s, connection);
         if ( ! userSync )
-            session->connectedFunc(session, connection, session->callbackContext);
+            s->connectedFunc(s, connection, s->callbackContext);
     }
     else {
         if ( ! userSync )
-            session->connectFailedFunc(session, peer, moreComing, session->callbackContext);
+            s->connectFailedFunc(s, peer, moreComing, s->callbackContext);
     }
     
-    YMRelease(session);
+    YMRelease(s);
     YMRelease(peer);
     YMRelease(connection);
     
@@ -467,21 +461,21 @@ void YM_CALLING_CONVENTION __ym_session_connect_async_proc(ym_thread_dispatch_re
 
 #pragma mark server
 
-typedef struct __ym_session_accept_thread_context_t
+typedef struct __ym_session_accept
 {
-    __YMSessionRef session;
+    __ym_session_t *s;
     bool ipv4;
-} _ym_session_accept_thread_context_t;
-typedef struct __ym_session_accept_thread_context_t *__ym_session_accept_thread_context_ref;
+} __ym_session_accept;
+typedef struct __ym_session_accept __ym_session_accept_t;
 
-bool YMSessionStartAdvertising(YMSessionRef session_, YMStringRef name)
+bool YMSessionStartAdvertising(YMSessionRef s_, YMStringRef name)
 {
-    __YMSessionRef session = (__YMSessionRef)session_;
+    __ym_session_t *s = (__ym_session_t *)s_;
     
-    if ( session->service )
+    if ( s->service )
         return false;
     
-    session->name = YMRetain(name);
+    s->name = YMRetain(name);
     
     bool okay = false;
     int socket = -1;
@@ -504,52 +498,52 @@ bool YMSessionStartAdvertising(YMSessionRef session_, YMStringRef name)
     ymlog("listening on %u",port);
     
     if ( ipv4 )
-        session->ipv4ListenSocket = socket;
+        s->ipv4ListenSocket = socket;
     else
-        session->ipv6ListenSocket = socket;
+        s->ipv6ListenSocket = socket;
     
-    YMStringRef memberName = YMStringCreateWithFormat("session-accept-%s",YMSTR(session->type),NULL);
-    __ym_session_accept_thread_context_ref ctx = YMALLOC(sizeof(struct __ym_session_accept_thread_context_t));
-    ctx->session = (__YMSessionRef)YMRetain(session);
+    YMStringRef memberName = YMStringCreateWithFormat("session-accept-%s",YMSTR(s->type),NULL);
+    __ym_session_accept_t *ctx = YMALLOC(sizeof(__ym_session_accept_t));
+    ctx->s = (__ym_session_t *)YMRetain(s);
     ctx->ipv4 = ipv4;
-    session->acceptThread = YMThreadCreate(memberName, __ym_session_accept_proc, ctx);
+    s->acceptThread = YMThreadCreate(memberName, __ym_session_accept_proc, ctx);
     YMRelease(memberName);
-    if ( ! session->acceptThread ) {
+    if ( ! s->acceptThread ) {
         ymerr("failed to create accept thread");
         goto rewind_fail;
     }
-    session->acceptThreadExitFlag = false;
-    okay = YMThreadStart(session->acceptThread);
+    s->acceptThreadExitFlag = false;
+    okay = YMThreadStart(s->acceptThread);
     if ( ! okay ) {
         ymerr("failed to start accept thread");
         goto rewind_fail;
     }
     
-    memberName = YMStringCreateWithFormat("session-init-%s",YMSTR(session->type),NULL);
-    session->initConnectionDispatchThread = YMThreadDispatchCreate(memberName);
+    memberName = YMStringCreateWithFormat("session-init-%s",YMSTR(s->type),NULL);
+    s->initConnectionDispatchThread = YMThreadDispatchCreate(memberName);
     YMRelease(memberName);
-    if ( ! session->initConnectionDispatchThread ) {
+    if ( ! s->initConnectionDispatchThread ) {
         ymerr("failed to create connection init thread");
         goto rewind_fail;
     }
-    okay = YMThreadStart(session->initConnectionDispatchThread);
+    okay = YMThreadStart(s->initConnectionDispatchThread);
     if ( ! okay ) {
         ymerr("failed to start start connection init thread");
         goto rewind_fail;
     }
     
-    session->service = YMmDNSServiceCreate(session->type, session->name, (uint16_t)port);
-    if ( ! session->service ) {
+    s->service = YMmDNSServiceCreate(s->type, s->name, (uint16_t)port);
+    if ( ! s->service ) {
         ymerr("failed to create mdns service");
         goto rewind_fail;
     }
-    okay = YMmDNSServiceStart(session->service);
+    okay = YMmDNSServiceStart(s->service);
     if ( ! okay ) {
         ymerr("failed to start mdns service");
         goto rewind_fail;
     }
     
-    okay = __YMSessionObserveNetworkInterfaceChanges(session,true);
+    okay = __YMSessionObserveNetworkInterfaceChanges(s,true);
     
     return true;
     
@@ -558,77 +552,77 @@ rewind_fail:
 		int result, error; const char *errorStr;
         YM_CLOSE_SOCKET(socket);
 	}
-    session->ipv4ListenSocket = NULL_SOCKET;
-    session->ipv6ListenSocket = NULL_SOCKET;
-    if ( session->acceptThread ) {
-        session->acceptThreadExitFlag = true;
-        YMRelease(session->acceptThread);
-        session->acceptThread = NULL;
+    s->ipv4ListenSocket = NULL_SOCKET;
+    s->ipv6ListenSocket = NULL_SOCKET;
+    if ( s->acceptThread ) {
+        s->acceptThreadExitFlag = true;
+        YMRelease(s->acceptThread);
+        s->acceptThread = NULL;
     }
-    if ( session->service ) {
-        YMmDNSServiceStop(session->service, false);
-        YMRelease(session->service);
-        session->service = NULL;
+    if ( s->service ) {
+        YMmDNSServiceStop(s->service, false);
+        YMRelease(s->service);
+        s->service = NULL;
     }
     return false;
 }
 
-bool YMSessionStopAdvertising(YMSessionRef session_)
+bool YMSessionStopAdvertising(YMSessionRef s_)
 {
     YM_IO_BOILERPLATE
     
-    __YMSessionRef session = (__YMSessionRef)session_;
+    __ym_session_t *s = (__ym_session_t *)s_;
     
-    session->acceptThreadExitFlag = true;
+    s->acceptThreadExitFlag = true;
     bool okay = true;
-    if ( session->ipv4ListenSocket != NULL_SOCKET ) {
-		YM_CLOSE_SOCKET(session->ipv4ListenSocket);
+    if ( s->ipv4ListenSocket != NULL_SOCKET ) {
+		YM_CLOSE_SOCKET(s->ipv4ListenSocket);
         if ( result != 0 ) {
             ymerr("warning: failed to close ipv4 socket: %d %s",error,errorStr);
             okay = false;
         }
-        session->ipv4ListenSocket = NULL_SOCKET;
+        s->ipv4ListenSocket = NULL_SOCKET;
     }
-    if ( session->ipv6ListenSocket != NULL_SOCKET ) {
-        YM_CLOSE_SOCKET(session->ipv6ListenSocket);
+    if ( s->ipv6ListenSocket != NULL_SOCKET ) {
+        YM_CLOSE_SOCKET(s->ipv6ListenSocket);
         if ( result != 0 ) {
             ymerr("warning: failed to close ipv6 socket: %d %s",error,errorStr);
             okay = false;
         }
-        session->ipv6ListenSocket = NULL_SOCKET;
+        s->ipv6ListenSocket = NULL_SOCKET;
     }
     
-    if ( session->service ) {
-        bool mdnsOK = YMmDNSServiceStop(session->service, false);
-        YMRelease(session->service);
-        session->service = NULL;    
+    if ( s->service ) {
+        bool mdnsOK = YMmDNSServiceStop(s->service, false);
+        YMRelease(s->service);
+        s->service = NULL;
         if ( ! mdnsOK )
             okay = false;
     }
     
-    __YMSessionObserveNetworkInterfaceChanges(session, false);
+    __YMSessionObserveNetworkInterfaceChanges(s, false);
     
     return okay;
 }
 
-typedef struct __ym_connection_init_context_def
+typedef struct __ym_connection_init
 {
-    __YMSessionRef session;
+    __ym_session_t *s;
     int socket;
     struct sockaddr *addr;
     socklen_t addrLen; // redundant?
     bool ipv4;
-} ___ym_connection_init_context_def;
-typedef struct __ym_connection_init_context_def *__ym_connection_init_context;
+} __ym_connection_init;
+typedef struct __ym_connection_init __ym_connection_init_t;
 
 YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_accept_proc(YM_THREAD_PARAM ctx)
 {
-    __ym_session_accept_thread_context_ref context = ctx;
-    __YMSessionRef session = context->session;
+    __ym_session_accept_t *context = ctx;
+    __ym_session_t *s = context->s;
     bool ipv4 = context->ipv4;
     
-    while ( ! session->acceptThreadExitFlag ) {
-        int socket = ipv4 ? session->ipv4ListenSocket : session->ipv6ListenSocket;
+    while ( ! s->acceptThreadExitFlag ) {
+        int socket = ipv4 ? s->ipv4ListenSocket : s->ipv6ListenSocket;
         
         struct sockaddr_in6 *bigEnoughAddr = calloc(1,sizeof(struct sockaddr_in6));
         socklen_t thisLength = ipv4 ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6);
@@ -643,32 +637,32 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_accept_proc(YM_THREAD_PARAM 
         
         ymerr("accepted sf%d, dispatching connection init", aResult);
         
-        if ( session->initializingFunc )
-            session->initializingFunc(session,session->callbackContext);
+        if ( s->initializingFunc )
+            s->initializingFunc(s,s->callbackContext);
         
-        __ym_connection_init_context initCtx = (__ym_connection_init_context)YMALLOC(sizeof(struct __ym_connection_init_context_def));
-        initCtx->session = (__YMSessionRef)YMRetain(session);
+        __ym_connection_init_t *initCtx = (__ym_connection_init_t *)YMALLOC(sizeof(__ym_connection_init_t));
+        initCtx->s = (__ym_session_t *)YMRetain(s);
         initCtx->socket = aResult;
         initCtx->addr = (struct sockaddr *)bigEnoughAddr;
         initCtx->addrLen = thisLength;
         initCtx->ipv4 = ipv4;
         YMStringRef description = YMSTRC("init-connection");
-        struct ym_thread_dispatch_t dispatch = { __ym_session_init_incoming_connection_proc, NULL, false, initCtx, description };
-        YMThreadDispatchDispatch(session->initConnectionDispatchThread, dispatch);
+        ym_thread_dispatch_user_t dispatch = { __ym_session_init_incoming_connection_proc, NULL, false, initCtx, description };
+        YMThreadDispatchDispatch(s->initConnectionDispatchThread, dispatch);
         YMRelease(description);
     }
     
-    session->acceptThreadExitFlag = false;
+    s->acceptThreadExitFlag = false;
     
-    YMRelease(session);
+    YMRelease(s);
     free(context);
 	YM_THREAD_END
 }
 
-void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(ym_thread_dispatch_ref dispatch)
+void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(YM_THREAD_PARAM context)
 {
-    __ym_connection_init_context initCtx = dispatch->context;
-    __YMSessionRef session = initCtx->session;
+    __ym_connection_init_t *initCtx = (__ym_connection_init_t *)context;
+    __ym_session_t *s = initCtx->s;
     int socket = initCtx->socket;
     struct sockaddr *addr = initCtx->addr;
     socklen_t addrLen = initCtx->addrLen;
@@ -682,7 +676,7 @@ void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(ym_thread_
     
     peerAddress = YMAddressCreate(addr,ipv4?ntohs(((struct sockaddr_in *)addr)->sin_port):ntohs(((struct sockaddr_in6 *)addr)->sin6_port));
     peer = _YMPeerCreateWithAddress(peerAddress);
-    if ( ! session->shouldAcceptFunc(session, peer, session->callbackContext) ) {
+    if ( ! s->shouldAcceptFunc(s, peer, s->callbackContext) ) {
         ymlog("client rejected peer %s",YMSTR(YMAddressGetDescription(peerAddress)));
         goto catch_release;
     }
@@ -690,16 +684,16 @@ void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(ym_thread_
     newConnection = YMConnectionCreateIncoming(socket, peerAddress, YMConnectionStream, YMTLS, true);
     if ( ! newConnection ) {
         ymlog("failed to create new connection");
-		if ( session->connectFailedFunc ) 
-			session->connectFailedFunc(session, peer, false, session->callbackContext);
+		if ( s->connectFailedFunc )
+			s->connectFailedFunc(s, peer, false, s->callbackContext);
         goto catch_release;
     }
     
     ymlog("new connection %s",YMSTR(YMAddressGetDescription(peerAddress)));
     
-    __YMSessionAddConnection(session, newConnection);
-    ymassert(session->defaultConnection,"connection init incoming");
-    session->connectedFunc(session,newConnection,session->callbackContext);
+    __YMSessionAddConnection(s, newConnection);
+    ymassert(s->defaultConnection,"connection init incoming");
+    s->connectedFunc(s,newConnection,s->callbackContext);
     
 catch_release:
     
@@ -709,24 +703,23 @@ catch_release:
         YMRelease(peer);
     if ( newConnection )
         YMRelease(newConnection);
-    YMRelease(session);
+    YMRelease(s);
     free(addr);
     free(initCtx);
 }
 
 #pragma mark shared
 
-YMConnectionRef YMSessionGetDefaultConnection(YMSessionRef session_)
+YMConnectionRef YMSessionGetDefaultConnection(YMSessionRef s)
 {
-    __YMSessionRef session = (__YMSessionRef)session_;
-    return session->defaultConnection;
+    return s->defaultConnection;
 }
 
-YMDictionaryRef YMSessionGetConnections(YMSessionRef session_)
+YMDictionaryRef YMSessionGetConnections(YMSessionRef s)
 {
-    __YMSessionRef session = (__YMSessionRef)session_;
-    session = NULL;
-    return *(YMDictionaryRef *)session; // todo, sync
+    s = NULL;
+    ymassert(s,"implement me");
+    return *(YMDictionaryRef *)s; // todo, sync
 }
 
 void YMSessionStop(YMSessionRef session)
@@ -743,47 +736,45 @@ void YMSessionStop(YMSessionRef session)
     YMSelfUnlock(session);
 }
 
-void __YMSessionAddConnection(__YMSessionRef session_, YMConnectionRef connection)
+void __YMSessionAddConnection(__ym_session_t *s, YMConnectionRef connection)
 {
-    __YMSessionRef session = (__YMSessionRef)session_;
-    
-    YMSelfLock(session);
+    YMSelfLock(s);
     {
         YMDictionaryKey key = (YMDictionaryKey)connection;
-        ymassert(!YMDictionaryContains(session->connectionsByAddress, key), "connections by address state");
-        YMDictionaryAdd(session->connectionsByAddress, key, (void *)YMRetain(connection));
+        ymassert(!YMDictionaryContains(s->connectionsByAddress, key), "connections by address state");
+        YMDictionaryAdd(s->connectionsByAddress, key, (void *)YMRetain(connection));
     }
-    YMSelfUnlock(session);
+    YMSelfUnlock(s);
     
-    YMConnectionSetCallbacks(connection, __ym_session_new_stream_proc, session,
-                             __ym_session_stream_closing_proc, session,
-                             __ym_session_connection_interrupted_proc, session);
+    YMConnectionSetCallbacks(connection, __ym_session_new_stream_proc, s,
+                             __ym_session_stream_closing_proc, s,
+                             __ym_session_connection_interrupted_proc, s);
     
-    bool isNewDefault = (session->defaultConnection == NULL);
+    bool isNewDefault = (s->defaultConnection == NULL);
     YMAddressRef address = YMConnectionGetAddress(connection);
     ymassert(address, "could not initialize addr for connection");
     
     ymlog("adding %s connection for %s",isNewDefault?"default":"aux",YMSTR(YMAddressGetDescription(address)));
     
     if ( isNewDefault )
-        session->defaultConnection = connection;
+        s->defaultConnection = connection;
     
-    ymassert(session->defaultConnection!= NULL,"no default connection");
+    ymassert(s->defaultConnection!= NULL,"no default connection");
 }
 
-bool __YMSessionInterrupt(__YMSessionRef session, YMConnectionRef floatConnection)
+bool __YMSessionInterrupt(__ym_session_t *s, YMConnectionRef floatConnection)
 {
     bool first = false;
-    YMSelfLock(session);
+    YMSelfLock(s);
     {
-        if ( ! session->interrupted ) {
+        if ( ! s->interrupted ) {
             first = true;
-            session->interrupted = true;
-            session->defaultConnection = NULL;
+            s->interrupted = true;
+            s->defaultConnection = NULL;
     
-            while ( YMDictionaryGetCount(session->connectionsByAddress) ) {
-                YMDictionaryKey aKey = YMDictionaryGetRandomKey(session->connectionsByAddress);
-                YMConnectionRef aConnection = (YMConnectionRef)YMDictionaryRemove(session->connectionsByAddress, aKey);
+            while ( YMDictionaryGetCount(s->connectionsByAddress) ) {
+                YMDictionaryKey aKey = YMDictionaryGetRandomKey(s->connectionsByAddress);
+                YMConnectionRef aConnection = (YMConnectionRef)YMDictionaryRemove(s->connectionsByAddress, aKey);
                 ymassert(aConnection,"connection list state");
                 ymerr("releasing %s",YMSTR(YMAddressGetDescription(YMConnectionGetAddress(aConnection))));
                 if ( aConnection != floatConnection )
@@ -791,7 +782,7 @@ bool __YMSessionInterrupt(__YMSessionRef session, YMConnectionRef floatConnectio
             }
         }
     }
-    YMSelfUnlock(session);
+    YMSelfUnlock(s);
     
     return first;
 }
@@ -800,43 +791,43 @@ bool __YMSessionInterrupt(__YMSessionRef session, YMConnectionRef floatConnectio
 
 void __ym_session_new_stream_proc(YMConnectionRef connection, YMStreamRef stream, void *context)
 {
-    __YMSessionRef session = context;
+    __ym_session_t *s = context;
     
     YMAddressRef address = YMConnectionGetAddress(connection);
     YMPlexerStreamID streamID = YM_STREAM_INFO(stream)->streamID;
     ymlog("new incoming stream %llu on %s",streamID,YMSTR(YMAddressGetDescription(address)));
     
-    if ( connection != session->defaultConnection )
+    if ( connection != s->defaultConnection )
         ymerr("warning: new stream on non-default connection");
     
     // is it weird that we don't report 'connection' here, despite user only being concerned with "active"?
-    if ( session->newStreamFunc )
-        session->newStreamFunc(session,connection,stream,session->callbackContext);
+    if ( s->newStreamFunc )
+        s->newStreamFunc(s,connection,stream,s->callbackContext);
 }
 
 void __ym_session_stream_closing_proc(YMConnectionRef connection, YMStreamRef stream, void *context)
 {
-    __YMSessionRef session = context;
+    __ym_session_t *s = context;
     
     YMAddressRef address = YMConnectionGetAddress(connection);
     YMPlexerStreamID streamID = YM_STREAM_INFO(stream)->streamID;
     ymlog("remote stream %llu closing on %s",streamID,YMSTR(YMAddressGetDescription(address)));
     
-    if ( connection != session->defaultConnection ) {
+    if ( connection != s->defaultConnection ) {
         ymerr("warning: closing remote stream on non-default connection");
         return;
     }
     
-    if ( session->streamClosingFunc )
-        session->streamClosingFunc(session,connection,stream,session->callbackContext);
+    if ( s->streamClosingFunc )
+        s->streamClosingFunc(s,connection,stream,s->callbackContext);
 }
 
 void __ym_session_connection_interrupted_proc(YMConnectionRef connection, void *context)
 {
-    __YMSessionRef session = context;
+    __ym_session_t *s = context;
     
-    YMConnectionRef savedDefault = session->defaultConnection;
-    bool first = __YMSessionInterrupt(session, connection);
+    YMConnectionRef savedDefault = s->defaultConnection;
+    bool first = __YMSessionInterrupt(s, connection);
     if ( ! first )
         return;
     
@@ -845,8 +836,8 @@ void __ym_session_connection_interrupted_proc(YMConnectionRef connection, void *
 	    ymerr("connection interrupted: %s",YMSTR(YMAddressGetDescription(YMConnectionGetAddress(connection))));
     
     if ( isDefault ) {
-        if ( session->interruptedFunc )
-            session->interruptedFunc(session,session->callbackContext);
+        if ( s->interruptedFunc )
+            s->interruptedFunc(s,s->callbackContext);
     }
     
     YMRelease(connection);
@@ -856,28 +847,28 @@ void __ym_session_connection_interrupted_proc(YMConnectionRef connection, void *
 
 void __ym_mdns_service_appeared_func(__unused YMmDNSBrowserRef browser, YMmDNSServiceRecord * service, void *context)
 {
-    __YMSessionRef session = context;
+    __ym_session_t *s = context;
     ymlog("__ym_mdns_service_appeared_func: %s",YMSTR(service->name));
     
     YMPeerRef peer = _YMPeerCreate(service->name, NULL, NULL);
-    YMSelfLock(session);
-    YMDictionaryAdd(session->knownPeers, (YMDictionaryKey)peer, (void *)peer);
-    YMSelfUnlock(session);
+    YMSelfLock(s);
+    YMDictionaryAdd(s->knownPeers, (YMDictionaryKey)peer, (void *)peer);
+    YMSelfUnlock(s);
     
-    session->addedFunc(session,peer,session->callbackContext);
+    s->addedFunc(s,peer,s->callbackContext);
 }
 
 void __ym_mdns_service_removed_func(__unused YMmDNSBrowserRef browser, YMStringRef name, void *context)
 {
-    __YMSessionRef session = context;
+    __ym_session_t *s = context;
     
     ymlog("__ym_mdns_service_removed_func %s",YMSTR(name));
     
-    YMSelfLock(session);
+    YMSelfLock(s);
     {
         YMDictionaryKey mysteryKey = (YMDictionaryKey)MAX_OF(uint64_t);
         bool found = false;
-        YMDictionaryEnumRef myEnum = YMDictionaryEnumeratorBegin(session->knownPeers);
+        YMDictionaryEnumRef myEnum = YMDictionaryEnumeratorBegin(s->knownPeers);
         while ( myEnum ) {
             YMPeerRef peer = (YMPeerRef)myEnum->value;
             if ( strcmp(YMSTR(YMPeerGetName(peer)),YMSTR(name)) == 0 ) {
@@ -893,28 +884,28 @@ void __ym_mdns_service_removed_func(__unused YMmDNSBrowserRef browser, YMStringR
             return;
         }
         
-        YMDictionaryRemove(session->knownPeers, mysteryKey);
+        YMDictionaryRemove(s->knownPeers, mysteryKey);
     }
-    YMSelfUnlock(session);
+    YMSelfUnlock(s);
 }
 
 void __ym_mdns_service_updated_func(__unused YMmDNSBrowserRef browser, YMmDNSServiceRecord *service, void *context)
 {
-    __unused __YMSessionRef session = context;
+    __unused __ym_session_t *s = context;
     ymlog("__ym_mdns_service_updated_func %s",YMSTR(service->name));
 }
 
 void __ym_mdns_service_resolved_func(__unused YMmDNSBrowserRef browser, bool success, YMmDNSServiceRecord *service, void *context)
 {
-    __YMSessionRef session = context;
+    __ym_session_t *s = context;
     
     ymlog("__ym_mdns_service_resolved_func %s",YMSTR(service->name));
     
     bool found = false;
     YMPeerRef peer = NULL;
-    YMSelfLock(session);
+    YMSelfLock(s);
     {
-        YMDictionaryEnumRef myEnum = YMDictionaryEnumeratorBegin(session->knownPeers);
+        YMDictionaryEnumRef myEnum = YMDictionaryEnumeratorBegin(s->knownPeers);
         while ( myEnum ) {
             peer = (YMPeerRef)myEnum->value;
             if ( strcmp(YMSTR(YMPeerGetName(peer)),YMSTR(service->name)) == 0 ) {
@@ -930,22 +921,22 @@ void __ym_mdns_service_resolved_func(__unused YMmDNSBrowserRef browser, bool suc
         _YMPeerSetAddresses(peer, service->sockaddrList);
         _YMPeerSetPort(peer, service->port);
     }
-    YMSelfUnlock(session);
+    YMSelfUnlock(s);
     
     if ( found ) {
         if ( success )
-            session->resolvedFunc(session,peer,session->callbackContext);
+            s->resolvedFunc(s,peer,s->callbackContext);
         else
-            session->resolveFailedFunc(session,peer,session->callbackContext);
+            s->resolveFailedFunc(s,peer,s->callbackContext);
     } else
         ymabort("notified of resolution of unknown peer: %s",YMSTR(service->name));
 }
 
 #pragma mark config change observing
 
-void __YMSessionUpdateNetworkConfigDate(__YMSessionRef session)
+void __YMSessionUpdateNetworkConfigDate(__ym_session_t *s)
 {
-	ymerr("network config changed on %p", session);
+	ymerr("network config changed on %p", s);
 }
 
 #if defined(YMAPPLE)
@@ -957,9 +948,9 @@ void __ym_SCDynamicStoreCallBack(__unused SCDynamicStoreRef store, __unused CFAr
 
 YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_macos_sc_runloop_proc(YM_THREAD_PARAM ctx)
 {
-    __YMSessionRef session = ctx;
+    __ym_session_t *s = ctx;
 
-    SCDynamicStoreContext storeCtx = { 0, session, NULL, NULL, NULL };
+    SCDynamicStoreContext storeCtx = { 0, s, NULL, NULL, NULL };
     
 #if !defined(YMIOS)
     SCDynamicStoreRef scStore = SCDynamicStoreCreate(NULL, CFSTR("libyammer"), __ym_SCDynamicStoreCallBack, &storeCtx);
@@ -974,7 +965,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_macos_sc_runloop_proc(YM_THR
     
     ymerr("network interface change observer entered");
     
-    while ( ! session->scObserverThreadExitFlag )
+    while ( ! s->scObserverThreadExitFlag )
       CFRunLoopRunInMode(kCFRunLoopDefaultMode, 1, false);
 
     CFRunLoopRemoveSource(aRunloop, storeSource, kCFRunLoopDefaultMode);
@@ -991,25 +982,25 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_macos_sc_runloop_proc(YM_THR
     YM_THREAD_END
 }
 
-bool __YMSessionObserveNetworkInterfaceChangesMacos(__YMSessionRef session, bool startStop)
+bool __YMSessionObserveNetworkInterfaceChangesMacos(__ym_session_t *s, bool startStop)
 {
 	if (startStop) {
-		if (session->scObserverThread)
+		if (s->scObserverThread)
 			return true;
 		
-		session->scObserverThread = YMThreadCreate(NULL,__ym_session_macos_sc_runloop_proc,session);
-		session->scObserverThreadExitFlag = false;
-		return session->scObserverThread && YMThreadStart(session->scObserverThread);
+		s->scObserverThread = YMThreadCreate(NULL,__ym_session_macos_sc_runloop_proc,s);
+		s->scObserverThreadExitFlag = false;
+		return s->scObserverThread && YMThreadStart(s->scObserverThread);
 	}
 	else {
-		if (!session->scObserverThread)
+		if (!s->scObserverThread)
 			return false;
 
 		ymdbg("stopped observing network interface changes");
-		session->scObserverThreadExitFlag = true;
-		YMThreadJoin(session->scObserverThread);
-		YMRelease(session->scObserverThread);
-		session->scObserverThread = NULL;
+		s->scObserverThreadExitFlag = true;
+		YMThreadJoin(s->scObserverThread);
+		YMRelease(s->scObserverThread);
+		s->scObserverThread = NULL;
 	}
 
 	return true;
@@ -1019,12 +1010,12 @@ bool __YMSessionObserveNetworkInterfaceChangesMacos(__YMSessionRef session, bool
 
 YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_linux_proc_net_dev_scrape_proc(YM_THREAD_PARAM ctx)
 {
-	__YMSessionRef session = ctx;
+	__ym_session_t *s = ctx;
 	
 	YMDictionaryRef thisIter = NULL, prevIter = NULL;
 	// this /proc scraping method was cribbed from ifplugd. thanks ifplugd!
 	// PF_NETLINK approach didn't work after not a whole lot of trying on raspbian
-	while (!session->linuxPollThreadExitFlag) {
+	while (!s->linuxPollThreadExitFlag) {
 		FILE *f;
 		char ln[256];
 
@@ -1074,7 +1065,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_linux_proc_net_dev_scrape_pr
 						somethingMoved = prevStatus != s;
 						if ( somethingMoved ) {
 							ymerr("%s: changed status: %s",p,s==IFSTATUS_UP?"up":(s==IFSTATUS_DOWN?"down":"?"));
-							__YMSessionUpdateNetworkConfigDate(session);
+							__YMSessionUpdateNetworkConfigDate(s);
 						}
 					}
 					dEnum = YMDictionaryEnumeratorGetNext(dEnum);
@@ -1082,7 +1073,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_linux_proc_net_dev_scrape_pr
 				
 				if ( ! found ) {
 					ymerr("%s: new interface status: %s",p,s==IFSTATUS_UP?"up":(s==IFSTATUS_DOWN?"down":"?"));
-					__YMSessionUpdateNetworkConfigDate(session);
+					__YMSessionUpdateNetworkConfigDate(s);
 				}
 			}
 	        char *ifCopy = strdup(p);
@@ -1103,7 +1094,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_linux_proc_net_dev_scrape_pr
 
 		fclose(f);
 
-		if (session->linuxPollThreadExitFlag)
+		if (s->linuxPollThreadExitFlag)
 			break;
 		sleep(1);
 		
@@ -1119,26 +1110,26 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_linux_proc_net_dev_scrape_pr
 	YM_THREAD_END
 }
 
-bool __YMSessionObserveNetworkInterfaceChangesLinux(__YMSessionRef session, bool startStop)
+bool __YMSessionObserveNetworkInterfaceChangesLinux(__ym_session_t *s, bool startStop)
 {
 	if (!startStop) {
-		if (!session->linuxPollThread)
+		if (!s->linuxPollThread)
 			return false;
 
-		session->linuxPollThreadExitFlag = true;
-		YMThreadJoin(session->linuxPollThread);
-		YMRelease(session->linuxPollThread);
-		session->linuxPollThread = NULL;
+		s->linuxPollThreadExitFlag = true;
+		YMThreadJoin(s->linuxPollThread);
+		YMRelease(s->linuxPollThread);
+		s->linuxPollThread = NULL;
 
 		return true;
 	}
 
-	session->linuxPollThread = YMThreadCreate(NULL, __ym_session_linux_proc_net_dev_scrape_proc, session);
-	session->linuxPollThreadExitFlag = false;
-	bool okay = YMThreadStart(session->linuxPollThread);
+	s->linuxPollThread = YMThreadCreate(NULL, __ym_session_linux_proc_net_dev_scrape_proc, s);
+	s->linuxPollThreadExitFlag = false;
+	bool okay = YMThreadStart(s->linuxPollThread);
 	if (!okay) {
-		YMRelease(session->linuxPollThread);
-		session->linuxPollThread = NULL;
+		YMRelease(s->linuxPollThread);
+		s->linuxPollThread = NULL;
 	}
 }
 
@@ -1198,27 +1189,27 @@ HRESULT STDMETHODCALLTYPE ymsink_SetStatus(__RPC__in IWbemObjectSink * This,/* [
 	return WBEM_S_NO_ERROR;
 }
 
-bool __YMSessionObserveNetworkInterfaceChangesWin32(__YMSessionRef session, bool startStop)
+bool __YMSessionObserveNetworkInterfaceChangesWin32(__ym_session_t *s, bool startStop)
 {
 	static BSTR gbNamespace = NULL;
 	static BSTR gbWql = NULL;
 	static BSTR gbQuery = NULL;
 
 	if (!startStop) {
-		if (session->gobbledygook) {
-			session->gobbledygook->lpVtbl->CancelAsyncCall(session->gobbledygook, (IWbemObjectSink *)session->my_gobbledygook);
-			session->gobbledygook->lpVtbl->Release(session->gobbledygook);
-			session->gobbledygook = NULL;
+		if (s->gobbledygook) {
+			s->gobbledygook->lpVtbl->CancelAsyncCall(s->gobbledygook, (IWbemObjectSink *)s->my_gobbledygook);
+			s->gobbledygook->lpVtbl->Release(s->gobbledygook);
+			s->gobbledygook = NULL;
 
-			YMRelease(session->my_gobbledygook->that);
-			session->my_gobbledygook->lpVtbl->Release((IWbemObjectSink *)session->my_gobbledygook);
+			YMRelease(s->my_gobbledygook->that);
+			s->my_gobbledygook->lpVtbl->Release((IWbemObjectSink *)s->my_gobbledygook);
 			// these malloc'd pointers move on the first QueryInterface call
 			// as if some standard com thing wraps them in something else.
 			// presumably they still need to be free'd, wherever it is they went.
 			// or maybe that's done for us in Release?
-			//free(session->my_gobbledygook->lpVtbl);
-			//free(session->my_gobbledygook);
-			session->my_gobbledygook = NULL;
+			//free(s->my_gobbledygook->lpVtbl);
+			//free(s->my_gobbledygook);
+			s->my_gobbledygook = NULL;
 
 			return true;
 		}
@@ -1269,13 +1260,13 @@ bool __YMSessionObserveNetworkInterfaceChangesWin32(__YMSessionRef session, bool
 	}
 
 	// Connect to the root\default namespace with the current user.
-	hr = pLoc->lpVtbl->ConnectServer(pLoc, gbNamespace, NULL, NULL, NULL, 0, NULL, NULL, &session->gobbledygook);
+	hr = pLoc->lpVtbl->ConnectServer(pLoc, gbNamespace, NULL, NULL, NULL, 0, NULL, NULL, &s->gobbledygook);
 	if (FAILED(hr)) {
 		ymerr("ConnectServer failed");
 		goto catch_release;
 	}
 
-	hr = CoSetProxyBlanket((IUnknown *)session->gobbledygook, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL, RPC_C_AUTHN_LEVEL_CALL,
+	hr = CoSetProxyBlanket((IUnknown *)s->gobbledygook, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL, RPC_C_AUTHN_LEVEL_CALL,
 		RPC_C_IMP_LEVEL_DELEGATE, NULL, EOAC_NONE);
 
 	if (FAILED(hr)) {
@@ -1287,35 +1278,35 @@ bool __YMSessionObserveNetworkInterfaceChangesWin32(__YMSessionRef session, bool
 		CLSCTX_LOCAL_SERVER, &IID_IUnsecuredApartment,
 		(void**)&pUnsecApp);
 
-	session->my_gobbledygook = YMALLOC(sizeof(YM_IWbemObjectSink));
-	session->my_gobbledygook->that = (void *)YMRetain(session);
-	session->my_gobbledygook->lpVtbl = YMALLOC(sizeof(IWbemObjectSinkVtbl));
-	session->my_gobbledygook->lpVtbl->AddRef = ymsink_AddRef;
-	session->my_gobbledygook->lpVtbl->Indicate = ymsink_Indicate;
-	session->my_gobbledygook->lpVtbl->QueryInterface = ymsink_QueryInterface;
-	session->my_gobbledygook->lpVtbl->Release = ymsink_Release;
-	session->my_gobbledygook->lpVtbl->SetStatus = ymsink_SetStatus;
+	s->my_gobbledygook = YMALLOC(sizeof(YM_IWbemObjectSink));
+	s->my_gobbledygook->that = (void *)YMRetain(s);
+	s->my_gobbledygook->lpVtbl = YMALLOC(sizeof(IWbemObjectSinkVtbl));
+	s->my_gobbledygook->lpVtbl->AddRef = ymsink_AddRef;
+	s->my_gobbledygook->lpVtbl->Indicate = ymsink_Indicate;
+	s->my_gobbledygook->lpVtbl->QueryInterface = ymsink_QueryInterface;
+	s->my_gobbledygook->lpVtbl->Release = ymsink_Release;
+	s->my_gobbledygook->lpVtbl->SetStatus = ymsink_SetStatus;
 
-	hr = pUnsecApp->lpVtbl->CreateObjectStub(pUnsecApp, (IUnknown *)session->my_gobbledygook, &pStubUnk);
+	hr = pUnsecApp->lpVtbl->CreateObjectStub(pUnsecApp, (IUnknown *)s->my_gobbledygook, &pStubUnk);
 
 	if (FAILED(hr)) {
 		ymerr("CreateObjectStub failed");
 		goto catch_release;
 	}
 
-	hr = pStubUnk->lpVtbl->QueryInterface(pStubUnk, &IID_IWbemObjectSink, (void **)&session->my_gobbledygook);
+	hr = pStubUnk->lpVtbl->QueryInterface(pStubUnk, &IID_IWbemObjectSink, (void **)&s->my_gobbledygook);
 
 	if (FAILED(hr)) {
 		ymerr("QueryInterface failed");
 		goto catch_release;
 	}
 
-	hr = session->gobbledygook->lpVtbl->ExecNotificationQueryAsync(session->gobbledygook,
+	hr = s->gobbledygook->lpVtbl->ExecNotificationQueryAsync(s->gobbledygook,
 		gbWql,
 		gbQuery,
 		WBEM_FLAG_SEND_STATUS,
 		NULL,
-		(IWbemObjectSink *)session->my_gobbledygook);
+		(IWbemObjectSink *)s->my_gobbledygook);
 
 	if (FAILED(hr)) {
 		ymerr("ExecNotificationQueryAsync failed");
@@ -1328,14 +1319,14 @@ bool __YMSessionObserveNetworkInterfaceChangesWin32(__YMSessionRef session, bool
 
 catch_release:
 
-	if (session->my_gobbledygook) {
-		free(session->my_gobbledygook->lpVtbl);
-		free(session->my_gobbledygook);
-		session->my_gobbledygook = NULL;
+	if (s->my_gobbledygook) {
+		free(s->my_gobbledygook->lpVtbl);
+		free(s->my_gobbledygook);
+		s->my_gobbledygook = NULL;
 	}
-	if (session->gobbledygook) {
-		session->gobbledygook->lpVtbl->Release(session->gobbledygook);
-		session->gobbledygook = NULL;
+	if (s->gobbledygook) {
+		s->gobbledygook->lpVtbl->Release(s->gobbledygook);
+		s->gobbledygook = NULL;
 	}
 	if (pLoc)
 		pLoc->lpVtbl->Release(pLoc);

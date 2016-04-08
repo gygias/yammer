@@ -18,13 +18,13 @@
 #endif
 
 #define ymlog_pre "task[%s]: "
-#define ymlog_args YMSTR(task->path)
+#define ymlog_args YMSTR(t->path)
 #define ymlog_type YMLogDefault
 #include "YMLog.h"
 
 YM_EXTERN_C_PUSH
 
-typedef struct __ym_task_t
+typedef struct __ym_task
 {
     _YMType _type;
     
@@ -42,8 +42,8 @@ typedef struct __ym_task_t
 #if defined(YMWIN32)
 	HANDLE childHandle;
 #endif
-} __ym_task_t;
-typedef struct __ym_task_t *__YMTaskRef;
+} __ym_task;
+typedef struct __ym_task __ym_task_t;
 
 #define NULL_PID (-1)
 
@@ -55,30 +55,29 @@ YM_ONCE_DEF(__YMTaskRegisterAtfork);
 
 YMTaskRef YMTaskCreate(YMStringRef path, YMArrayRef args, bool saveOutput)
 {
-    __YMTaskRef task = (__YMTaskRef)_YMAlloc(_YMTaskTypeID, sizeof(struct __ym_task_t));
-    task->path = YMRetain(path);
-    task->args = args ? YMRetain(args) : NULL;
-    task->save = saveOutput;
+    __ym_task_t *t = (__ym_task_t *)_YMAlloc(_YMTaskTypeID, sizeof(__ym_task_t));
+    t->path = YMRetain(path);
+    t->args = args ? YMRetain(args) : NULL;
+    t->save = saveOutput;
     
-    task->childPid = NULL_PID;
-    task->exited = false;
-    task->output = NULL;
-    task->outputPipe = NULL;
-    task->outputThread = NULL;
-    task->outputLen = 0;
-    task->result = -1;
-    return task;
+    t->childPid = NULL_PID;
+    t->exited = false;
+    t->output = NULL;
+    t->outputPipe = NULL;
+    t->outputThread = NULL;
+    t->outputLen = 0;
+    t->result = -1;
+    return t;
 }
 
-void _YMTaskFree(YMTaskRef task_)
+void _YMTaskFree(YMTaskRef t)
 {
-    __YMTaskRef task = (__YMTaskRef)task_;
-    YMRelease(task->path);
-    if ( task->args )
-        YMRelease(task->args);
-    free(task->output);
-    if ( task->outputThread )
-        YMRelease(task->outputThread);
+    YMRelease(t->path);
+    if ( t->args )
+        YMRelease(t->args);
+    free(t->output);
+    if ( t->outputThread )
+        YMRelease(t->outputThread);
 }
 
 #if defined(YMWIN32)
@@ -92,18 +91,18 @@ YM_ONCE_FUNC(__YMTaskRegisterAtfork, {
 
 YM_ONCE_OBJ gYMTaskOnce = YM_ONCE_INIT;
 
-bool YMTaskLaunch(YMTaskRef task_)
+bool YMTaskLaunch(YMTaskRef t_)
 {
-    __YMTaskRef task = (__YMTaskRef)task_;
+    __ym_task_t *t = (__ym_task_t *)t_;
     
     YM_IO_BOILERPLATE
 
 	bool okay = true;
     
-    if ( task->save ) {
-        task->outputPipe = YMPipeCreate(NULL);
-        ymlog("output pipe %d -> %d",YMPipeGetInputFile(task->outputPipe),YMPipeGetOutputFile(task->outputPipe));
-        task->outputThread = YMThreadCreate(task->path, __ym_task_read_output_proc, (void *)YMRetain(task));
+    if ( t->save ) {
+        t->outputPipe = YMPipeCreate(NULL);
+        ymlog("output pipe %d -> %d",YMPipeGetInputFile(t->outputPipe),YMPipeGetOutputFile(t->outputPipe));
+        t->outputThread = YMThreadCreate(t->path, __ym_task_read_output_proc, (void *)YMRetain(t));
     }
 
 #if !defined(YMWIN32)
@@ -115,26 +114,26 @@ bool YMTaskLaunch(YMTaskRef task_)
     if ( pid == 0 ) { // child
         _YMLogUnlock();
         
-        int64_t nArgs = task->args ? YMArrayGetCount(task->args) : 0;
+        int64_t nArgs = t->args ? YMArrayGetCount(t->args) : 0;
         
         int64_t argvSize = nArgs + 2;
         const char **argv = malloc((unsigned long)argvSize*sizeof(char *));
         
-        argv[0] = YMSTR(task->path);
+        argv[0] = YMSTR(t->path);
         argv[argvSize - 1] = NULL;
         
         ymlogi("%s",argv[0]);
         for(int64_t i = 0; i < nArgs; i++) {
-            argv[i + 1] = YMArrayGet(task->args, i);
+            argv[i + 1] = YMArrayGet(t->args, i);
             ymlogi(" %s",argv[i + 1]);
         }
         ymlogr();
 
-        if ( task->save ) {
-            int pipeIn = YMPipeGetInputFile(task->outputPipe);
+        if ( t->save ) {
+            int pipeIn = YMPipeGetInputFile(t->outputPipe);
             result = dup2(pipeIn, STDOUT_FILENO);
             if ( result == -1 ) { ymerr("dup2(%d<-%d): %d %s",pipeIn,STDOUT_FILENO,errno,strerror(errno)); abort(); }
-            YMRelease(task->outputPipe); // closes in and out
+            YMRelease(t->outputPipe); // closes in and out
         }
 
         execv(argv[0], (char * const *)argv);
@@ -143,32 +142,32 @@ bool YMTaskLaunch(YMTaskRef task_)
     }
     _YMLogUnlock();
 
-    task->childPid = pid;
+    t->childPid = pid;
 
 #else
 	PROCESS_INFORMATION procInfo = {0};
 
 	STARTUPINFO startupInfo = { 0 };
-    if ( task->save ) {
+    if ( t->save ) {
 		startupInfo.cb = sizeof(STARTUPINFO);
-		startupInfo.hStdOutput = YMPipeGetInputFile(task->outputPipe);
+		startupInfo.hStdOutput = YMPipeGetInputFile(t->outputPipe);
 		startupInfo.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
 		startupInfo.hStdError = GetStdHandle(STD_ERROR_HANDLE);
 		startupInfo.dwFlags |= STARTF_USESTDHANDLES;
 	}
 
-	int cmdLen = strlen(YMSTR(task->path));
+	int cmdLen = strlen(YMSTR(t->path));
 	int cmdlineSize = cmdLen + 128;
 	wchar_t *cmdline = calloc(cmdlineSize,sizeof(wchar_t));
 
-	int cmdLenNull = strlen(YMSTR(task->path)) + 1;
-	swprintf(cmdline, cmdlineSize, L"%hs", YMSTR(task->path));
+	int cmdLenNull = strlen(YMSTR(t->path)) + 1;
+	swprintf(cmdline, cmdlineSize, L"%hs", YMSTR(t->path));
 	int cmdlineLen = cmdLen;
 
-	if ( task->args ) {
-		for ( int64_t i = 0; i < YMArrayGetCount(task->args); i++ ) {
+	if ( t->args ) {
+		for ( int64_t i = 0; i < YMArrayGetCount(t->args); i++ ) {
 			int argMaxLen = 256;
-			const char *arg = YMArrayGet(task->args,i);
+			const char *arg = YMArrayGet(t->args,i);
 			int argLen = strlen(arg);
 			ymassert(argLen<argMaxLen,"arg len >= 255, fix hard code");
 			if ( ( argLen + 2 ) > ( cmdlineSize - cmdlineLen ) ) {
@@ -186,74 +185,74 @@ bool YMTaskLaunch(YMTaskRef task_)
 	okay = CreateProcess(NULL,cmdline,NULL,NULL,true,0,NULL,NULL,&startupInfo,&procInfo);
 	free(cmdline);
 
-	task->childPid = procInfo.dwProcessId;
-	task->childHandle = procInfo.hProcess;
+	t->childPid = procInfo.dwProcessId;
+	t->childHandle = procInfo.hProcess;
 
 #endif
 
-	if (task->save)
-		YMThreadStart(task->outputThread);
+	if (t->save)
+		YMThreadStart(t->outputThread);
 
-	ymlog("forked: p%d", task->childPid);
+	ymlog("forked: p%d", t->childPid);
 
 	return okay;
 }
 
-void YMTaskWait(YMTaskRef task_)
+void YMTaskWait(YMTaskRef t_)
 {
-    __YMTaskRef task = (__YMTaskRef)task_;
-    ymassert(task->childPid!=NULL_PID,ymlog_pre "asked to wait on non-existant child",YMSTR(task->path));
+    __ym_task_t *t = (__ym_task_t *)t_;
+    ymassert(t->childPid!=NULL_PID,ymlog_pre "asked to wait on non-existant child",YMSTR(t->path));
 
 #if !defined(YMWIN32)
 
     int stat_loc;
     pid_t result;
     do {
-        result = waitpid(task->childPid, &stat_loc, 0);
-    } while ( result != task->childPid );
-    ymerr("p%d exited%s with %d", task->childPid, WIFEXITED(result) ?
+        result = waitpid(t->childPid, &stat_loc, 0);
+    } while ( result != t->childPid );
+    ymerr("p%d exited%s with %d", t->childPid, WIFEXITED(result) ?
                                                         "" :
                                                         (WIFSIGNALED(result) ? " signaled," : " (*)"), stat_loc);
-    task->result = stat_loc;
+    t->result = stat_loc;
 
 #else
 
-	DWORD result = WaitForSingleObject(task->childHandle, INFINITE);
+	DWORD result = WaitForSingleObject(t->childHandle, INFINITE);
 	if ( result == WAIT_OBJECT_0 ) {
 		DWORD exitCode = 0;
-		BOOL okay = GetExitCodeProcess(task->childHandle, &exitCode);
+		BOOL okay = GetExitCodeProcess(t->childHandle, &exitCode);
 		if ( okay ) {
-			ymerr("p%d exited with %d", task->childPid, exitCode);
-			task->result = exitCode;
+			ymerr("p%d exited with %d", t->childPid, exitCode);
+			t->result = exitCode;
 		} else
-			ymerr("GetExitCodeProcess(p%d) failed: %x",task->childPid,GetLastError());
+			ymerr("GetExitCodeProcess(p%d) failed: %x",t->childPid,GetLastError());
 	} else
-		ymerr("WaitForSingleObject(p%d) failed: %d %x",task->childPid,result,GetLastError());
+		ymerr("WaitForSingleObject(p%d) failed: %d %x",t->childPid,result,GetLastError());
 
 #endif
     
-    if (task->save) {
-        YMThreadJoin(task->outputThread);
+    if (t->save) {
+        YMThreadJoin(t->outputThread);
         ymerr("joined on output thread...");
     }
 
-    task->exited = true;
+    t->exited = true;
 }
 
-int YMTaskGetExitStatus(YMTaskRef task_)
+int YMTaskGetExitStatus(YMTaskRef t_)
 {
-    __YMTaskRef task = (__YMTaskRef)task_;
-    ymassert(task->exited,ymlog_pre "hasn't exited",YMSTR(task->path));
-    return task->result;
+    __ym_task_t *t = (__ym_task_t *)t_;
+    ymassert(t->exited,ymlog_pre "hasn't exited",YMSTR(t->path));
+    return t->result;
 }
 
-unsigned char *YMTaskGetOutput(YMTaskRef task_, uint32_t *outLength)
+unsigned char *YMTaskGetOutput(YMTaskRef t_, uint32_t *outLength)
 {
-    __YMTaskRef task = (__YMTaskRef)task_;
-    if ( task->save )
-      YMThreadJoin(task->outputThread);
-    *outLength = task->outputLen;
-    return task->output;
+    __ym_task_t *t = (__ym_task_t *)t_;
+    if ( t->save )
+      YMThreadJoin(t->outputThread);
+    *outLength = t->outputLen;
+    return t->output;
 }
 
 // printf: lazily avoid log chicken-and-egg
@@ -271,26 +270,26 @@ void __ym_task_child_atfork() {
 
 YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_task_read_output_proc(YM_THREAD_PARAM ctx_)
 {
-    __YMTaskRef task = ctx_;
+    __ym_task_t *t = ctx_;
     
     ymlog("flush output started...");
     
     YM_IO_BOILERPLATE
     
-    _YMPipeCloseInputFile(task->outputPipe);
-    YMFILE outFd = YMPipeGetOutputFile(task->outputPipe);
+    _YMPipeCloseInputFile(t->outputPipe);
+    YMFILE outFd = YMPipeGetOutputFile(t->outputPipe);
     
 #define OUTPUT_BUF_INIT_SIZE 1024
-    task->output = malloc(OUTPUT_BUF_INIT_SIZE);
+    t->output = malloc(OUTPUT_BUF_INIT_SIZE);
     off_t outputBufSize = OUTPUT_BUF_INIT_SIZE;
     off_t outputOff = 0;
     
     while(true) {
         while( ( outputOff + OUTPUT_BUF_INIT_SIZE ) > outputBufSize ) {
             outputBufSize *= 2;
-            task->output = realloc(task->output, (unsigned long)outputBufSize);
+            t->output = realloc(t->output, (unsigned long)outputBufSize);
         }
-        YM_READ_FILE(outFd, task->output + outputOff, OUTPUT_BUF_INIT_SIZE);
+        YM_READ_FILE(outFd, t->output + outputOff, OUTPUT_BUF_INIT_SIZE);
         if ( aRead == -1 ) {
             ymerr("reading output: %d %s",error,errorStr);
             break;
@@ -305,19 +304,19 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_task_read_output_proc(YM_THREAD_PARA
     
     if ( outputOff == outputBufSize ) {
         outputBufSize++;
-        task->output = realloc(task->output, (unsigned long)outputBufSize);
+        t->output = realloc(t->output, (unsigned long)outputBufSize);
     }
     for( int i = 0; i < outputOff; i++ ) {
-        if ( task->output[i] == '\0' )
-            task->output[i] = '_';
+        if ( t->output[i] == '\0' )
+            t->output[i] = '_';
     }
-    task->output[outputOff] = '\0';
-    task->outputLen = (uint32_t)outputOff;
+    t->output[outputOff] = '\0';
+    t->outputLen = (uint32_t)outputOff;
     
-    YMRelease(task);
+    YMRelease(t);
     
-    YMRelease(task->outputPipe);
-    task->outputPipe = NULL;
+    YMRelease(t->outputPipe);
+    t->outputPipe = NULL;
     
     ymlog("flush output exiting");
     

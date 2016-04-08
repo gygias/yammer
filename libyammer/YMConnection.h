@@ -20,7 +20,7 @@ YM_EXTERN_C_PUSH
 # include <winsock2.h>
 #endif
 
-typedef const struct __ym_connection_t *YMConnectionRef;
+typedef const struct __ym_connection * YMConnectionRef;
 
 // interface / speed stuff
 YMStringRef YMAPI YMConnectionGetLocalInterfaceName(YMConnectionRef connection);

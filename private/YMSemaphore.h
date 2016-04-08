@@ -11,7 +11,7 @@
 
 YM_EXTERN_C_PUSH
 
-typedef struct __YMSemaphore *YMSemaphoreRef;
+typedef struct __ym_semaphore * YMSemaphoreRef;
 
 YMSemaphoreRef YMAPI YMSemaphoreCreate(int initialValue);
 YMSemaphoreRef YMAPI YMSemaphoreCreateWithName(YMStringRef name, int initialValue);

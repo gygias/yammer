@@ -13,12 +13,10 @@
 
 YM_EXTERN_C_PUSH
 
-typedef const struct __ym_thread_t *YMThreadRef;
+typedef const struct __ym_thread * YMThreadRef;
 
 typedef void (*ym_void_voidp_func)(void *);
 typedef void *(*ym_voidp_voidp_func)(void *);
-
-typedef struct ym_thread_dispatch_t *ym_thread_dispatch_ref;
 
 #if !defined(YMWIN32)
 # define YM_THREAD_RETURN void *
@@ -35,11 +33,8 @@ typedef struct ym_thread_dispatch_t *ym_thread_dispatch_ref;
 # define YM_THREAD_END return 0;
 #endif
 
-typedef void(YM_CALLING_CONVENTION *ym_thread_dispatch_func)(ym_thread_dispatch_ref);
+typedef void(YM_CALLING_CONVENTION *ym_dispatch_user_func)(YM_THREAD_PARAM);
 typedef YM_THREAD_RETURN(YM_CALLING_CONVENTION *ym_thread_entry)(YM_THREAD_PARAM);
-
-// function pointers for YMThreadDispatchUserInfo
-typedef ym_thread_dispatch_func ym_thread_dispatch_dealloc;
 
 YMThreadRef YMAPI YMThreadCreate(YMStringRef name, ym_thread_entry entryPoint, void *context);
 YMThreadRef YMAPI YMThreadDispatchCreate(YMStringRef name);
@@ -47,24 +42,25 @@ YMThreadRef YMAPI YMThreadDispatchCreate(YMStringRef name);
 void YMThreadSetContext(YMThreadRef thread, void *context);
 
 // if context contains nested allocations, or doesn't use the YMALLOC allocator, use ym_thread_dispatch_dealloc
-typedef struct ym_thread_dispatch_t
+typedef struct ym_thread_dispatch_user
 {
-    ym_thread_dispatch_func dispatchProc;
-    ym_thread_dispatch_dealloc deallocProc; // optional // todo why is this necessary - can't dispatchProc take care of opaque stuff before it finishes?
+    ym_dispatch_user_func dispatchProc;
+    ym_dispatch_user_func deallocProc; // optional // todo why is this necessary - can't dispatchProc take care of opaque stuff before it finishes?
     bool freeContextWhenDone; // optional convenience for YMALLOC'd context pointers. will be free'd after deallocProc, if it is specified.
     void *context; // weak
     YMStringRef description; // optional, assigns a name that will be included in logging from YMThreadDispatch
-} _ym_thread_dispatch_t;
+} ym_thread_dispatch_user;
+typedef struct ym_thread_dispatch_user ym_thread_dispatch_user_t;
 
-void YMAPI YMThreadDispatchDispatch(YMThreadRef thread, struct ym_thread_dispatch_t dispatch);
+void YMAPI YMThreadDispatchDispatch(YMThreadRef thread, ym_thread_dispatch_user_t userDispatch);
 
-typedef void (*ym_dispatch_forward_file_callback)(void *, YMIOResult, uint64_t);
-typedef struct _ym_thread_forward_file_context_t
+typedef void (*ym_forward_file_callback)(void *, YMIOResult, uint64_t);
+typedef struct ym_forward_file
 {
-    ym_dispatch_forward_file_callback callback;
+    ym_forward_file_callback callback;
     void * context;
-} _ym_thread_forward_file_context_t;
-typedef struct _ym_thread_forward_file_context_t *_ym_thread_forward_file_context_ref;
+} ym_forward_file;
+typedef struct ym_forward_file ym_forward_file_t;
 
 void YMAPI YMThreadDispatchSetGlobalMode(bool);
 void YMAPI YMThreadDispatchMain();
@@ -76,8 +72,8 @@ YMThreadRef YMAPI YMThreadDispatchGetGlobal();
 // want to be able to leave stream open, forward file doesn't imply close after completion
 // need event based way to either notify user when forward is complete, or 'close when done' in sync with plexer's list of streams
 // should the client 'forward' api be on connection, so it can ConnectionCloseStream either on callback or after sync method?
-bool YMAPI YMThreadDispatchForwardFile(YMFILE fromFile, YMStreamRef toStream, const uint64_t *nBytesPtr, bool sync, _ym_thread_forward_file_context_ref callbackInfo);
-bool YMAPI YMThreadDispatchForwardStream(YMStreamRef fromStream, YMFILE toFile, const uint64_t *nBytesPtr, bool sync, _ym_thread_forward_file_context_ref callbackInfo);
+bool YMAPI YMThreadDispatchForwardFile(YMFILE fromFile, YMStreamRef toStream, const uint64_t *nBytesPtr, bool sync, ym_forward_file_t *callbackInfo);
+bool YMAPI YMThreadDispatchForwardStream(YMStreamRef fromStream, YMFILE toFile, const uint64_t *nBytesPtr, bool sync, ym_forward_file_t *callbackInfo);
 void YMAPI YMThreadDispatchJoin(YMThreadRef thread_);
 
 bool YMAPI YMThreadStart(YMThreadRef thread);
