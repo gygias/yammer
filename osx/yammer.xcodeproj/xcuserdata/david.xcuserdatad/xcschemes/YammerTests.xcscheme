@@ -26,9 +26,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "63EEC7551BFB6AA400990ECE"
-            BuildableName = "ymchat"
-            BlueprintName = "ymchat"
+            BlueprintIdentifier = "631F0D311C141EE500C141D4"
+            BuildableName = "ymtest"
+            BlueprintName = "ymtest"
             ReferencedContainer = "container:yammer.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -49,9 +49,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "63EEC7551BFB6AA400990ECE"
-            BuildableName = "ymchat"
-            BlueprintName = "ymchat"
+            BlueprintIdentifier = "631F0D311C141EE500C141D4"
+            BuildableName = "ymtest"
+            BlueprintName = "ymtest"
             ReferencedContainer = "container:yammer.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -84,15 +84,6 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
-      <MacroExpansion>
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "63EEC7551BFB6AA400990ECE"
-            BuildableName = "ymchat"
-            BlueprintName = "ymchat"
-            ReferencedContainer = "container:yammer.xcodeproj">
-         </BuildableReference>
-      </MacroExpansion>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">
