@@ -67,8 +67,8 @@ typedef struct PlexerTest
 } PlexerTest;
 
 void _DoManyRoundTripsTest(struct PlexerTest *);
-void YM_CALLING_CONVENTION _init_local_plexer_proc(ym_thread_dispatch_ref dispatch);
-void YM_CALLING_CONVENTION _handle_remote_stream(ym_thread_dispatch_ref ctx_);
+void YM_CALLING_CONVENTION _init_local_plexer_proc(YM_THREAD_PARAM);
+void YM_CALLING_CONVENTION _handle_remote_stream(YM_THREAD_PARAM);
 YM_THREAD_RETURN YM_CALLING_CONVENTION _RunLocalPlexer(YM_THREAD_PARAM);
 void _SendMessage(struct PlexerTest *theTest, YMStreamRef stream, uint8_t *message, uint16_t length);
 uint8_t *_ReceiveMessage(struct PlexerTest *theTest, YMStreamRef stream, uint16_t *outLen);
@@ -140,7 +140,7 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     YMPlexerSetStreamClosingFunc(theTest->fakeRemotePlexer, remote_plexer_stream_closing);
     YMPlexerSetCallbackContext(theTest->fakeRemotePlexer, theTest);
     
-    struct ym_thread_dispatch_t dispatch = { _init_local_plexer_proc, NULL, false, theTest, NULL };
+    ym_thread_dispatch_user_t dispatch = { _init_local_plexer_proc, NULL, false, theTest, NULL };
     YMThreadDispatchDispatch(theTest->dispatchThread, dispatch);
     
     bool okay = YMPlexerStart(theTest->fakeRemotePlexer);
@@ -193,9 +193,9 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
           PlexerTest1NewStreamPerRoundTrip?"stream":"round-trip");
 }
 
-void YM_CALLING_CONVENTION _init_local_plexer_proc(ym_thread_dispatch_ref dispatch)
+void YM_CALLING_CONVENTION _init_local_plexer_proc(YM_THREAD_PARAM context)
 {
-    struct PlexerTest *theTest = dispatch->context;
+    struct PlexerTest *theTest = context;
     bool okay = YMPlexerStart(theTest->localPlexer);
     testassert(okay,"master did not start");
 }
@@ -220,7 +220,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _RunLocalPlexer(YM_THREAD_PARAM ctx_)
             YMStringRef name = YMSTRC(__FUNCTION__);
             aStream = YMPlexerCreateStream(plexer,name);
             YMRelease(name);
-            streamID = ((ym_plexer_stream_user_info_ref)_YMStreamGetUserInfo(aStream))->streamID;
+            streamID = ((ym_pstream_user_info_t *)_YMStreamGetUserInfo(aStream))->streamID;
         }
         
         uint8_t *outgoingMessage;
@@ -379,16 +379,16 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *cont
     hContext->theTest = theTest;
     hContext->stream = YMRetain(stream);
     
-    struct ym_thread_dispatch_t dispatchDef = { _handle_remote_stream, NULL, true, hContext, NULL };
+    ym_thread_dispatch_user_t dispatchDef = { _handle_remote_stream, NULL, true, hContext, NULL };
     YMThreadDispatchDispatch(theTest->dispatchThread, dispatchDef);
 }
 
-void YM_CALLING_CONVENTION _handle_remote_stream(ym_thread_dispatch_ref ctx_)
+void YM_CALLING_CONVENTION _handle_remote_stream(YM_THREAD_PARAM c)
 {
-    struct HandleStreamContext *ctx = ctx_->context;
+    struct HandleStreamContext *ctx = c;
     struct PlexerTest *theTest = ctx->theTest;
     YMStreamRef stream = ctx->stream;
-    YMPlexerStreamID streamID = ((ym_plexer_stream_user_info_ref)_YMStreamGetUserInfo(stream))->streamID;
+    YMPlexerStreamID streamID = ((ym_pstream_user_info_t *)_YMStreamGetUserInfo(stream))->streamID;
     bool protectTheList = ( PlexerTest1Threads > 1 );
     
     unsigned iterations = PlexerTest1NewStreamPerRoundTrip ? 1 : PlexerTest1RoundTripsPerThread;

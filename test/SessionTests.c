@@ -97,8 +97,8 @@ void _TestSessionWritingLargeAndReadingSparseFiles(struct SessionTest *theTest);
 YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteLargeFile(YM_THREAD_PARAM);
 YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteSparseFiles(YM_THREAD_PARAM);
 YM_THREAD_RETURN YM_CALLING_CONVENTION _FlushMiddleman(YM_THREAD_PARAM);
-void YM_CALLING_CONVENTION _EatLargeFile(ym_thread_dispatch_ref);
-void YM_CALLING_CONVENTION _EatASparseFile(ym_thread_dispatch_ref);
+void YM_CALLING_CONVENTION _EatLargeFile(YM_THREAD_PARAM);
+void YM_CALLING_CONVENTION _EatASparseFile(YM_THREAD_PARAM);
 void _AsyncForwardCallback(struct SessionTest *theTest, YMConnectionRef connection, YMStreamRef stream, YMIOResult result, uint64_t bytesWritten, bool isServer);
 
 void SessionTestsRun(ym_test_assert_func assert, ym_test_diff_func diff, const void *context)
@@ -501,9 +501,9 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteSparseFiles(YM_THREAD_PARAM c
 	YM_THREAD_END
 }
 
-void YM_CALLING_CONVENTION _EatASparseFile(ym_thread_dispatch_ref ctx_)
+void YM_CALLING_CONVENTION _EatASparseFile(YM_THREAD_PARAM c)
 {
-	struct TestConnectionStream *ctx = ctx_->context;
+	struct TestConnectionStream *ctx = c;
     struct SessionTest *theTest = ctx->theTest;
 
 	int result, error = 0;
@@ -559,9 +559,9 @@ catch_release:
     YMRelease(stream);
 }
 
-void YM_CALLING_CONVENTION _EatLargeFile(ym_thread_dispatch_ref ctx_)
+void YM_CALLING_CONVENTION _EatLargeFile(YM_THREAD_PARAM c)
 {
-	struct TestConnectionStream *ctx = ctx_->context;
+	struct TestConnectionStream *ctx = c;
     struct SessionTest *theTest = ctx->theTest;
 
 	int result, error = 0;
@@ -781,7 +781,7 @@ void _ym_session_new_stream_func(YMSessionRef session, YMConnectionRef connectio
     ctx->connection = YMRetain(connection);
     ctx->stream = YMRetain(stream);
     
-    struct ym_thread_dispatch_t dispatch = { (isServer ? _EatASparseFile : _EatLargeFile), NULL, true, ctx, NULL };
+    ym_thread_dispatch_user_t dispatch = { (isServer ? _EatASparseFile : _EatLargeFile), NULL, true, ctx, NULL };
     YMThreadDispatchDispatch(theTest->incomingDispatch, dispatch);
 }
 

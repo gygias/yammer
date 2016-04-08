@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
     return 1;
 }
 
-void YM_CALLING_CONVENTION _ym_thread_dispatch_func(__unused ym_thread_dispatch_ref dispatch)
+void YM_CALLING_CONVENTION _ym_thread_dispatch_func(__unused YM_THREAD_PARAM context)
 {
     bool mainThread = _YMThreadGetCurrentThreadNumber() ==
 #if !defined(YMWIN32)
@@ -75,7 +75,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_dispatch_main_test_proc(__unused YM_T
     for( int i = 0; i < gReps; i++ )
     {
         YMThreadRef globalQueue = YMThreadDispatchGetGlobal();
-        struct ym_thread_dispatch_t aDispatch = { _ym_thread_dispatch_func, NULL, true, NULL, NULL };
+        ym_thread_dispatch_user_t aDispatch = { _ym_thread_dispatch_func, NULL, true, NULL, NULL };
         YMThreadDispatchDispatch(globalQueue, aDispatch);
     }
     
