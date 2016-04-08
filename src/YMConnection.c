@@ -387,7 +387,6 @@ bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, 
     bool conCmdOkay = true;
     
     // determine local interface
-#if defined(YMAPPLE) || defined(YMWIN32)
     struct sockaddr_in6 saddr;
     socklen_t slen = sizeof(saddr);
     bool matched = false;
@@ -425,9 +424,6 @@ bool __YMConnectionInitCommon(__YMConnectionRef connection, YMSOCKET newSocket, 
         connection->localIFName = YMSTRC("?");
         connection->localIFType = YMInterfaceUnknown;
     }
-#else
-#error implement me, getsockname is a BSD thing
-#endif
     
     if ( asServer ) {
         // if ( clientWantsSamplingFastestEtc )
