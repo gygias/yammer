@@ -34,6 +34,7 @@ typedef struct __ym_socket
     
     ym_socket_disconnected dFunc;
     const void *dCtx;
+    bool dNotified;
 } __ym_socket;
 typedef struct __ym_socket __ym_socket_t;
 
@@ -102,6 +103,10 @@ bool YMSocketSet(YMSocketRef s_, YMSOCKET socket)
     if ( okay ) {
         okay = YMThreadStart(s->inThread);
     }
+    if ( ! okay )
+        s->socket = NULL_SOCKET;
+    
+    s->dNotified = false;
     
     return okay;
 }
@@ -140,8 +145,13 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_socket_out_proc(YM_THREAD_PARAM ctx)
             YM_READ_FILE(outputOfInput, ((uint8_t *)&socketgram.data) + off, toForwardRaw - off);
             if ( result <= 0 ) {
                 ymlog("socket input closed");
-                if ( s->dFunc )
-                    s->dFunc(s,s->dCtx);
+                YMSelfLock(s);
+                if ( ! s->dNotified ) {
+                    s->dNotified = true;
+                    if ( s->dFunc )
+                        s->dFunc(s,s->dCtx);
+                }
+                YMSelfUnlock(s);
                 goto out_proc_exit;
             }
             off += result;
@@ -156,8 +166,13 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_socket_out_proc(YM_THREAD_PARAM ctx)
             YM_WRITE_SOCKET(s->socket, outBuf + off, toForwardBoxed - off);
             if ( result <= 0 ) {
                 ymlog("socket output");
-                if ( s->dFunc )
-                    s->dFunc(s,s->dCtx);
+                YMSelfLock(s);
+                if ( ! s->dNotified ) {
+                    s->dNotified = true;
+                    if ( s->dFunc )
+                        s->dFunc(s,s->dCtx);
+                }
+                YMSelfUnlock(s);
                 goto out_proc_exit;
             }
             off += result;
@@ -195,8 +210,13 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_socket_in_proc(YM_THREAD_PARAM ctx)
             YM_READ_SOCKET(s->socket, inBuf + off, toForwardBoxed - off);
             if ( result <= 0 ) {
                 ymlog("socket output closed");
-                if ( s->dFunc )
-                    s->dFunc(s,s->dCtx);
+                YMSelfLock(s);
+                if ( ! s->dNotified ) {
+                    s->dNotified = true;
+                    if ( s->dFunc )
+                        s->dFunc(s,s->dCtx);
+                }
+                YMSelfUnlock(s);
                 goto in_proc_exit;
             }
             off += result;
@@ -210,8 +230,13 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_socket_in_proc(YM_THREAD_PARAM ctx)
             YM_WRITE_FILE(inputOfOutput, ((uint8_t *)&socketgram.data) + off, toForwardRaw - off);
             if ( result <= 0 ) {
                 ymlog("socket input");
-                if ( s->dFunc )
-                    s->dFunc(s,s->dCtx);
+                YMSelfLock(s);
+                if ( ! s->dNotified ) {
+                    s->dNotified = true;
+                    if ( s->dFunc )
+                        s->dFunc(s,s->dCtx);
+                }
+                YMSelfUnlock(s);
                 goto in_proc_exit;
             }
             off += result;
