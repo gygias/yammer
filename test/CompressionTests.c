@@ -132,15 +132,15 @@ void _CompressionTest(CompressionTest *theTest, const char *sourcePath, YMCompre
     YM_REWIND_FILE(theTest->sourceFd);
     while(true) {
         YM_READ_FILE(theTest->sourceFd,outBuf,by);
-        testassert(aRead>=0,"compare source");
+        testassert(result>=0,"compare source");
         
-        int cmp = memcmp(theTest->outBytes + idx, outBuf, aRead);
+        int cmp = memcmp(theTest->outBytes + idx, outBuf, result);
         testassert(cmp==0,"compare from %zd",idx);
         
-        if ( aRead == 0 )
+        if ( result == 0 )
             break;
         
-        idx += aRead;
+        idx += result;
     }
     
     free(theTest->outBytes);
@@ -159,17 +159,17 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION compression_test_read_proc(YM_THREAD_PARA
     
     while(true) {
         YM_READ_FILE(theTest->sourceFd,buf,by);
-        testassert(result!=-1&&aRead>=0,"read source");
-        if ( aRead == 0 ) {
+        testassert(result>=0,"read source");
+        if ( result == 0 ) {
             bool okay = YMCompressionClose(theTest->writeC);
             testassert(okay,"write close");
             break;
         }
         
         size_t o = UINT32_MAX;
-        YMIOResult ymResult = YMCompressionWrite(theTest->writeC, buf, aRead, &o);
+        YMIOResult ymResult = YMCompressionWrite(theTest->writeC, buf, result, &o);
         testassert(ymResult==YMIOSuccess,"write");
-        testassert((ssize_t)o==aRead,"o!=aRead");
+        testassert((ssize_t)o==result,"o!=aRead");
         theTest->rawRead += o;
         
         testassert((idx+o)<16384,"overflow");

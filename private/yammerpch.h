@@ -103,15 +103,15 @@
 	#define WRITE_FLAG O_WRONLY
 	#define READ_WRITE_FLAG O_RDWR
 
-	#define YM_IO_BOILERPLATE		__unused int result = 0, __unused error = 0; __unused ssize_t aRead = 0, aWrite = 0; __unused const char *errorStr = NULL;
+	#define YM_IO_BOILERPLATE		 __unused int error = 0; __unused const char *errorStr = NULL; __unused ssize_t result = 0, __r = 0, __w = 0;
 	
 	#define YM_OPEN_FILE(p,f)				{ result = open(p,f,0644); if ( result != 0 ) { error = errno; errorStr = strerror(errno); } }
 	#define YM_OPEN_FILE_2(p,f,m)			{ result = open(p,(f)|O_CREAT,m); if ( result != 0 ) { error = errno; errorStr = strerror(errno); } }
 	#define YM_STOMP_FILE(p,f)				{ result = open(p,(f)|O_CREAT|O_TRUNC,0644); if ( result != 0 ) { error = errno; errorStr = strerror(errno); } }
 	#define YM_REWIND_FILE(f)				{ result = (int)lseek(f,0,SEEK_SET); if ( result != 0 ) { error = errno; errorStr = strerror(errno); } }
 	#define YM_SEEK_FILE(f,o,r)				{ result = lseek(f,o,,r); if ( result != 0 ) { error = errno; errorStr = strerror(errno); } }
-    #define YM_READ_FILE(fd,addr,count)		{ aRead = read(fd, addr, count); if ( aRead == -1 ) { error = errno; errorStr = strerror(errno); } }
-    #define YM_WRITE_FILE(fd,addr,count)	{ aWrite = write(fd,addr,count); if ( aRead == -1 ) { error = errno; errorStr = strerror(errno); } }
+    #define YM_READ_FILE(fd,addr,count)		{ __r = read(fd, addr, count); if ( __r == -1 ) { result = -1; error = errno; errorStr = strerror(errno); } else { result = __r; } }
+    #define YM_WRITE_FILE(fd,addr,count)	{ __w = write(fd,addr,count); if ( __w == -1 ) { result = -1; error = errno; errorStr = strerror(errno); } else { result = __w; } }
     #define YM_CLOSE_FILE(fd)				{ if ( gYMWatchFile != NULL_FILE && fd == gYMWatchFile ) abort(); result = close(fd); if ( result != 0 ) { error = errno; errorStr = strerror(error); } }
     #define NULL_SOCKET (-1)
 	#define YM_READ_SOCKET(s,b,l)	YM_READ_FILE(s,b,l)
@@ -144,13 +144,13 @@
 												if ( __cfa == INVALID_HANDLE_VALUE ) { result = -1; error = (int)GetLastError(); errorStr = GENERIC_WERROR_STR; } else result = (int)__cfa; }
 	#define YM_REWIND_FILE(f)				YM_SEEK_FILE(f,0,FILE_BEGIN)
 	#define YM_SEEK_FILE(f,o,r)				{ DWORD __sfp = SetFilePointer(f,o,NULL,r); if ( __sfp == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR ) result = -1; else result = 0; }
-	#define YM_READ_FILE(fd,addr,count)		{ BOOL __rf = ReadFile(fd, addr, count, &aRead, NULL); \
+	#define YM_READ_FILE(fd,addr,count)		{ BOOL __rf = ReadFile(fd, addr, count, &__r, NULL); \
 												if ( ! __rf ) { \
 													error = GetLastError(); \
 													if ( error == ERROR_HANDLE_EOF ) result = 0; \
 													else result = -1;  } \
-												else if ( aRead == 0 ) result = 0; }
-	#define YM_WRITE_FILE(fd,addr,count)	{ BOOL __wf = WriteFile(fd, addr, count, &aWrite, NULL); if ( ! __wf ) { aWrite = -1; error = GetLastError(); } }
+												else if ( __r == 0 ) result = 0; }
+	#define YM_WRITE_FILE(fd,addr,count)	{ BOOL __wf = WriteFile(fd, addr, count, &__w, NULL); if ( ! __wf ) { result = -1; error = GetLastError(); errorStr = GENERIC_WERROR_STR; } }
     #define YM_CLOSE_FILE(fd)				{ BOOL __ch = CloseHandle(fd); if ( ! __ch ) result = -1; else result = 0; }
     #define NULL_SOCKET ((SOCKET)NULL)
 	#define GENERIC_WERROR_STR "windows error" // unfortunately the strerror equivalent FormatMessage needs the caller to take ownership, which we don't want to mess with.

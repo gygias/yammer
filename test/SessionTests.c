@@ -287,10 +287,11 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteLargeFile(YM_THREAD_PARAM ctx
     while(1) {
         size_t toRead = (size_t)(copyBytes ? ( copyBytes < 512 ? copyBytes : 512 ) : 512);
 		YM_READ_FILE(origFd,buff,toRead);
-        testassert(aRead>=0,"aRead: %d %s",error,errorStr);
-        if ( aRead == 0 ) break;
+        testassert(result>=0,"aRead: %d %s",error,errorStr);
+        if ( result == 0 ) break;
+        ssize_t aRead = result;
 		YM_WRITE_FILE(theTest->largeSrcFd,buff,aRead);
-        testassert(aRead==aWrite, "aRead%d!=aWrite%d: %d %s",aRead,aWrite,error,errorStr);
+        testassert(aRead==result, "aRead%d!=aWrite%d: %d %s",aRead,result,error,errorStr);
         if ( copyBytes && copyBytes - aRead == 0 ) break;
         copyBytes -= aRead;
     }
@@ -358,8 +359,9 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _FlushMiddleman(YM_THREAD_PARAM ctx_)
 		YM_READ_FILE(theTest->largeSrcFd, buf, 1024);
         //XCTAssert(aRead==1024,"middleman read");
         
+        ssize_t aRead = result;
 		YM_WRITE_FILE(writeFd, buf, aRead);
-        testassert(aWrite==aRead,"middleman write");
+        testassert(result==aRead,"middleman write");
         
         if ( time(NULL) - startTime > writeLargeUnboundedFor ) {
             ymlog("closing large middleman input (f%d)",writeFd);

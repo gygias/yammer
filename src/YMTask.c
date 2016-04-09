@@ -290,15 +290,15 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_task_read_output_proc(YM_THREAD_PARA
             t->output = realloc(t->output, (unsigned long)outputBufSize);
         }
         YM_READ_FILE(outFd, t->output + outputOff, OUTPUT_BUF_INIT_SIZE);
-        if ( aRead == -1 ) {
+        if ( result == -1 ) {
             ymerr("reading output: %d %s",error,errorStr);
             break;
-        } else if ( aRead == 0 ) {
+        } else if ( result == 0 ) {
             ymlog("finished reading output: %db",(int)outputOff);
             break;
         } else {
-            ymdbg("flushed %d bytes...",(int)aRead);
-            outputOff += aRead;
+            ymdbg("flushed %ld bytes...",result);
+            outputOff += result;
         }
     }
     

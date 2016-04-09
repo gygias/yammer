@@ -158,12 +158,12 @@ YMIOResult YMNoCompressionRead(__ym_compression_t *c, uint8_t *b, size_t l, size
 {
     YM_IO_BOILERPLATE
     YM_READ_FILE(c->file, b, l);
-    if ( o )
-        *o = aRead;
-    if ( aRead == -1 )
+    if ( result == -1 )
         return YMIOError;
-    else if ( aRead == 0 )
+    else if ( result == 0 )
         return YMIOEOF;
+    if ( o )
+        *o = result;
     return YMIOSuccess;
 }
 
@@ -171,10 +171,10 @@ YMIOResult YMNoCompressionWrite(__ym_compression_t *c, const uint8_t *b, size_t 
 {
     YM_IO_BOILERPLATE
     YM_WRITE_FILE(c->file, b, l);
-    if ( o )
-        *o = aWrite;
-    if ( aWrite != (ssize_t)l )
+    if ( result != (ssize_t)l )
         return YMIOError;
+    if ( o )
+        *o = result;
     return YMIOSuccess;
 }
 

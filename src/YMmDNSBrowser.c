@@ -579,7 +579,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_event_proc(YM_THREAD_PARAM ctx)
 			error = errno;
 			errorStr = strerror(errno);
 #endif
-            ymerr("event thread select failed from n%d fds: %d: %d (%s)",nfds,result,error,errorStr);
+            ymerr("event thread select failed from n%d fds: %ld: %d (%s)",nfds,result,error,errorStr);
             keepGoing = false;
         }
     }

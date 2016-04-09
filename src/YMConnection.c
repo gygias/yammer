@@ -226,9 +226,9 @@ bool YMConnectionConnect(YMConnectionRef c_)
     
     int yes = 1;
     result = setsockopt(newSocket, SOL_SOCKET, SO_REUSEADDR, (const void *)&yes, sizeof(yes));
-    if ( result != 0 ) ymerr("warning: setsockopt(reuse) failed on f%d: %d: %d (%s)",newSocket,result,errno,strerror(errno));
+    if ( result != 0 ) ymerr("warning: setsockopt(reuse) failed on f%d: %ld: %d (%s)",newSocket,result,errno,strerror(errno));
     result = setsockopt(newSocket, SOL_SOCKET, SO_DONTROUTE, (const void *)&yes, sizeof(yes));
-    if ( result != 0 ) ymerr("warning: setsockopt(dontroute) failed on f%d: %d: %d (%s)",newSocket,result,errno,strerror(errno));
+    if ( result != 0 ) ymerr("warning: setsockopt(dontroute) failed on f%d: %ld: %d (%s)",newSocket,result,errno,strerror(errno));
     
     ymlog("connecting...");
     
@@ -361,12 +361,12 @@ int64_t __YMConnectionDoSample(__unused __ym_connection_t *c, YMSOCKET socket, u
             if ( writing ) {
                 random = arc4random();
                 YM_WRITE_SOCKET(socket, (const char *)&random, (size_t)toReadWrite);
-                if ( aWrite != toReadWrite ) return sample;
-                sentReceived += aWrite;
+                if ( result != toReadWrite ) return sample;
+                sentReceived += result;
             } else {
                 YM_READ_SOCKET(socket, (char *)&random, (size_t)toReadWrite);
-                if ( aRead != toReadWrite ) return sample;
-                sentReceived += aRead;
+                if ( result != toReadWrite ) return sample;
+                sentReceived += result;
             }
         }
         ymlog("%s back sample",writing?"reading":"writing");
@@ -437,7 +437,7 @@ bool __YMConnectionInitCommon(__ym_connection_t *c, YMSOCKET newSocket, bool asS
             else                { command.command = YMConnectionCommandInit; command.userInfo = 0; }
             
             YM_WRITE_SOCKET(newSocket, (const char *)&command, sizeof(command));
-            if ( aWrite != sizeof(command) ) {
+            if ( result != sizeof(command) ) {
                 ymerr("connection failed to initialize: %d %d %s",i,error,errorStr);
                 YM_CLOSE_SOCKET(newSocket);
                 return false;
@@ -468,7 +468,7 @@ bool __YMConnectionInitCommon(__ym_connection_t *c, YMSOCKET newSocket, bool asS
     } else {
         while(1) {
             YM_READ_SOCKET(newSocket, (char *)&command, sizeof(command));
-            if ( aRead != sizeof(command) ) {
+            if ( result != sizeof(command) ) {
                 ymerr("connection failed to initialize: %d %s",error,errorStr);
                 YM_CLOSE_SOCKET(newSocket);
                 return false;

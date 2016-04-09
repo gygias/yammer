@@ -74,14 +74,14 @@ bool YMNoSecurityRead(__ym_security_provider_t *p, uint8_t *buffer, size_t bytes
 {
 	YM_IO_BOILERPLATE
     YM_READ_SOCKET(p->socket, buffer, bytes);
-    return ( (size_t)aRead == bytes );
+    return ( (size_t)result == bytes );
 }
 
 bool YMNoSecurityWrite(__ym_security_provider_t *p, const uint8_t *buffer, size_t bytes)
 {
     YM_IO_BOILERPLATE
     YM_WRITE_SOCKET(p->socket, buffer, bytes);
-    return ( (size_t)aWrite == bytes );
+    return ( (size_t)result == bytes );
 }
 
 bool YMNoSecurityClose(__unused __ym_security_provider_t *p)

@@ -31,12 +31,13 @@ YMTypeID _YMmDNSServiceTypeID = 'm';
 YMTypeID _YMLocalSocketPairTypeID = 'o';
 YMTypeID _YMSemaphoreTypeID = 'p';
 YMTypeID _YMPeerTypeID = 'P';
-YMTypeID _YMStreamTypeID = 'r';
+YMTypeID _YMSecurityProviderTypeID = 'v';
 YMTypeID _YMSessionTypeID = 's';
+YMTypeID _YMSocketTypeID = 'O';
+YMTypeID _YMStreamTypeID = 'r';
 YMTypeID _YMStringTypeID = 'S';
 YMTypeID _YMThreadTypeID = 't';
 YMTypeID _YMTLSProviderTypeID = 'T';
-YMTypeID _YMSecurityProviderTypeID = 'v';
 YMTypeID _YMPlexerTypeID = 'x';
 YMTypeID _YMX509CertificateTypeID = 'X';
 YMTypeID _YMDictionaryTypeID = 'y';
@@ -63,6 +64,7 @@ extern void _YMStringFree(YMTypeRef);
 extern void _YMTaskFree(YMTypeRef);
 extern void _YMArrayFree(YMTypeRef);
 extern void _YMCompressionFree(YMTypeRef);
+extern void _YMSocketFree(YMTypeRef);
 
 typedef struct __ym_type
 {
@@ -186,6 +188,8 @@ void __YMFree(__ym_type_t *o)
         _YMArrayFree(o);
     else if ( type == _YMCompressionTypeID )
         _YMCompressionFree(o);
+    else if ( type == _YMSocketTypeID )
+        _YMSocketFree(o);
     else
         ymabort("base: fatal: free type unknown %c",type);
 }

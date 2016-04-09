@@ -100,6 +100,8 @@
 		63476A501BEB159C00D10081 /* YMDictionary.h in Headers */ = {isa = PBXBuildFile; fileRef = 63476A4E1BEB159C00D10081 /* YMDictionary.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		63476A531BEB319000D10081 /* YMSemaphore.c in Sources */ = {isa = PBXBuildFile; fileRef = 63476A511BEB319000D10081 /* YMSemaphore.c */; };
 		63476A541BEB319000D10081 /* YMSemaphore.h in Headers */ = {isa = PBXBuildFile; fileRef = 63476A521BEB319000D10081 /* YMSemaphore.h */; };
+		634F5B951CB8770A008CF20C /* YMSocket.c in Sources */ = {isa = PBXBuildFile; fileRef = 634F5B941CB8770A008CF20C /* YMSocket.c */; };
+		634F5B961CB8770A008CF20C /* YMSocket.c in Sources */ = {isa = PBXBuildFile; fileRef = 634F5B941CB8770A008CF20C /* YMSocket.c */; };
 		63500B191CAF7381009E5514 /* YMCompression.c in Sources */ = {isa = PBXBuildFile; fileRef = 63500B181CAF7381009E5514 /* YMCompression.c */; };
 		63500B1E1CAF9245009E5514 /* libbz2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 63500B1D1CAF9245009E5514 /* libbz2.tbd */; };
 		63500B1F1CAF925D009E5514 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 63500B1B1CAF8FF8009E5514 /* libz.tbd */; };
@@ -404,6 +406,8 @@
 		634F5B8E1CB71197008CF20C /* tests.vcxproj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; name = tests.vcxproj; path = ../win/tests/tests.vcxproj; sourceTree = "<group>"; };
 		634F5B8F1CB8124B008CF20C /* YMObject.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMObject.h; path = ../private/YMObject.h; sourceTree = "<group>"; };
 		634F5B901CB812A0008CF20C /* YMObject.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMObject.c; path = ../src/YMObject.c; sourceTree = "<group>"; };
+		634F5B931CB876E8008CF20C /* YMSocket.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMSocket.h; path = ../private/YMSocket.h; sourceTree = "<group>"; };
+		634F5B941CB8770A008CF20C /* YMSocket.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMSocket.c; path = ../src/YMSocket.c; sourceTree = "<group>"; };
 		63500B171CAF7361009E5514 /* YMCompression.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMCompression.h; path = ../private/YMCompression.h; sourceTree = "<group>"; };
 		63500B181CAF7381009E5514 /* YMCompression.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMCompression.c; path = ../src/YMCompression.c; sourceTree = "<group>"; };
 		63500B1B1CAF8FF8009E5514 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
@@ -742,17 +746,18 @@
 				630A5D1A1BE97D5A003292EE /* YMmDNS.h */,
 				630A5D151BE9777C003292EE /* YMmDNSBrowser.h */,
 				630A5CEC1BE9428C003292EE /* YMmDNSService.h */,
+				634F5B8F1CB8124B008CF20C /* YMObject.h */,
 				637E3D5F1BF2680B00D702ED /* YMOpenssl.h */,
 				6335CAC71BF4813A00412CC9 /* YMPeerPriv.h */,
 				63225D531BE9074700C28F05 /* YMPipe.h */,
 				631799691BF9B05B0086EB05 /* YMPipePriv.h */,
 				63225D5F1BE909BB00C28F05 /* YMPlexer.h */,
 				637816C41BF684D300BF79E2 /* YMPlexerPriv.h */,
-				634F5B8F1CB8124B008CF20C /* YMObject.h */,
 				63FD5B591BF1899800174824 /* YMRSAKeyPair.h */,
 				63225D631BE90A6400C28F05 /* YMSecurityProvider.h */,
 				637E3D621BF2D12100D702ED /* YMSecurityProviderInternal.h */,
 				63476A521BEB319000D10081 /* YMSemaphore.h */,
+				634F5B931CB876E8008CF20C /* YMSocket.h */,
 				6307F77D1BECA44A009C64CD /* YMStreamPriv.h */,
 				63BA70A31C17494700210D2E /* YMTask.h */,
 				630A5CF91BE95E36003292EE /* YMThread.h */,
@@ -796,6 +801,7 @@
 				630A5CE71BE93BEF003292EE /* YMTLSProvider.c */,
 				63225D671BE9184000C28F05 /* YMUtilities.c */,
 				637E3D5B1BF262EE00D702ED /* YMX509Certificate.c */,
+				634F5B941CB8770A008CF20C /* YMSocket.c */,
 			);
 			name = src;
 			sourceTree = "<group>";
@@ -1356,6 +1362,7 @@
 				630A5CF61BE9518A003292EE /* YMSession.c in Sources */,
 				630A5CE91BE93BEF003292EE /* YMTLSProvider.c in Sources */,
 				63225D641BE90A6400C28F05 /* YMSecurityProvider.c in Sources */,
+				634F5B951CB8770A008CF20C /* YMSocket.c in Sources */,
 				63DFAB551C221EA60076BF27 /* YMDebug.c in Sources */,
 				63500B191CAF7381009E5514 /* YMCompression.c in Sources */,
 				63BA70A21C17493600210D2E /* YMTask.c in Sources */,
@@ -1399,6 +1406,7 @@
 				6346BBC71C1F802500437E21 /* YMThread.c in Sources */,
 				6346BBC81C1F802500437E21 /* YMPipe.c in Sources */,
 				63B17DB81CB45704005B662B /* YMDebug.c in Sources */,
+				634F5B961CB8770A008CF20C /* YMSocket.c in Sources */,
 				6346BBC91C1F802500437E21 /* YMUtilities.c in Sources */,
 				6346BBCA1C1F802500437E21 /* YMLock.c in Sources */,
 				6346BBCC1C1F802500437E21 /* YMSemaphore.c in Sources */,
