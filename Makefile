@@ -4,8 +4,8 @@
 OUT=out
 
 LSRC=YMAddress.c YMArray.c YMBase.c YMCompression.c YMConnection.c YMDictionary.c YMLocalSocketPair.c YMLock.c YMLog.c \
-				 YMmDNS.c YMmDNSBrowser.c YMmDNSService.c YMPeer.c YMPipe.c YMPlexer.c YMRSAKeyPair.c YMSecurityProvider.c \
-				 YMSemaphore.c YMSession.c YMSocket.c YMStream.c YMString.c YMThread.c YMTLSProvider.c YMUtilities.c \
+				 YMmDNS.c YMmDNSBrowser.c YMmDNSService.c YMNumber.c YMPeer.c YMPipe.c YMPlexer.c YMRSAKeyPair.c \
+                 YMSecurityProvider.c YMSemaphore.c YMSession.c YMSocket.c YMStream.c YMString.c YMThread.c YMTLSProvider.c YMUtilities.c \
 				 YMX509Certificate.c YMTask.c
 LTGT=libyammer.a
 

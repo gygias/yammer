@@ -16,7 +16,7 @@ YM_EXTERN_C_PUSH
 
 typedef struct __ym_string
 {
-    _YMType _type;
+    _YMType _common;
     
     const char *cString;
     size_t length;

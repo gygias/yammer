@@ -110,7 +110,7 @@ typedef struct {
 
 typedef struct __ym_plexer
 {
-    _YMType _type;
+    _YMType _common;
     
     YMStringRef name;
     YMSecurityProviderRef provider;

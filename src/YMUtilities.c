@@ -349,6 +349,7 @@ YMDictionaryRef YMInterfaceMapCreateLocal()
         goto catch_return;
     }
     ifaddrsIter = ifaddrsList;
+    
     while ( ifaddrsIter ) {
         // IFF_UP // defined in ifconfig.c, anywhere else?
         //ioctl(<#int#>, <#unsigned long, ...#>);
@@ -358,17 +359,22 @@ YMDictionaryRef YMInterfaceMapCreateLocal()
                 YMStringRef name = YMSTRC(ifaddrsIter->ifa_name);
                 YMDictionaryRef ifInfo = YMDictionaryGetItem(map, (YMDictionaryKey)name);
                 if ( ! ifInfo ) {
-                    ifInfo = YMDictionaryCreate();
+                    ifInfo = YMDictionaryCreate2(false,true);
                     YMDictionaryAdd(map, (YMDictionaryKey)name, (void *)ifInfo);
-                    YMDictionaryAdd(ifInfo, kYMIFMapTypeKey, (void *)YMInterfaceTypeForName(name));
+                    YMNumberRef ymType = YMNumberCreateWithInt32(YMInterfaceTypeForName(name));
+                    YMDictionaryAdd(ifInfo, kYMIFMapTypeKey, ymType);
+                    YMRelease(ymType);
+                    YMRelease(ifInfo);
                 }
                 YMArrayRef addresses = YMDictionaryGetItem(ifInfo, kYMIFMapAddressesKey);
                 if ( ! addresses ) {
                     addresses = YMArrayCreate2(true);
                     YMDictionaryAdd(ifInfo, kYMIFMapAddressesKey, (void *)addresses);
+                    YMRelease(addresses);
                 }
                 YMArrayAdd(addresses, address);
                 YMRelease(name);
+                YMRelease(address);
             }
         }
         ifaddrsIter = ifaddrsIter->ifa_next;
@@ -404,7 +410,10 @@ YMDictionaryRef YMInterfaceMapCreateLocal()
                 if ( ! ifInfo ) {
                     ifInfo = YMDictionaryCreate();
                     YMDictionaryAdd(map, (YMDictionaryKey)name, (void *)ifInfo);
-                    YMDictionaryAdd(ifInfo, kYMIFMapTypeKey, (void *)YMInterfaceTypeForName(name));
+                    YMNumberRef ymType = YMNumberCreateWithInt32(YMInterfaceTypeForName(name));
+                    YMDictionaryAdd(ifInfo, kYMIFMapTypeKey, ymType);
+                    YMRelease(ymType);
+                    YMRelease(ifInfo);
                 }
 				YMAddressRef address = YMAddressCreateWithIPStringAndPort(ymIp, 0);
 
@@ -415,6 +424,7 @@ YMDictionaryRef YMInterfaceMapCreateLocal()
 						YMDictionaryAdd(ifInfo, kYMIFMapAddressesKey, (void *)addresses);
 					}
 					YMArrayAdd(addresses, address);
+                    YMRelease(address);
 				} else
 					ymlog("warning: failed to parse if %s address %s",YMSTR(name),YMSTR(ymIp));
 
@@ -437,7 +447,7 @@ YMDictionaryRef YMInterfaceMapCreateLocal()
     while ( denum ) {
         YMStringRef ifName = (YMStringRef)denum->key;
         YMDictionaryRef ifInfo = denum->value;
-        YMInterfaceType thisType = (YMInterfaceType)YMDictionaryGetItem(ifInfo, kYMIFMapTypeKey);
+        YMInterfaceType thisType = YMNumberInt32Value((YMNumberRef)YMDictionaryGetItem(ifInfo, kYMIFMapTypeKey));
         ymlogi(" %s (%s):",YMSTR(ifName),YMInterfaceTypeDescription(thisType));
         YMArrayRef addresses = YMDictionaryGetItem(ifInfo, kYMIFMapAddressesKey);
         if ( addresses ) {

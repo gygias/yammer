@@ -30,7 +30,7 @@ YM_EXTERN_C_PUSH
 
 typedef struct __ym_mdns_service
 {
-    _YMType _type;
+    _YMType _common;
     
     YMStringRef type;
     YMStringRef name;

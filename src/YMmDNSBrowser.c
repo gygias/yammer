@@ -39,7 +39,7 @@ YM_EXTERN_C_PUSH
 
 typedef struct __ym_mdns_browser
 {
-    _YMType _type;
+    _YMType _common;
     
     YMStringRef type;
     YMmDNSServiceList *serviceList; // convert to collection

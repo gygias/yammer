@@ -77,6 +77,7 @@ extern YMTypeID _YMSecurityProviderTypeID;
 extern YMTypeID _YMPlexerTypeID;
 extern YMTypeID _YMSessionTypeID;
 extern YMTypeID _YMThreadTypeID;
+extern YMTypeID _YMNumberTypeID;
 extern YMTypeID _YMmDNSServiceTypeID;
 extern YMTypeID _YMmDNSBrowserTypeID;
 extern YMTypeID _YMLockTypeID;

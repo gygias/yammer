@@ -17,7 +17,7 @@ YM_EXTERN_C_PUSH
 
 typedef struct __ym_array
 {
-    _YMType _type;
+    _YMType _common;
     
     YMDictionaryRef dict;
     int64_t count;

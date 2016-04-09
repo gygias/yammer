@@ -42,7 +42,7 @@ YM_EXTERN_C_PUSH
 
 typedef struct __ym_address
 {
-    _YMType _type;
+    _YMType _common;
     
     YMAddressType type;
     struct sockaddr *address;

@@ -43,7 +43,7 @@ YM_EXTERN_C_PUSH
 
 typedef struct __ym_local_socket_pair
 {
-    _YMType _type;
+    _YMType _common;
     
     YMStringRef socketName;
     YMStringRef userName;

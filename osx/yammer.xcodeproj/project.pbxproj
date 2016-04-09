@@ -102,6 +102,8 @@
 		63476A541BEB319000D10081 /* YMSemaphore.h in Headers */ = {isa = PBXBuildFile; fileRef = 63476A521BEB319000D10081 /* YMSemaphore.h */; };
 		634F5B951CB8770A008CF20C /* YMSocket.c in Sources */ = {isa = PBXBuildFile; fileRef = 634F5B941CB8770A008CF20C /* YMSocket.c */; };
 		634F5B961CB8770A008CF20C /* YMSocket.c in Sources */ = {isa = PBXBuildFile; fileRef = 634F5B941CB8770A008CF20C /* YMSocket.c */; };
+		634F5B991CB9C31C008CF20C /* YMNumber.c in Sources */ = {isa = PBXBuildFile; fileRef = 634F5B981CB9C31C008CF20C /* YMNumber.c */; };
+		634F5B9A1CB9C31C008CF20C /* YMNumber.c in Sources */ = {isa = PBXBuildFile; fileRef = 634F5B981CB9C31C008CF20C /* YMNumber.c */; };
 		63500B191CAF7381009E5514 /* YMCompression.c in Sources */ = {isa = PBXBuildFile; fileRef = 63500B181CAF7381009E5514 /* YMCompression.c */; };
 		63500B1E1CAF9245009E5514 /* libbz2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 63500B1D1CAF9245009E5514 /* libbz2.tbd */; };
 		63500B1F1CAF925D009E5514 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 63500B1B1CAF8FF8009E5514 /* libz.tbd */; };
@@ -408,6 +410,8 @@
 		634F5B901CB812A0008CF20C /* YMObject.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMObject.c; path = ../src/YMObject.c; sourceTree = "<group>"; };
 		634F5B931CB876E8008CF20C /* YMSocket.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMSocket.h; path = ../private/YMSocket.h; sourceTree = "<group>"; };
 		634F5B941CB8770A008CF20C /* YMSocket.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMSocket.c; path = ../src/YMSocket.c; sourceTree = "<group>"; };
+		634F5B971CB9C2ED008CF20C /* YMNumber.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMNumber.h; path = ../private/YMNumber.h; sourceTree = "<group>"; };
+		634F5B981CB9C31C008CF20C /* YMNumber.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMNumber.c; path = ../src/YMNumber.c; sourceTree = "<group>"; };
 		63500B171CAF7361009E5514 /* YMCompression.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMCompression.h; path = ../private/YMCompression.h; sourceTree = "<group>"; };
 		63500B181CAF7381009E5514 /* YMCompression.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMCompression.c; path = ../src/YMCompression.c; sourceTree = "<group>"; };
 		63500B1B1CAF8FF8009E5514 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
@@ -746,6 +750,7 @@
 				630A5D1A1BE97D5A003292EE /* YMmDNS.h */,
 				630A5D151BE9777C003292EE /* YMmDNSBrowser.h */,
 				630A5CEC1BE9428C003292EE /* YMmDNSService.h */,
+				634F5B971CB9C2ED008CF20C /* YMNumber.h */,
 				634F5B8F1CB8124B008CF20C /* YMObject.h */,
 				637E3D5F1BF2680B00D702ED /* YMOpenssl.h */,
 				6335CAC71BF4813A00412CC9 /* YMPeerPriv.h */,
@@ -786,6 +791,7 @@
 				630A5D1B1BE98199003292EE /* YMmDNS.c */,
 				630A5D141BE9777C003292EE /* YMmDNSBrowser.c */,
 				630A5CEB1BE9428C003292EE /* YMmDNSService.c */,
+				634F5B981CB9C31C008CF20C /* YMNumber.c */,
 				634F5B901CB812A0008CF20C /* YMObject.c */,
 				6335CAC31BF480DC00412CC9 /* YMPeer.c */,
 				63225D521BE9074700C28F05 /* YMPipe.c */,
@@ -1341,6 +1347,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				637816C71BF68B8F00BF79E2 /* YMString.c in Sources */,
+				634F5B991CB9C31C008CF20C /* YMNumber.c in Sources */,
 				63225D6D1BE91B3B00C28F05 /* YMLog.c in Sources */,
 				63BD75CE1BF3F0E700D01F70 /* YMLocalSocketPair.c in Sources */,
 				630A5CFA1BE95E36003292EE /* YMThread.c in Sources */,
@@ -1385,6 +1392,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6346BBB51C1F802500437E21 /* YMBase.c in Sources */,
+				634F5B9A1CB9C31C008CF20C /* YMNumber.c in Sources */,
 				6346BBB61C1F802500437E21 /* YMString.c in Sources */,
 				6346BBB71C1F802500437E21 /* YMArray.c in Sources */,
 				6346BBB81C1F802500437E21 /* YMDictionary.c in Sources */,

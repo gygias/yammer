@@ -55,7 +55,7 @@ YM_EXTERN_C_PUSH
 
 typedef struct __ym_connection
 {
-    _YMType _type;
+    _YMType _common;
     
 	YMSOCKET socket;
     YMSocketRef ymSocket;
@@ -765,8 +765,8 @@ void ym_connection_interrupted_proc(__unused YMPlexerRef plexer, void *context)
 
 void ym_connection_socket_disconnected(YMSocketRef s, const void *ctx)
 {
-    YMConnectionRef c = ctx;
-    ymlog("socket disconnected!: %p",s);
+    __unused YMConnectionRef c = ctx; // warning! volatile vs interrupt until those are refactored
+    ymlogg("socket disconnected!: %p",s);
 }
 
 YM_EXTERN_C_POP

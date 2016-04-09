@@ -12,7 +12,7 @@ YM_EXTERN_C_PUSH
 
 typedef struct __ym_object
 {
-    _YMType _type;
+    _YMType _common;
 } __ym_object;
 typedef struct __ym_object __ym_object_t;
 

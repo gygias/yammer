@@ -22,7 +22,7 @@ YM_EXTERN_C_PUSH
 
 typedef struct __ym_x509_certificate
 {
-    _YMType _type;
+    _YMType _common;
     
     X509 *x509;
 } __ym_x509_certificate;

@@ -15,7 +15,7 @@
 
 typedef struct __ym_lock
 {
-    _YMType _type;
+    _YMType _common;
     
 	MUTEX_PTR_TYPE mutex;
     YMStringRef name;

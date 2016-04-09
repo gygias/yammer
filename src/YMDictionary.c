@@ -30,7 +30,7 @@ typedef _YMDictionaryItem *_YMDictionaryItemRef;
 
 typedef struct __ym_dictionary
 {
-    _YMType _type;
+    _YMType _common;
     
     _YMDictionaryItemRef head;
     size_t count;

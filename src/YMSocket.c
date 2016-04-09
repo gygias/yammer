@@ -17,7 +17,7 @@ YM_EXTERN_C_PUSH
 
 typedef struct __ym_socket
 {
-    _YMType _type;
+    _YMType _common;
     
     YMSOCKET socket;
     bool passthrough;

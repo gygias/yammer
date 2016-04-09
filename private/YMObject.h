@@ -11,7 +11,7 @@
 
 YM_EXTERN_C_PUSH
 
-typedef const struct __ym_object_t * YMObjectRef;
+typedef const struct __ym_object * YMObjectRef;
 
 YMObjectRef YMObjectCreate();
 

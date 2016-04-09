@@ -61,7 +61,7 @@ YM_EXTERN_C_PUSH
 
 typedef struct __ym_session
 {
-    _YMType _type;
+    _YMType _common;
     
     // shared
     YMStringRef type;
