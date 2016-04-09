@@ -10,6 +10,7 @@
 #include "YMConnectionPriv.h"
 
 #include "YMPlexer.h"
+#include "YMSocket.h"
 #include "YMSecurityProvider.h"
 #include "YMTLSProvider.h"
 #include "YMUtilities.h"
@@ -57,6 +58,7 @@ typedef struct __ym_connection
     _YMType _type;
     
 	YMSOCKET socket;
+    YMSocketRef ymSocket;
     bool isIncoming;
     YMIFAPType apType;
     YMStringRef localIFName;
@@ -108,6 +110,8 @@ bool __YMConnectionInitCommon(__ym_connection_t *, YMSOCKET newSocket, bool asSe
 
 bool __YMConnectionForward(YMConnectionRef connection, bool toFile, YMStreamRef stream, YMFILE file, const uint64_t *nBytesPtr, bool sync, ym_connection_forward_context_t*);
 void _ym_connection_forward_callback_proc(void *context, YMIOResult result, uint64_t bytesForwarded);
+
+void ym_connection_socket_disconnected(YMSocketRef, const void *);
 
 YMConnectionRef YMConnectionCreate(YMAddressRef peerAddress, YMConnectionType type, YMConnectionSecurityType securityType, bool closeWhenDone)
 {
@@ -502,13 +506,20 @@ bool __YMConnectionInitCommon(__ym_connection_t *c, YMSOCKET newSocket, bool asS
         }
     }
     
+    c->ymSocket = YMSocketCreate(ym_connection_socket_disconnected, c);
+    bool okay = YMSocketSet(c->ymSocket, newSocket);
+    ymassert(okay,"connection set socket");
+    
+    YMFILE socketInput = YMSocketGetInput(c->ymSocket);
+    YMFILE socketOutput = YMSocketGetOutput(c->ymSocket);
+    
     switch( c->securityType )
     {
         case YMInsecure:
-            security = YMSecurityProviderCreateWithSocket(newSocket);
+            security = YMSecurityProviderCreate(socketOutput,socketInput);
             break;
         case YMTLS:
-            security = (YMSecurityProviderRef)YMTLSProviderCreateWithSocket(newSocket, asServer);
+            security = (YMSecurityProviderRef)YMTLSProviderCreate(socketOutput, socketInput, asServer);
             break;
         default:
             ymerr("unknown security type");
@@ -750,6 +761,12 @@ void ym_connection_interrupted_proc(__unused YMPlexerRef plexer, void *context)
     __ym_connection_t *c = (__ym_connection_t *)context;
     if ( c->interruptedFunc )
         c->interruptedFunc(c, c->interruptedFuncContext);
+}
+
+void ym_connection_socket_disconnected(YMSocketRef s, const void *ctx)
+{
+    YMConnectionRef c = ctx;
+    ymlog("socket disconnected!: %p",s);
 }
 
 YM_EXTERN_C_POP

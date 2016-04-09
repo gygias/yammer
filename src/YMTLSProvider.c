@@ -55,13 +55,13 @@ typedef struct __ym_tls_provider
     __ym_security_provider_t _common;
     
     bool isServer;
-    bool isWrappingSocket;
     bool usingGeneratedCert; // todo client-supplied
     bool preverified;
     SSL_CTX *sslCtx;
     //int sslCtxExDataIdx; // if only!
     SSL *ssl;
-    BIO *bio;
+    BIO *rBio;
+    BIO *wBio;
     
     YMX509CertificateRef localCertificate;
     YMX509CertificateRef peerCertificate;
@@ -77,6 +77,8 @@ bool __YMTLSProviderInit(__ym_security_provider_t *);
 bool __YMTLSProviderRead(__ym_security_provider_t *, uint8_t *, size_t);
 bool __YMTLSProviderWrite(__ym_security_provider_t *, const uint8_t *, size_t );
 bool __YMTLSProviderClose(__ym_security_provider_t *);
+
+extern BIO_METHOD ym_bio_methods;
 
 void ym_tls_thread_id_callback(CRYPTO_THREADID *threadId)
 {
@@ -100,21 +102,13 @@ YM_ONCE_FUNC(__YMTLSInit,
 	gYMTLSExDataLock = YMLockCreate(YMInternalLockType);
 })
 
-// designated initializer
-YMTLSProviderRef __YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isWrappingSocket, bool isServer);
-
-YMTLSProviderRef YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isServer)
-{
-    return __YMTLSProviderCreateWithSocket(socket, false, isServer);
-}
-
 YM_ONCE_OBJ gYMInitTLSOnce = YM_ONCE_INIT;
 
-YMTLSProviderRef __YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isWrappingSocket, bool isServer)
+YMTLSProviderRef YMTLSProviderCreate(YMFILE inFile, YMFILE outFile, bool isServer)
 {
 	YM_ONCE_DO(gYMInitTLSOnce,__YMTLSInit);
     
-#if !defined(YMWIN32)
+#if !defined(YMWIN32) && defined(WTF_IS_THIS)
     struct stat statbuf;
     fstat(socket, &statbuf);
     if ( ! S_ISSOCK(statbuf.st_mode) ) {
@@ -125,8 +119,8 @@ YMTLSProviderRef __YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isWrappin
     
     __ym_tls_provider_t *tls = (__ym_tls_provider_t *)_YMAlloc(_YMTLSProviderTypeID,sizeof(__ym_tls_provider_t));
     
-    tls->_common.socket = socket;
-    tls->isWrappingSocket = isWrappingSocket;
+    tls->_common.inFile = inFile;
+    tls->_common.outFile = outFile;
     tls->isServer = isServer;
     tls->usingGeneratedCert = false;
     tls->preverified = false;
@@ -147,7 +141,8 @@ YMTLSProviderRef __YMTLSProviderCreateWithSocket(YMSOCKET socket, bool isWrappin
     tls->sslCtx = NULL;
     //tls->sslCtxExDataIdx = -1;
     tls->ssl = NULL;
-    tls->bio = NULL;
+    tls->rBio = NULL;
+    tls->wBio = NULL;
     
     return tls;
 }
@@ -469,24 +464,35 @@ bool __YMTLSProviderInit(__ym_security_provider_t *p)
     }
     // assuming whatever memory was allocated here gets free'd in SSL_CTX_free
     
-    //tls->bio = BIO_new(&ym_bio_methods);
-    tls->bio = BIO_new_socket(tls->_common.socket, BIO_NOCLOSE);
-    if ( ! tls->bio ) {
+    //tls->rBio = BIO_new(&ym_bio_methods);
+    //tls->wBio = tls->rBio;
+    //tls->bio = BIO_new_socket(tls->_common.socket, BIO_NOCLOSE);
+    tls->rBio = BIO_new_fd(tls->_common.inFile, BIO_NOCLOSE);
+    if ( ! tls->rBio ) {
         sslError = ERR_get_error();
-        ymerr("BIO_new failed: %lu (%s)",sslError,ERR_error_string(sslError, NULL));
+        ymerr("BIO_new r failed: %lu (%s)",sslError,ERR_error_string(sslError, NULL));
         goto catch_return;
     }
     
-    SSL_set_bio(tls->ssl, tls->bio, tls->bio);
-    tls->bio->ptr = tls; // this is the elusive context pointer
+    tls->wBio = BIO_new_fd(tls->_common.outFile, BIO_NOCLOSE);
+    if ( ! tls->wBio ) {
+        sslError = ERR_get_error();
+        ymerr("BIO_new w failed: %lu (%s)",sslError,ERR_error_string(sslError, NULL));
+        goto catch_return;
+    }
+    
+    SSL_set_bio(tls->ssl, tls->rBio, tls->wBio);
+    tls->rBio->ptr = tls; // this is the elusive context pointer
+    tls->wBio->ptr = tls;
+    ymlog("rBio[%d], wBio[%d]",tls->_common.inFile,tls->_common.outFile);
     
     SSL_set_debug(tls->ssl, 1);
     
     if ( tls->isServer ) {
-        //SSL_set_info_callback(tls->ssl, __ym_tls_info_server_callback);
+        SSL_set_info_callback(tls->ssl, __ym_tls_info_server_callback);
         SSL_set_accept_state(tls->ssl);
     } else {
-        //SSL_set_info_callback(tls->ssl, __ym_tls_info_client_callback);
+        SSL_set_info_callback(tls->ssl, __ym_tls_info_client_callback);
         SSL_set_connect_state(tls->ssl);
     }
 
@@ -575,55 +581,57 @@ bool __YMTLSProviderClose(__ym_security_provider_t *p)
 
 #pragma mark function bio example
 
-//int ym_tls_write(BIO *bio, const char *buffer, int length)
-//{
-//    ymlog("ym_tls_write: %p %p %d",bio,buffer,length);
-//    YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr;
-//    YMIOResult result = YMWriteFull(tls->socket, (const unsigned char *)buffer, length);
-//    if ( result != YMIOSuccess )
-//        return -1;
-//    return length;
-//}
-//int ym_tls_read(BIO *bio, char *buffer, int length)
-//{
-//    ymlog("ym_tls_read: %p %p %d",bio,buffer,length);
-//    YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr;
-//    YMIOResult result = YMReadFull(tls->socket, (unsigned char *)buffer, length);
-//    if ( result == YMIOError )
-//        return -1;
-//    else if ( result == YMIOEOF )
-//        return 0; // right?
-//    return length;
-//}
-//int ym_tls_puts(BIO *bio, const char * buffer)
-//{
-//    ymlog("ym_tls_puts: %p %p %s",bio,buffer,buffer);
-//    return 0;
-//}
-//
-//int ym_tls_gets(BIO *bio, char * buffer, int length)
-//{
-//    ymlog("ym_tls_gets: %p %p %d",bio,buffer,length);
-//    return 0;
-//}
-//
-//long ym_tls_ctrl (BIO *bio, int one, long two, void *three) { ymlog("ym_tls_ctrl: %p %d %ld %p",bio,one,two,three); return 1; }
-//int ym_tls_new(BIO *bio) { ymlog("ym_tls_new: %p",bio); return 1; }
-//int ym_tls_free(BIO *bio) { ymlog("ym_tls_free: %p",bio); return 1; }
-//long ym_tls_callback_ctrl(BIO *bio, int one, bio_info_cb * info) { ymlog("ym_tls_callback_ctrl: %p %d %p",bio,one,info); return 1; }
-//
-//__unused static BIO_METHOD ym_bio_methods =
-//{
-//    BIO_TYPE_SOCKET,
-//    "socket",
-//    ym_tls_write,
-//    ym_tls_read,
-//    ym_tls_puts,
-//    ym_tls_gets, /* sock_gets, */
-//    ym_tls_ctrl,
-//    ym_tls_new,
-//    ym_tls_free,
-//    ym_tls_callback_ctrl,
-//};
+int ym_tls_write(BIO *bio, const char *buffer, int length)
+{
+    YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr;
+    ymlog("ym_tls_write: %p %p %d",bio,buffer,length);
+    YMIOResult result = YMWriteFull(tls->_common.inFile, (const unsigned char *)buffer, length, NULL);
+    if ( result != YMIOSuccess )
+        return -1;
+    return length;
+}
+int ym_tls_read(BIO *bio, char *buffer, int length)
+{
+    YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr;
+    ymlog("ym_tls_read: %p %p %d",bio,buffer,length);
+    YMIOResult result = YMReadFull(tls->_common.outFile, (unsigned char *)buffer, length, NULL);
+    if ( result == YMIOError )
+        return -1;
+    else if ( result == YMIOEOF )
+        return 0; // right?
+    return length;
+}
+int ym_tls_puts(BIO *bio, const char * buffer)
+{
+    YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr;
+    ymlog("ym_tls_puts: %p %p %s",bio,buffer,buffer);
+    return 0;
+}
+
+int ym_tls_gets(BIO *bio, char * buffer, int length)
+{
+    YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr;
+    ymlog("ym_tls_gets: %p %p %d",bio,buffer,length);
+    return 0;
+}
+
+long ym_tls_ctrl (BIO *bio, int one, long two, void *three) { YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr; ymlog("ym_tls_ctrl: %p %d %ld %p",bio,one,two,three); return 1; }
+int ym_tls_new(__unused BIO *bio) { /*YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr; ymlog("ym_tls_new: %p",bio); */ return 1; }
+int ym_tls_free(BIO *bio) { YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr; ymlog("ym_tls_free: %p",bio); return 1; }
+long ym_tls_callback_ctrl(BIO *bio, int one, bio_info_cb * info) { YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr; ymlog("ym_tls_callback_ctrl: %p %d %p",bio,one,info); return 1; }
+
+BIO_METHOD ym_bio_methods =
+{
+    BIO_TYPE_FD,
+    "ymbio",
+    ym_tls_write,
+    ym_tls_read,
+    ym_tls_puts,
+    ym_tls_gets, /* sock_gets, */
+    ym_tls_ctrl,
+    ym_tls_new,
+    ym_tls_free,
+    ym_tls_callback_ctrl,
+};
 
 YM_EXTERN_C_POP

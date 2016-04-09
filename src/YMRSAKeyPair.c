@@ -169,7 +169,7 @@ bool YMRSAKeyPairGenerate(YMRSAKeyPairRef k_)
     if ( timeResult == 0 ) {
         timeResult = gettimeofday(&now, NULL);
         if ( timeResult == 0 )
-            ymlog("rsa: it took %ld seconds to generate rsa keypair with %d modulo bits",now.tv_sec - then.tv_sec,k->moduloNBits);
+            ymdbg("rsa: it took %ld seconds to generate rsa keypair with %d modulo bits",now.tv_sec - then.tv_sec,k->moduloNBits);
     }
     if ( timeResult != 0 )
         ymerr("rsa: gettimeofday failed");
@@ -206,7 +206,7 @@ void __YMRSAKeyPairSeed()
     if ( timeResult == 0 ) {
         timeResult = gettimeofday(&now, NULL);
         if ( timeResult == 0 )
-            ymlog("rsa: it took %ld seconds and %llu words to seed openssl rand",now.tv_sec - then.tv_sec,iters);
+            ymdbg("rsa: it took %ld seconds and %llu words to seed openssl rand",now.tv_sec - then.tv_sec,iters);
     }
     if ( timeResult != 0 )
         ymlog("rsa: gettimeofday failed");

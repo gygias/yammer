@@ -8,6 +8,9 @@
 
 #include "YMSocket.h"
 
+#include "YMPipe.h"
+#include "YMThread.h"
+
 #include "YMLog.h"
 
 YM_EXTERN_C_PUSH
@@ -17,9 +20,20 @@ typedef struct __ym_socket
     _YMType _type;
     
     YMSOCKET socket;
+    bool passthrough;
     
-    uint64_t oOff;
+    YMPipeRef inPipe;
+    YMThreadRef inThread;
+    
+    YMPipeRef outPipe;
+    YMThreadRef outThread;
+    
     uint64_t iOff;
+    uint64_t oOff;
+    uint64_t iRolls;
+    
+    ym_socket_disconnected dFunc;
+    const void *dCtx;
 } __ym_socket;
 typedef struct __ym_socket __ym_socket_t;
 
@@ -27,73 +41,187 @@ typedef struct __ym_socket __ym_socket_t;
 // { ack thru off 1234,
 //   n bytes to follow,
 //   user data... }
-typedef struct ym_socket_message
+
+#define SocketChunkSize 16384
+
+YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_socket_out_proc(YM_THREAD_PARAM);
+YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_socket_in_proc(YM_THREAD_PARAM);
+
+typedef struct ym_socketgram
 {
     uint64_t iOff;
-    uint16_t nBytes;
-} ym_socket_message;
+    uint8_t data[SocketChunkSize];
+} ym_socketgram;
+typedef struct ym_socketgram ym_socketgram_t;
 
-YMSocketRef YMSocketCreate()
+YMSocketRef YMSocketCreate(ym_socket_disconnected f, const void *c)
 {
     __ym_socket_t *s = (__ym_socket_t *)_YMAlloc(_YMSocketTypeID, sizeof(__ym_socket_t));
+    
     s->socket = NULL_SOCKET;
+    s->dFunc = f;
+    s->dCtx = c;
+    s->passthrough = true;
+    
+    s->inPipe = YMPipeCreate(NULL);
+    s->inThread = YMThreadCreate(NULL, _ym_socket_in_proc, s);
+    
+    s->outPipe = YMPipeCreate(NULL);
+    s->outThread = YMThreadCreate(NULL, _ym_socket_out_proc, s);
+    
     return s;
 }
 
-void _YMSocketFree(__unused YMTypeRef object)
+void _YMSocketFree(YMTypeRef object)
 {
+    YMSocketRef s = object;
     
+    YMRelease(s->inPipe);
+    YMRelease(s->inThread);
+    
+    YMRelease(s->outPipe);
+    YMRelease(s->outThread);
 }
 
 bool YMSocketSet(YMSocketRef s_, YMSOCKET socket)
 {
     __ym_socket_t *s = (__ym_socket_t *)s_;
+    ymassert(s->socket==NULL_SOCKET,"socket hot swap not implemented");
+    
     s->socket = socket;
     
-    return true;
-}
-
-YMIOResult YMSocketWrite(YMSocketRef s, const uint8_t *b, size_t l)
-{
-    YM_IO_BOILERPLATE
+    ymerr("socket[if%d->of%d -> %d -> if%d->of%d]: %p allocating",
+          YMPipeGetInputFile(s->inPipe),
+          YMPipeGetOutputFile(s->inPipe),
+          s->socket,
+          YMPipeGetInputFile(s->outPipe),
+          YMPipeGetOutputFile(s->outPipe),
+          s );
     
-    ymassert(s->socket!=NULL_SOCKET,"underlying socket not set");
-    
-    YMIOResult ymResult = YMIOSuccess;
-    size_t off = 0;
-    while ( off < l ) {
-        YM_WRITE_SOCKET(s->socket, b + off, l - off);
-        if ( result <= 0 ) {
-            ymResult = YMIOError;
-            break;
-        }
-        off += result;
+    bool okay = YMThreadStart(s->outThread);
+    if ( okay ) {
+        okay = YMThreadStart(s->inThread);
     }
     
-    return ymResult;
+    return okay;
 }
 
-YMIOResult YMSocketRead(YMSocketRef s, uint8_t *b, size_t l)
+YMFILE YMSocketGetInput(YMSocketRef s)
 {
+    return YMPipeGetInputFile(s->inPipe);
+}
+
+YMFILE YMSocketGetOutput(YMSocketRef s)
+{
+    return YMPipeGetOutputFile(s->outPipe);
+}
+
+// threads run for the lifetime of the socket object, across potentially many "underlying sockets"
+
+YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_socket_out_proc(YM_THREAD_PARAM ctx)
+{
+    __ym_socket_t *s = ctx;
+    ymlog("_ym_socket_out_proc entered");
+    
+    YMFILE outputOfInput = YMPipeGetOutputFile(s->inPipe);
+    
     YM_IO_BOILERPLATE
     
-    ymassert(s->socket!=NULL_SOCKET,"underlying socket not set");
+    ym_socketgram_t socketgram;
     
-    YMIOResult ymResult = YMIOSuccess;
-    size_t off = 0;
-    while ( off < l ) {
-        YM_READ_SOCKET(s->socket, b + off, l - off);
-        if ( result == 0 ) {
-            ymResult = YMIOEOF;
-            break;
-        } else if ( result == -1 ) {
-            ymResult = YMIOError;
-            break;
+    do {
+        
+        // read one chunk
+        ssize_t off = 0;
+        ssize_t toForwardRaw = s->passthrough ? 1 : SocketChunkSize;
+        ssize_t toForwardBoxed = s->passthrough ? 1 : sizeof(socketgram);
+        while ( off < toForwardRaw ) {
+            ymdbg("_ym_socket_out_proc reading socketgram from %d by 1: %zd of %zd",outputOfInput,off,toForwardRaw);
+            YM_READ_FILE(outputOfInput, ((uint8_t *)&socketgram.data) + off, toForwardRaw - off);
+            if ( result <= 0 ) {
+                ymlog("socket input closed");
+                if ( s->dFunc )
+                    s->dFunc(s,s->dCtx);
+                goto out_proc_exit;
+            }
+            off += result;
         }
-        off += result;
-    }
+        
+        // send one chunk
+        off = 0;
+        if ( ! s->passthrough ) socketgram.iOff = s->iOff++;
+        uint8_t *outBuf = s->passthrough ? (uint8_t *)&socketgram.data : (uint8_t *)&socketgram;
+        while ( off < toForwardBoxed ) {
+            ymdbg("_ym_socket_out_proc reading socketgram: %zd of %zd",off,toForwardBoxed);
+            YM_WRITE_SOCKET(s->socket, outBuf + off, toForwardBoxed - off);
+            if ( result <= 0 ) {
+                ymlog("socket output");
+                if ( s->dFunc )
+                    s->dFunc(s,s->dCtx);
+                goto out_proc_exit;
+            }
+            off += result;
+        }
+        
+        
+    } while (true);
+out_proc_exit:
+    ymlog("_ym_socket_out_proc exiting");
     
-    return ymResult;
+    YM_THREAD_END
+}
+
+YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_socket_in_proc(YM_THREAD_PARAM ctx)
+{
+    __ym_socket_t *s = ctx;
+    ymlog("_ym_socket_in_proc entered");
+    
+    YMFILE inputOfOutput = YMPipeGetInputFile(s->outPipe);
+    
+    YM_IO_BOILERPLATE
+    
+    ym_socketgram_t socketgram;
+    
+    do {
+        
+        // receive one chunk
+        ssize_t off = 0;
+        ssize_t toForwardRaw = s->passthrough ? 1 : SocketChunkSize;
+        ssize_t toForwardBoxed = s->passthrough ? 1 : sizeof(socketgram);
+        
+        uint8_t *inBuf = s->passthrough ? (uint8_t *)&socketgram.data : (uint8_t *)&socketgram;
+        while ( off < toForwardBoxed ) {
+            ymdbg("_ym_socket_in_proc reading socketgram: %zd of %zd",off,toForwardBoxed);
+            YM_READ_SOCKET(s->socket, inBuf + off, toForwardBoxed - off);
+            if ( result <= 0 ) {
+                ymlog("socket output closed");
+                if ( s->dFunc )
+                    s->dFunc(s,s->dCtx);
+                goto in_proc_exit;
+            }
+            off += result;
+        }
+        
+        // write one chunk
+        off = 0;
+        if ( ! s->passthrough ) s->oOff = socketgram.iOff;
+        while ( off < toForwardRaw ) {
+            ymdbg("_ym_socket_in_proc writing to %d: %zd of %zd",inputOfOutput,off,toForwardRaw);
+            YM_WRITE_FILE(inputOfOutput, ((uint8_t *)&socketgram.data) + off, toForwardRaw - off);
+            if ( result <= 0 ) {
+                ymlog("socket input");
+                if ( s->dFunc )
+                    s->dFunc(s,s->dCtx);
+                goto in_proc_exit;
+            }
+            off += result;
+        }
+    } while (true);
+    
+in_proc_exit:
+    ymlog("_ym_socket_in_proc exiting");
+    
+    YM_THREAD_END
 }
 
 YM_EXTERN_C_POP

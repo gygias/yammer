@@ -12,6 +12,7 @@
 #include "YMLock.h"
 #include "YMSemaphore.h"
 #include "YMLocalSocketPair.h"
+#include "YMSocket.h"
 #include "YMThread.h"
 
 #if defined (YMLINUX)
@@ -67,6 +68,12 @@ void __sigpipe_handler (__unused int signum)
     fprintf(stderr,"sigpipe happened\n");
 }
 
+void __tls_test_socket_disconnected(YMSocketRef s, const void *ctx)
+{
+    struct TLSTest *t = (struct TLSTest *)ctx;
+    ymerr("socket disconnected! %p -- %p",(void *)s,(void *)t);
+}
+
 void TLSTestsRun(ym_test_assert_func assert, const void *context)
 {
     YMStringRef name = YMSTRC("TLSTest");
@@ -112,9 +119,14 @@ void _TestTLS1(struct TLSTest *theTest)
     testassert((size_t)result==testLen,"failed to receive test message: %d (%s)",errno,strerror(errno));
     testassert(strncmp(testBuffer,testIncoming,result)==0,"received test message does not match");
     
-    YMTLSProviderRef localProvider = YMTLSProviderCreateWithSocket(localIsServer ? serverSocket : clientSocket, localIsServer);
+    YMSocketRef localSocket = YMSocketCreate(__tls_test_socket_disconnected,theTest);
+    YMSocketSet(localSocket, localIsServer ? serverSocket : clientSocket);
+    YMSocketRef remoteSocket = YMSocketCreate(__tls_test_socket_disconnected,theTest);
+    YMSocketSet(remoteSocket, localIsServer ? clientSocket : serverSocket);
+    
+    YMTLSProviderRef localProvider = YMTLSProviderCreate(YMSocketGetOutput(localSocket), YMSocketGetInput(localSocket), localIsServer);
     testassert(localProvider,"local provider didn't initialize");
-    YMTLSProviderRef remoteProvider = YMTLSProviderCreateWithSocket(localIsServer ? clientSocket : serverSocket, !localIsServer);
+    YMTLSProviderRef remoteProvider = YMTLSProviderCreate(YMSocketGetOutput(remoteSocket), YMSocketGetInput(remoteSocket), !localIsServer);
     testassert(remoteProvider,"remote provider didn't initialize");
     
     YMTLSProviderRef theServer = localIsServer?localProvider:remoteProvider;

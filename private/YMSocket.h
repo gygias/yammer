@@ -19,12 +19,15 @@ YM_EXTERN_C_PUSH
 
 typedef const struct __ym_socket * YMSocketRef;
 
-YMSocketRef YMSocketCreate();
+typedef void (*ym_socket_disconnected)(YMSocketRef, const void*);
+
+YMSocketRef YMSocketCreate(ym_socket_disconnected, const void*);
 
 bool YMSocketSet(YMSocketRef, YMSOCKET);
+void YMSocketSetPassthrough(YMSocketRef, bool);
 
-YMIOResult YMSocketWrite(YMSocketRef, const uint8_t *, size_t);
-YMIOResult YMSocketRead(YMSocketRef, uint8_t *, size_t);
+YMFILE YMSocketGetInput(YMSocketRef);
+YMFILE YMSocketGetOutput(YMSocketRef);
 
 YM_EXTERN_C_POP
 
