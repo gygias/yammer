@@ -11,6 +11,10 @@
 
 YM_EXTERN_C_PUSH
 
+// YMNumber was added for the few places where we (had) a mixture of YMTypes and unmanaged types in
+// collections, to avoid having to write one-off "free mixed type collection" functions.
+// Please don't use this if not for that purpose.
+
 typedef const struct __ym_number * YMNumberRef;
 
 YMNumberRef YMNumberCreateWithDouble(double);
