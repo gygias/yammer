@@ -112,7 +112,13 @@ void _TaskOpensslRun(struct TaskTest *theTest)
 #if !defined(YMWIN32)
     YMStringRef path = YMSTRC("/usr/bin/openssl");
     YMArrayAdd(args, "genrsa");
-    YMArrayAdd(args, "4096");
+    YMArrayAdd(args,
+# if defined(YMAPPLE)
+               "4096"
+# else // so rpi doesn't take 30 seconds
+               "1024"
+# endif
+               );
 #else
 	YMStringRef path = YMSTRC("c:\\Windows\\System32\\ipconfig.exe");
 	YMArrayAdd(args, "/all");
