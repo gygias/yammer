@@ -113,7 +113,7 @@ typedef enum
 
 typedef enum YMCompressionType {
     YMCompressionNone = 0,
-#if defined(YMAPPLE)
+#if !defined(YMWIN32)
     YMCompressionGZ = 100,
     YMCompressionBZ2 = 200,
     YMCompressionLZ = 300

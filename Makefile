@@ -33,7 +33,7 @@ else
 	CC=$(GCC)
 	STD=c99
 	IEX=-Ilinux
-	LLEX=-ldns_sd
+	LLEX=-ldns_sd -lbz2 -lz
 	PT=-pthread
 endif
 LOBJ=$(LSRC:%.c=%.o)

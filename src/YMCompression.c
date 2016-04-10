@@ -13,7 +13,7 @@
 #define ymlog_type YMLogCompression
 #include "YMLog.h"
 
-#if defined(YMAPPLE)
+#if !defined(YMWIN32)
 #include <zlib.h>
 #include <bzlib.h>
 #else
@@ -40,7 +40,7 @@ typedef struct __ym_compression
     ym_compression_read_func   readFunc;
     ym_compression_write_func  writeFunc;
     ym_compression_close_func  closeFunc;
-#if defined(YMAPPLE)
+#if !defined(YMWIN32)
     gzFile gzfile;
     BZFILE * bzfile;
 #endif
@@ -71,7 +71,7 @@ YMCompressionRef YMCompressionCreate(YMCompressionType type, YMFILE file, bool i
     __ym_compression_t *c = (__ym_compression_t *)_YMAlloc(_YMCompressionTypeID,sizeof(__ym_compression_t));
     
     switch(type) {
-#if defined(YMAPPLE)
+#if !defined(YMWIN32)
         case YMCompressionGZ:
             c->initFunc = YMGZInit;
             c->readFunc = YMGZRead;
@@ -106,7 +106,7 @@ YMCompressionRef YMCompressionCreate(YMCompressionType type, YMFILE file, bool i
     c->type = type;
     c->input = input;
     
-#if defined(YMAPPLE)
+#if !defined(YMWIN32)
     c->gzfile = NULL;
     c->bzfile = NULL;
 #endif
@@ -187,7 +187,7 @@ bool YMNoCompressionClose(__unused __ym_compression_t *c)
   return ( result == 0 );
 }
 
-#if defined(YMAPPLE)
+#if !defined(YMWIN32)
 bool YMGZInit(__ym_compression_t *c)
 {
     const char *mode = "r";

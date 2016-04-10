@@ -60,7 +60,7 @@ void _GZTestRun(CompressionTest *theTest)
 	YMCompressionType type = YMCompressionGZ;
 #elif defined(YMLINUX)
     const char *sourcePath = "/usr/share/man/man1/gzip.1.gz";
-	YMCompressionType type = YMCompressionNone;
+	YMCompressionType type = YMCompressionGZ;
 #else
 	const char *sourcePath = "\\\\Windows\\system.ini";
 	YMCompressionType type = YMCompressionNone;
@@ -72,10 +72,10 @@ void _BZTestRun(CompressionTest *theTest)
 {
 #if defined(YMAPPLE)
     const char *sourcePath = "/usr/share/man/man1/bzip2.1";
-	YMCompressionType type = YMCompressionGZ;
+	YMCompressionType type = YMCompressionBZ2;
 #elif defined(YMLINUX)
     const char *sourcePath = "/usr/share/man/man1/bzip2.1.gz";
-	YMCompressionType type = YMCompressionNone;
+	YMCompressionType type = YMCompressionBZ2;
 #else
 	const char *sourcePath = TEXT("\\\\Windows\\system.ini");
 	YMCompressionType type = YMCompressionNone;
