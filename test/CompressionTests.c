@@ -119,7 +119,7 @@ void _CompressionTest(CompressionTest *theTest, const char *sourcePath, YMCompre
     
     okay = YMCompressionClose(theTest->readC);
     ymassert(okay,"read close");
-    ymassert(theTest->rawWritten==theTest->rawRead,"raw mismatch");
+    ymassert(theTest->rawWritten==theTest->rawRead,"raw mismatch w%lu v r%lu",theTest->rawWritten,theTest->rawRead);
     
     YMThreadJoin(readThread);
     YMRelease(readThread);
