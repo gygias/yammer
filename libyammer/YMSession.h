@@ -59,7 +59,7 @@ bool YMAPI YMSessionStopBrowsing(YMSessionRef session);
 bool YMAPI YMSessionCloseAllConnections(YMSessionRef session);
 
 YMConnectionRef YMAPI YMSessionGetDefaultConnection(YMSessionRef session);
-YMDictionaryRef YMAPI YMSessionGetConnections(YMSessionRef session);
+YMArrayRef YMAPI YMSessionCopyConnections(YMSessionRef session);
 
 YM_EXTERN_C_POP
 

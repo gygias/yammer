@@ -716,11 +716,21 @@ YMConnectionRef YMSessionGetDefaultConnection(YMSessionRef s)
     return s->defaultConnection;
 }
 
-YMDictionaryRef YMSessionGetConnections(YMSessionRef s)
+YMArrayRef YMAPI YMSessionCopyConnections(YMSessionRef s)
 {
-    s = NULL;
-    ymassert(s,"implement me");
-    return *(YMDictionaryRef *)s; // todo, sync
+    if ( ! ( s->connectionsByAddress && YMDictionaryGetCount(s->connectionsByAddress) ) )
+        return NULL;
+    
+    YMArrayRef copy = YMArrayCreate(true);
+    
+    YMDictionaryEnumRef denum = YMDictionaryEnumeratorBegin(s->connectionsByAddress);
+    while ( denum ) {
+        YMConnectionRef aConnection = (YMConnectionRef)denum->value;
+        YMArrayAdd(copy, aConnection);
+        denum = YMDictionaryEnumeratorGetNext(denum);
+    }
+    
+    return copy;
 }
 
 void YMSessionStop(YMSessionRef session)
