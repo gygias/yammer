@@ -132,13 +132,13 @@ void _added_peer_func(YMSessionRef session, YMPeerRef peer, __unused void* conte
 void _removed_peer_func(__unused YMSessionRef session, YMPeerRef peer, __unused void* context)
 {
     printf("lost peer %s\n", YMSTR(YMPeerGetName(peer)));
-    exit(1);
+    //exit(1);
 }
 
 void _resolve_failed_func(__unused YMSessionRef session, YMPeerRef peer, __unused void* context)
 {
     printf("resolve failed %s\n", YMSTR(YMPeerGetName(peer)));
-    exit(1);
+    //exit(1);
 }
 
 void _resolved_func(__unused YMSessionRef session, YMPeerRef peer, __unused void* context)
@@ -150,8 +150,9 @@ void _resolved_func(__unused YMSessionRef session, YMPeerRef peer, __unused void
 void _connect_failed_func(__unused YMSessionRef session, YMPeerRef peer, bool moreComing, __unused void* context)
 {
     printf("connect failed %s\n", YMSTR(YMPeerGetName(peer)));
-    if ( ! moreComing )
-        exit(1);
+    if ( ! moreComing ) {
+        //exit(1);
+    }
 }
 
 // server
@@ -175,7 +176,7 @@ void _connected_func(__unused YMSessionRef session,YMConnectionRef connection, _
 void _interrupted_func(__unused YMSessionRef session, __unused void* context)
 {
     printf("session interrupted\n");
-    exit(1);
+    //exit(1);
 }
 
 // streams
@@ -192,5 +193,5 @@ void _new_stream_func(__unused YMSessionRef session, __unused YMConnectionRef co
 void _closing_func(__unused YMSessionRef session, __unused YMConnectionRef connection, __unused YMStreamRef stream, __unused void* context)
 {
     printf("stream closed\n");
-    exit(1);
+    //exit(1);
 }
