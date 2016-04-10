@@ -458,6 +458,7 @@ void DNSSD_API __ym_mdns_addr_info_callback
             b->serviceResolved(b, true, record, b->callbackContext);
         
         __YMmDNSBrowserRemoveServiceRef(b,sdRef);
+        free(context);
     }
 }
 
@@ -477,6 +478,8 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
     __ym_mdns_resolve_t *ctx = context;
     __ym_mdns_browser_t *b = ctx->b;
     YMStringRef unescapedName = ctx->unescapedName;
+    free(context);
+    
     ymlog("__ym_mdns_resolve_callback: %s/%s(%s) -> %s:%u[txt%ub]",YMSTR(b->type),fullname,YMSTR(unescapedName),host,(unsigned)ntohs(port),txtLength);
     
     __YMmDNSBrowserRemoveServiceRef(b,serviceRef);

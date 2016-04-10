@@ -396,8 +396,8 @@ bool __YMConnectionInitCommon(__ym_connection_t *c, YMSOCKET newSocket, bool asS
     socklen_t slen = sizeof(saddr);
     bool matched = false;
     result = getsockname(newSocket, (struct sockaddr *)&saddr, &slen);
-    YMAddressRef localAddr = YMAddressCreate(&saddr, 0);
     if ( result == 0 ) {
+        YMAddressRef localAddr = YMAddressCreate(&saddr, 0);
         YMDictionaryRef localIFMap = YMInterfaceMapCreateLocal();
         if ( localIFMap ) {
             YMDictionaryEnumRef denum = YMDictionaryEnumeratorBegin(localIFMap);
@@ -424,6 +424,7 @@ bool __YMConnectionInitCommon(__ym_connection_t *c, YMSOCKET newSocket, bool asS
             
             YMRelease(localIFMap);
         }
+        YMRelease(localAddr);
     }
     if ( result == -1 || ! matched ) {
         c->localIFName = YMSTRC("?");

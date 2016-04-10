@@ -388,7 +388,7 @@ bool YMSessionConnectToPeer(YMSessionRef s_, YMPeerRef peer, bool sync)
         context->userSync = sync;
         
         name = YMSTRC("session-async-connect");
-        ym_thread_dispatch_user_t connectDispatch = {__ym_session_connect_async_proc, 0, 0, context, name};
+        ym_thread_dispatch_user_t connectDispatch = {__ym_session_connect_async_proc, NULL, false, context, name};
         
         if ( ! sync ) {
             if ( ! s->connectDispatchThread ) {
@@ -432,6 +432,7 @@ void YM_CALLING_CONVENTION __ym_session_connect_async_proc(YM_THREAD_PARAM ctx)
     YMConnectionRef connection = context->connection;
     bool moreComing = context->moreComing;
     bool userSync = context->userSync;
+    free(ctx);
     
     ymlog("__ym_session_connect_async_proc entered");
     
@@ -966,10 +967,11 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_macos_sc_runloop_proc(YM_THR
     ymerr("network interface change observer entered");
     
     while ( ! s->scObserverThreadExitFlag )
-      CFRunLoopRunInMode(kCFRunLoopDefaultMode, 1, false);
+      CFRunLoopRunInMode(kCFRunLoopDefaultMode, .2, false);
 
     CFRunLoopRemoveSource(aRunloop, storeSource, kCFRunLoopDefaultMode);
     CFRelease(storeSource);
+    CFRelease(scStore);
 
     ymerr("network interface change observer exiting");
     

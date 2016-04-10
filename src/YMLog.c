@@ -47,9 +47,11 @@ int __YMLogIndent( int level )
     return 0;
 }
 
+static YM_ONCE_OBJ gYMLogInitOnce = YM_ONCE_INIT;
+
 void __YMLogType( int level, bool newline, char* format, ... )
 {
-	YM_ONCE_DO_LOCAL(__YMLogInit);
+	YM_ONCE_DO(gYMLogInitOnce,__YMLogInit);
     
     FILE *file = (level == YMLogError) ? stderr : stdout;
     
@@ -104,7 +106,21 @@ void YMAPI __YMLogReturn( int level )
     YMLockUnlock(gYMLogLock);
 }
 
-void _YMLogLock() { YM_ONCE_DO_LOCAL(__YMLogInit); YMLockLock(gYMLogLock); }
-void _YMLogUnlock() { YM_ONCE_DO_LOCAL(__YMLogInit); YMLockUnlock(gYMLogLock); }
+void _YMLogLock() { YM_ONCE_DO(gYMLogInitOnce,__YMLogInit); YMLockLock(gYMLogLock); }
+void _YMLogUnlock() { YM_ONCE_DO(gYMLogInitOnce,__YMLogInit); YMLockUnlock(gYMLogLock); }
+
+void YMLogFreeGlobals()
+{
+    if ( gYMLogLock ) {
+        YMRelease(gYMLogLock);
+        gYMLogLock = NULL;
+        
+        free(gTimeFormatBuf);
+        gTimeFormatBuf = NULL;
+        
+        YM_ONCE_OBJ onceAgain = YM_ONCE_INIT;
+        memcpy(&gYMLogInitOnce,&onceAgain,sizeof(onceAgain));
+    }
+}
 
 YM_EXTERN_C_POP

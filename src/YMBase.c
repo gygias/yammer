@@ -232,6 +232,7 @@ void YMFreeGlobalResources()
 {
     YMTLSProviderFreeGlobals();
 	YMUtilitiesFreeGlobals();
+    YMLogFreeGlobals();
 }
 
 YM_EXTERN_C_POP

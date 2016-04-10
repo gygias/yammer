@@ -75,6 +75,8 @@ void YMAPI __YMLogReturn( int level );
 void _YMLogLock();
 void _YMLogUnlock();
 
+void YMLogFreeGlobals();
+
 YM_EXTERN_C_POP
 
 #endif /* YMLog_h */
