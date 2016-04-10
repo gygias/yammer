@@ -1,10 +1,12 @@
 //
-//  main.m
-//  testprompt
+//  main.c
+//  pta-cli
 //
-//  Created by david on 11/16/15.
-//  Copyright © 2015 combobulated. All rights reserved.
+//  Created by david on 4/10/16.
+//  Copyright © 2016 combobulated. All rights reserved.
 //
+
+#include <stdio.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,7 +24,7 @@
 #endif
 
 #include <libyammer/Yammer.h>
-#include "defs.h"
+#include "misc/chat/defs.h"
 
 YMSessionRef gYMSession = NULL;
 bool gIsServer;
@@ -41,19 +43,19 @@ void __CtrlHandler(DWORD cType)
 }
 
 int main(int argc, const char * argv[]) {
-        
+    
     if ( argc < 2 || argc > 3 ) {
-        printf("usage: testprompt <mdns type> [<mdns name>]\n");
+        printf("usage: pta <mdns type> [<mdns name>]\n");
         printf(" if name is not specified, the tool will act as a client.\n");
-		exit(1);
+        exit(1);
     }
-        
+    
 #ifndef YMWIN32
     signal(SIGINT, __sigint_handler);
 #else
     SetConsoleCtrlHandler((PHANDLER_ROUTINE)__CtrlHandler, TRUE);
 #endif
-
+    
     if ( argc == 3 ) {
         gIsServer = true;
         gYMSession = YMSessionCreate(YMSTRC(argv[1]));
@@ -68,7 +70,7 @@ int main(int argc, const char * argv[]) {
         YMSessionSetBrowsingCallbacks(gYMSession, _added_peer_func, _removed_peer_func, _resolve_failed_func, _resolved_func, _connect_failed_func, NULL);
         if ( ! YMSessionStartBrowsing(gYMSession) )
             exit(1);
-		printf("looking for service...\n");
+        printf("looking for service...\n");
     }
     
     int longTime = 999999999;
@@ -83,37 +85,43 @@ void thread(void (*func)(YMStreamRef), YMStreamRef context)
     pthread_t pthread;
     pthread_create(&pthread, NULL, (void *(*)(void *))func, (void *)context);
 #else
-	HANDLE thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)func, (LPVOID)context, 0, NULL);
+    HANDLE thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)func, (LPVOID)context, 0, NULL);
 #endif
 }
 
-typedef struct message_header
+void run_client_loop(YMStreamRef stream)
 {
-    uint16_t length;
-} _message_header;
-
-void run_chat(YMStreamRef stream)
-{
-    char aChar;
-    while ( ( aChar = (char)getc(stdin) ) != EOF ) {
-        YMStreamWriteDown(stream, (uint8_t *)&aChar, sizeof(aChar));
-   }
+    YMIOResult ymResult;
+    uint64_t off = 0;
+    do {
+        uint32_t random = arc4random();
+        ymResult = YMStreamWriteDown(stream, (uint8_t *)&random, sizeof(random));
+        off += sizeof(random);
+        if ( ( off % 1048576 ) == 0 ) printf("c: wrote %llu\n",off);
+    } while ( ymResult == YMIOSuccess );
+    
+    printf("client write returned %d, breaking.",ymResult);
 }
-
-void print_incoming(YMStreamRef stream)
+    
+void run_server_loop(YMStreamRef stream)
 {
-    char aChar;
-    while ( true ) {
-        YMIOResult result = YMStreamReadUp(stream, (uint8_t *)&aChar, sizeof(aChar), NULL);
-        if ( result != YMIOSuccess ) {
-            printf("peer left\n");
-            exit(1);
+    YMIOResult ymResult;
+    uint64_t off = 0;
+    do {
+        uint32_t random;
+        uint16_t o = 0;
+        ymResult = YMStreamReadUp(stream, (uint8_t *)&random, sizeof(random), &o);
+        if ( o != sizeof(random) ) {
+            printf("server read incomplete");
+            break;
         }
-        
-        putc(aChar, stdout);
-    }
+        off += o;
+        if ( ( off % 1048576 ) == 0 ) printf("s: wrote %llu\n",off);
+    } while ( ymResult == YMIOSuccess );
+    
+    printf("server breaking.");
 }
-
+    
 // client, discover->connect
 void _added_peer_func(YMSessionRef session, YMPeerRef peer, __unused void* context)
 {
@@ -160,9 +168,7 @@ void _connected_func(__unused YMSessionRef session,YMConnectionRef connection, _
     
     if ( ! gIsServer ) {
         YMStreamRef stream = YMConnectionCreateStream(connection, YMSTRC("outgoing"), YMCompressionNone);
-        YMStreamWriteDown(stream, (uint8_t *)"!", 1);
-        thread(run_chat, stream);
-        thread(print_incoming, stream);
+        thread(run_client_loop, stream);
     }
 }
 
@@ -179,11 +185,10 @@ void _new_stream_func(__unused YMSessionRef session, __unused YMConnectionRef co
     char hello;
     YMStreamReadUp(stream, (uint8_t *)&hello, 1, NULL);
     if ( gIsServer ) {
-        thread(run_chat, stream);
-        thread(print_incoming, stream);
+        thread(run_server_loop,stream);
     }
 }
-
+    
 void _closing_func(__unused YMSessionRef session, __unused YMConnectionRef connection, __unused YMStreamRef stream, __unused void* context)
 {
     printf("stream closed\n");

@@ -44,6 +44,11 @@
 			<key>orderHint</key>
 			<integer>1</integer>
 		</dict>
+		<key>pta-cli.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>11</integer>
+		</dict>
 		<key>ym-dispatch-main-test.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
@@ -88,6 +93,11 @@
 			<true/>
 		</dict>
 		<key>6329D31F1C9F646A0087988D</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>632FC1F41CBAE065007E89D9</key>
 		<dict>
 			<key>primary</key>
 			<true/>

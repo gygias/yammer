@@ -1,3 +1,4 @@
+- uint8_t buf params are tedious, take void and cast bytewise internally
 - abolish file/socket distinction in a winsock friendly way
 - test on santa monita "City WiFi" and philz, funny biznass
   ``NOTE WELL:'' PHILZ IN SANTA MONICA DOESNT SERVE BAGELS DUE TO HEALTH REGULATIONS

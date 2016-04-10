@@ -47,9 +47,9 @@
         if ( ! self.ymsession )
             return nil;
         
-        YMSessionSetCommonCallbacks(self.ymsession, _ym_session_initializing_func, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
+        YMSessionSetCommonCallbacks(self.ymsession, _ym_session_initializing_func, _connected_func, _interrupted_func, _new_stream_func, _closing_func);
         YMSessionSetAdvertisingCallbacks(self.ymsession, _ym_session_should_accept_func, (__bridge void *)(self));
-        YMSessionSetBrowsingCallbacks(self.ymsession, _ym_session_added_peer_func, _ym_session_removed_peer_func, _ym_session_resolve_failed_func, _ym_session_resolved_peer_func, _ym_session_connect_failed_func, (__bridge void *)(self));
+        YMSessionSetBrowsingCallbacks(self.ymsession, _added_peer_func, _removed_peer_func, _resolve_failed_func, _resolved_func, _connect_failed_func, (__bridge void *)(self));
         
         self.type = type;
         self.name = name;
@@ -146,7 +146,7 @@
     return theConnection;
 }
 
-void _ym_session_added_peer_func(__unused YMSessionRef session, YMPeerRef peerRef, void* context)
+void _added_peer_func(__unused YMSessionRef session, YMPeerRef peerRef, void* context)
 {
     YMSession *SELF = (__bridge YMSession *)context;
     NSLog(@"%s: %@",__FUNCTION__,SELF);
@@ -157,7 +157,7 @@ void _ym_session_added_peer_func(__unused YMSessionRef session, YMPeerRef peerRe
     }
 }
 
-void _ym_session_removed_peer_func(__unused YMSessionRef session, YMPeerRef peerRef, void* context)
+void _removed_peer_func(__unused YMSessionRef session, YMPeerRef peerRef, void* context)
 {
     YMSession *SELF = (__bridge YMSession *)context;
     NSLog(@"%s: %@",__FUNCTION__,SELF);
@@ -168,7 +168,7 @@ void _ym_session_removed_peer_func(__unused YMSessionRef session, YMPeerRef peer
     }
 }
 
-void _ym_session_resolve_failed_func(__unused YMSessionRef session, YMPeerRef peerRef, void* context)
+void _resolve_failed_func(__unused YMSessionRef session, YMPeerRef peerRef, void* context)
 {
     YMSession *SELF = (__bridge YMSession *)context;
     NSLog(@"%s: %@",__FUNCTION__,SELF);
@@ -181,7 +181,7 @@ void _ym_session_resolve_failed_func(__unused YMSessionRef session, YMPeerRef pe
     }
 }
 
-void _ym_session_resolved_peer_func(__unused YMSessionRef session, YMPeerRef peerRef, void* context)
+void _resolved_func(__unused YMSessionRef session, YMPeerRef peerRef, void* context)
 {
     YMSession *SELF = (__bridge YMSession *)context;
     NSLog(@"%s: %@",__FUNCTION__,SELF);
@@ -194,7 +194,7 @@ void _ym_session_resolved_peer_func(__unused YMSessionRef session, YMPeerRef pee
     }
 }
 
-void _ym_session_connect_failed_func(__unused YMSessionRef session, YMPeerRef peerRef, __unused bool moreComing, void* context)
+void _connect_failed_func(__unused YMSessionRef session, YMPeerRef peerRef, __unused bool moreComing, void* context)
 {
     YMSession *SELF = (__bridge YMSession *)context;
     NSLog(@"%s: %@",__FUNCTION__,SELF);
@@ -224,7 +224,7 @@ void _ym_session_initializing_func(__unused YMSessionRef session, void* context)
         SELF.initializingHandler(SELF);
 }
 
-void _ym_session_connected_func(__unused YMSessionRef session,YMConnectionRef connectionRef, void* context)
+void _connected_func(__unused YMSessionRef session,YMConnectionRef connectionRef, void* context)
 {
     YMSession *SELF = (__bridge YMSession *)context;
     NSLog(@"%s: %@",__FUNCTION__,SELF);
@@ -235,7 +235,7 @@ void _ym_session_connected_func(__unused YMSessionRef session,YMConnectionRef co
         SELF.connectionHandler(SELF, connection);
 }
 
-void _ym_session_interrupted_func(__unused YMSessionRef sessionRef, void* context)
+void _interrupted_func(__unused YMSessionRef sessionRef, void* context)
 {
     YMSession *SELF = (__bridge YMSession *)context;
     NSLog(@"%s: %@",__FUNCTION__,SELF);
@@ -244,7 +244,7 @@ void _ym_session_interrupted_func(__unused YMSessionRef sessionRef, void* contex
         SELF.interruptedHandler(SELF);
 }
 
-void _ym_session_new_stream_func(__unused YMSessionRef sessionRef, __unused YMConnectionRef connectionRef, YMStreamRef streamRef, __unused void* context)
+void _new_stream_func(__unused YMSessionRef sessionRef, __unused YMConnectionRef connectionRef, YMStreamRef streamRef, __unused void* context)
 {
     YMSession *SELF = (__bridge YMSession *)context;
     NSLog(@"%s: %@",__FUNCTION__,SELF);
@@ -255,7 +255,7 @@ void _ym_session_new_stream_func(__unused YMSessionRef sessionRef, __unused YMCo
         SELF.newHandler(SELF, connectionForRef, streamForRef);
 }
 
-void _ym_session_stream_closing_func(__unused YMSessionRef sessionRef, __unused YMConnectionRef connectionRef, __unused YMStreamRef streamRef, __unused void* context)
+void _closing_func(__unused YMSessionRef sessionRef, __unused YMConnectionRef connectionRef, __unused YMStreamRef streamRef, __unused void* context)
 {
     YMSession *SELF = (__bridge YMSession *)context;
     NSLog(@"%s: %@",__FUNCTION__,SELF);

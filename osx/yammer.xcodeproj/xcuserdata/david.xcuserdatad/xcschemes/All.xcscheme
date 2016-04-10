@@ -146,6 +146,20 @@
                ReferencedContainer = "container:yammer.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "632FC1F41CBAE065007E89D9"
+               BuildableName = "pta"
+               BlueprintName = "pta"
+               ReferencedContainer = "container:yammer.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -168,9 +182,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "631916301BFCFF13001475FC"
-            BuildableName = "Yammer.framework"
-            BlueprintName = "Yammer"
+            BlueprintIdentifier = "631F0D311C141EE500C141D4"
+            BuildableName = "ymtest"
+            BlueprintName = "ymtest"
             ReferencedContainer = "container:yammer.xcodeproj">
          </BuildableReference>
       </MacroExpansion>

@@ -138,28 +138,28 @@ void SessionTestsRun(ym_test_assert_func assert, ym_test_diff_func diff, const v
 
 void _server_async_forward_callback(YMConnectionRef connection, YMStreamRef stream, YMIOResult result, uint64_t bytesWritten, void * ctx);
 void _client_async_forward_callback(YMConnectionRef connection, YMStreamRef stream, YMIOResult result, uint64_t bytesWritten, void * ctx);
-void _ym_session_added_peer_func(YMSessionRef session, YMPeerRef peer, void *context);
-void _ym_session_removed_peer_func(YMSessionRef session, YMPeerRef peer, void *context);
-void _ym_session_resolve_failed_func(YMSessionRef session, YMPeerRef peer, void *context);
-void _ym_session_resolved_peer_func(YMSessionRef session, YMPeerRef peer, void *context);
-void _ym_session_connect_failed_func(YMSessionRef session, YMPeerRef peer, bool moreComing, void *context);
+void _added_peer_func(YMSessionRef session, YMPeerRef peer, void *context);
+void _removed_peer_func(YMSessionRef session, YMPeerRef peer, void *context);
+void _resolve_failed_func(YMSessionRef session, YMPeerRef peer, void *context);
+void _resolved_func(YMSessionRef session, YMPeerRef peer, void *context);
+void _connect_failed_func(YMSessionRef session, YMPeerRef peer, bool moreComing, void *context);
 bool _ym_session_should_accept_func(YMSessionRef session, YMPeerRef peer, void *context);
-void _ym_session_connected_func(YMSessionRef session, YMConnectionRef connection, void *context);
-void _ym_session_interrupted_func(YMSessionRef session, void *context);
-void _ym_session_new_stream_func(YMSessionRef session, YMConnectionRef connection, YMStreamRef stream, void *context);
-void _ym_session_stream_closing_func(YMSessionRef session, YMConnectionRef connection, YMStreamRef stream, void *context);
+void _connected_func(YMSessionRef session, YMConnectionRef connection, void *context);
+void _interrupted_func(YMSessionRef session, void *context);
+void _new_stream_func(YMSessionRef session, YMConnectionRef connection, YMStreamRef stream, void *context);
+void _closing_func(YMSessionRef session, YMConnectionRef connection, YMStreamRef stream, void *context);
 
 void _TestSessionWritingLargeAndReadingSparseFiles(struct SessionTest *theTest) {
     
     theTest->serverSession = YMSessionCreate(theTest->testType);
     testassert(theTest->serverSession,"server alloc");
-    YMSessionSetCommonCallbacks(theTest->serverSession, NULL, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
+    YMSessionSetCommonCallbacks(theTest->serverSession, NULL, _connected_func, _interrupted_func, _new_stream_func, _closing_func);
     YMSessionSetAdvertisingCallbacks(theTest->serverSession, _ym_session_should_accept_func, theTest);
     
     theTest->clientSession = YMSessionCreate(theTest->testType);
     testassert(theTest->clientSession,"client alloc");
-    YMSessionSetCommonCallbacks(theTest->clientSession, NULL, _ym_session_connected_func, _ym_session_interrupted_func, _ym_session_new_stream_func, _ym_session_stream_closing_func);
-    YMSessionSetBrowsingCallbacks(theTest->clientSession, _ym_session_added_peer_func, _ym_session_removed_peer_func, _ym_session_resolve_failed_func, _ym_session_resolved_peer_func, _ym_session_connect_failed_func, theTest);
+    YMSessionSetCommonCallbacks(theTest->clientSession, NULL, _connected_func, _interrupted_func, _new_stream_func, _closing_func);
+    YMSessionSetBrowsingCallbacks(theTest->clientSession, _added_peer_func, _removed_peer_func, _resolve_failed_func, _resolved_func, _connect_failed_func, theTest);
     
     bool started = YMSessionStartAdvertising(theTest->serverSession, theTest->testName);
     testassert(started,"server start");
@@ -646,7 +646,7 @@ void _AsyncForwardCallback(struct SessionTest *theTest, YMConnectionRef connecti
 }
 
 // client, discover->connect
-void _ym_session_added_peer_func(YMSessionRef session, YMPeerRef peer, void *context)
+void _added_peer_func(YMSessionRef session, YMPeerRef peer, void *context)
 {
     ymlog("%s",__FUNCTION__);
     struct SessionTest *theTest = context;
@@ -663,7 +663,7 @@ void _ym_session_added_peer_func(YMSessionRef session, YMPeerRef peer, void *con
     }
 }
 
-void _ym_session_removed_peer_func(YMSessionRef session, YMPeerRef peer, void *context)
+void _removed_peer_func(YMSessionRef session, YMPeerRef peer, void *context)
 {
     ymlog("%s",__FUNCTION__);
     struct SessionTest *theTest = context;
@@ -674,7 +674,7 @@ void _ym_session_removed_peer_func(YMSessionRef session, YMPeerRef peer, void *c
     testassert(theTest->stopping,"removed");
 }
 
-void _ym_session_resolve_failed_func(YMSessionRef session, YMPeerRef peer, void *context)
+void _resolve_failed_func(YMSessionRef session, YMPeerRef peer, void *context)
 {
     ymlog("%s",__FUNCTION__);
     struct SessionTest *theTest = context;
@@ -685,7 +685,7 @@ void _ym_session_resolve_failed_func(YMSessionRef session, YMPeerRef peer, void 
     testassert(false,"resolveFailed");
 }
 
-void _ym_session_resolved_peer_func(YMSessionRef session, YMPeerRef peer, void *context)
+void _resolved_func(YMSessionRef session, YMPeerRef peer, void *context)
 {
     ymlog("%s",__FUNCTION__);
     struct SessionTest *theTest = context;
@@ -709,12 +709,12 @@ void _ym_session_resolved_peer_func(YMSessionRef session, YMPeerRef peer, void *
         if ( testSync )
         {
             YMConnectionRef connection = YMSessionGetDefaultConnection(session);
-            _ym_session_connected_func(session,connection,theTest);
+            _connected_func(session,connection,theTest);
         }
     //});
 }
 
-void _ym_session_connect_failed_func(YMSessionRef session, YMPeerRef peer, bool moreComing, void *context)
+void _connect_failed_func(YMSessionRef session, YMPeerRef peer, bool moreComing, void *context)
 {
     ymlog("%s",__FUNCTION__);
     struct SessionTest *theTest = context;
@@ -738,7 +738,7 @@ bool _ym_session_should_accept_func(YMSessionRef session, YMPeerRef peer, void *
 }
 
 // connection
-void _ym_session_connected_func(YMSessionRef session, YMConnectionRef connection, void *context)
+void _connected_func(YMSessionRef session, YMConnectionRef connection, void *context)
 {
     ymlog("%s: s%p c%p",__FUNCTION__,(void*)session,(void*)connection);
     struct SessionTest *theTest = context;
@@ -755,7 +755,7 @@ void _ym_session_connected_func(YMSessionRef session, YMConnectionRef connection
     YMSemaphoreSignal(theTest->connectAndAsyncClientCallbackSemaphore);
 }
 
-void _ym_session_interrupted_func(YMSessionRef session, void *context)
+void _interrupted_func(YMSessionRef session, void *context)
 {
     ymlog("%s",__FUNCTION__);
     struct SessionTest *theTest = context;
@@ -766,7 +766,7 @@ void _ym_session_interrupted_func(YMSessionRef session, void *context)
 }
 
 // streams
-void _ym_session_new_stream_func(YMSessionRef session, YMConnectionRef connection, YMStreamRef stream, void *context)
+void _new_stream_func(YMSessionRef session, YMConnectionRef connection, YMStreamRef stream, void *context)
 {
     NoisyTestLog("%s",__FUNCTION__);
     struct SessionTest *theTest = context;
@@ -786,7 +786,7 @@ void _ym_session_new_stream_func(YMSessionRef session, YMConnectionRef connectio
     YMThreadDispatchDispatch(theTest->incomingDispatch, dispatch);
 }
 
-void _ym_session_stream_closing_func(YMSessionRef session, YMConnectionRef connection, YMStreamRef stream, void *context)
+void _closing_func(YMSessionRef session, YMConnectionRef connection, YMStreamRef stream, void *context)
 {
     NoisyTestLog("%s",__FUNCTION__);
     struct SessionTest *theTest = context;
