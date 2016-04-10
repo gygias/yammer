@@ -113,9 +113,11 @@ void _CompressionTest(CompressionTest *theTest, const char *sourcePath, YMCompre
         size_t o = UINT32_MAX;
         ymResult = YMCompressionRead(theTest->readC, outBuf, by, &o);
         testassert(((ymResult==YMIOSuccess)&&o>0)||ymResult==YMIOEOF,"read");
+        if ( ymResult == YMIOEOF )
+            break;
         theTest->rawWritten += o;
         // todo factor low level FS stuff into library and diff this.
-    } while (ymResult!=YMIOEOF);
+    } while (true);
     
     okay = YMCompressionClose(theTest->readC);
     ymassert(okay,"read close");
