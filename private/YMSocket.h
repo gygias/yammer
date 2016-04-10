@@ -21,13 +21,13 @@ typedef const struct __ym_socket * YMSocketRef;
 
 typedef void (*ym_socket_disconnected)(YMSocketRef, const void*);
 
-YMSocketRef YMSocketCreate(ym_socket_disconnected, const void*);
+YMSocketRef YMAPI YMSocketCreate(ym_socket_disconnected, const void*);
 
-bool YMSocketSet(YMSocketRef, YMSOCKET);
-void YMSocketSetPassthrough(YMSocketRef, bool);
+bool YMAPI YMSocketSet(YMSocketRef, YMSOCKET);
+void YMAPI YMSocketSetPassthrough(YMSocketRef, bool);
 
-YMFILE YMSocketGetInput(YMSocketRef);
-YMFILE YMSocketGetOutput(YMSocketRef);
+YMFILE YMAPI YMSocketGetInput(YMSocketRef);
+YMFILE YMAPI YMSocketGetOutput(YMSocketRef);
 
 YM_EXTERN_C_POP
 

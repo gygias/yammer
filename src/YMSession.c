@@ -1049,11 +1049,11 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_linux_proc_net_dev_scrape_pr
 				YM_THREAD_END
 			}
 			
-	        interface_status_t s;
-	        if ((s = interface_detect_beat_ethtool(fd, p)) == IFSTATUS_ERR)
-	            if ((s = interface_detect_beat_mii(fd, p)) == IFSTATUS_ERR)
-	                if ((s = interface_detect_beat_wlan(fd, p)) == IFSTATUS_ERR)
-	                    s = interface_detect_beat_iff(fd, p);
+	        interface_status_t st;
+	        if ((st = interface_detect_beat_ethtool(fd, p)) == IFSTATUS_ERR)
+	            if ((st = interface_detect_beat_mii(fd, p)) == IFSTATUS_ERR)
+	                if ((st = interface_detect_beat_wlan(fd, p)) == IFSTATUS_ERR)
+	                    st = interface_detect_beat_iff(fd, p);
 	        close(fd);
 	        
 			bool somethingMoved = false;
@@ -1064,9 +1064,9 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_linux_proc_net_dev_scrape_pr
 					if ( strcmp((char *)dEnum->key,p) == 0 ) {
 						found = true;
 						interface_status_t prevStatus = (interface_status_t)dEnum->value;
-						somethingMoved = prevStatus != s;
+						somethingMoved = prevStatus != st;
 						if ( somethingMoved ) {
-							ymerr("%s: changed status: %s",p,s==IFSTATUS_UP?"up":(s==IFSTATUS_DOWN?"down":"?"));
+							ymerr("%s: changed status: %s",p,st==IFSTATUS_UP?"up":(st==IFSTATUS_DOWN?"down":"?"));
 							__YMSessionUpdateNetworkConfigDate(s);
 						}
 					}
@@ -1074,12 +1074,12 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_linux_proc_net_dev_scrape_pr
 				}
 				
 				if ( ! found ) {
-					ymerr("%s: new interface status: %s",p,s==IFSTATUS_UP?"up":(s==IFSTATUS_DOWN?"down":"?"));
+					ymerr("%s: new interface status: %s",p,st==IFSTATUS_UP?"up":(st==IFSTATUS_DOWN?"down":"?"));
 					__YMSessionUpdateNetworkConfigDate(s);
 				}
 			}
 	        char *ifCopy = strdup(p);
-	        YMDictionaryAdd(thisIter,(YMDictionaryKey)ifCopy,(YMDictionaryValue)s);
+	        YMDictionaryAdd(thisIter,(YMDictionaryKey)ifCopy,(YMDictionaryValue)st);
 	
 	        switch(s) {
 	            case IFSTATUS_UP:

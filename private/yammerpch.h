@@ -136,7 +136,7 @@
 	# define SEEK_END FILE_END
 	#endif
 
-	#define YM_IO_BOILERPLATE				__unused int result = 0, __unused error = 0; __unused ssize_t aRead = 0, aWrite = 0; __unused size_t __total = 0; __unused const char *errorStr = NULL;
+	#define YM_IO_BOILERPLATE				__unused int result = 0, __unused error = 0; __unused ssize_t __r = 0, __w = 0; __unused size_t __total = 0; __unused const char *errorStr = NULL;
 	
 	#define YM_OPEN_FILE(p,f)				{ HANDLE __cfa = CreateFile(p,f,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,NULL,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL); \
 												if ( __cfa == INVALID_HANDLE_VALUE ) { result = -1; error = (int)GetLastError(); errorStr = GENERIC_WERROR_STR; } else result = (int)__cfa; }
@@ -150,20 +150,22 @@
 													error = GetLastError(); \
 													if ( error == ERROR_HANDLE_EOF ) result = 0; \
 													else result = -1;  } \
-												else if ( __r == 0 ) result = 0; }
-	#define YM_WRITE_FILE(fd,addr,count)	{ BOOL __wf = WriteFile(fd, addr, count, &__w, NULL); if ( ! __wf ) { result = -1; error = GetLastError(); errorStr = GENERIC_WERROR_STR; } }
+												else result = __r; }
+	#define YM_WRITE_FILE(fd,addr,count)	{ BOOL __wf = WriteFile(fd, addr, count, &__w, NULL); \
+												if ( ! __wf ) { result = -1; error = GetLastError(); errorStr = GENERIC_WERROR_STR; } \
+												else result = __w; }
     #define YM_CLOSE_FILE(fd)				{ BOOL __ch = CloseHandle(fd); if ( ! __ch ) result = -1; else result = 0; }
     #define NULL_SOCKET ((SOCKET)NULL)
 	#define GENERIC_WERROR_STR "windows error" // unfortunately the strerror equivalent FormatMessage needs the caller to take ownership, which we don't want to mess with.
 												// we could have our own method with static strings. P.S. ERROR_ARENA_TRASHED
-	#define YM_READ_SOCKET(s,b,l)	__total = 0; while(__total < l) { aRead = recv(s,b,l - __total,0); \
-															if ( aRead == 0 || aRead == SOCKET_ERROR ) break; \
-															__total += aRead; } \
-									if ( aRead != SOCKET_ERROR ) aRead = __total; else { error = WSAGetLastError(); errorStr = GENERIC_WERROR_STR; }
-	#define YM_WRITE_SOCKET(s,b,l)	__total = 0; while(__total < l) { aWrite = send(s,b,l - __total,0); \
-															if ( aWrite == SOCKET_ERROR ) break; \
-															__total += aWrite; } \
-									if ( aWrite > 0 ) aWrite = __total; else { error = WSAGetLastError(); errorStr = GENERIC_WERROR_STR; }
+	#define YM_READ_SOCKET(s,b,l)	__total = 0; while(__total < l) { __r = recv(s,b,l - __total,0); \
+															if ( __r == 0 || __r == SOCKET_ERROR ) break; \
+															__total += __r; } \
+									if ( __r != SOCKET_ERROR ) result = __total; else { result = -1; error = WSAGetLastError(); errorStr = GENERIC_WERROR_STR; }
+	#define YM_WRITE_SOCKET(s,b,l)	__total = 0; while(__total < l) { __w = send(s,b,l - __total,0); \
+															if ( __w == SOCKET_ERROR ) break; \
+															__total += __w; } \
+									if ( __w > 0 ) result = __total; else { result = -1; error = WSAGetLastError(); errorStr = GENERIC_WERROR_STR; }
     #define YM_CLOSE_SOCKET(socket) { result = closesocket(socket); if ( result == SOCKET_ERROR ) { result = -1; error = GetLastError(); errorStr = GENERIC_WERROR_STR; } }
     #define YM_WAIT_SEMAPHORE(s)	{ DWORD __wfso = WaitForSingleObject(s, INFINITE); \
 										if ( __wfso != WAIT_OBJECT_0 ) { \

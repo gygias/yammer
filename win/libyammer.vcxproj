@@ -195,6 +195,7 @@
     <ClInclude Include="..\private\YMmDNS.h" />
     <ClInclude Include="..\private\YMmDNSBrowser.h" />
     <ClInclude Include="..\private\YMmDNSService.h" />
+    <ClInclude Include="..\private\YMNumber.h" />
     <ClInclude Include="..\private\YMOpenssl.h" />
     <ClInclude Include="..\private\YMPeerPriv.h" />
     <ClInclude Include="..\private\YMPipe.h" />
@@ -205,6 +206,7 @@
     <ClInclude Include="..\private\YMSecurityProvider.h" />
     <ClInclude Include="..\private\YMSecurityProviderInternal.h" />
     <ClInclude Include="..\private\YMSemaphore.h" />
+    <ClInclude Include="..\private\YMSocket.h" />
     <ClInclude Include="..\private\YMStreamPriv.h" />
     <ClInclude Include="..\private\YMStringPriv.h" />
     <ClInclude Include="..\private\YMTask.h" />
@@ -233,6 +235,7 @@
     <ClCompile Include="..\src\YMmDNS.c" />
     <ClCompile Include="..\src\YMmDNSBrowser.c" />
     <ClCompile Include="..\src\YMmDNSService.c" />
+    <ClCompile Include="..\src\YMNumber.c" />
     <ClCompile Include="..\src\YMPeer.c" />
     <ClCompile Include="..\src\YMPipe.c" />
     <ClCompile Include="..\src\YMPlexer.c">
@@ -243,6 +246,7 @@
     <ClCompile Include="..\src\YMSecurityProvider.c" />
     <ClCompile Include="..\src\YMSemaphore.c" />
     <ClCompile Include="..\src\YMSession.c" />
+    <ClCompile Include="..\src\YMSocket.c" />
     <ClCompile Include="..\src\YMStream.c" />
     <ClCompile Include="..\src\YMString.c" />
     <ClCompile Include="..\src\YMTask.c" />

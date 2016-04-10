@@ -467,14 +467,14 @@ bool __YMTLSProviderInit(__ym_security_provider_t *p)
     //tls->rBio = BIO_new(&ym_bio_methods);
     //tls->wBio = tls->rBio;
     //tls->bio = BIO_new_socket(tls->_common.socket, BIO_NOCLOSE);
-    tls->rBio = BIO_new_fd(tls->_common.inFile, BIO_NOCLOSE);
+    tls->rBio = BIO_new_fd((int)tls->_common.inFile, BIO_NOCLOSE);
     if ( ! tls->rBio ) {
         sslError = ERR_get_error();
         ymerr("BIO_new r failed: %lu (%s)",sslError,ERR_error_string(sslError, NULL));
         goto catch_return;
     }
     
-    tls->wBio = BIO_new_fd(tls->_common.outFile, BIO_NOCLOSE);
+    tls->wBio = BIO_new_fd((int)tls->_common.outFile, BIO_NOCLOSE);
     if ( ! tls->wBio ) {
         sslError = ERR_get_error();
         ymerr("BIO_new w failed: %lu (%s)",sslError,ERR_error_string(sslError, NULL));

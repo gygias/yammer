@@ -69,9 +69,6 @@
     <ClInclude Include="..\private\YMInternal.h">
       <Filter>private</Filter>
     </ClInclude>
-    <ClInclude Include="..\private\YMLinkedList.h">
-      <Filter>private</Filter>
-    </ClInclude>
     <ClInclude Include="..\private\YMLocalSocketPair.h">
       <Filter>private</Filter>
     </ClInclude>
@@ -159,6 +156,12 @@
     <ClInclude Include="..\private\YMCompression.h">
       <Filter>private</Filter>
     </ClInclude>
+    <ClInclude Include="..\private\YMNumber.h">
+      <Filter>private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\private\YMSocket.h">
+      <Filter>private</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -180,9 +183,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\src\YMDictionary.c">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\YMLinkedList.c">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\src\YMLocalSocketPair.c">
@@ -255,6 +255,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\src\YMCompression.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMSocket.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\YMNumber.c">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
