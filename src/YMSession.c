@@ -1081,7 +1081,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_linux_proc_net_dev_scrape_pr
 	        char *ifCopy = strdup(p);
 	        YMDictionaryAdd(thisIter,(YMDictionaryKey)ifCopy,(YMDictionaryValue)st);
 	
-	        switch(s) {
+	        switch(st) {
 	            case IFSTATUS_UP:
 	                ymdbg("%s: up", p);
 	                break;	                
