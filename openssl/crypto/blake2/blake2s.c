@@ -15,11 +15,6 @@
  * can be found at https://blake2.net.
  */
 
-#ifndef BLAKE_DEBUG
-# undef NDEBUG                  /* avoid conflicting definitions */
-# define NDEBUG
-#endif
-
 #include <assert.h>
 #include <string.h>
 #include <openssl/crypto.h>
@@ -73,7 +68,7 @@ static void blake2s_init_param(BLAKE2S_CTX *S, const BLAKE2S_PARAM *P)
 
     /* The param struct is carefully hand packed, and should be 32 bytes on
      * every platform. */
-    OPENSSL_assert(sizeof(BLAKE2S_PARAM) == 32);
+    assert(sizeof(BLAKE2S_PARAM) == 32);
     blake2s_init0(S);
     /* IV XOR ParamBlock */
     for (i = 0; i < 8; ++i) {

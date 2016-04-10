@@ -77,10 +77,21 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # Minimum warning options... any contributions to OpenSSL should at least get
 # past these.
 
-my $gcc_devteam_warn = "-DPEDANTIC -DREF_DEBUG -DDEBUG_UNUSED -DBIO_DEBUG"
-        . " -pedantic"
+# DEBUG_UNUSED enables __owur (warn unused result) checks.
+my $gcc_devteam_warn = "-DDEBUG_UNUSED"
+        # -DPEDANTIC complements -pedantic and is meant to mask code that
+        # is not strictly standard-compliant and/or implementation-specifc,
+        # e.g. inline assembly, disregards to alignment requirements, such
+        # that -pedantic would complain about. Incidentally -DPEDANTIC has
+        # to be used even in sanitized builds, because sanitizer too is
+        # supposed to and does take notice of non-standard behaviour. Then
+        # -pedantic with pre-C9x compiler would also complain about 'long
+        # long' not being supported. As 64-bit algorithms are common now,
+        # it grew impossible to resolve this without sizeable additional
+        # code, so we just tell compiler to be pedantic about everything
+        # but 'long long' type.
+        . " -DPEDANTIC -pedantic -Wno-long-long"
         . " -Wall"
-        . " -Wno-long-long"
         . " -Wsign-compare"
         . " -Wmissing-prototypes"
         . " -Wshadow"
@@ -743,9 +754,9 @@ while (@tocheckfor) {
     while (@cascade_copy) {
 	my ($test, $descendents) = (shift @cascade_copy, shift @cascade_copy);
 	if (ref($test) eq "CODE" ? $test->() : defined($disabled{$test})) {
-	    map {
+	    foreach(grep { !defined($disabled{$_}) } @$descendents) {
 		$new_tocheckfor{$_} = 1; $disabled{$_} = "forced";
-	    } grep { !defined($disabled{$_}) } @$descendents;
+	    }
 	}
     }
     @tocheckfor = (keys %new_tocheckfor);
@@ -2128,12 +2139,12 @@ sub resolve_config {
 	    # the config that had it.
 	    delete $inherited_config{template};
 
-	    map {
+	    foreach (keys %inherited_config) {
 		if (!$combined_inheritance{$_}) {
 		    $combined_inheritance{$_} = [];
 		}
 		push @{$combined_inheritance{$_}}, $inherited_config{$_};
-	    } keys %inherited_config;
+	    }
 	}
     }
 
@@ -2415,7 +2426,7 @@ sub quotify {
     my $processor =
 	defined($processors{$for}) ? $processors{$for} : sub { shift; };
 
-    map { $processor->($_); } @_;
+    return map { $processor->($_); } @_;
 }
 
 # collect_from_file($filename, $line_concat_cond_re, $line_concat)

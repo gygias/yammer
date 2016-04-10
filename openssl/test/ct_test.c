@@ -101,7 +101,11 @@ static CT_TEST_FIXTURE set_up(const char *const test_case_name)
 {
     CT_TEST_FIXTURE fixture;
     int setup_ok = 1;
-    CTLOG_STORE *ctlog_store = CTLOG_STORE_new();
+    CTLOG_STORE *ctlog_store;
+
+    memset(&fixture, 0, sizeof(fixture));
+
+    ctlog_store = CTLOG_STORE_new();
 
     if (ctlog_store == NULL) {
         setup_ok = 0;
@@ -115,7 +119,6 @@ static CT_TEST_FIXTURE set_up(const char *const test_case_name)
         goto end;
     }
 
-    memset(&fixture, 0, sizeof(fixture));
     fixture.test_case_name = test_case_name;
     fixture.ctlog_store = ctlog_store;
 
@@ -402,6 +405,17 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
             goto end;
         }
 
+        if (fixture.test_validity && cert != NULL) {
+            int is_sct_validated = SCT_validate(sct, ct_policy_ctx);
+            if (is_sct_validated < 0) {
+                fprintf(stderr, "Error validating SCT\n");
+                goto end;
+            } else if (!is_sct_validated) {
+                fprintf(stderr, "SCT failed verification\n");
+                goto end;
+            }
+        }
+
         if (fixture.sct_text_file
             && compare_sct_printout(sct, expected_sct_text)) {
                 goto end;
@@ -412,17 +426,6 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
             memcmp(fixture.tls_sct, tls_sct, tls_sct_len) != 0) {
             fprintf(stderr, "Failed to encode SCT into TLS format correctly\n");
             goto end;
-        }
-
-        if (fixture.test_validity && cert != NULL) {
-            int is_sct_validated = SCT_validate(sct, ct_policy_ctx);
-            if (is_sct_validated < 0) {
-                fprintf(stderr, "Error validating SCT\n");
-                goto end;
-            } else if (!is_sct_validated) {
-                fprintf(stderr, "SCT failed verification\n");
-                goto end;
-            }
         }
     }
     success = 1;
@@ -565,6 +568,11 @@ int main(int argc, char *argv[])
     int result = 0;
     char *tmp_env = NULL;
 
+    tmp_env = getenv("OPENSSL_DEBUG_MEMORY");
+    if (tmp_env != NULL && strcmp(tmp_env, "on") == 0)
+        CRYPTO_set_mem_debug(1);
+    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+
     tmp_env = getenv("CT_DIR");
     ct_dir = OPENSSL_strdup(tmp_env != NULL ? tmp_env : "ct");
     tmp_env = getenv("CERTS_DIR");
@@ -583,6 +591,11 @@ int main(int argc, char *argv[])
 
     OPENSSL_free(ct_dir);
     OPENSSL_free(certs_dir);
+
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    if (CRYPTO_mem_leaks_fp(stderr) <= 0)
+        result = 1;
+#endif
 
     return result;
 }

@@ -1347,6 +1347,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
         ret += salglen;
     }
 
+#ifndef OPENSSL_NO_OCSP
     if (s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp) {
         int i;
         long extlen, idlen, itmp;
@@ -1390,6 +1391,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
         if (extlen > 0)
             i2d_X509_EXTENSIONS(s->tlsext_ocsp_exts, &ret);
     }
+#endif
 #ifndef OPENSSL_NO_HEARTBEATS
     if (SSL_IS_DTLS(s)) {
         /* Add Heartbeat extension */
@@ -2128,14 +2130,14 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
                 }
             }
         } else if (type == TLSEXT_TYPE_status_request) {
-            const unsigned char *ext_data;
-
             if (!PACKET_get_1(&extension,
                               (unsigned int *)&s->tlsext_status_type)) {
                 return 0;
             }
 
+#ifndef OPENSSL_NO_OCSP
             if (s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp) {
+                const unsigned char *ext_data;
                 PACKET responder_id_list, exts;
                 if (!PACKET_get_length_prefixed_2(&extension, &responder_id_list))
                     return 0;
@@ -2192,10 +2194,12 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
                         return 0;
                     }
                 }
-            /*
-             * We don't know what to do with any other type * so ignore it.
-             */
-            } else {
+            } else
+#endif
+            {
+                /*
+                 * We don't know what to do with any other type so ignore it.
+                 */
                 s->tlsext_status_type = -1;
             }
         }
@@ -4087,17 +4091,20 @@ DH *ssl_get_auto_dh(SSL *s)
 
     if (dh_secbits >= 128) {
         DH *dhp = DH_new();
+        BIGNUM *p, *g;
         if (dhp == NULL)
             return NULL;
-        dhp->g = BN_new();
-        if (dhp->g != NULL)
-            BN_set_word(dhp->g, 2);
+        g = BN_new();
+        if (g != NULL)
+            BN_set_word(g, 2);
         if (dh_secbits >= 192)
-            dhp->p = get_rfc3526_prime_8192(NULL);
+            p = get_rfc3526_prime_8192(NULL);
         else
-            dhp->p = get_rfc3526_prime_3072(NULL);
-        if (dhp->p == NULL || dhp->g == NULL) {
+            p = get_rfc3526_prime_3072(NULL);
+        if (p == NULL || g == NULL || !DH_set0_pqg(dhp, p, NULL, g)) {
             DH_free(dhp);
+            BN_free(p);
+            BN_free(g);
             return NULL;
         }
         return dhp;

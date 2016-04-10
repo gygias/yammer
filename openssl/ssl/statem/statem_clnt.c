@@ -1334,7 +1334,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
     }
 
     i = ssl_verify_cert_chain(s, sk);
-    if (s->verify_mode != SSL_VERIFY_NONE && i <= 0) {
+    if ((s->verify_mode & SSL_VERIFY_PEER) && i <= 0) {
         al = ssl_verify_alarm_type(s->verify_result);
         SSLerr(SSL_F_TLS_PROCESS_SERVER_CERTIFICATE,
                SSL_R_CERTIFICATE_VERIFY_FAILED);
@@ -1527,6 +1527,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         PACKET prime, generator, pub_key;
 
         DH *dh;
+        BIGNUM *p, *g, *bnpub_key;
 
         if (!PACKET_get_length_prefixed_2(pkt, &prime)
             || !PACKET_get_length_prefixed_2(pkt, &generator)
@@ -1550,20 +1551,39 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             goto err;
         }
 
-        if ((dh->p = BN_bin2bn(PACKET_data(&prime),
-                               PACKET_remaining(&prime), NULL)) == NULL
-            || (dh->g = BN_bin2bn(PACKET_data(&generator),
-                                  PACKET_remaining(&generator), NULL)) == NULL
-            || (dh->pub_key =
-                BN_bin2bn(PACKET_data(&pub_key),
-                          PACKET_remaining(&pub_key), NULL)) == NULL) {
+        p = BN_bin2bn(PACKET_data(&prime), PACKET_remaining(&prime), NULL);
+        g = BN_bin2bn(PACKET_data(&generator), PACKET_remaining(&generator),
+                      NULL);
+        bnpub_key = BN_bin2bn(PACKET_data(&pub_key), PACKET_remaining(&pub_key),
+                              NULL);
+        if (p == NULL || g == NULL || bnpub_key == NULL) {
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_BN_LIB);
+            BN_free(p);
+            BN_free(g);
+            BN_free(bnpub_key);
             goto err;
         }
 
-        if (BN_is_zero(dh->p) || BN_is_zero(dh->g) || BN_is_zero(dh->pub_key)) {
+        if (BN_is_zero(p) || BN_is_zero(g) || BN_is_zero(bnpub_key)) {
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_BAD_DH_VALUE);
+            BN_free(p);
+            BN_free(g);
+            BN_free(bnpub_key);
             goto f_err;
+        }
+
+        if (!DH_set0_pqg(dh, p, NULL, g)) {
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_BN_LIB);
+            BN_free(p);
+            BN_free(g);
+            BN_free(bnpub_key);
+            goto err;
+        }
+
+        if (!DH_set0_key(dh, bnpub_key, NULL)) {
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_BN_LIB);
+            BN_free(bnpub_key);
+            goto err;
         }
 
         if (!ssl_security(s, SSL_SECOP_TMP_DH, DH_security_bits(dh), 0, dh)) {
@@ -1863,6 +1883,7 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
             SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST, ERR_R_MALLOC_FAILURE);
             goto err;
         }
+        xn = NULL;
     }
 
     /* we should setup a certificate to return.... */
@@ -1877,6 +1898,7 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
  err:
     ossl_statem_set_error(s);
  done:
+    X509_NAME_free(xn);
     sk_X509_NAME_pop_free(ca_sk, X509_NAME_free);
     return ret;
 }
@@ -2065,7 +2087,8 @@ MSG_PROCESS_RETURN tls_process_server_done(SSL *s, PACKET *pkt)
 
 #ifndef OPENSSL_NO_CT
     if (s->ct_validation_callback != NULL) {
-        if (!ssl_validate_ct(s)) {
+        /* Note we validate the SCTs whether or not we abort on error */
+        if (!ssl_validate_ct(s) && (s->verify_mode & SSL_VERIFY_PEER)) {
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
             return MSG_PROCESS_ERROR;
         }
@@ -2251,6 +2274,7 @@ psk_err:
 #ifndef OPENSSL_NO_DH
     else if (alg_k & (SSL_kDHE | SSL_kDHEPSK)) {
         DH *dh_clnt = NULL;
+        BIGNUM *pub_key;
         skey = s->s3->peer_tmp;
         if (skey == NULL) {
             SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
@@ -2268,9 +2292,10 @@ psk_err:
 
 
         /* send off the data */
-        n = BN_num_bytes(dh_clnt->pub_key);
+        DH_get0_key(dh_clnt, &pub_key, NULL);
+        n = BN_num_bytes(pub_key);
         s2n(n, p);
-        BN_bn2bin(dh_clnt->pub_key, p);
+        BN_bn2bin(pub_key, p);
         n += 2;
         EVP_PKEY_free(ckey);
         ckey = NULL;

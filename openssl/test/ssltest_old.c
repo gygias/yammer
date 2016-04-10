@@ -1113,7 +1113,7 @@ int main(int argc, char *argv[])
      * Disable CT validation by default, because it will interfere with
      * anything using custom extension handlers to deal with SCT extensions.
      */
-    ct_validation_cb ct_validation = NULL;
+    int ct_validation = 0;
 #endif
     SSL_CONF_CTX *s_cctx = NULL, *c_cctx = NULL, *s_cctx2 = NULL;
     STACK_OF(OPENSSL_STRING) *conf_args = NULL;
@@ -1300,13 +1300,10 @@ int main(int argc, char *argv[])
         }
 #ifndef OPENSSL_NO_CT
         else if (strcmp(*argv, "-noct") == 0) {
-            ct_validation = NULL;
+            ct_validation = 0;
         }
-        else if (strcmp(*argv, "-requestct") == 0) {
-            ct_validation = CT_verify_no_bad_scts;
-        }
-        else if (strcmp(*argv, "-requirect") == 0) {
-            ct_validation = CT_verify_at_least_one_good_sct;
+        else if (strcmp(*argv, "-ct") == 0) {
+            ct_validation = 1;
         }
 #endif
 #ifndef OPENSSL_NO_COMP
@@ -1633,7 +1630,8 @@ int main(int argc, char *argv[])
     }
 
 #ifndef OPENSSL_NO_CT
-    if (!SSL_CTX_set_ct_validation_callback(c_ctx, ct_validation, NULL)) {
+    if (ct_validation &&
+        !SSL_CTX_enable_ct(c_ctx, SSL_CT_VALIDATION_STRICT)) {
         ERR_print_errors(bio_err);
         goto end;
     }
@@ -3529,13 +3527,16 @@ static DH *get_dh512()
         0x02,
     };
     DH *dh;
+    BIGNUM *p, *g;
 
     if ((dh = DH_new()) == NULL)
         return (NULL);
-    dh->p = BN_bin2bn(dh512_p, sizeof(dh512_p), NULL);
-    dh->g = BN_bin2bn(dh512_g, sizeof(dh512_g), NULL);
-    if ((dh->p == NULL) || (dh->g == NULL)) {
+    p = BN_bin2bn(dh512_p, sizeof(dh512_p), NULL);
+    g = BN_bin2bn(dh512_g, sizeof(dh512_g), NULL);
+    if ((p == NULL) || (g == NULL) || !DH_set0_pqg(dh, p, NULL, g)) {
         DH_free(dh);
+        BN_free(p);
+        BN_free(g);
         return (NULL);
     }
     return (dh);
@@ -3570,13 +3571,16 @@ static DH *get_dh1024()
         0x02,
     };
     DH *dh;
+    BIGNUM *p, *g;
 
     if ((dh = DH_new()) == NULL)
         return (NULL);
-    dh->p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), NULL);
-    dh->g = BN_bin2bn(dh1024_g, sizeof(dh1024_g), NULL);
-    if ((dh->p == NULL) || (dh->g == NULL)) {
+    p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), NULL);
+    g = BN_bin2bn(dh1024_g, sizeof(dh1024_g), NULL);
+    if ((p == NULL) || (g == NULL) || !DH_set0_pqg(dh, p, NULL, g)) {
         DH_free(dh);
+        BN_free(p);
+        BN_free(g);
         return (NULL);
     }
     return (dh);
@@ -3631,16 +3635,19 @@ static DH *get_dh1024dsa()
         0x07, 0xE7, 0x68, 0x1A, 0x82, 0x5D, 0x32, 0xA2,
     };
     DH *dh;
+    BIGNUM *p, *g;
 
     if ((dh = DH_new()) == NULL)
         return (NULL);
-    dh->p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), NULL);
-    dh->g = BN_bin2bn(dh1024_g, sizeof(dh1024_g), NULL);
-    if ((dh->p == NULL) || (dh->g == NULL)) {
+    p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), NULL);
+    g = BN_bin2bn(dh1024_g, sizeof(dh1024_g), NULL);
+    if ((p == NULL) || (g == NULL) || !DH_set0_pqg(dh, p, NULL, g)) {
         DH_free(dh);
+        BN_free(p);
+        BN_free(g);
         return (NULL);
     }
-    dh->length = 160;
+    DH_set_length(dh, 160);
     return (dh);
 }
 #endif

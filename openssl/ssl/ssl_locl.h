@@ -816,7 +816,7 @@ struct ssl_ctx_st {
     * Validates that the SCTs (Signed Certificate Timestamps) are sufficient.
     * If they are not, the connection should be aborted.
     */
-    ct_validation_cb ct_validation_callback;
+    ssl_ct_validation_cb ct_validation_callback;
     void *ct_validation_callback_arg;
 #  endif
 
@@ -1015,7 +1015,7 @@ struct ssl_st {
     X509_VERIFY_PARAM *param;
 
     /* Per connection DANE state */
-    struct dane_st dane;
+    SSL_DANE dane;
 
     /* crypto */
     STACK_OF(SSL_CIPHER) *cipher_list;
@@ -1123,7 +1123,7 @@ struct ssl_st {
     * Validates that the SCTs (Signed Certificate Timestamps) are sufficient.
     * If they are not, the connection should be aborted.
     */
-    ct_validation_cb ct_validation_callback;
+    ssl_ct_validation_cb ct_validation_callback;
     /* User-supplied argument tha tis passed to the ct_validation_callback */
     void *ct_validation_callback_arg;
     /*
