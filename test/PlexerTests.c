@@ -191,6 +191,8 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
           PlexerTest1Threads,
           PlexerTest1RoundTripsPerThread,
           PlexerTest1NewStreamPerRoundTrip?"stream":"round-trip");
+    
+    YMRelease(socketPair);
 }
 
 void YM_CALLING_CONVENTION _init_local_plexer_proc(YM_THREAD_PARAM context)

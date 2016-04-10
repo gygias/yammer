@@ -231,7 +231,6 @@ void _TestSessionWritingLargeAndReadingSparseFiles(struct SessionTest *theTest) 
     testassert(diffOK, "diff sparse");
 #endif
     
-    YMFreeGlobalResources();
     ymlog("session test finished");
 }
 
