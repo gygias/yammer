@@ -163,13 +163,15 @@ bool _ym_session_should_accept_func(__unused YMSessionRef session, YMPeerRef pee
 }
 
 // connection
-void _connected_func(__unused YMSessionRef session,YMConnectionRef connection, __unused void* context)
+void _connected_func(YMSessionRef session, YMConnectionRef connection, __unused void* context)
 {
     printf("connected to %s\n", YMSTR(YMAddressGetDescription(YMConnectionGetAddress(connection))));
     
     if ( ! gIsServer ) {
-        YMStreamRef stream = YMConnectionCreateStream(connection, YMSTRC("outgoing"), YMCompressionNone);
-        thread(run_client_loop, stream);
+        if ( YMSessionGetDefaultConnection(session) == connection ) {
+            YMStreamRef stream = YMConnectionCreateStream(connection, YMSTRC("outgoing"), YMCompressionNone);
+            thread(run_client_loop, stream);
+        }
     }
 }
 

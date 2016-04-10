@@ -411,7 +411,7 @@ bool __YMConnectionInitCommon(__ym_connection_t *c, YMSOCKET newSocket, bool asS
                     if ( YMAddressIsEqualIncludingPort(localAddr, aLocalAddress, false) ) {
                         c->localIFName = YMRetain(ifName);
                         c->localIFType = YMInterfaceTypeForName(ifName);
-                        ymlog("allocated %s (%s)",YMSTR(ifName),YMInterfaceTypeDescription(c->localIFType));
+                        ymdbg("allocated %s (%s)",YMSTR(ifName),YMInterfaceTypeDescription(c->localIFType));
                         matched = true;
                         break;
                     }
