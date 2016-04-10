@@ -143,7 +143,7 @@ void _removed_peer_func(YMSessionRef session, YMPeerRef peer, void *context);
 void _resolve_failed_func(YMSessionRef session, YMPeerRef peer, void *context);
 void _resolved_func(YMSessionRef session, YMPeerRef peer, void *context);
 void _connect_failed_func(YMSessionRef session, YMPeerRef peer, bool moreComing, void *context);
-bool _ym_session_should_accept_func(YMSessionRef session, YMPeerRef peer, void *context);
+bool _should_accept_func(YMSessionRef session, YMPeerRef peer, void *context);
 void _connected_func(YMSessionRef session, YMConnectionRef connection, void *context);
 void _interrupted_func(YMSessionRef session, void *context);
 void _new_stream_func(YMSessionRef session, YMConnectionRef connection, YMStreamRef stream, void *context);
@@ -154,7 +154,7 @@ void _TestSessionWritingLargeAndReadingSparseFiles(struct SessionTest *theTest) 
     theTest->serverSession = YMSessionCreate(theTest->testType);
     testassert(theTest->serverSession,"server alloc");
     YMSessionSetCommonCallbacks(theTest->serverSession, NULL, _connected_func, _interrupted_func, _new_stream_func, _closing_func);
-    YMSessionSetAdvertisingCallbacks(theTest->serverSession, _ym_session_should_accept_func, theTest);
+    YMSessionSetAdvertisingCallbacks(theTest->serverSession, _should_accept_func, theTest);
     
     theTest->clientSession = YMSessionCreate(theTest->testType);
     testassert(theTest->clientSession,"client alloc");
@@ -726,7 +726,7 @@ void _connect_failed_func(YMSessionRef session, YMPeerRef peer, bool moreComing,
 }
 
 // server
-bool _ym_session_should_accept_func(YMSessionRef session, YMPeerRef peer, void *context)
+bool _should_accept_func(YMSessionRef session, YMPeerRef peer, void *context)
 {
     ymlog("%s",__FUNCTION__);
     struct SessionTest *theTest = context;

@@ -60,7 +60,7 @@ int main(int argc, const char * argv[]) {
         gIsServer = true;
         gYMSession = YMSessionCreate(YMSTRC(argv[1]));
         YMSessionSetCommonCallbacks(gYMSession, NULL, _connected_func, _interrupted_func, _new_stream_func, _closing_func);
-        YMSessionSetAdvertisingCallbacks(gYMSession, _ym_session_should_accept_func, NULL);
+        YMSessionSetAdvertisingCallbacks(gYMSession, _should_accept_func, NULL);
         if ( ! YMSessionStartAdvertising(gYMSession, YMSTRC(argv[2])) )
             exit(1);
     } else {
@@ -156,7 +156,7 @@ void _connect_failed_func(__unused YMSessionRef session, YMPeerRef peer, bool mo
 }
 
 // server
-bool _ym_session_should_accept_func(__unused YMSessionRef session, YMPeerRef peer, __unused void* context)
+bool _should_accept_func(__unused YMSessionRef session, YMPeerRef peer, __unused void* context)
 {
     printf("accepting %s...\n", YMSTR(YMPeerGetName(peer)));
     return true;

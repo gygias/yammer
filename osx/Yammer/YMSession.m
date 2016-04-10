@@ -48,7 +48,7 @@
             return nil;
         
         YMSessionSetCommonCallbacks(self.ymsession, _ym_session_initializing_func, _connected_func, _interrupted_func, _new_stream_func, _closing_func);
-        YMSessionSetAdvertisingCallbacks(self.ymsession, _ym_session_should_accept_func, (__bridge void *)(self));
+        YMSessionSetAdvertisingCallbacks(self.ymsession, _should_accept_func, (__bridge void *)(self));
         YMSessionSetBrowsingCallbacks(self.ymsession, _added_peer_func, _removed_peer_func, _resolve_failed_func, _resolved_func, _connect_failed_func, (__bridge void *)(self));
         
         self.type = type;
@@ -207,7 +207,7 @@ void _connect_failed_func(__unused YMSessionRef session, YMPeerRef peerRef, __un
     }
 }
 
-bool _ym_session_should_accept_func(__unused YMSessionRef session, YMPeerRef peerRef, void* context)
+bool _should_accept_func(__unused YMSessionRef session, YMPeerRef peerRef, void* context)
 {
     YMSession *SELF = (__bridge YMSession *)context;
     NSLog(@"%s: %@",__FUNCTION__,SELF);

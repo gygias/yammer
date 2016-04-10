@@ -18,7 +18,7 @@ void _removed_peer_func(YMSessionRef session, YMPeerRef peer, void* context);
 void _resolve_failed_func(YMSessionRef session, YMPeerRef peer, void* context);
 void _resolved_func(YMSessionRef session, YMPeerRef peer, void* context);
 void _connect_failed_func(YMSessionRef session, YMPeerRef peer, bool moreComing, void* context);
-bool _ym_session_should_accept_func(YMSessionRef session, YMPeerRef peer, void* context);
+bool _should_accept_func(YMSessionRef session, YMPeerRef peer, void* context);
 void _connected_func(YMSessionRef session,YMConnectionRef connection, void* context);
 void _interrupted_func(YMSessionRef session, void* context);
 void _new_stream_func(__unused YMSessionRef session, __unused YMConnectionRef connection, YMStreamRef stream, __unused void* context);
