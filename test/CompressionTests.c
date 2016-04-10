@@ -11,6 +11,7 @@
 #include "YMBase.h"
 #include "YMCompression.h"
 #include "YMPipe.h"
+#include "YMPipePriv.h"
 #include "YMThread.h"
 
 #include <sys/types.h>
@@ -121,6 +122,7 @@ void _CompressionTest(CompressionTest *theTest, const char *sourcePath, YMCompre
     
     okay = YMCompressionClose(theTest->readC);
     ymassert(okay,"read close");
+    
     ymassert(theTest->rawWritten==theTest->rawRead,"raw mismatch w%lu v r%lu",theTest->rawWritten,theTest->rawRead);
     
     YMThreadJoin(readThread);
@@ -128,6 +130,7 @@ void _CompressionTest(CompressionTest *theTest, const char *sourcePath, YMCompre
     
     YMRelease(theTest->writeC);
     YMRelease(theTest->readC);
+    _YMPipeSetClosed(pipe);
     YMRelease(pipe);
     
     size_t idx = 0;

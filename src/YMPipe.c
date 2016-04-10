@@ -112,6 +112,13 @@ void _YMPipeCloseInputFile(YMPipeRef p)
     YMSelfUnlock(p);
 }
 
+void YMAPI _YMPipeSetClosed(YMPipeRef p_)
+{
+    __ym_pipe_t *p = (__ym_pipe_t *)p_;
+    p->inFd = NULL_FILE;
+    p->outFd = NULL_FILE;
+}
+
 void __YMPipeCloseFile(__ym_pipe_t *p, YMFILE *fdPtr)
 {
     YMFILE fd = *fdPtr;
