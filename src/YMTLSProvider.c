@@ -23,7 +23,9 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-#if !defined(YMWIN32)
+#if defined(YMWIN32)
+# include <openssl/applink.c> // as of 1.0.2, openssl exits with "no OPENSSL_Applink"
+#else
 # include <pthread.h>
 #endif
 
@@ -86,12 +88,20 @@ void ym_tls_thread_id_callback(CRYPTO_THREADID *threadId)
     CRYPTO_THREADID_set_numeric(threadId, (unsigned long)_YMThreadGetCurrentThreadNumber());
 }
 
+void __YMTLSInitPlatform()
+{
+#if defined(YMWIN32)
+	OPENSSL_Applink();
+#endif
+}
+
 YM_ONCE_FUNC(__YMTLSInit,
 {
 	SSL_load_error_strings();
 	// ``SSL_library_init() always returns "1", so it is safe to discard the return value.''
 	SSL_library_init();
 	OpenSSL_add_all_algorithms();
+	__YMTLSInitPlatform();
 
 	gYMTLSLocks = calloc(CRYPTO_num_locks(),sizeof(YMLockRef));
 
