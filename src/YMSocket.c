@@ -89,6 +89,15 @@ bool YMSocketSet(YMSocketRef s_, YMSOCKET socket)
     __ym_socket_t *s = (__ym_socket_t *)s_;
     ymassert(s->socket==NULL_SOCKET,"socket hot swap not implemented");
     
+#if !defined(YMWIN32)
+    struct stat statbuf;
+    fstat(socket, &statbuf);
+    if ( ! S_ISSOCK(statbuf.st_mode) ) {
+        ymerr("file f%d is not a socket",socket);
+        return false;
+    }
+#endif
+    
     s->socket = socket;
     
     ymerr("socket[if%d->of%d -> %d -> if%d->of%d]: %p allocating",

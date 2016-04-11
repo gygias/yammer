@@ -108,15 +108,6 @@ YMTLSProviderRef YMTLSProviderCreate(YMFILE inFile, YMFILE outFile, bool isServe
 {
 	YM_ONCE_DO(gYMInitTLSOnce,__YMTLSInit);
     
-#if !defined(YMWIN32) && defined(WTF_IS_THIS)
-    struct stat statbuf;
-    fstat(socket, &statbuf);
-    if ( ! S_ISSOCK(statbuf.st_mode) ) {
-        ymerrg(ymlog_pre "file f%d is not a socket",isServer,socket);
-        return NULL;
-    }
-#endif
-    
     __ym_tls_provider_t *tls = (__ym_tls_provider_t *)_YMAlloc(_YMTLSProviderTypeID,sizeof(__ym_tls_provider_t));
     
     tls->_common.inFile = inFile;
@@ -207,6 +198,10 @@ void YMTLSProviderFreeGlobals()
 //	memcpy(&gYMInitTLSOnce, &onceAgain, sizeof(onceAgain));
 }
 
+#if defined(YMWIN32)
+# define CRYPTO_LOCK 1
+# pragma warning(bad:fixme)
+#endif
 void __ym_tls_lock_callback(int mode, int type, __unused const char *file, __unused int line)
 {
     bool lock = mode & CRYPTO_LOCK;
@@ -482,8 +477,8 @@ bool __YMTLSProviderInit(__ym_security_provider_t *p)
     }
     
     SSL_set_bio(tls->ssl, tls->rBio, tls->wBio);
-    tls->rBio->ptr = tls; // this is the elusive context pointer
-    tls->wBio->ptr = tls;
+	BIO_set_app_data(tls->rBio, tls); // this is the elusive context pointer
+	BIO_set_app_data(tls->wBio, tls);
     ymlog("rBio[%d], wBio[%d]",tls->_common.inFile,tls->_common.outFile);
     
     SSL_set_debug(tls->ssl, 1);
@@ -579,11 +574,12 @@ bool __YMTLSProviderClose(__ym_security_provider_t *p)
     return true;
 }
 
+/*
 #pragma mark function bio example
 
 int ym_tls_write(BIO *bio, const char *buffer, int length)
 {
-    YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr;
+    YMTLSProviderRef tls = (YMTLSProviderRef)BIO_get_app_data(bio);
     ymlog("ym_tls_write: %p %p %d",bio,buffer,length);
     YMIOResult result = YMWriteFull(tls->_common.inFile, (const unsigned char *)buffer, length, NULL);
     if ( result != YMIOSuccess )
@@ -592,7 +588,7 @@ int ym_tls_write(BIO *bio, const char *buffer, int length)
 }
 int ym_tls_read(BIO *bio, char *buffer, int length)
 {
-    YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr;
+    YMTLSProviderRef tls = (YMTLSProviderRef)BIO_get_app_data(bio);
     ymlog("ym_tls_read: %p %p %d",bio,buffer,length);
     YMIOResult result = YMReadFull(tls->_common.outFile, (unsigned char *)buffer, length, NULL);
     if ( result == YMIOError )
@@ -603,22 +599,23 @@ int ym_tls_read(BIO *bio, char *buffer, int length)
 }
 int ym_tls_puts(BIO *bio, const char * buffer)
 {
-    YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr;
+    YMTLSProviderRef tls = (YMTLSProviderRef)BIO_get_app_data(bio);
     ymlog("ym_tls_puts: %p %p %s",bio,buffer,buffer);
     return 0;
 }
 
 int ym_tls_gets(BIO *bio, char * buffer, int length)
 {
-    YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr;
+    YMTLSProviderRef tls = (YMTLSProviderRef)BIO_get_app_data(bio);
     ymlog("ym_tls_gets: %p %p %d",bio,buffer,length);
     return 0;
 }
 
-long ym_tls_ctrl (BIO *bio, int one, long two, void *three) { YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr; ymlog("ym_tls_ctrl: %p %d %ld %p",bio,one,two,three); return 1; }
-int ym_tls_new(__unused BIO *bio) { /*YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr; ymlog("ym_tls_new: %p",bio); */ return 1; }
-int ym_tls_free(BIO *bio) { YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr; ymlog("ym_tls_free: %p",bio); return 1; }
-long ym_tls_callback_ctrl(BIO *bio, int one, bio_info_cb * info) { YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr; ymlog("ym_tls_callback_ctrl: %p %d %p",bio,one,info); return 1; }
+long ym_tls_ctrl (BIO *bio, int one, long two, void *three) { YMTLSProviderRef tls = (YMTLSProviderRef)BIO_get_app_data(bio); ymlog("ym_tls_ctrl: %p %d %ld %p",bio,one,two,three); return 1; }
+int ym_tls_new(__unused BIO *bio) { //YMTLSProviderRef tls = (YMTLSProviderRef)bio->ptr; ymlog("ym_tls_new: %p",bio);
+	return 1; }
+int ym_tls_free(BIO *bio) { YMTLSProviderRef tls = (YMTLSProviderRef)BIO_get_app_data(bio); ymlog("ym_tls_free: %p",bio); return 1; }
+long ym_tls_callback_ctrl(BIO *bio, int one, bio_info_cb * info) { YMTLSProviderRef tls = (YMTLSProviderRef)BIO_get_app_data(bio); ymlog("ym_tls_callback_ctrl: %p %d %p",bio,one,info); return 1; }
 
 BIO_METHOD ym_bio_methods =
 {
@@ -627,11 +624,11 @@ BIO_METHOD ym_bio_methods =
     ym_tls_write,
     ym_tls_read,
     ym_tls_puts,
-    ym_tls_gets, /* sock_gets, */
+    ym_tls_gets, // sock_gets
     ym_tls_ctrl,
     ym_tls_new,
     ym_tls_free,
     ym_tls_callback_ctrl,
-};
+};*/
 
 YM_EXTERN_C_POP
