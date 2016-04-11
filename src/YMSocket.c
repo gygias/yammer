@@ -13,6 +13,10 @@
 
 #include "YMLog.h"
 
+#if !defined(YMWIN32)
+# include <sys/stat.h>
+#endif
+
 YM_EXTERN_C_PUSH
 
 typedef struct __ym_socket
