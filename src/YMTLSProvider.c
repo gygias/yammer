@@ -518,7 +518,7 @@ bool __YMTLSProviderInit(__ym_security_provider_t *p)
 catch_return:
     
     if ( ! initOkay ) {
-        // seems that SSL* takes ownership of BIO
+        // seems that SSL* takes memory ownership of BIO
         if ( tls->ssl ) {
             SSL_free(tls->ssl);
             tls->ssl = NULL;

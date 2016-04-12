@@ -238,6 +238,13 @@ bool YMConnectionConnect(YMConnectionRef c_)
     
     struct sockaddr *addr = (struct sockaddr *)YMAddressGetAddressData(c->address);
     socklen_t addrLen = YMAddressGetLength(c->address);
+    if ( addr->sa_family == AF_INET )
+        ((struct sockaddr_in *)addr)->sin_port = htons(((struct sockaddr_in *)addr)->sin_port);
+    else if ( addr->sa_family == AF_INET6 )
+        ((struct sockaddr_in6 *)addr)->sin6_port = htons(((struct sockaddr_in6 *)addr)->sin6_port);
+    else
+        ymabort("connect: address family %d unsupported",addr->sa_family);
+    
     __unused struct sockaddr_in *addrAsIPV4 = (struct sockaddr_in *)addr;
     __unused struct sockaddr_in6 *addrAsIPV6 = (struct sockaddr_in6 *)addr;
     
@@ -290,6 +297,7 @@ bool __YMConnectionDoIFExchange(__ym_connection_t *c, YMSOCKET socket, bool asSe
             if ( ! okay ) { whyFailed = "write prefix"; goto catch_return; }
             
             // todo implemented localhost<->localhost does endianness matter streaming this?
+            // todo endianness here
             if ( mySockaddr->sa_family == AF_INET ) {
                 okay = YMWriteFull(socket,(uint8_t *)&((struct sockaddr_in *)mySockaddr)->sin_addr.s_addr, sizeof(in_addr_t), NULL);
                 if ( ! okay ) { whyFailed = "write ipv4 addr"; goto catch_return; }

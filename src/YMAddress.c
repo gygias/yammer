@@ -100,7 +100,7 @@ YMAddressRef YMAddressCreate(const void *sockaddr_, uint16_t port)
             goto rewind_fail;
         }
         
-        address->description = YMStringCreateWithFormat("%s:%u",ipString,ntohs(port),NULL);
+        address->description = YMStringCreateWithFormat("%s:%u",ipString,port,NULL);
     }
     
     return address;

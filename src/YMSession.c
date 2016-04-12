@@ -636,6 +636,18 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_accept_proc(YM_THREAD_PARAM 
             continue;
         }
         
+        struct sockaddr_in6 bigEnoughSockName;
+        socklen_t slen = sizeof(bigEnoughSockName);
+        int result = getsockname(aResult, (struct sockaddr *)&bigEnoughSockName, &slen);
+        if ( result == 0 ) {
+            if ( bigEnoughAddr->sin6_family == AF_INET )
+                ((struct sockaddr_in *)bigEnoughAddr)->sin_port = ntohs(((struct sockaddr_in *)&bigEnoughSockName)->sin_port);
+            else if ( bigEnoughAddr->sin6_family == AF_INET6 )
+                ((struct sockaddr_in6 *)bigEnoughAddr)->sin6_port = ntohs(bigEnoughSockName.sin6_port);
+            else
+                ymabort("accept: address family %d unsupported",bigEnoughAddr->sin6_family);
+        }
+        
         ymerr("accepted sf%d, dispatching connection init", aResult);
         
         if ( s->initializingFunc )
@@ -675,7 +687,7 @@ void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(YM_THREAD_
     
     ymlog("__ym_session_init_connection entered: sf%d %d %d",socket,addrLen,ipv4);
     
-    peerAddress = YMAddressCreate(addr,ipv4?ntohs(((struct sockaddr_in *)addr)->sin_port):ntohs(((struct sockaddr_in6 *)addr)->sin6_port));
+    peerAddress = YMAddressCreate(addr,ipv4?((struct sockaddr_in *)addr)->sin_port:((struct sockaddr_in6 *)addr)->sin6_port);
     peer = _YMPeerCreateWithAddress(peerAddress);
     if ( ! s->shouldAcceptFunc(s, peer, s->callbackContext) ) {
         ymlog("client rejected peer %s",YMSTR(YMAddressGetDescription(peerAddress)));

@@ -15,7 +15,6 @@
 - adopt spinlocks where appropriate
 - generalize copy file / recursive delete dir into utilities, or something
 - __YMRetain(obj,off)
-- server session's port order is backwards
 - match plexer buffer / max i/o to connection mtu?
 - __YMX509CertificateCreateX509 is misinterpreting errors from various openssl 'namespaces'
 - eliminate redundant framing between forward file and plexer
@@ -35,4 +34,4 @@ opaque_thing_that_closes_input_file
 - mDNS filter local services
 - muxer protocol renegotiate
 - service all ready downstreams in single loop, lock optimization
-- {h,n}to{n,h}
+- {h,n}to{n,h}, if exchange

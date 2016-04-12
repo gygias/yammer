@@ -480,7 +480,9 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
     YMStringRef unescapedName = ctx->unescapedName;
     free(context);
     
-    ymlog("__ym_mdns_resolve_callback: %s/%s(%s) -> %s:%u[txt%ub]",YMSTR(b->type),fullname,YMSTR(unescapedName),host,(unsigned)ntohs(port),txtLength);
+    uint16_t hostPort = ntohs(port);
+    
+    ymlog("__ym_mdns_resolve_callback: %s/%s(%s) -> %s:%u[txt%ub]",YMSTR(b->type),fullname,YMSTR(unescapedName),host,(unsigned)hostPort,txtLength);
     
     __YMmDNSBrowserRemoveServiceRef(b,serviceRef);
     
@@ -489,7 +491,7 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
     
     if ( dnsResult == kDNSServiceErr_NoError ) {
         
-        _YMmDNSServiceRecordSetPort(record, port);
+        _YMmDNSServiceRecordSetPort(record, hostPort);
         _YMmDNSServiceRecordSetTxtRecord(record, txtRecord, txtLength);
         
         if ( ! record->addrinfoSdref ) {
