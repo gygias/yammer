@@ -20,7 +20,7 @@
 
 #define ymlog_type YMLogConnection
 #define ymlog_pre "connection[%s:%s]: "
-#define ymlog_args (c->isServer ? "s" : "c"),(c->address ? YMSTR(YMAddressGetDescription(c->address)) : "*")
+#define ymlog_args (c->isIncoming ? "s" : "c"),(c->address ? YMSTR(YMAddressGetDescription(c->address)) : "*")
 #include "YMLog.h"
 
 #if !defined(YMWIN32)
@@ -58,7 +58,6 @@ typedef struct __ym_connection
     _YMType _common;
     
 	YMSOCKET socket;
-    bool isServer;
     YMSocketRef ymSocket;
     bool isIncoming;
     YMIFAPType apType;
@@ -561,7 +560,6 @@ bool __YMConnectionInitCommon(__ym_connection_t *c, YMSOCKET newSocket, bool asS
     
     c->plexer = plexer;
     c->socket = newSocket;
-    c->isServer = asServer;
     
     YMRelease(security);
     return true;
