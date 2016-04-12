@@ -180,7 +180,7 @@ YMPlexerRef YMPlexerCreate(YMStringRef name, YMSecurityProviderRef provider, boo
     
     __ym_plexer_t *p = (__ym_plexer_t *)_YMAlloc(_YMPlexerTypeID,sizeof(__ym_plexer_t));
     
-    p->name = YMStringCreateWithFormat("%s(%s)",name?YMSTR(name):"*",master?"m":"s",NULL);
+    p->name = YMStringCreateWithFormat("%s:%s",master?"s":"c",name?YMSTR(name):"*",NULL);
     p->provider = YMRetain(provider);
     
     p->active = false;
