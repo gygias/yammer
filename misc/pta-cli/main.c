@@ -24,6 +24,7 @@
 #endif
 
 #include <libyammer/Yammer.h>
+#include "YMUtilities.h"
 #include "misc/chat/defs.h"
 
 YMSessionRef gYMSession = NULL;
@@ -90,6 +91,23 @@ void thread(void (*func)(YMStreamRef), YMStreamRef context)
 #endif
 }
 
+void print_stuff(bool server, uint64_t off)
+{
+    printf("%s: wrote %llu: ",server?"s":"c",off);
+    
+    YMArrayRef connections = YMSessionCopyConnections(gYMSession);
+    for( int i = 0; i < YMArrayGetCount(connections); i++ ) {
+        YMConnectionRef aConnection = YMArrayGet(connections, i);
+        const char *lDesc = YMInterfaceTypeDescription(YMConnectionGetLocalInterface(aConnection));
+        const char *rDesc = YMInterfaceTypeDescription(YMConnectionGetRemoteInterface(aConnection));
+        const char *prefix = ( YMSessionGetDefaultConnection(gYMSession) == aConnection ) ? "* " : "";
+        printf("%s%s <-> %s (%0.2f mb/s)", prefix, lDesc, rDesc, (double)YMConnectionGetSample(aConnection)/1024/1024);
+    }
+    YMRelease(connections);
+    
+    printf("\n");
+}
+
 void run_client_loop(YMStreamRef stream)
 {
     YMIOResult ymResult;
@@ -98,12 +116,14 @@ void run_client_loop(YMStreamRef stream)
         uint32_t random = arc4random();
         ymResult = YMStreamWriteDown(stream, (uint8_t *)&random, sizeof(random));
         off += sizeof(random);
-        if ( ( off % 1048576 ) == 0 ) printf("c: wrote %llu\n",off);
+        
+        if ( ( off % 1048576 ) == 0 ) print_stuff(false,off);
+            
     } while ( ymResult == YMIOSuccess );
     
     printf("client write returned %d, breaking.",ymResult);
 }
-    
+
 void run_server_loop(YMStreamRef stream)
 {
     YMIOResult ymResult;
@@ -117,7 +137,7 @@ void run_server_loop(YMStreamRef stream)
             break;
         }
         off += o;
-        if ( ( off % 1048576 ) == 0 ) printf("s: wrote %llu\n",off);
+        if ( ( off % 1048576 ) == 0 ) print_stuff(true,off);
     } while ( ymResult == YMIOSuccess );
     
     printf("server breaking.");

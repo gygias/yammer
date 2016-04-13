@@ -154,7 +154,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "632FC1F41CBAE065007E89D9"
+               BlueprintIdentifier = "6371229D1CBEB5FD00629E10"
                BuildableName = "pta"
                BlueprintName = "pta"
                ReferencedContainer = "container:yammer.xcodeproj">
