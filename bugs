@@ -1,3 +1,12 @@
 no bugs? wrong!
 
 - raspberry pi (without wifi, or out-of-range wpa_supplicant configuration) <- direct connect ethernet dongle -> macbookpro still gives a mdns resolve callback loop
+2016-04-13 13:36:20.064 yammer[2807:1991353456]: session[session:_ympta._tcp]: __ym_mdns_service_appeared_func: lol
+...
+2016-04-13 13:36:20.069 yammer[2807:1991353456]: session[session:_ympta._tcp]: __ym_mdns_service_resolved_func lol
+2016-04-13 13:36:22.007 yammer[2807:1991353456]: session[session:_ympta._tcp]: __ym_mdns_service_removed_func lol
+2016-04-13 13:36:22.264 yammer[2807:1991353456]: session[session:_ympta._tcp]: __ym_mdns_service_appeared_func: lol
+...
+2016-04-13 13:36:23.159 yammer[2807:1991353456]: session[session:_ympta._tcp]: __ym_mdns_service_resolved_func lol
+2016-04-13 13:36:28.287 yammer[2807:1991353456]: session[session:_ympta._tcp]: __ym_mdns_service_removed_func lol
+...
