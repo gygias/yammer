@@ -1,4 +1,5 @@
 - write complete build instructions based off clean w32 & debian installs
+- adaptive sample, time based, short-circuit for convergence
 
 - uint8_t buf params are tedious, take void and cast bytewise internally
 - abolish file/socket distinction in a winsock friendly way
