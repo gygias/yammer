@@ -101,7 +101,7 @@ void print_stuff(bool server, uint64_t off)
         const char *lDesc = YMInterfaceTypeDescription(YMConnectionGetLocalInterface(aConnection));
         const char *rDesc = YMInterfaceTypeDescription(YMConnectionGetRemoteInterface(aConnection));
         const char *prefix = ( YMSessionGetDefaultConnection(gYMSession) == aConnection ) ? "* " : "";
-        printf("%s%s <-> %s (%0.2f mb/s)", prefix, lDesc, rDesc, (double)YMConnectionGetSample(aConnection)/1024/1024);
+        printf("%s%s <-> %s (%0.2f mb/s)%s", prefix, lDesc, rDesc, (double)YMConnectionGetSample(aConnection)/1024/1024,i<YMArrayGetCount(connections)-1?", ":"");
     }
     YMRelease(connections);
     
