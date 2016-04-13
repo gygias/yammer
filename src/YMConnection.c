@@ -171,7 +171,13 @@ __ym_connection_t *__YMConnectionCreate(bool isIncoming, YMAddressRef address, Y
 void _YMConnectionFree(YMTypeRef c_)
 {
     __ym_connection_t *c = (__ym_connection_t *)c_;
+    
+    c->newFunc = NULL;
+    c->closingFunc = NULL;
+    c->interruptedFunc = NULL;
+    
     __YMConnectionDestroy(c, true); // frees security and plexer
+    
     YMRelease(c->address);
     if ( c->localIFName )
         YMRelease(c->localIFName);

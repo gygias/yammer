@@ -209,6 +209,10 @@ void _YMSessionFree(YMTypeRef o_)
 {
     __ym_session_t *s = (__ym_session_t *)o_;
     
+    YMSessionSetCommonCallbacks(s, NULL, NULL, NULL, NULL, NULL);
+    YMSessionSetAdvertisingCallbacks(s, NULL, NULL);
+    YMSessionSetBrowsingCallbacks(s, NULL, NULL, NULL, NULL, NULL, NULL);
+    
     __YMSessionInterrupt(s, NULL);
     
     // release these first, threads join on their exit flag when they're deallocated,

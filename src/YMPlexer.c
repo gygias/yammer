@@ -230,8 +230,14 @@ YMPlexerRef YMPlexerCreate(YMStringRef name, YMSecurityProviderRef provider, boo
     return p;
 }
 
-void _YMPlexerFree(YMPlexerRef p)
+void _YMPlexerFree(YMPlexerRef p_)
 {
+    __ym_plexer_t *p = (__ym_plexer_t *)p_;
+    
+    p->newIncomingFunc = NULL;
+    p->closingFunc = NULL;
+    p->interruptedFunc = NULL;
+    
     // ensure that if we haven't been stopped, or interrupted, we hang up
     bool first = __YMPlexerInterrupt((__ym_plexer_t *)p);
     ymerr("deallocating (%s)",first?"stopping":"already stopped");

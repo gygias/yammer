@@ -117,7 +117,7 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     YMSOCKET socketB = YMLocalSocketPairGetB(socketPair);
     
     bool localIsMaster = arc4random_uniform(2);
-    ymlog("plexer test using pipes: L(%s)-s%d <-> s%d R(%s)",localIsMaster?"M":"S",socketA,socketB,localIsMaster?"S":"M");
+    ymlog("plexer test using pipes: L(%s)-s%d <-> s%d-R(%s)",localIsMaster?"m":"s",socketA,socketB,localIsMaster?"s":"m");
     ymlog("plexer test using %u threads, %u trips per thread, %s streams per thread, %s messages",PlexerTest1Threads,PlexerTest1RoundTripsPerThread,PlexerTest1NewStreamPerRoundTrip?"new":"one",PlexerTest1RandomMessages?"random":"fixed");
     
     YMStringRef name = YMSTRC("L");
