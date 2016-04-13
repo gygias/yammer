@@ -44,8 +44,8 @@ void __CtrlHandler(DWORD cType)
 
 int main(int argc, const char * argv[]) {
     
-    if ( argc < 2 || argc > 3 ) {
-        printf("usage: pta <mdns type> [<mdns name>]\n");
+    if ( argc < 1 || argc > 2 ) {
+        printf("usage: pta [<mdns name>]\n");
         printf(" if name is not specified, the tool will act as a client.\n");
         exit(1);
     }
@@ -56,16 +56,17 @@ int main(int argc, const char * argv[]) {
     SetConsoleCtrlHandler((PHANDLER_ROUTINE)__CtrlHandler, TRUE);
 #endif
     
-    if ( argc == 3 ) {
+    YMStringRef ymType = YMSTRC("_ympta._tcp");
+    if ( argc == 2 ) {
         gIsServer = true;
-        gYMSession = YMSessionCreate(YMSTRC(argv[1]));
+        gYMSession = YMSessionCreate(ymType);
         YMSessionSetCommonCallbacks(gYMSession, NULL, _connected_func, _interrupted_func, _new_stream_func, _closing_func);
         YMSessionSetAdvertisingCallbacks(gYMSession, _should_accept_func, NULL);
-        if ( ! YMSessionStartAdvertising(gYMSession, YMSTRC(argv[2])) )
+        if ( ! YMSessionStartAdvertising(gYMSession, YMSTRC(argv[1])) )
             exit(1);
     } else {
         gIsServer = false;
-        gYMSession = YMSessionCreate(YMSTRC(argv[1]));
+        gYMSession = YMSessionCreate(ymType);
         YMSessionSetCommonCallbacks(gYMSession, NULL, _connected_func, _interrupted_func, _new_stream_func, _closing_func);
         YMSessionSetBrowsingCallbacks(gYMSession, _added_peer_func, _removed_peer_func, _resolve_failed_func, _resolved_func, _connect_failed_func, NULL);
         if ( ! YMSessionStartBrowsing(gYMSession) )
