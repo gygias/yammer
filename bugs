@@ -1,1 +1,3 @@
-no bugs!?
+no bugs? wrong!
+
+- raspberry pi (without wifi, or out-of-range wpa_supplicant configuration) <- direct connect ethernet dongle -> macbookpro still gives a mdns resolve callback loop
