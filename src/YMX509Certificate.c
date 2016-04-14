@@ -28,7 +28,7 @@ typedef struct __ym_x509_certificate
 } __ym_x509_certificate;
 typedef struct __ym_x509_certificate __ym_x509_certificate_t;
 
-X509* __YMX509CertificateCreateX509(YMRSAKeyPairRef keyPair)
+X509* __YMX509CertificateCreateX509(YMRSAKeyPairRef keyPair, int daysBefore, int daysAfter)
 {
     const char *opensslFunc = NULL;
     ASN1_INTEGER *serial = NULL;
@@ -120,8 +120,13 @@ X509* __YMX509CertificateCreateX509(YMRSAKeyPairRef keyPair)
         goto catch_return;
     }
     
-    X509_gmtime_adj(X509_get_notBefore(x509), 0);
-    X509_time_adj_ex(X509_get_notAfter(x509), 365, 0, NULL);
+    time_t t_now = time(NULL);
+    ASN1_TIME *a_yearAgo = ASN1_TIME_adj(NULL, t_now, -(daysBefore), 0);
+    X509_set_notBefore(x509, a_yearAgo);
+    ASN1_STRING_free(a_yearAgo);
+    ASN1_TIME *a_yearFromNow = ASN1_TIME_adj(NULL, t_now, (daysAfter), 0);
+    X509_set_notAfter(x509, a_yearFromNow);
+    ASN1_STRING_free(a_yearFromNow);
     
     key = EVP_PKEY_new(); // todo leaks in happy case?
     if ( ! key ) {
@@ -174,7 +179,16 @@ catch_return:
 
 YMX509CertificateRef YMX509CertificateCreate(YMRSAKeyPairRef keyPair)
 {
-    X509 *x509 = __YMX509CertificateCreateX509(keyPair);
+    X509 *x509 = __YMX509CertificateCreateX509(keyPair, 1, 365);
+    if ( ! x509 )
+        return NULL;
+    
+    return _YMX509CertificateCreateWithX509(x509, false);
+}
+
+YMX509CertificateRef YMAPI YMX509CertificateCreate2(YMRSAKeyPairRef keyPair, int validityDaysBefore, int validityDaysAfter)
+{
+    X509 *x509 = __YMX509CertificateCreateX509(keyPair, validityDaysBefore, validityDaysAfter);
     if ( ! x509 )
         return NULL;
     

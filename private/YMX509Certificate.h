@@ -16,6 +16,7 @@ YM_EXTERN_C_PUSH
 typedef const struct __ym_x509_certificate * YMX509CertificateRef;
 
 YMX509CertificateRef YMAPI YMX509CertificateCreate(YMRSAKeyPairRef);
+YMX509CertificateRef YMAPI YMX509CertificateCreate2(YMRSAKeyPairRef, int validityDaysBefore, int validityDaysAfter);
 
 size_t YMAPI YMX509CertificateGetPublicKeyData(void *buffer);
 

@@ -386,7 +386,12 @@ void __YMTLSProviderInitSslCtx(__ym_tls_provider_t *tls)
         tls->usingGeneratedCert = true;
         rsa = YMRSAKeyPairCreate();
         YMRSAKeyPairGenerate(rsa);
+#if !defined(YMLINUX)
         cert = YMX509CertificateCreate(rsa);
+#else
+        ymerr("BUG: linux: using ±1 years validity");
+        cert = YMX509CertificateCreate2(rsa, 365 * 1, 365 * 1); // rpi ntp doesn't seem to stick when it loses internet, it's generally ±days
+#endif
     }
     
     if ( ! cert ) {
