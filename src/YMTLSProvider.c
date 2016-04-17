@@ -316,7 +316,12 @@ int __ym_tls_certificate_verify_callback(int preverify_ok, X509_STORE_CTX *x509_
     } else if ( ! preverify_ok ) {
         if ( ! tls->isServer && tls->usingGeneratedCert && ( err != X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT ) ) {
             ymerr("verify: preverify: %d (%s)",err,X509_verify_cert_error_string(err));
+#if !defined(YMLINUX)
             return 0;
+#else
+            ymerr("BUG: linux: cynical of cert validity, buy raspberry pi a precision timepiece for precision timekeeping");
+#endif
+            
         }
     }
     

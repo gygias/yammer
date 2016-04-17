@@ -382,6 +382,22 @@ bool YMSessionConnectToPeer(YMSessionRef s_, YMPeerRef peer, bool sync)
     YMArrayRef addresses = YMPeerGetAddresses(peer);
     for ( int64_t i = 0; i < YMArrayGetCount(addresses); i++ ) {
         YMAddressRef address = (YMAddressRef)YMArrayGet(addresses, i);
+        
+        bool existing = false;
+        YMDictionaryEnumRef denum = YMDictionaryEnumeratorBegin(s->connectionsByAddress);
+        while ( denum ) {
+            if ( YMAddressIsEqualIncludingPort(address, address, false) ) {
+                YMDictionaryEnumeratorEnd(denum);
+                existing = true;
+                break;
+            }
+            denum = YMDictionaryEnumeratorGetNext(denum);
+        }
+        if ( existing ) {
+            ymerr("already connected to %s",YMSTR(YMAddressGetDescription(address)));
+            continue;
+        }
+        
         YMConnectionRef newConnection = YMConnectionCreate(address, YMConnectionStream, YMTLS, true);
         
         context = (__ym_session_connect_t *)YMALLOC(sizeof(__ym_session_connect_t));
@@ -442,20 +458,29 @@ void YM_CALLING_CONVENTION __ym_session_connect_async_proc(YM_THREAD_PARAM ctx)
     
     bool okay = YMConnectionConnect(connection);
     
-    if ( okay && s->initializingFunc )
-        s->initializingFunc(s, s->callbackContext);
-    
-    okay = YMConnectionInit(connection);
+    if ( s->interrupted )
+        goto catch_release;
     
     if ( okay ) {
-        __YMSessionAddConnection((__ym_session_t *)s, connection);
-        if ( ! userSync )
-            s->connectedFunc(s, connection, s->callbackContext);
+        if ( s->initializingFunc )
+            s->initializingFunc(s, s->callbackContext);
+        okay = YMConnectionInit(connection);
+        
+        if ( s->interrupted )
+            goto catch_release;
+    
+        if ( okay ) {
+            __YMSessionAddConnection((__ym_session_t *)s, connection);
+            if ( ! userSync )
+                s->connectedFunc(s, connection, s->callbackContext);
+        }
     }
     else {
         if ( ! userSync )
             s->connectFailedFunc(s, peer, moreComing, s->callbackContext);
     }
+    
+catch_release:
     
     YMRelease(s);
     YMRelease(peer);
@@ -765,11 +790,15 @@ void YMSessionStop(YMSessionRef session)
 
 void __YMSessionAddConnection(__ym_session_t *s, YMConnectionRef connection)
 {
+    YMAddressRef address = YMConnectionGetAddress(connection);
+    ymassert(address, "could not initialize addr for connection");
+    
     YMSelfLock(s);
     {
-        YMDictionaryKey key = (YMDictionaryKey)connection;
+        YMDictionaryKey key = (YMDictionaryKey)address;
         ymassert(!YMDictionaryContains(s->connectionsByAddress, key), "connections by address state");
         YMDictionaryAdd(s->connectionsByAddress, key, (void *)YMRetain(connection));
+        ymerr("@@@ %p added connection %p with key %p",s,connection,key);
     }
     YMSelfUnlock(s);
     
@@ -778,8 +807,6 @@ void __YMSessionAddConnection(__ym_session_t *s, YMConnectionRef connection)
                              __ym_session_connection_interrupted_proc, s);
     
     bool isNewDefault = (s->defaultConnection == NULL);
-    YMAddressRef address = YMConnectionGetAddress(connection);
-    ymassert(address, "could not initialize addr for connection");
     
     ymlog("adding %s connection for %s",isNewDefault?"default":"aux",YMSTR(YMAddressGetDescription(address)));
     
@@ -860,7 +887,15 @@ void __ym_session_connection_interrupted_proc(YMConnectionRef connection, void *
     
     bool isDefault = ( connection == savedDefault );
     
-	    ymerr("connection interrupted: %s",YMSTR(YMAddressGetDescription(YMConnectionGetAddress(connection))));
+    ymerr("connection interrupted: %s",YMSTR(YMAddressGetDescription(YMConnectionGetAddress(connection))));
+    
+    YMSelfLock(s);
+    {
+        YMDictionaryKey key = (YMDictionaryKey)YMConnectionGetAddress(connection);
+        if ( YMDictionaryContains(s->connectionsByAddress, key) )
+            YMDictionaryRemove(s->connectionsByAddress, key);
+    }
+    YMSelfUnlock(s);
     
     if ( isDefault ) {
         if ( s->interruptedFunc )

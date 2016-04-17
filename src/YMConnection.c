@@ -521,20 +521,28 @@ bool __YMConnectionInitCommon(__ym_connection_t *c, YMSOCKET newSocket, bool asS
         }
     }
     
+    YMFILE inputFile;
+    YMFILE outputFile;
+//#define YM_USE_SOCKETS 1
+#if defined(YM_USE_SOCKETS)
     c->ymSocket = YMSocketCreate(ym_connection_socket_disconnected, c);
     bool okay = YMSocketSet(c->ymSocket, newSocket);
     ymassert(okay,"connection set socket");
     
-    YMFILE socketInput = YMSocketGetInput(c->ymSocket);
-    YMFILE socketOutput = YMSocketGetOutput(c->ymSocket);
+    inputFile = YMSocketGetInput(c->ymSocket);
+    outputFile = YMSocketGetOutput(c->ymSocket);
+#else
+    inputFile = newSocket;
+    outputFile = newSocket;
+#endif
     
     switch( c->securityType )
     {
         case YMInsecure:
-            security = YMSecurityProviderCreate(socketOutput,socketInput);
+            security = YMSecurityProviderCreate(outputFile,inputFile);
             break;
         case YMTLS:
-            security = (YMSecurityProviderRef)YMTLSProviderCreate(socketOutput, socketInput, asServer);
+            security = (YMSecurityProviderRef)YMTLSProviderCreate(outputFile, inputFile, asServer);
             break;
         default:
             ymerr("unknown security type");

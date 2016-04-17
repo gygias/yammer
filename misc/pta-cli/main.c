@@ -91,33 +91,42 @@ void thread(void (*func)(YMStreamRef), YMStreamRef context)
 #endif
 }
 
-void print_stuff(bool server, uint64_t off)
+void print_stuff(bool server, uint64_t this, time_t start)
 {
-    printf("%s: wrote %llu: ",server?"s":"c",off);
+    printf("%s: wrote %llu: ",server?"s":"c",this);
+    time_t end = time(NULL);
     
     YMArrayRef connections = YMSessionCopyConnections(gYMSession);
     for( int i = 0; i < YMArrayGetCount(connections); i++ ) {
         YMConnectionRef aConnection = YMArrayGet(connections, i);
         const char *lDesc = YMInterfaceTypeDescription(YMConnectionGetLocalInterface(aConnection));
         const char *rDesc = YMInterfaceTypeDescription(YMConnectionGetRemoteInterface(aConnection));
-        const char *prefix = ( YMSessionGetDefaultConnection(gYMSession) == aConnection ) ? "* " : "";
-        printf("%s%s <-> %s (%0.2f mb/s)%s", prefix, lDesc, rDesc, (double)YMConnectionGetSample(aConnection)/1024/1024,i<YMArrayGetCount(connections)-1?", ":"");
+        double sampleMBs = (double)YMConnectionGetSample(aConnection) / 1024. / 1024.;
+        if ( YMSessionGetDefaultConnection(gYMSession) == aConnection ) {
+            double tputMBs = (double)this / (double)( end - start ) / 1024. / 1024.;
+            double ratio = tputMBs / sampleMBs;
+            printf("* (%0.2f mb/s, %0.0f%%) ",tputMBs,ratio*100);
+        }
+        printf("%s <-> %s (%0.2f mb/s)%s", lDesc, rDesc, sampleMBs,i<YMArrayGetCount(connections)-1?", ":"");
     }
     YMRelease(connections);
     
     printf("\n");
 }
 
+#define LogIntervalBytes 1048576
+    
 void run_client_loop(YMStreamRef stream)
 {
     YMIOResult ymResult;
     uint64_t off = 0;
+    time_t start = time(NULL);
     do {
         uint32_t random = arc4random();
         ymResult = YMStreamWriteDown(stream, (uint8_t *)&random, sizeof(random));
         off += sizeof(random);
         
-        if ( ( off % 1048576 ) == 0 ) print_stuff(false,off);
+        if ( ( off % LogIntervalBytes ) == 0 ) { print_stuff(false,LogIntervalBytes,start); start = time(NULL); }
             
     } while ( ymResult == YMIOSuccess );
     
@@ -128,6 +137,7 @@ void run_server_loop(YMStreamRef stream)
 {
     YMIOResult ymResult;
     uint64_t off = 0;
+    time_t start = time(NULL);
     do {
         uint32_t random;
         uint16_t o = 0;
@@ -137,7 +147,7 @@ void run_server_loop(YMStreamRef stream)
             break;
         }
         off += o;
-        if ( ( off % 1048576 ) == 0 ) print_stuff(true,off);
+        if ( ( off % LogIntervalBytes ) == 0 ) { print_stuff(true,LogIntervalBytes,start); start = time(NULL); }
     } while ( ymResult == YMIOSuccess );
     
     printf("server breaking.");

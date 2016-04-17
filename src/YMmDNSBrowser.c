@@ -399,14 +399,19 @@ static void DNSSD_API __ym_mdns_browse_callback(__unused DNSServiceRef serviceRe
     }
     
     // "An enumeration callback with the "Add" flag NOT set indicates a "Remove", i.e. the domain is no longer valid.
-//#if !defined(YMLINUX) // my mdnsresponder goes into a removed/added loop on raspian, todo
     bool remove = ! ((flags & kDNSServiceFlagsAdd) || (flags & kDNSServiceFlagsMoreComing));
+    
+#if defined(YMLINUX) // apple's mdnsresponder goes into a removed/added loop ad nauseum on raspian, todo
+    if ( remove ) {
+        ymerr("BUG: linux: cynical about '%s:%s' removal",YMSTR(b->type),name);
+        remove = false;
+    }
+#endif
     
     YMStringRef ymName = YMSTRC(name);
     if ( remove )
         __YMmDNSBrowserRemoveServiceNamed(b, ymName);
     else
-//#endif
     {
         YMmDNSServiceRecord *existingRecord = __YMmDNSBrowserGetServiceWithName(b, ymName, false);
         if ( ! existingRecord ) {
