@@ -798,7 +798,7 @@ void __YMSessionAddConnection(__ym_session_t *s, YMConnectionRef connection)
         YMDictionaryKey key = (YMDictionaryKey)address;
         ymassert(!YMDictionaryContains(s->connectionsByAddress, key), "connections by address state");
         YMDictionaryAdd(s->connectionsByAddress, key, (void *)YMRetain(connection));
-        ymerr("@@@ %p added connection %p with key %p",s,connection,key);
+        ymlog("%p added connection %p with key %p",s,connection,key);
     }
     YMSelfUnlock(s);
     
