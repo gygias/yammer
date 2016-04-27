@@ -111,9 +111,9 @@ bool YMTaskLaunch(YMTaskRef t_)
     
     _YMLogLock();
     pid_t pid = fork();
+    _YMLogUnlock();
+    
     if ( pid == 0 ) { // child
-        _YMLogUnlock();
-        
         int64_t nArgs = t->args ? YMArrayGetCount(t->args) : 0;
         
         int64_t argvSize = nArgs + 2;
@@ -140,7 +140,6 @@ bool YMTaskLaunch(YMTaskRef t_)
         ymerr("execv: %d %s",errno,strerror(errno));
         exit(EXIT_FAILURE);
     }
-    _YMLogUnlock();
 
     t->childPid = pid;
 
