@@ -18,8 +18,7 @@
 
 - (id)_initWithStreamRef:(YMStreamRef)streamRef
 {
-    if ( ( self = [super init] ) )
-    {
+    if ( ( self = [super init] ) ) {
         self.streamRef = YMRetain(streamRef);
     }
     return self;

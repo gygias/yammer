@@ -246,8 +246,7 @@
 - (nullable id)transformedValue:(nullable id)value
 {
     ConnectionState state = [value integerValue];
-    switch(state)
-    {
+    switch(state) {
         case IdleState:
             return @"";
         case SearchingState:

@@ -29,8 +29,7 @@
 
 - (id)_initWithPeerRef:(YMPeerRef)peerRef
 {
-    if ( ( self = [super init] ) )
-    {
+    if ( ( self = [super init] ) ) {
         self.peerRef = YMRetain(peerRef);
     }
     return self;

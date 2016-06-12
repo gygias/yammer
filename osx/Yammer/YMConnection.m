@@ -25,8 +25,7 @@
 
 - (id)_initWithConnectionRef:(YMConnectionRef)connectionRef
 {
-    if ( ( self = [super init] ) )
-    {
+    if ( ( self = [super init] ) ) {
         self.connectionRef = YMRetain(connectionRef);
         self.streams = [NSMutableArray array];
     }
@@ -52,8 +51,7 @@
     __block YMStream *theStream = nil;
     [self.streams enumerateObjectsUsingBlock:^(id  _Nonnull obj, __unused NSUInteger idx, BOOL * _Nonnull stop) {
         YMStream *aStream = (YMStream *)obj;
-        if ( [aStream _isEqualToRef:streamRef] )
-        {
+        if ( [aStream _isEqualToRef:streamRef] ) {
             theStream = aStream;
             *stop = YES;
         }

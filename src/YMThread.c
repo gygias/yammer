@@ -221,8 +221,7 @@ __ym_thread_dispatch_context_t *__YMThreadDispatchJoin(__ym_thread_t *t)
     }
     YMLockUnlock(gDispatchThreadListLock);
     
-    if ( stopped )
-    {
+    if ( stopped ) {
         YMSemaphoreSignal(t->dispatchSemaphore);
         
         if ( _YMThreadGetThreadNumber(t) != _YMThreadGetCurrentThreadNumber() ) {

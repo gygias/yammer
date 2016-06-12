@@ -706,8 +706,7 @@ void _resolved_func(YMSessionRef session, YMPeerRef peer, void *context)
         bool okay = YMSessionConnectToPeer(session,peer,testSync);
         testassert(okay,"client connect to peer");
         
-        if ( testSync )
-        {
+        if ( testSync ) {
             YMConnectionRef connection = YMSessionGetDefaultConnection(session);
             _connected_func(session,connection,theTest);
         }

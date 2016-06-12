@@ -34,14 +34,11 @@ int main(int argc, char *argv[])
     
     ymlog("ym-dispatch-main-test running on %s with %d reps",main?"main":"thread",gReps);
     
-    if ( main )
-    {
+    if ( main ) {
         YMThreadStart(YMThreadCreate(YMSTRC("dispatch-main-test-thread"), _ym_dispatch_main_test_proc, NULL));
         YMThreadDispatchSetGlobalMode(true);
         YMThreadDispatchMain();
-    }
-    else
-    {
+    } else {
         _ym_dispatch_main_test_proc(NULL);
     }
     
@@ -63,8 +60,7 @@ void YM_CALLING_CONVENTION _ym_thread_dispatch_func(__unused YM_THREAD_PARAM con
     
     gCompleted++;
     
-    if ( gCompleted == gReps )
-    {
+    if ( gCompleted == gReps ) {
         ymlog("dispatch-main-test completed %d reps",gReps);
         exit(0);
     }
@@ -72,8 +68,7 @@ void YM_CALLING_CONVENTION _ym_thread_dispatch_func(__unused YM_THREAD_PARAM con
 
 YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_dispatch_main_test_proc(__unused YM_THREAD_PARAM ctx)
 {
-    for( int i = 0; i < gReps; i++ )
-    {
+    for( int i = 0; i < gReps; i++ ) {
         YMThreadRef globalQueue = YMThreadDispatchGetGlobal();
         ym_thread_dispatch_user_t aDispatch = { _ym_thread_dispatch_func, NULL, true, NULL, NULL };
         YMThreadDispatchDispatch(globalQueue, aDispatch);

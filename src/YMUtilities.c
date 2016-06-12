@@ -605,8 +605,7 @@ catch_return:
 
 const char *YMInterfaceTypeDescription(YMInterfaceType type)
 {
-    switch ( type )
-    {
+    switch ( type ) {
         case YMInterfaceLoopback:
             return "loopback";
             break;

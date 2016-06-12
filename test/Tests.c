@@ -35,8 +35,7 @@ YMLockRef gLock = NULL;
 
 void _ym_test_assert_func(__unused const void *ctx, bool exp, const char *fmt, ...)
 {
-	if (!exp)
-	{
+    if (!exp) {
 		va_list args;
 		va_start(args, fmt);
 		vfprintf(stderr, fmt, args);
@@ -112,8 +111,7 @@ char *YMRandomASCIIStringWithMaxLength(uint16_t maxLength, bool for_mDNSServiceN
     
     uint8_t maxChar = for_mDNSServiceName ? 'z' : 0x7E, minChar = for_mDNSServiceName ? 'a' : 0x20;
     uint8_t range = maxChar - minChar;    
-    while ( randomLength-- )
-    {
+    while ( randomLength-- ) {
         char aChar;
         do {
             aChar = (char)arc4random_uniform(range + 1) + minChar;
@@ -132,8 +130,7 @@ uint8_t *YMRandomDataWithMaxLength(uint16_t length, uint16_t *outLength)
     uint8_t *randomData = malloc(randomLength);
     
     uint16_t countdown = randomLength;
-    while ( countdown-- )
-    {
+    while ( countdown-- ) {
         uint8_t aByte = (uint8_t)arc4random_uniform(0x100);
         randomData[countdown] = aByte;
     }

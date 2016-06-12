@@ -536,8 +536,7 @@ bool __YMConnectionInitCommon(__ym_connection_t *c, YMSOCKET newSocket, bool asS
     outputFile = newSocket;
 #endif
     
-    switch( c->securityType )
-    {
+    switch( c->securityType ) {
         case YMInsecure:
             security = YMSecurityProviderCreate(outputFile,inputFile);
             break;

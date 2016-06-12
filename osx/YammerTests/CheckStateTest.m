@@ -67,13 +67,10 @@
     NSData *output = [[pipe2 fileHandleForReading] readDataToEndOfFile];
     NSString *outputStr = [[NSString alloc] initWithData:output encoding:NSUTF8StringEncoding];
     
-    if ( ! fail && assertOutputDoesNotContainStrings )
-    {
-        for ( NSString *string in assertOutputDoesNotContainStrings )
-        {
+    if ( ! fail && assertOutputDoesNotContainStrings ) {
+        for ( NSString *string in assertOutputDoesNotContainStrings ) {
             fail = ( [outputStr rangeOfString:string].location != NSNotFound );
-            if ( fail )
-            {
+            if ( fail ) {
                 NSLog(@"output contains '%@'",string);
                 break;
             }

@@ -41,8 +41,7 @@
 
 void ym_test_assert_proc(const void *ctx, bool exp, const char *fmt, ...)
 {
-    if ( ! exp )
-    {
+    if ( ! exp ) {
         va_list args;
         va_start(args,fmt);
         vprintf(fmt, args);
@@ -73,13 +72,10 @@ bool ym_test_diff_proc(const void *ctx, const char *path1, const char *path2, bo
             if ( [(NSString *)line length] == 0 )
                 return;
             BOOL lineOK = NO;
-            if ( exceptions )
-            {
+            if ( exceptions ) {
                 YMDictionaryEnumRef dEnum = YMDictionaryEnumeratorBegin(exceptions);
-                while (dEnum)
-                {
-                    if ( strstr([line UTF8String],dEnum->value) )
-                    {
+                while (dEnum) {
+                    if ( strstr([line UTF8String],dEnum->value) ) {
                         NSLog(@"making exception for %s based on '%@'",dEnum->value,line);
                         lineOK = true;
                         break;
@@ -88,8 +84,7 @@ bool ym_test_diff_proc(const void *ctx, const char *path1, const char *path2, bo
                 }
                 YMDictionaryEnumeratorEnd(dEnum);
             }
-            if ( ! lineOK )
-            {
+            if ( ! lineOK ) {
                 NSLog(@"no match for '%@'",line);
                 outputAndOK = NO;
                 *stop = YES;

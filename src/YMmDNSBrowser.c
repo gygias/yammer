@@ -411,8 +411,7 @@ static void DNSSD_API __ym_mdns_browse_callback(__unused DNSServiceRef serviceRe
     YMStringRef ymName = YMSTRC(name);
     if ( remove )
         __YMmDNSBrowserRemoveServiceNamed(b, ymName);
-    else
-    {
+    else {
         YMmDNSServiceRecord *existingRecord = __YMmDNSBrowserGetServiceWithName(b, ymName, false);
         if ( ! existingRecord ) {
             YMmDNSServiceRecord *record = _YMmDNSServiceRecordCreate(name, type, domain);

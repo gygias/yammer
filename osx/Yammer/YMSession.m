@@ -38,8 +38,7 @@
 
 - (id)initWithType:(NSString *)type name:(NSString *)name
 {
-    if ( ( self = [super init] ) )
-    {
+    if ( ( self = [super init] ) ) {
         // todo: since we're the 'friendly objc' wrapper, should probably check args rather than crash in the c lib
         YMStringRef ymName = YMSTRC([type UTF8String]);
         self.ymsession = YMSessionCreate(ymName);
@@ -136,8 +135,7 @@
     __block YMConnection *theConnection = nil;
     [self.connections enumerateObjectsUsingBlock:^(id  _Nonnull obj, __unused NSUInteger idx, BOOL * _Nonnull stop) {
         YMConnection *aCon = (YMConnection *)obj;
-        if ( [aCon _isEqualToRef:connectionRef] )
-        {
+        if ( [aCon _isEqualToRef:connectionRef] ) {
             theConnection = obj;
             *stop = YES;
         }
@@ -150,8 +148,7 @@ void _added_peer_func(__unused YMSessionRef session, YMPeerRef peerRef, void* co
 {
     YMSession *SELF = (__bridge YMSession *)context;
     NSLog(@"%s: %@",__FUNCTION__,SELF);
-    if ( SELF.discoveredHandler )
-    {
+    if ( SELF.discoveredHandler ) {
         YMPeer *peer = [[YMPeer alloc] _initWithPeerRef:peerRef];
         SELF.discoveredHandler(SELF, peer);
     }
@@ -161,8 +158,7 @@ void _removed_peer_func(__unused YMSessionRef session, YMPeerRef peerRef, void* 
 {
     YMSession *SELF = (__bridge YMSession *)context;
     NSLog(@"%s: %@",__FUNCTION__,SELF);
-    if ( SELF.disappearedHandler )
-    {
+    if ( SELF.disappearedHandler ) {
         YMPeer *peer = [[YMPeer alloc] _initWithPeerRef:peerRef];
         SELF.disappearedHandler(SELF, peer);
     }
@@ -173,8 +169,7 @@ void _resolve_failed_func(__unused YMSessionRef session, YMPeerRef peerRef, void
     YMSession *SELF = (__bridge YMSession *)context;
     NSLog(@"%s: %@",__FUNCTION__,SELF);
     
-    if ( SELF.resolvingPeer && SELF.resolvedHandler )
-    {
+    if ( SELF.resolvingPeer && SELF.resolvedHandler ) {
         BOOL same = YMStringEquals(YMPeerGetName(peerRef), YMPeerGetName([SELF.resolvingPeer _peerRef]));
         if ( same )
             SELF.resolvedHandler(SELF, SELF.resolvingPeer, NO);
@@ -186,8 +181,7 @@ void _resolved_func(__unused YMSessionRef session, YMPeerRef peerRef, void* cont
     YMSession *SELF = (__bridge YMSession *)context;
     NSLog(@"%s: %@",__FUNCTION__,SELF);
     
-    if ( SELF.resolvingPeer && SELF.resolvedHandler )
-    {
+    if ( SELF.resolvingPeer && SELF.resolvedHandler ) {
         BOOL same = YMStringEquals(YMPeerGetName(peerRef), YMPeerGetName([SELF.resolvingPeer _peerRef]));
         if ( same )
             SELF.resolvedHandler(SELF, SELF.resolvingPeer, YES);
@@ -199,8 +193,7 @@ void _connect_failed_func(__unused YMSessionRef session, YMPeerRef peerRef, __un
     YMSession *SELF = (__bridge YMSession *)context;
     NSLog(@"%s: %@",__FUNCTION__,SELF);
     
-    if ( SELF.connectingPeer && SELF.failedHandler )
-    {
+    if ( SELF.connectingPeer && SELF.failedHandler ) {
         BOOL same = YMStringEquals(YMPeerGetName(peerRef), YMPeerGetName([SELF.connectingPeer _peerRef]));
         if ( same )
             SELF.failedHandler(SELF, SELF.connectingPeer);
