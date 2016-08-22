@@ -777,7 +777,7 @@ bool YMDestroyMutex(pthread_mutex_t *mutex)
     return ( result == 0 );
 }
 
-#else
+#else // win32
 
 bool YMLockMutex(HANDLE mutex)
 {
@@ -798,13 +798,12 @@ HANDLE YMCreateMutexWithOptions(YMLockOptions options)
 {
 	return CreateMutex(NULL, false, NULL);
 }
-
 #endif
 
 #if defined(YMLINUX)
 bool gYMDebuggerChecked = false;
 bool gYMDebuggerAttached = true;
-void __ymutilities_debugger_sigtrap_trap(int sig)
+void __ymutilities_debug_sigtrap(int sig)
 {
   gYMDebuggerAttached = false;
   signal(SIGTRAP, SIG_DFL);
@@ -838,13 +837,12 @@ bool YMIsDebuggerAttached()
     junk = sysctl(mib, sizeof(mib) / sizeof(*mib), &info, &size, NULL, 0);
     assert(junk == 0);
     
-    // We're being debugged if the P_TRACED flag is set.
-    
+    // We're being debugged if the P_TRACED flag is set.    
     return ( (info.kp_proc.p_flag & P_TRACED) != 0 );
 #elif defined(YMLINUX)
     if ( ! gYMDebuggerChecked ) {
       gYMDebuggerChecked = true;
-      signal(SIGTRAP, __ymutilities_debugger_sigtrap_trap);
+      signal(SIGTRAP, __ymutilities_debug_sigtrap);
       raise(SIGTRAP);
     }
 #elif defined(YMWIN32)
