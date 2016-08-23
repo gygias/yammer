@@ -47,7 +47,7 @@ void _ym_test_assert_func(__unused const void *ctx, bool exp, const char *fmt, .
 
 #define HARD
 #ifdef HARD
-		ymabort("yo");
+		ymabort("something happened");
 #else
 		YMLockLock(gLock);
 		gFailures++;
