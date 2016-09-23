@@ -446,6 +446,9 @@ bool __YMConnectionInitCommon(__ym_connection_t *c, YMSOCKET newSocket, bool asS
     }
     
     if ( asServer ) {
+        // when/if optional, sampling is done serially upon connection before the "line" is released to the client.
+        // can't assume client will continuously send/receive data to the point that an accurate sample is gathered,
+        // yet don't want client data borrowing throughput from the sample.
         // if ( clientWantsSamplingFastestEtc )
 #define THIRTY_TWO_MEGABYTES 33554432
 #define SIXTEEN_MEGABYTES ( THIRTY_TWO_MEGABYTES / 2 )
