@@ -230,7 +230,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _RunEndpoint(YM_THREAD_PARAM ctx)
     if ( looped )
         YMLockUnlock(theTest->stateLock);
     
-    ymlog("run %s exiting...",isServer?"server":"client");
+    NoisyTestLog("run %s exiting...",isServer?"server":"client");
     YMSemaphoreSignal(theTest->threadExitSemaphore);
 
 	YM_THREAD_END

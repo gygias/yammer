@@ -175,7 +175,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_socket_out_proc(YM_THREAD_PARAM ctx)
         if ( ! s->passthrough ) socketgram.iOff = s->iOff++;
         uint8_t *outBuf = s->passthrough ? (uint8_t *)&socketgram.data : (uint8_t *)&socketgram;
         while ( off < toForwardBoxed ) {
-            ymdbg("_ym_socket_out_proc reading socketgram: %zd of %zd",off,toForwardBoxed);
+            ymdbg("_ym_socket_out_proc writing socketgram: %zd of %zd",off,toForwardBoxed);
             YM_WRITE_SOCKET(s->socket, outBuf + off, toForwardBoxed - off);
             if ( result <= 0 ) {
                 ymlog("socket output");
@@ -219,7 +219,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_socket_in_proc(YM_THREAD_PARAM ctx)
         
         uint8_t *inBuf = s->passthrough ? (uint8_t *)&socketgram.data : (uint8_t *)&socketgram;
         while ( off < toForwardBoxed ) {
-            ymerr("_ym_socket_in_proc reading socketgram: %zd of %zd",off,toForwardBoxed);
+            ymdbg("_ym_socket_in_proc reading socketgram: %zd of %zd",off,toForwardBoxed);
             YM_READ_SOCKET(s->socket, inBuf + off, toForwardBoxed - off);
             if ( result <= 0 ) {
                 ymlog("socket output closed");
@@ -239,7 +239,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_socket_in_proc(YM_THREAD_PARAM ctx)
         off = 0;
         if ( ! s->passthrough ) s->oOff = socketgram.iOff;
         while ( off < toForwardRaw ) {
-            ymerr("_ym_socket_in_proc writing to %d: %zd of %zd",inputOfOutput,off,toForwardRaw);
+            ymdbg("_ym_socket_in_proc writing socketgram to %d: %zd of %zd",inputOfOutput,off,toForwardRaw);
             YM_WRITE_FILE(inputOfOutput, ((uint8_t *)&socketgram.data) + off, toForwardRaw - off);
             if ( result <= 0 ) {
                 ymlog("socket input");

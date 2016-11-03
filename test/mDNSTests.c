@@ -181,7 +181,7 @@ YMmDNSTxtRecordKeyPair ** _MakeTxtRecordKeyPairs(uint16_t *inOutnKeypairs)
             ymabort("txt record format");
     }
     
-    NoisyTestLog(@"made txt record length %zu out of requested %zu (blob size %zu)",actualSize,requestedSize,debugBlobSize);
+    NoisyTestLog("made txt record length %zu out of requested %zu (blob size %zu)",actualSize,requestedSize,debugBlobSize);
     *inOutnKeypairs = (uint16_t)actualSize;
     
     return keyPairs;
