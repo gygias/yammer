@@ -14,7 +14,6 @@
 @interface YMSession ()
 
 @property (nonatomic,copy) NSString *type;
-@property (nonatomic,copy) NSString *name;
 
 @property (nonatomic,copy) YMSessionPeerDiscoveredHandler discoveredHandler;
 @property (nonatomic,copy) YMSessionPeerDisappearedHandler disappearedHandler;
@@ -36,7 +35,7 @@
 
 @implementation YMSession
 
-- (id)initWithType:(NSString *)type name:(NSString *)name
+- (id)initWithType:(NSString *)type
 {
     if ( ( self = [super init] ) ) {
         // todo: since we're the 'friendly objc' wrapper, should probably check args rather than crash in the c lib
@@ -51,7 +50,6 @@
         YMSessionSetBrowsingCallbacks(self.ymsession, _added_peer_func, _removed_peer_func, _resolve_failed_func, _resolved_func, _connect_failed_func, (__bridge void *)(self));
         
         self.type = type;
-        self.name = name;
         self.connections = [NSMutableArray array];
     }
     return self;

@@ -13,13 +13,16 @@
 @interface YMConnection : NSObject
 
 @property (readonly) NSString * localInterfaceName;
-@property (readonly) YMInterfaceType localInterfaceType;
+//@property (readonly) YMInterfaceType localInterfaceType;
 @property (readonly) NSString * localInterfaceDescription;
-@property (readonly) YMInterfaceType remoteInterfaceType;
+//@property (readonly) YMInterfaceType remoteInterfaceType;
 @property (readonly) NSString * remoteInterfaceDescription;
 @property (readonly) NSNumber *sample; // bytes/sec
 
 - (YMStream *)newStreamWithName:(NSString *)name;
 - (void)closeStream:(YMStream *)stream;
+
+- (BOOL)forwardFile:(int)file toStream:(YMStream *)stream length:(uint64_t *)inOutLen;
+- (BOOL)forwardStream:(YMStream *)stream toFile:(int)file length:(uint64_t *)inOutLen;
 
 @end

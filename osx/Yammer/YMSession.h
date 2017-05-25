@@ -16,7 +16,7 @@ typedef void (^YMSessionPeerDiscoveredHandler)(YMSession *session, YMPeer *peer)
 typedef void (^YMSessionPeerDisappearedHandler)(YMSession *session, YMPeer *peer);
 typedef void (^YMSessionPeerResolveHandler)(YMSession *session, YMPeer *peer, BOOL resolved);
 
-typedef bool (^YMSessionShouldAcceptConnectionHandler)(YMSession *session, YMPeer *peer);
+typedef BOOL (^YMSessionShouldAcceptConnectionHandler)(YMSession *session, YMPeer *peer);
 typedef void (^YMSessionConnectionInitializingHandler)(YMSession *session);
 typedef void (^YMSessionConnectionFailedHandler)(YMSession *session, YMPeer *peer);
 typedef void (^YMSessionNewConnectionHandler)(YMSession *session, YMConnection *connection);
@@ -25,8 +25,7 @@ typedef void (^YMSessionNewStreamHandler)(YMSession *session, YMConnection *conn
 typedef void (^YMSessionStreamClosingHandler)(YMSession *session, YMConnection *connection, YMStream *stream);
 typedef void (^YMSessionInterruptedHandler)(YMSession *session);
 
-- (id)initWithType:(NSString *)type
-              name:(NSString *)name;
+- (id)initWithType:(NSString *)type;
 - (void)setStandardHandlers:(YMSessionConnectionInitializingHandler)initializingHandler
                            :(YMSessionNewStreamHandler)newHandler
                            :(YMSessionStreamClosingHandler)closingHandler

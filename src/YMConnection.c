@@ -237,8 +237,8 @@ bool YMConnectionConnect(YMConnectionRef c_)
     int yes = 1;
     result = setsockopt(newSocket, SOL_SOCKET, SO_REUSEADDR, (const void *)&yes, sizeof(yes));
     if ( result != 0 ) ymerr("warning: setsockopt(reuse) failed on f%d: %ld: %d (%s)",newSocket,result,errno,strerror(errno));
-    result = setsockopt(newSocket, SOL_SOCKET, SO_DONTROUTE, (const void *)&yes, sizeof(yes));
-    if ( result != 0 ) ymerr("warning: setsockopt(dontroute) failed on f%d: %ld: %d (%s)",newSocket,result,errno,strerror(errno));
+    //result = setsockopt(newSocket, SOL_SOCKET, SO_DONTROUTE, (const void *)&yes, sizeof(yes));
+    //if ( result != 0 ) ymerr("warning: setsockopt(dontroute) failed on f%d: %ld: %d (%s)",newSocket,result,errno,strerror(errno));
     
     ymlog("connecting...");
     
@@ -708,6 +708,7 @@ bool YMConnectionForwardStream(YMConnectionRef c, YMStreamRef fromStream, YMFILE
     return __YMConnectionForward(c, true, fromStream, toFile, nBytesPtr, sync, callbackInfo);
 }
 
+//#warning i think this fails when nBytes==0, e.g. /usr/share/cups/templates/help-trailer.tmpl
 bool __YMConnectionForward(YMConnectionRef c, bool toFile, YMStreamRef stream, YMFILE file, const uint64_t *nBytesPtr, bool sync, ym_connection_forward_context_t *callbackInfo)
 {
     
