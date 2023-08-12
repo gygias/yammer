@@ -44,6 +44,9 @@
 #include "YMLog.h"
 #define daemon_log(l,f,...) ymerr(f,##__VA_ARGS__)
 
+int interface_auto_up;
+int interface_do_message;
+
 void interface_up(int fd, char *iface) {
     struct ifreq ifr;
 

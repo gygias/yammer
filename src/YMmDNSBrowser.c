@@ -200,7 +200,6 @@ typedef struct __ym_mdns_resolve __ym_mdns_resolve_t;
 bool YMmDNSBrowserResolve(YMmDNSBrowserRef b_, YMStringRef serviceName)
 {
     __ym_mdns_browser_t *b = (__ym_mdns_browser_t *)b_;
-    
     YMmDNSServiceRecord *theService = __YMmDNSBrowserGetServiceWithName(b, serviceName, false);
     if ( ! theService ) {
         ymerr("asked to resolve '%s::%s' without record",YMSTR(b->type),YMSTR(serviceName));
@@ -400,14 +399,7 @@ static void DNSSD_API __ym_mdns_browse_callback(__unused DNSServiceRef serviceRe
     
     // "An enumeration callback with the "Add" flag NOT set indicates a "Remove", i.e. the domain is no longer valid.
     bool remove = ! ((flags & kDNSServiceFlagsAdd) || (flags & kDNSServiceFlagsMoreComing));
-    
-#if defined(YMLINUX) // apple's mdnsresponder goes into a removed/added loop ad nauseum on raspian, todo
-    if ( remove ) {
-        ymerr("BUG: linux: cynical about '%s:%s' removal",YMSTR(b->type),name);
-        remove = false;
-    }
-#endif
-    
+        
     YMStringRef ymName = YMSTRC(name);
     if ( remove )
         __YMmDNSBrowserRemoveServiceNamed(b, ymName);
@@ -502,19 +494,29 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
             
             record->addrinfoSdref = YMALLOC(sizeof(DNSServiceRef));
             __YMmDNSBrowserAddServiceRef(b, record->addrinfoSdref);
+
+            struct addrinfo a, *c;
+            char portstr[10];
+            snprintf(portstr, 10, "%u", hostPort);
+            int ret = getaddrinfo(host, portstr, NULL, &c);
+            if ( ret != 0 ) {
+                ymerr("getting addr info for '%s::%s::%s:%s': %d %s", YMSTR(b->type), YMSTR(unescapedName), host, portstr, ret, strerror(ret));
+                free(record->addrinfoSdref);
+                record->addrinfoSdref = NULL;
+                return;
+            }
             
+            int idx = 0;
             __ym_get_addr_info_t *aCtx = YMALLOC(sizeof(__ym_get_addr_info_t));
             aCtx->b = (__ym_mdns_browser_t *)YMRetain(b);
             aCtx->unescapedName = YMRetain(unescapedName);
-            DNSServiceErrorType err = DNSServiceGetAddrInfo(record->addrinfoSdref, kDNSServiceFlagsForceMulticast, kDNSServiceInterfaceIndexAny, kDNSServiceProtocol_IPv4|kDNSServiceProtocol_IPv6, host, __ym_mdns_addr_info_callback, aCtx);
-            if ( err != kDNSServiceErr_NoError ) {
-                ymerr("getting addr info for '%s::%s'",YMSTR(b->type),YMSTR(unescapedName));
-                free(record->addrinfoSdref);
-                record->addrinfoSdref = NULL;
-                YMRelease(aCtx->b);
-                YMRelease(aCtx->unescapedName);
-                free(aCtx);
-            }
+            do {
+                if (c->ai_family == AF_INET || c->ai_family == AF_INET6)
+                    __ym_mdns_addr_info_callback(record->addrinfoSdref,c->ai_next?kDNSServiceFlagsMoreComing:0,idx,0,host,c->ai_addr,0,aCtx);
+                else
+                    ymlog("getaddrinfo unknown type: %d",c->ai_family);
+                c = c->ai_next; idx++;
+            } while (c);
         }
     } else if ( b->serviceResolved )
         b->serviceResolved(b, false, record, b->callbackContext);

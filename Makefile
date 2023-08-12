@@ -30,8 +30,8 @@ ifeq ($(ARCH),macos)
 else
 	LSRC+= arc4random.c interface.c
 	DEFS=-DYMLINUX
-	CC=$(GCC)
-	STD=c99
+	CC=$(CLANG)
+	STD=gnu99
 	IEX=-Ilinux
 	LLEX=-ldns_sd -lbz2 -lz
 	PT=-pthread
@@ -41,7 +41,7 @@ LDEP=$(LOBJ:%.o=$(OUT)/%.o)
 INC=-I. -Iprivate -Ilibyammer $(IEX)
 LLIBS=-lssl -lcrypto $(LLEX)
 DBG=-ggdb3
-FLG=-include private/yammerpch.h -std=$(STD) $(DEFS) $(PT) -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast
+FLG=-include private/yammerpch.h -std=$(STD) $(DEFS) $(PT) -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast -fPIC
 
 #ALG=-L/usr/lib/arm-linux-gnueabihf
 DLIBS=-L. -lyammer
