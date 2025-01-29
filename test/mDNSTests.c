@@ -210,11 +210,25 @@ void _CompareTxtList(struct mDNSTest *theTest, YMmDNSTxtRecordKeyPair **aList, s
     testassert((uintptr_t)aList ^ (uintptr_t)bList,"null list vs non-null list");
     
     for ( size_t i = 0; i < aSize; i++ ) {
-        testassert(aList[i]->key&&bList[i],"a key %zdth null",i);
-        testassert(0 == strcmp(YMSTR(aList[i]->key), YMSTR(bList[i]->key)),"%zd-th keys '%s' and '%s' don't match",i,YMSTR(aList[i]->key),YMSTR(bList[i]->key));
+        testassert(aList[i]->key,"(a) key %zdth null (%p %p)",i,aList[i]->key,bList[i]->key);
+
+        // this happened to work once, no more on ubuntu 24.04 / libavahi-core7/noble,now 0.8-13ubuntu6 amd64
+        //testassert(0 == strcmp(YMSTR(aList[i]->key), YMSTR(bList[i]->key)),"%zd-th keys '%s' and '%s' don't match (%d)",i,YMSTR(aList[i]->key),YMSTR(bList[i]->key),aSize);
+        ssize_t j = 0;
+        for ( ; j <= bSize; j++ ) {
+            if ( j == bSize ) {
+                j = -1;
+                break;
+            }
+
+            testassert(bList[j]->key,"(b) key %zdth null",j);
+            if ( 0 == strcmp(YMSTR(aList[i]->key), YMSTR(bList[j]->key)) )
+                break;
+        }
+        testassert(j>=0,"couldn't find corresponding b key-value for '%s'",YMSTR(aList[i]->key));
         testassert(aList[i]->value&&aList[i]->value,"a value %zdth null",i);
-        testassert(aList[i]->valueLen == bList[i]->valueLen,"%zd-th values have different lengths of %u and %u",i,aList[i]->valueLen,bList[i]->valueLen);
-        testassert(0 == memcmp(aList[i]->value, bList[i]->value, aList[i]->valueLen),"%zu-th values of length %u don't match",i,aList[i]->valueLen);
+        testassert(aList[i]->valueLen == bList[j]->valueLen,"%zd-th values have different lengths of %u and %u",i,aList[i]->valueLen,bList[j]->valueLen);
+        testassert(0 == memcmp(aList[i]->value, bList[j]->value, aList[i]->valueLen),"%zu-th values of length %u don't match",i,aList[i]->valueLen);
     }
 }
 
