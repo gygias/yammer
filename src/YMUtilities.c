@@ -77,7 +77,7 @@ const char *YMGetCurrentTimeString(char *buf, size_t bufLen)
     if ( result == 0 )
         return NULL;
     if ( result < (int)bufLen - 4 )
-        snprintf(buf + result, bufLen - result, ".%03d",epoch.tv_usec/1000);
+        snprintf(buf + result, bufLen - result, ".%03ld",epoch.tv_usec/1000);
     return buf;
 }
 
@@ -590,13 +590,13 @@ catch_close:
 
 	if ( YMStringHasPrefix2(ifName, "lo") ) {
 	  return YMInterfaceLoopback;
-	} else if ( YMStringHasPrefix2(ifName, "eth") ) {
+	} else if ( YMStringHasPrefix2(ifName, "eth") || YMStringHasPrefix2(ifName, "en") ) {
 	  return YMInterfaceWiredEthernet;
 	} else if ( YMStringHasPrefix2(ifName, "wlan") ) {
 	  return YMInterfaceWirelessEthernet;
 	}
 #else
-#error if matching not implemented for this platform
+#error if-matching not implemented for this configuration
 #endif
 
 catch_return:
@@ -840,17 +840,20 @@ bool YMIsDebuggerAttached()
     // We're being debugged if the P_TRACED flag is set.    
     return ( (info.kp_proc.p_flag & P_TRACED) != 0 );
 #elif defined(YMLINUX)
-    if ( ! gYMDebuggerChecked ) {
+    if ( ! gYMDebuggerChecked ) { // todo review this
       gYMDebuggerChecked = true;
       signal(SIGTRAP, __ymutilities_debug_sigtrap);
       raise(SIGTRAP);
     }
+    return gYMDebuggerAttached;
 #elif defined(YMWIN32)
 	return IsDebuggerPresent();
 #else
 #warning todo: debugger detection for this platform
     return false;
 #endif
+
+    return false;
 }
 
 void YMUtilitiesFreeGlobals()

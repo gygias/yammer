@@ -18,7 +18,9 @@
 
 #if !defined(YMWIN32)
 # if defined(YMLINUX)
-#  define __USE_POSIX
+#  ifndef __USE_POSIX
+#   define __USE_POSIX
+#  endif
 #  include <netinet/in.h>
 # endif
 # include <netdb.h>

@@ -1,5 +1,5 @@
-# defaults to linux, which has only ever been tested on raspbian "4.1.7-v7+" (debian 7.9) & raspberry pi 2.
-# also supports ARCH=macos, which has only ever been tested on 10.11.*
+# defaults to linux
+# ARCH=macos hasn't been tested since 10.11.* in 2016-ish, no longer have access to hardware
 
 OUT=out
 
@@ -31,7 +31,7 @@ else
 	LSRC+= arc4random.c interface.c
 	DEFS=-DYMLINUX
 	CC=$(CLANG)
-	STD=gnu99
+	STD=gnu17
 	IEX=-Ilinux
 	LLEX=-ldns_sd -lbz2 -lz
 	PT=-pthread
@@ -40,10 +40,12 @@ LOBJ=$(LSRC:%.c=%.o)
 LDEP=$(LOBJ:%.o=$(OUT)/%.o)
 INC=-I. -Iprivate -Ilibyammer $(IEX)
 LLIBS=-lssl -lcrypto $(LLEX)
-DBG=-ggdb3
+ifeq ($(DEBUG),1)
+	DBGO=-g -O3
+else
+	DBGO=-O3
+endif
 FLG=-include private/yammerpch.h -std=$(STD) $(DEFS) $(PT) -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast -fPIC
-
-#ALG=-L/usr/lib/arm-linux-gnueabihf
 DLIBS=-L. -lyammer
 
 
@@ -56,37 +58,37 @@ $(OUT):
 	mkdir -p "$(OUT)"
 
 $(LTGT): $(LOBJ)
-	$(CC) -shared -o "$(OUT)/$@" $(PT) $(ALG) $(LLIBS) $(DBG) $(LDEP)
+	$(CC) -shared -o "$(OUT)/$@" $(PT) $(ALG) $(LLIBS) $(DBGO) $(LDEP)
 
 interface.o: linux/interface.c
-	$(CC) -c $< -o "$(OUT)/$@" $(CCF) $(INC) $(FLG) $(DBG)
+	$(CC) -c $< -o "$(OUT)/$@" $(CCF) $(INC) $(FLG) $(DBGO)
 
 %.o: src/%.c
-	$(CC) -c $< -o "$(OUT)/$@" $(CCF) $(INC) $(FLG) $(DBG)
+	$(CC) -c $< -o "$(OUT)/$@" $(CCF) $(INC) $(FLG) $(DBGO)
 
 %.o: test/%.c
-	$(CC) -c $< -o "$(OUT)/$@" $(CCF) $(INC) $(FLG) $(DBG)
+	$(CC) -c $< -o "$(OUT)/$@" $(CCF) $(INC) $(FLG) $(DBGO)
 
 ymtest: $(LTGT) $(TOBJ) TestsMain.o
-	cd "$(OUT)" ;	$(CC) -o $@ TestsMain.o $(PT) $(DLIBS) $(DBG) $(TDEP)
+	cd "$(OUT)" ;	$(CC) -o $@ TestsMain.o $(PT) $(DLIBS) $(DBGO) $(TDEP)
 
 TestsMain.o:
-	$(CC) -c test/TestsMain.c $(CCF) -o $(OUT)/$@ $(INC) $(FLG) $(DBG)
+	$(CC) -c test/TestsMain.c $(CCF) -o "$(OUT)/$@" $(INC) $(FLG) $(DBGO)
 
 ymchat: $(LTGT) chat.o
-	cd "$(OUT)" ; $(CC) -o $@ $(PT) $(DLIBS) $(DBG) chat.o
+	cd "$(OUT)" ; $(CC) -o $@ $(PT) $(DLIBS) $(DBGO) chat.o
 
 chat.o:
-	$(CC) -c misc/chat/main.c $(CCF) -o "$(OUT)/$@" $(INC) $(FLG) $(DBG)
+	$(CC) -c misc/chat/main.c $(CCF) -o "$(OUT)/$@" $(INC) $(FLG) $(DBGO)
 
 ym-dispatch-main-test: $(LTGT) ym-dispatch-main-test.o
-	cd "$(OUT)" ;	$(CC) -o $@ $(PT) ym-dispatch-main-test.o $(DLIBS) $(DBG) $(TDEP)
+	cd "$(OUT)" ;	$(CC) -o $@ $(PT) ym-dispatch-main-test.o $(DLIBS) $(DBGO) $(TDEP)
 
 ym-dispatch-main-test.o:
-	$(CC) -c test/ym-dispatch-main-test.c -o "$(OUT)/$@" $(CCF) $(INC) $(FLG) $(DBG)
+	$(CC) -c test/ym-dispatch-main-test.c -o "$(OUT)/$@" $(CCF) $(INC) $(FLG) $(DBGO)
 
 pta: $(LTGT) pta.o
-	cd "$(OUT)" ; $(CC) -o $@ $(PT) $(DLIBS) $(DBG) pta.o
+	cd "$(OUT)" ; $(CC) -o $@ $(PT) $(DLIBS) $(DBGO) pta.o
 
 pta.o:
-	$(CC) -c misc/pta-cli/main.c $(CCF) -o "$(OUT)/$@" $(INC) $(FLG) $(DBG)
+	$(CC) -c misc/pta-cli/main.c $(CCF) -o "$(OUT)/$@" $(INC) $(FLG) $(DBGO)

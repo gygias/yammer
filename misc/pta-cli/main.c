@@ -18,9 +18,11 @@
 # if defined(YMLINUX)
 #  include <signal.h>
 # endif
+# define myexit _Exit
 #else
 # define WIN32_LEAN_AND_MEAN
 # include <windows.h>
+# define myexit exit
 #endif
 
 #include <libyammer/Yammer.h>
@@ -40,7 +42,7 @@ void __CtrlHandler(DWORD cType)
         return;
 #endif
     printf("caught sigint\n");
-    exit(1);
+    myexit(1);
 }
 
 int main(int argc, const char * argv[]) {
@@ -48,7 +50,7 @@ int main(int argc, const char * argv[]) {
     if ( argc < 1 || argc > 2 ) {
         printf("usage: pta [<mdns name>]\n");
         printf(" if name is not specified, the tool will act as a client.\n");
-        exit(1);
+        myexit(1);
     }
     
 #ifndef YMWIN32
@@ -64,14 +66,14 @@ int main(int argc, const char * argv[]) {
         YMSessionSetCommonCallbacks(gYMSession, NULL, _connected_func, _interrupted_func, _new_stream_func, _closing_func);
         YMSessionSetAdvertisingCallbacks(gYMSession, _should_accept_func, NULL);
         if ( ! YMSessionStartAdvertising(gYMSession, YMSTRC(argv[1])) )
-            exit(1);
+            myexit(1);
     } else {
         gIsServer = false;
         gYMSession = YMSessionCreate(ymType);
         YMSessionSetCommonCallbacks(gYMSession, NULL, _connected_func, _interrupted_func, _new_stream_func, _closing_func);
         YMSessionSetBrowsingCallbacks(gYMSession, _added_peer_func, _removed_peer_func, _resolve_failed_func, _resolved_func, _connect_failed_func, NULL);
         if ( ! YMSessionStartBrowsing(gYMSession) )
-            exit(1);
+            myexit(1);
         printf("looking for service...\n");
     }
     
@@ -93,7 +95,7 @@ void thread(void (*func)(YMStreamRef), YMStreamRef context)
 
 void print_stuff(bool server, uint64_t this, struct timeval *start)
 {
-    printf("%s: wrote %llu: ",server?"s":"c",this);
+    printf("%s: wrote %lu: ",server?"s":"c",this);
     struct timeval end;
     gettimeofday(&end, NULL);
     
@@ -169,13 +171,13 @@ void _added_peer_func(YMSessionRef session, YMPeerRef peer, __unused void* conte
 void _removed_peer_func(__unused YMSessionRef session, YMPeerRef peer, __unused void* context)
 {
     printf("lost peer %s\n", YMSTR(YMPeerGetName(peer)));
-    //exit(1);
+    //myexit(1);
 }
 
 void _resolve_failed_func(__unused YMSessionRef session, YMPeerRef peer, __unused void* context)
 {
     printf("resolve failed %s\n", YMSTR(YMPeerGetName(peer)));
-    //exit(1);
+    //myexit(1);
 }
 
 void _resolved_func(__unused YMSessionRef session, YMPeerRef peer, __unused void* context)
@@ -188,7 +190,7 @@ void _connect_failed_func(__unused YMSessionRef session, YMPeerRef peer, bool mo
 {
     printf("connect failed %s\n", YMSTR(YMPeerGetName(peer)));
     if ( ! moreComing ) {
-        //exit(1);
+        //myexit(1);
     }
 }
 
@@ -215,7 +217,7 @@ void _connected_func(YMSessionRef session, YMConnectionRef connection, __unused 
 void _interrupted_func(__unused YMSessionRef session, __unused void* context)
 {
     printf("session interrupted\n");
-    //exit(1);
+    //myexit(1);
 }
 
 // streams
@@ -232,5 +234,5 @@ void _new_stream_func(__unused YMSessionRef session, __unused YMConnectionRef co
 void _closing_func(__unused YMSessionRef session, __unused YMConnectionRef connection, __unused YMStreamRef stream, __unused void* context)
 {
     printf("stream closed\n");
-    //exit(1);
+    //myexit(1);
 }

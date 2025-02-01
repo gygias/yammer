@@ -26,7 +26,9 @@
 
 #if !defined(YMWIN32)
 # if defined(YMLINUX)
-#  define __USE_POSIX
+#  ifndef __USE_POSIX
+#   define __USE_POSIX
+#  endif
 #  include <sys/socket.h>
 # elif defined(YMAPPLE)
 #  include <SystemConfiguration/SystemConfiguration.h>
@@ -208,7 +210,6 @@ void YMSessionSetCommonCallbacks(YMSessionRef s_, ym_session_initializing_func i
 void _YMSessionFree(YMTypeRef o_)
 {
     __ym_session_t *s = (__ym_session_t *)o_;
-    
     YMSessionSetCommonCallbacks(s, NULL, NULL, NULL, NULL, NULL);
     YMSessionSetAdvertisingCallbacks(s, NULL, NULL);
     YMSessionSetBrowsingCallbacks(s, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -762,7 +763,7 @@ YMArrayRef YMAPI YMSessionCopyConnections(YMSessionRef s)
     if ( ! ( s->connectionsByAddress && YMDictionaryGetCount(s->connectionsByAddress) ) )
         return NULL;
     
-    YMArrayRef copy = YMArrayCreate(true);
+    YMArrayRef copy = YMArrayCreate2(true);
     
     YMDictionaryEnumRef denum = YMDictionaryEnumeratorBegin(s->connectionsByAddress);
     while ( denum ) {
@@ -849,7 +850,7 @@ void __ym_session_new_stream_proc(YMConnectionRef connection, YMStreamRef stream
     
     YMAddressRef address = YMConnectionGetAddress(connection);
     YMPlexerStreamID streamID = YM_STREAM_INFO(stream)->streamID;
-    ymlog("new incoming stream %llu on %s",streamID,YMSTR(YMAddressGetDescription(address)));
+    ymlog("new incoming stream %lu on %s",streamID,YMSTR(YMAddressGetDescription(address)));
     
     if ( connection != s->defaultConnection )
         ymerr("warning: new stream on non-default connection");
@@ -865,7 +866,7 @@ void __ym_session_stream_closing_proc(YMConnectionRef connection, YMStreamRef st
     
     YMAddressRef address = YMConnectionGetAddress(connection);
     YMPlexerStreamID streamID = YM_STREAM_INFO(stream)->streamID;
-    ymlog("remote stream %llu closing on %s",streamID,YMSTR(YMAddressGetDescription(address)));
+    ymlog("remote stream %lu closing on %s",streamID,YMSTR(YMAddressGetDescription(address)));
     
     if ( connection != s->defaultConnection ) {
         ymerr("warning: closing remote stream on non-default connection");
@@ -1194,6 +1195,8 @@ bool __YMSessionObserveNetworkInterfaceChangesLinux(__ym_session_t *s, bool star
 		YMRelease(s->linuxPollThread);
 		s->linuxPollThread = NULL;
 	}
+
+    return okay;
 }
 
 #else

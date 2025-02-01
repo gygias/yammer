@@ -81,7 +81,7 @@ void TLSTestsRun(ym_test_assert_func assert, const void *context)
     YMRelease(name);
     
     _TestTLS1(&theTest);
-    ymerr(" TLSTest1 completed %llub in %llub out",theTest.bytesIn,theTest.bytesOut);
+    ymerr(" TLSTest1 completed %lub in %lub out",theTest.bytesIn,theTest.bytesOut);
     
     YMRelease(theTest.stateLock);
     YMRelease(theTest.threadExitSemaphore);
@@ -166,7 +166,7 @@ void _TestTLS1(struct TLSTest *theTest)
     YMRelease(localSocketPair);
     
     signal(SIGPIPE, SIG_DFL);
-    ymlog("tls test finished (%llu in, %llu out)",theTest->bytesIn,theTest->bytesOut);
+    ymlog("tls test finished (%lu in, %lu out)",theTest->bytesIn,theTest->bytesOut);
 }
 
 const char *testMessage = "security is important. put in the advanced technology. technology consultants international. please check. thanks.";

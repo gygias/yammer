@@ -72,9 +72,6 @@ typedef enum
 void YMAPI __YMLogType( int level, bool newline, char* format, ... ) __printflike(3, 4);
 void YMAPI __YMLogReturn( int level );
 
-void _YMLogLock();
-void _YMLogUnlock();
-
 void YMLogFreeGlobals();
 
 YM_EXTERN_C_POP

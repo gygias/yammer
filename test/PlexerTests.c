@@ -93,7 +93,7 @@ void PlexerTestsRun(ym_test_assert_func assert, const void *context)
     
     sleep(2); // or add a thread exit semaphore
     
-    ymerr(" PlexerRoundTripsTest finished with %llub in %llub out",theTest.bytesIn,theTest.bytesOut);
+    ymerr(" PlexerRoundTripsTest finished with %lub in %lub out",theTest.bytesIn,theTest.bytesOut);
     
     YMRelease(theTest.plexerTest1Lock);
     YMRelease(theTest.interruptNotificationSem);
@@ -187,7 +187,7 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     YMRelease(theTest->fakeRemotePlexer);
     
     sleep(2); // let the system settle 3.0 (let threads exit before stack theTest goes out of scope without coordination)
-    ymlog("plexer test finished %llu incoming round-trips on %d threads (%d round-trips per %s)",theTest->incomingStreamRoundTrips,
+    ymlog("plexer test finished %lu incoming round-trips on %d threads (%d round-trips per %s)",theTest->incomingStreamRoundTrips,
           PlexerTest1Threads,
           PlexerTest1RoundTripsPerThread,
           PlexerTest1NewStreamPerRoundTrip?"stream":"round-trip");
@@ -458,7 +458,7 @@ void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *
     NoisyTestLog("%s: gPlexerTest1AwaitingCloses: %llu",__FUNCTION__,theTest->awaitingClosures);
     if ( PlexerTest1TimeBased ) {
         if ( theTest->streamsCompleted % 10000 == 0 )
-            ymlog("handled %lluth stream, approx %llumb in, %llumb out",theTest->streamsCompleted,theTest->bytesIn/1024/1024,theTest->bytesOut/1024/1024);
+            ymlog("handled %luth stream, approx %lumb in, %lumb out",theTest->streamsCompleted,theTest->bytesIn/1024/1024,theTest->bytesOut/1024/1024);
     } else {
         if ( last ) {
             ymlog("%s last stream closed, signaling exit",__FUNCTION__);

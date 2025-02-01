@@ -109,7 +109,7 @@ YM_ONCE_FUNC(__YMTLSInit,
 	CRYPTO_set_locking_callback(__ym_tls_lock_callback);
 
 	gYMTLSExDataList = YMDictionaryCreate();
-	gYMTLSExDataLock = YMLockCreate(YMInternalLockType);
+	gYMTLSExDataLock = YMLockCreateWithOptions(YMInternalLockType);
 })
 
 YM_ONCE_OBJ gYMInitTLSOnce = YM_ONCE_INIT;

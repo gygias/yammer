@@ -75,7 +75,8 @@ void _YMTaskFree(YMTaskRef t)
     YMRelease(t->path);
     if ( t->args )
         YMRelease(t->args);
-    free(t->output);
+    if ( t->output )
+        free(t->output);
     if ( t->outputThread )
         YMRelease(t->outputThread);
 }
@@ -109,9 +110,7 @@ bool YMTaskLaunch(YMTaskRef t_)
 
     YM_ONCE_DO(gYMTaskOnce, __YMTaskRegisterAtfork);
     
-    _YMLogLock();
     pid_t pid = fork();
-    _YMLogUnlock();
     
     if ( pid == 0 ) { // child
         int64_t nArgs = t->args ? YMArrayGetCount(t->args) : 0;
@@ -245,7 +244,7 @@ int YMTaskGetExitStatus(YMTaskRef t_)
     return t->result;
 }
 
-unsigned char *YMTaskGetOutput(YMTaskRef t_, uint32_t *outLength)
+const unsigned char *YMTaskGetOutput(YMTaskRef t_, uint32_t *outLength)
 {
     __ym_task_t *t = (__ym_task_t *)t_;
     if ( t->save )

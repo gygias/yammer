@@ -116,7 +116,7 @@ void SessionTestsRun(ym_test_assert_func assert, ym_test_diff_func diff, const v
     
     ymerr(" Session test: '%s'",YMSTR(theTest.testName));
     _TestSessionWritingLargeAndReadingSparseFiles(&theTest);
-    ymerr(" Session test finished with %llu sparse files",theTest.nSparseFilesToRead);
+    ymerr(" Session test finished with %lu sparse files",theTest.nSparseFilesToRead);
     
     while ( YMDictionaryGetCount(theTest.nonRegularFileNames) > 0 ) {
         const void *filename = YMDictionaryRemove(theTest.nonRegularFileNames, YMDictionaryGetRandomKey(theTest.nonRegularFileNames));
@@ -533,11 +533,11 @@ void YM_CALLING_CONVENTION _EatASparseFile(YM_THREAD_PARAM c)
     testassert(sparseDstFd>=0,"create '%s' dst %d %s",header.name,errno,strerror(errno))
     
     uint64_t len64 = header.len;
-    ymlog("reading sparse file '%s'[%llu] %sbounded, sync to f%d",header.name,header.len,header.willBoundDataStream?"":"un",sparseDstFd);
+    ymlog("reading sparse file '%s'[%lu] %sbounded, sync to f%d",header.name,header.len,header.willBoundDataStream?"":"un",sparseDstFd);
     ymResult = YMStreamWriteToFile(stream, sparseDstFd, header.willBoundDataStream ? &len64 : NULL, &outBytes);
     testassert(ymResult==YMIOSuccess||(!header.willBoundDataStream&&ymResult==YMIOEOF),"eat sparse result");
     testassert(outBytes==header.len,"eat sparse result");
-    ymlog("read sparse file '%s'[%llu] bytes: %s : %s",header.name,outBytes,YMSTR(theTest->tempSparseDir),header.name);
+    ymlog("read sparse file '%s'[%lu] bytes: %s : %s",header.name,outBytes,YMSTR(theTest->tempSparseDir),header.name);
     
 	YM_CLOSE_FILE(sparseDstFd);
     testassert(result==0,"close sparse dst %s",header.name);
@@ -583,7 +583,7 @@ void YM_CALLING_CONVENTION _EatLargeFile(YM_THREAD_PARAM c)
     YMIOResult ymResult = YMStreamWriteToFile(stream, largeOutFd, theTest->serverBounding ? &gSomeLength : NULL, &outBytes);
     testassert(ymResult!=YMIOError,"eat large result");
     testassert(!theTest->serverBounding||outBytes==gSomeLength,"eat large outBytes");
-    ymerr("reading large finished: %llu bytes",outBytes);
+    ymerr("reading large finished: %lu bytes",outBytes);
 
     YM_CLOSE_FILE(largeOutFd);
     testassert(result==0, "close large out fd %d %s",errno,strerror(errno));
@@ -632,7 +632,7 @@ void _AsyncForwardCallback(struct SessionTest *theTest, YMConnectionRef connecti
         testassert(bytesWritten==theTest->lastClientFileSize,"lengths don't match");
         
     if ( isServer ) {
-        ymlog("_async_forward_callback (large): %llu",bytesWritten);
+        ymlog("_async_forward_callback (large): %lu",bytesWritten);
     } else
         NoisyTestLog("_async_forward_callback (sparse): %llu",bytesWritten);
     
@@ -702,7 +702,7 @@ void _resolved_func(YMSessionRef session, YMPeerRef peer, void *context)
     int64_t fakeDelayNsec = (int64_t)fakeDelay * 1000000000;
     //dispatch_after(dispatch_time(DISPATCH_TIME_NOW, fakeDelay), dispatch_get_global_queue(0, 0), ^{
         bool testSync = arc4random_uniform(2);
-        ymlog("connecting to %s after %lld delay (%ssync)...",YMSTR(YMPeerGetName(peer)),fakeDelayNsec,testSync?"":"a");
+        ymlog("connecting to %s after %ld delay (%ssync)...",YMSTR(YMPeerGetName(peer)),fakeDelayNsec,testSync?"":"a");
         bool okay = YMSessionConnectToPeer(session,peer,testSync);
         testassert(okay,"client connect to peer");
         

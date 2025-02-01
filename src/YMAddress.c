@@ -22,7 +22,9 @@
 # include <sys/socket.h>
 # include <netinet/in.h> // protocols
 # if defined (YMLINUX)
-#  define __USE_MISC
+#  ifndef __USE_MISC
+#   define __USE_MISC
+#endif
 # endif
 # include <arpa/inet.h>
 #else

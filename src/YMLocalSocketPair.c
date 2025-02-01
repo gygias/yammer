@@ -35,8 +35,10 @@
 #include <stddef.h> // offsetof
 
 #if defined(YMLINUX) // __USE_MISC /usr/include/arm-linux-gnueabihf/sys/un.h
-# define SUN_LEN(ptr) ((size_t) (((struct sockaddr_un *) 0)->sun_path)	      \
+# ifndef SUN_LEN
+#  define SUN_LEN(ptr) ((size_t) (((struct sockaddr_un *) 0)->sun_path)	      \
 		      + strlen ((ptr)->sun_path))
+# endif
 #endif
 
 YM_EXTERN_C_PUSH

@@ -55,59 +55,51 @@ void __YMLogType( int level, bool newline, char* format, ... )
     
     FILE *file = (level == YMLogError) ? stderr : stdout;
     
-    YMLockLock(gYMLogLock);
-    {
-        if ( newline || ! gIntraline ) {
-            const char *timeStr = YMGetCurrentTimeString(gTimeFormatBuf, gTimeFormatBufLen);
-            uint64_t threadID = _YMThreadGetCurrentThreadNumber();
-            uint64_t pid =
-    #if !defined(YMWIN32)
-                getpid();
-    #else
-                GetCurrentProcessId();
-    #endif
+    if ( newline || ! gIntraline ) {
+        const char *timeStr = YMGetCurrentTimeString(gTimeFormatBuf, gTimeFormatBufLen);
+        uint64_t threadID = _YMThreadGetCurrentThreadNumber();
+        uint64_t pid =
+#if !defined(YMWIN32)
+            getpid();
+#else
+            GetCurrentProcessId();
+#endif
 
-            if (timeStr)
-                fprintf(file, "%s ", timeStr);
-            fprintf(file,"yammer[%llu:%llu]: ",pid,threadID);
-            
-            int indent = __YMLogIndent(level);
-            while ( indent-- > 0 )
-                fprintf(file," ");
-            if ( level == YMLogError ) fprintf(file, "!: ");
-        }
+        if (timeStr)
+            fprintf(file, "%s ", timeStr);
+        fprintf(file,"yammer[%lu:%lu]: ",pid,threadID);
         
-        if ( ! newline )
-            gIntraline = true;
-        else
-            gIntraline = false;
-        
-        va_list args;
-        va_start(args,format);
-        vfprintf(file,format, args);
-        va_end(args);
-        
-        if ( newline )
-            fprintf(file,"\n");
-        fflush(file);
+        int indent = __YMLogIndent(level);
+        while ( indent-- > 0 )
+            fprintf(file," ");
+        if ( level == YMLogError ) fprintf(file, "!: ");
     }
-    YMLockUnlock(gYMLogLock);
+    
+    if ( ! newline )
+        gIntraline = true;
+    else
+        gIntraline = false;
+    
+    va_list args;
+    va_start(args,format);
+    vfprintf(file,format, args);
+    va_end(args);
+    
+    if ( newline )
+        fprintf(file,"\n");
+    fflush(file);
 }
 
 void YMAPI __YMLogReturn( int level )
 {
-    YMLockLock(gYMLogLock);
-    {
-        FILE *file = (level == YMLogError) ? stderr : stdout;
-        fprintf(file,"\n");
-        fflush(file);
-        gIntraline = false;
-    }
-    YMLockUnlock(gYMLogLock);
+    FILE *file = (level == YMLogError) ? stderr : stdout;
+    fprintf(file,"\n");
+    fflush(file);
+    gIntraline = false;
 }
 
-void _YMLogLock() { YM_ONCE_DO(gYMLogInitOnce,__YMLogInit); YMLockLock(gYMLogLock); }
-void _YMLogUnlock() { YM_ONCE_DO(gYMLogInitOnce,__YMLogInit); YMLockUnlock(gYMLogLock); }
+void _YMLogLock() { YM_ONCE_DO(gYMLogInitOnce,__YMLogInit); /*YMLockLock(gYMLogLock);*/ }
+void _YMLogUnlock() { YM_ONCE_DO(gYMLogInitOnce,__YMLogInit); /*YMLockUnlock(gYMLogLock);*/ }
 
 void YMLogFreeGlobals()
 {

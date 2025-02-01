@@ -10,6 +10,12 @@
 
 #include "YMLog.h"
 
+#ifndef YMWIN32
+# define myexit _Exit
+#else
+# define myexit exit
+#endif
+
 YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_dispatch_main_test_proc(YM_THREAD_PARAM ctx);
 
 void usage() { ymlog("usage: ym-dispatch-main-test [m|t] (nReps)"); exit(1); }
@@ -62,7 +68,7 @@ void YM_CALLING_CONVENTION _ym_thread_dispatch_func(__unused YM_THREAD_PARAM con
     
     if ( gCompleted == gReps ) {
         ymlog("dispatch-main-test completed %d reps",gReps);
-        exit(0);
+        myexit(0);
     }
 }
 

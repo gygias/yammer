@@ -23,7 +23,7 @@
 # define YM_THREAD_TYPE HANDLE
 #endif
 
-#define ymlog_pre "thread[%s,%s,dt%llu]: "
+#define ymlog_pre "thread[%s,%s,dt%lu]: "
 #define ymlog_args t?YMSTR(t->name):"&",(t&&t->isDispatch)?"dispatch":"&",(t&&t->dispatchID)?t->dispatchID:0
 #define ymlog_type YMLogThread
 #define ymlog_type_debug YMLogThreadDebug
@@ -370,38 +370,38 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_dispatch_dispatch_thread_proc
     bool *stopFlag = context->stopFlag;
     __unused YMThreadDispatchID aDispatchID = -1;
     __ym_thread_dispatch_t *aDispatch = NULL;
-    ymlog("n%llu entered", _YMThreadGetCurrentThreadNumber());
+    ymlog("n%lu entered", _YMThreadGetCurrentThreadNumber());
     
     while ( true ) {
-        ymdbg("n%llu begin dispatch loop",_YMThreadGetCurrentThreadNumber());
+        ymdbg("n%lu begin dispatch loop",_YMThreadGetCurrentThreadNumber());
         YMSemaphoreWait(t->dispatchSemaphore);
         
         YMSelfLock(t);
         {
             // check if we were signaled to exit
             if ( *stopFlag && ( YMDictionaryGetCount(t->dispatchesByID) == 0 ) ) {
-                ymlog("n%llu woke for exit", _YMThreadGetCurrentThreadNumber());
+                ymlog("n%lu woke for exit", _YMThreadGetCurrentThreadNumber());
                 YMSelfUnlock(t);
                 break;
             }
             
-            ymdbg("n%llu woke for a dispatch", _YMThreadGetCurrentThreadNumber());
+            ymdbg("n%lu woke for a dispatch", _YMThreadGetCurrentThreadNumber());
             
             // todo this should be in order
             YMDictionaryKey randomKey = YMDictionaryGetRandomKey(t->dispatchesByID);
             aDispatch = (__ym_thread_dispatch_t *)YMDictionaryRemove(t->dispatchesByID,randomKey);
-            ymassert(aDispatch,"fatal: n%llu thread signaled without target", _YMThreadGetCurrentThreadNumber());
+            ymassert(aDispatch,"fatal: n%lu thread signaled without target", _YMThreadGetCurrentThreadNumber());
         }
         YMSelfUnlock(t);
         
-        ymdbg("n%llu entering dispatch %llu '%s': u %p ctx %p", _YMThreadGetCurrentThreadNumber(), aDispatchID, YMSTR(aDispatch->userDispatch->description),aDispatch->userDispatch,aDispatch->userDispatch->context);
+        ymdbg("n%lu entering dispatch %lu '%s': u %p ctx %p", _YMThreadGetCurrentThreadNumber(), aDispatchID, YMSTR(aDispatch->userDispatch->description),aDispatch->userDispatch,aDispatch->userDispatch->context);
         aDispatch->userDispatch->dispatchProc(aDispatch->userDispatch->context);
-        ymdbg("n%llu finished dispatch %llu '%s': u %p ctx %p", _YMThreadGetCurrentThreadNumber(), aDispatchID, YMSTR(aDispatch->userDispatch->description),aDispatch->userDispatch,aDispatch->userDispatch->context);
+        ymdbg("n%lu finished dispatch %lu '%s': u %p ctx %p", _YMThreadGetCurrentThreadNumber(), aDispatchID, YMSTR(aDispatch->userDispatch->description),aDispatch->userDispatch,aDispatch->userDispatch->context);
         
         __YMThreadFreeDispatch(aDispatch);
     }
     
-    ymlog("n%llu exiting", _YMThreadGetCurrentThreadNumber());
+    ymlog("n%lu exiting", _YMThreadGetCurrentThreadNumber());
     
     // for exit, YMThread signals us after setting stop flag, we signal them back
     // so they know it's safe to deallocate our stuff
@@ -538,7 +538,7 @@ bool __YMThreadDispatchForward(YMStreamRef stream, YMFILE file, bool toStream, c
     // but, if we wanted to feel good about ourselves, these threads could hang around for a certain amount of time to handle
     // subsequent forwarding requests, to recycle the thread creation overhead.
     YMPlexerStreamID streamID = YM_STREAM_INFO(stream)->streamID;
-    name = YMSTRCF("dispatch-forward-%d%ss%llu",file,toStream?"->":"<-",streamID);
+    name = YMSTRCF("dispatch-forward-%d%ss%lu",file,toStream?"->":"<-",streamID);
     t = (__ym_thread_t *)YMThreadCreate(name, __ym_thread_dispatch_forward_file_proc, context);
     YMRelease(name);
     if ( ! t ) {
@@ -579,14 +579,14 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_dispatch_forward_file_proc(YM
     uint64_t outBytes = 0;
     
     YMPlexerStreamID streamID = YM_STREAM_INFO(stream)->streamID;
-    ymlog("forward: entered for f%d%ss%llu]",file,toStream?"->":"<-",streamID);
+    ymlog("forward: entered for f%d%ss%lu]",file,toStream?"->":"<-",streamID);
     uint64_t forwardBytes = bounded ? nBytes : 0;
     YMIOResult result;
     if ( toStream )
         result = YMStreamReadFromFile(stream, file, bounded ? &forwardBytes : NULL, &outBytes);
     else
         result = YMStreamWriteToFile(stream, file, bounded ? &forwardBytes : NULL, &outBytes);
-    ymlog("forward: %s %llu bytes from f%d%ss%llu", (result == YMIOError)?"error at offset":"finished",outBytes,file,toStream?"->":"<-",streamID);
+    ymlog("forward: %s %lu bytes from f%d%ss%lu", (result == YMIOError)?"error at offset":"finished",outBytes,file,toStream?"->":"<-",streamID);
     
     if ( ! sync && callbackInfo->callback ) {
         YMIOResult effectiveResult = nBytes ? result : ( result == YMIOEOF );
