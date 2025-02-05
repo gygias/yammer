@@ -10,10 +10,6 @@
 
 #include "YMLog.h"
 
-// isequal
-#include "YMAddress.h"
-// ...
-
 YM_EXTERN_C_PUSH
 
 YMFILE gYMWatchFile = NULL_FILE;
@@ -82,14 +78,14 @@ void __YMFree(__ym_type_t *object);
 
 YMTypeRef _YMAlloc(YMTypeID type, size_t size)
 {
-    ymassert(size >= sizeof(_YMType),"base: fatal: bad alloc '%c'",type);
+    ymassert(size >= sizeof(_YMType),"base: bad alloc '%c'",type);
     
     __ym_type_t *object = YMALLOC(size);
     object->__type = type;
     object->__retainCount = 1;
     
     object->__mutex = YMCreateMutexWithOptions(YMLockRecursive);
-    ymassert(object->__mutex,"base: fatal: create mutex failed");
+    ymassert(object->__mutex,"base: create mutex failed");
     
     // can't divine a way to escape infinite recursion here
     //YMStringRef name = _YMStringCreateForYMAlloc("ymtype-%p", object, NULL);
@@ -103,7 +99,7 @@ YMTypeRef YMRetain(YMTypeRef o_)
 {
     __ym_type_t *o = (__ym_type_t *)o_;
     YMLockMutex(o->__mutex);
-    ymassert(o->__retainCount >= 1, "base: fatal: retain count inconsistent for %p",o);
+    ymassert(o->__retainCount >= 1, "retain count inconsistent for %p",o);
 
     o->__retainCount++;
     YMUnlockMutex(o->__mutex);
@@ -120,12 +116,12 @@ YM_RELEASE_RETURN_TYPE YMRelease(YMTypeRef o_)
 {
     __ym_type_t *o = (__ym_type_t *)o_;
     
-    ymsoftassert(o, "released null");
+    ymassert(o, "released null");
     
     bool dealloc = false;
     YMLockMutex(o->__mutex);
     {
-        ymassert(o->__retainCount >= 1, "base: fatal: something has overreleased %p (%c)",o,o->__type);
+        ymassert(o->__retainCount >= 1, "something has overreleased %p (%c)",o,o->__type);
         
         if ( o->__retainCount-- == 1 )
             dealloc = true;

@@ -371,7 +371,7 @@ typedef struct HandleStreamContext
 
 void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *context)
 {
-    NoisyTestLog("%s",__FUNCTION__);
+    ymdbg("%s",__FUNCTION__);
     struct PlexerTest *theTest = context;
     testassert(theTest,"remote new context");
     testassert(plexer==theTest->fakeRemotePlexer,"remoteNewStream not remote");
@@ -439,7 +439,7 @@ catch_return:
     YMPlexerCloseStream(theTest->fakeRemotePlexer,stream);
     YMRelease(stream);
     
-    NoisyTestLog("^^^ REMOTE -newStream [%u] exiting (and remoteReleasing)",streamID);
+    ymdbg("^^^ REMOTE -newStream [%lu] exiting (and remoteReleasing)",streamID);
 }
 
 void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *context)
@@ -455,7 +455,7 @@ void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *
     theTest->streamsCompleted++;
     YMLockUnlock(theTest->plexerTest1Lock);
     
-    NoisyTestLog("%s: gPlexerTest1AwaitingCloses: %llu",__FUNCTION__,theTest->awaitingClosures);
+    ymdbg("%s: gPlexerTest1AwaitingCloses: %lu",__FUNCTION__,theTest->awaitingClosures);
     if ( PlexerTest1TimeBased ) {
         if ( theTest->streamsCompleted % 10000 == 0 )
             ymlog("handled %luth stream, approx %lumb in, %lumb out",theTest->streamsCompleted,theTest->bytesIn/1024/1024,theTest->bytesOut/1024/1024);

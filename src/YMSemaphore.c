@@ -88,7 +88,7 @@ YMSemaphoreRef __YMSemaphoreCreate(YMStringRef name, int initialValue)
     YMLockUnlock(gYMSemaphoreIndexLock);
 
 #if !defined(YMWIN32)
-try_again:;
+try_again:; // XXX
     s->sem = sem_open(YMSTR(s->semName), O_CREAT|O_EXCL, S_IRUSR|S_IWUSR, initialValue); // todo mode?
     if ( s->sem == SEM_FAILED ) {
         if ( errno == EEXIST ) {

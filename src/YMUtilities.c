@@ -591,8 +591,8 @@ catch_close:
 	if ( YMStringHasPrefix2(ifName, "lo") ) {
 	  return YMInterfaceLoopback;
 	} else if ( YMStringHasPrefix2(ifName, "eth") || YMStringHasPrefix2(ifName, "en") ) {
-	  return YMInterfaceWiredEthernet;
-	} else if ( YMStringHasPrefix2(ifName, "wlan") ) {
+	  return YMInterfaceWiredEthernet;                  // wlx is assigned to usb wifi adapters
+	} else if ( YMStringHasPrefix2(ifName, "wlan") || YMStringHasPrefix2(ifName, "wlx") ) {
 	  return YMInterfaceWirelessEthernet;
 	}
 #else

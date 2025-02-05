@@ -107,8 +107,8 @@ typedef struct message_header
 
 void run_chat(YMStreamRef stream)
 {
-    char aChar;
-    while ( ( aChar = (char)getc(stdin) ) != EOF ) {
+    int aChar;
+    while ( ( aChar = getc(stdin) ) != EOF ) {
         YMStreamWriteDown(stream, (uint8_t *)&aChar, sizeof(aChar));
    }
 }

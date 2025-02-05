@@ -30,16 +30,6 @@
 #include "Yammer.h"
 #include "YMLog.h"
 
-//#define     Logging 1
-#ifdef      Logging
-#define     NoisyTestLog(x,...) printf((x)"\n",##__VA_ARGS__)
-#else
-#define     NoisyTestLog(x,...) ;
-#endif
-
-#define YammerTests             A_YammerTests
-#define CheckStateTest          Z_CheckStateTest
-
 YM_EXTERN_C_PUSH
 
 YM_WPPUSH

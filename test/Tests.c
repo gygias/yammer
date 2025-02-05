@@ -27,6 +27,7 @@ YM_EXTERN_C_PUSH
 #include "SessionTests.h"
 
 #include "YMLock.h"
+#include "YMTask.h"
 
 #include <stdarg.h>
 
@@ -59,7 +60,32 @@ void _ym_test_assert_func(__unused const void *ctx, bool exp, const char *fmt, .
 bool _ym_test_diff_func(__unused const void *ctx, __unused const char *path1, __unused const char *path2, __unused bool recursive, __unused YMDictionaryRef exceptions)
 {
 	ymerr("*** diff ***");
-	return true;
+
+#if defined(YMAPPLE)
+# warning is apple's diff in /usr/bin?
+# define SomeDiffPath "/usr/bin/diff"
+#elif defined(YMLINUX)
+# define SomeDiffPath "/usr/bin/diff"
+#elif defined(YMWIN32)
+# error implement me
+#endif
+
+    YMArrayRef args = YMArrayCreate();
+    if ( recursive )
+        YMArrayAdd(args,"-r");
+    YMArrayAdd(args,path1);
+    YMArrayAdd(args,path2);
+    YMStringRef diffPath = YMSTRC(SomeDiffPath);
+    YMTaskRef diff = YMTaskCreate(diffPath,args,false);
+    YMTaskLaunch(diff);
+    YMTaskWait(diff);
+    bool okay = YMTaskGetExitStatus(diff) == 0;
+
+    YMRelease(diffPath);
+    YMRelease(args);
+    YMRelease(diff);
+
+	return okay;
 }
 
 void RunAllTests()

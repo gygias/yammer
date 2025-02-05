@@ -31,7 +31,7 @@ typedef struct mDNSTest
 } mDNSTest;
 
 #define testServiceType "_yammer._tcp"
-#define testKeyPairReserved ( 3 ) // length char, '=' and zero-length
+#define testKeyPairReserved ( 2 ) // length byte, '='
 #define testKeyMaxLen ( UINT8_MAX - testKeyPairReserved )
 
 #if 0 // actually debugging
@@ -146,11 +146,13 @@ YMmDNSTxtRecordKeyPair ** _MakeTxtRecordKeyPairs(uint16_t *inOutnKeypairs)
     
     YMmDNSTxtRecordKeyPair **keyPairs = (YMmDNSTxtRecordKeyPair **)calloc(*inOutnKeypairs,sizeof(YMmDNSTxtRecordKeyPair *));
     
-    uint16_t remaining = UINT16_MAX;
+    // drafts/specs/implementations seem to converge toward txt record /should/ be 1300 bytes or shorter, wrt 1500 ethernet mtu
+    // avahi seems to enforce a hard limit around 1300
+    int remaining = 1200; //UINT16_MAX;
     for ( size_t idx = 0; idx < requestedSize; idx++ ) {
         keyPairs[idx] = calloc(1,sizeof(YMmDNSTxtRecordKeyPair));
         
-        remaining -= testKeyPairReserved; // length char, '=' and zero-length
+        remaining -= testKeyPairReserved; // length char, '='
         
         // The "Name" MUST be at least one character. Strings beginning with an '=' character (i.e. the name is missing) SHOULD be silently ignored.
         uint8_t aKeyLenMax = (uint8_t)(( testKeyMaxLen > remaining ) ? ( remaining - testKeyPairReserved ) : testKeyMaxLen);
@@ -172,16 +174,16 @@ YMmDNSTxtRecordKeyPair ** _MakeTxtRecordKeyPairs(uint16_t *inOutnKeypairs)
         remaining -= valueLen;
         
         actualSize++;
-        debugBlobSize += testKeyPairReserved + keyLen + valueLen;
-        NoisyTestLog("aKeyPair[%zd]: [%zu] <= [%zu]'%s'", idx,  [valueData length], [randomKey length], [randomKey UTF8String]);
+        debugBlobSize += ( testKeyPairReserved + keyLen + valueLen );
+        ymdbg("aKeyPair[%zd]: 3 + [%u] => [%zu]... [%lu] (%d)",idx,valueLen,keyLen,debugBlobSize,remaining);
         
-        if ( remaining == 0 )
-            break;
         if ( remaining < 0 )
             ymabort("txt record format");
+        if ( remaining <= testKeyPairReserved )
+            break;
     }
     
-    NoisyTestLog("made txt record length %zu out of requested %zu (blob size %zu)",actualSize,requestedSize,debugBlobSize);
+    ymdbg("made txt record length %zu out of requested %zu (blob size %zu)\n",actualSize,requestedSize,debugBlobSize);
     *inOutnKeypairs = (uint16_t)actualSize;
     
     return keyPairs;

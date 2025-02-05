@@ -66,7 +66,7 @@ static YMStringRef gYMLocalSocketPairName = NULL;
 static YMSemaphoreRef gYMLocalSocketSemaphore = NULL; // thread ready & each 'accepted'
 static bool gYMLocalSocketPairAcceptKeepListening = false;
 static bool gYMLocalSocketThreadEnd = false; // sadly not quite the same as 'keep listening'
-static bool gYMLocalSocketThreadExited = false;
+static YMSemaphoreRef gYMLocalSocketThreadExited = NULL;
 static YMSOCKET gYMLocalSocketListenSocket = NULL_SOCKET;
 static YMSOCKET gYMLocalSocketPairAcceptedLast = NULL_SOCKET;
 
@@ -87,7 +87,9 @@ void YMLocalSocketPairStop()
         ymsoftassert(result==0,"warning: close(%d) listen failed: %d (%s)",(int)gYMLocalSocketListenSocket,error,errorStr);
         gYMLocalSocketListenSocket = NULL_SOCKET;
 
-        while ( ! gYMLocalSocketThreadExited ) {}; // avoid free->create race where previous thread holds previous global sem
+        YMSemaphoreWait(gYMLocalSocketThreadExited);
+        YMRelease(gYMLocalSocketThreadExited);
+        gYMLocalSocketThreadExited = NULL;
         
         YMRelease(gYMLocalSocketSemaphore);
         gYMLocalSocketSemaphore = NULL;
@@ -124,7 +126,7 @@ YM_ONCE_FUNC(__YMLocalSocketPairInitOnce,
     ymassert(gYMLocalSocketPairAcceptThread&&gYMLocalSocketSemaphore,"local-socket: fatal: failed to spawn accept thread");
     
     gYMLocalSocketThreadEnd = false;
-    gYMLocalSocketThreadExited = false;
+    gYMLocalSocketThreadExited = YMSemaphoreCreate(0);
     bool okay = YMThreadStart(gYMLocalSocketPairAcceptThread);
     ymassert(okay,"fatal: failed to start accept thread");
     
@@ -335,7 +337,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_local_socket_accept_proc(__unused YM
     
     ymlogg("__ym_local_socket_accept_proc exiting");
     
-    gYMLocalSocketThreadExited = true;
+    YMSemaphoreSignal(gYMLocalSocketThreadExited);
 
 	YM_THREAD_END
 }

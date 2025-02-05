@@ -79,6 +79,8 @@ YMThreaddispatchID gDispatchIDNext = 0; // todo only for keying dictionary, impl
 YMDictionaryRef gDispatchThreadDefsByID = NULL;
 YMLockRef gDispatchThreadListLock = NULL;
 bool gDispatchGlobalModeMain = false;
+// array for main
+// dictionary for global
 __ym_thread_t * gDispatchGlobalQueue = NULL;
 YM_ONCE_OBJ gDispatchGlobalInitOnce = YM_ONCE_INIT;
 YM_ONCE_DEF(__YMThreadDispatchInitGlobal);
@@ -337,8 +339,7 @@ void YMThreadDispatchDispatch(YMThreadRef t_, ym_thread_dispatch_user_t userDisp
 {
     __ym_thread_t *t = (__ym_thread_t *)t_;
     
-    if ( ! t->isDispatch )
-        ymabort("fatal: attempt to dispatch to non-dispatch thread");
+    ymassert(t->isDispatch,"fatal: attempt to dispatch to non-dispatch thread");
     
     __ym_thread_dispatch_t *newDispatch = NULL;
     YMSelfLock(t);
@@ -349,8 +350,7 @@ void YMThreadDispatchDispatch(YMThreadRef t_, ym_thread_dispatch_user_t userDisp
         newDispatch->userDispatch = dispatchCopy;
         newDispatch->dispatchID = t->dispatchIDNext++;
         
-        if ( YMDictionaryContains(t->dispatchesByID, (YMDictionaryKey)newDispatch->dispatchID) )
-            ymabort("fatal: thread is out of dispatch ids (%zu)",YMDictionaryGetCount(t->dispatchesByID));
+        ymassert(!YMDictionaryContains(t->dispatchesByID, (YMDictionaryKey)newDispatch->dispatchID), "fatal: thread is out of dispatch ids (%zu)",YMDictionaryGetCount(t->dispatchesByID));
         
         ymdbg("adding dispatch '%s': u %p ctx %p",YMSTR(dispatchCopy->description),dispatchCopy,dispatchCopy->context);
         YMDictionaryAdd(t->dispatchesByID, (YMDictionaryKey)newDispatch->dispatchID, newDispatch);
@@ -387,16 +387,16 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_dispatch_dispatch_thread_proc
             
             ymdbg("n%lu woke for a dispatch", _YMThreadGetCurrentThreadNumber());
             
-            // todo this should be in order
+            // todo this should be in order!
             YMDictionaryKey randomKey = YMDictionaryGetRandomKey(t->dispatchesByID);
             aDispatch = (__ym_thread_dispatch_t *)YMDictionaryRemove(t->dispatchesByID,randomKey);
             ymassert(aDispatch,"fatal: n%lu thread signaled without target", _YMThreadGetCurrentThreadNumber());
         }
         YMSelfUnlock(t);
         
-        ymdbg("n%lu entering dispatch %lu '%s': u %p ctx %p", _YMThreadGetCurrentThreadNumber(), aDispatchID, YMSTR(aDispatch->userDispatch->description),aDispatch->userDispatch,aDispatch->userDispatch->context);
+        ymdbg("n%lu entering dispatch %lu '%s': d %p u %p ctx %p", _YMThreadGetCurrentThreadNumber(), aDispatchID, YMSTR(aDispatch->userDispatch->description),aDispatch,aDispatch->userDispatch,aDispatch->userDispatch->context);
         aDispatch->userDispatch->dispatchProc(aDispatch->userDispatch->context);
-        ymdbg("n%lu finished dispatch %lu '%s': u %p ctx %p", _YMThreadGetCurrentThreadNumber(), aDispatchID, YMSTR(aDispatch->userDispatch->description),aDispatch->userDispatch,aDispatch->userDispatch->context);
+        ymdbg("n%lu finished dispatch %lu '%s': d %p u %p ctx %p", _YMThreadGetCurrentThreadNumber(), aDispatchID, YMSTR(aDispatch->userDispatch->description),aDispatch,aDispatch->userDispatch,aDispatch->userDispatch->context);
         
         __YMThreadFreeDispatch(aDispatch);
     }

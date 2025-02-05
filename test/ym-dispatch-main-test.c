@@ -6,9 +6,8 @@
 //  Copyright © 2015 combobulated. All rights reserved.
 //
 
-#include "YMThreadPriv.h"
-
 #include "YMLog.h"
+#include "YMThreadPriv.h"
 
 #ifndef YMWIN32
 # define myexit _Exit
@@ -72,12 +71,38 @@ void YM_CALLING_CONVENTION _ym_thread_dispatch_func(__unused YM_THREAD_PARAM con
     }
 }
 
+void valgrind_take_me_away(void *ptr)
+{
+    free(ptr);
+}
+
+void * valgrind_hit_me()
+{
+    size_t relativelyBig = 1024;
+    return malloc(relativelyBig);
+}
+
 YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_dispatch_main_test_proc(__unused YM_THREAD_PARAM ctx)
 {
     for( int i = 0; i < gReps; i++ ) {
         YMThreadRef globalQueue = YMThreadDispatchGetGlobal();
-        ym_thread_dispatch_user_t aDispatch = { _ym_thread_dispatch_func, NULL, true, NULL, NULL };
-        YMThreadDispatchDispatch(globalQueue, aDispatch);
+        
+        ym_thread_dispatch_user_t aDispatch = { _ym_thread_dispatch_func, NULL, false, NULL, NULL };
+        switch(arc4random_uniform(3)) {
+            case 0:
+                YMThreadDispatchDispatch(globalQueue, aDispatch);
+                break;
+            case 1:
+                aDispatch.context = valgrind_hit_me();
+                aDispatch.deallocProc = valgrind_take_me_away;
+                YMThreadDispatchDispatch(globalQueue, aDispatch);
+                break;
+            default:
+                aDispatch.context = valgrind_hit_me();
+                aDispatch.freeContextWhenDone = true;
+                YMThreadDispatchDispatch(globalQueue, aDispatch);
+            break;
+        }
     }
     
     sleep(999999);

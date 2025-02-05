@@ -1,5 +1,6 @@
 # defaults to linux
 # ARCH=macos hasn't been tested since 10.11.* in 2016-ish, no longer have access to hardware
+# DEBUG=1, RPI=1 (working around compatibility issue between clang and valgrind on my rpi default environment)
 
 OUT=out
 
@@ -41,7 +42,11 @@ LDEP=$(LOBJ:%.o=$(OUT)/%.o)
 INC=-I. -Iprivate -Ilibyammer $(IEX)
 LLIBS=-lssl -lcrypto $(LLEX)
 ifeq ($(DEBUG),1)
-	DBGO=-g -O3
+	DBGO=-g -Og
+	ifeq ($(RPI),1)
+# https://bugs.kde.org/show_bug.cgi?id=452758
+		DBGO+=-gdwarf-4
+	endif
 else
 	DBGO=-O3
 endif

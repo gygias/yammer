@@ -14,7 +14,7 @@
 #include "YMLog.h"
 
 #include <openssl/rsa.h>
-#include <openssl/rand.h> // let's hope this is what the man page means by "the" pseudo-random number generator, despite the reference to "bad" rand(3)
+#include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/bn.h>
 
