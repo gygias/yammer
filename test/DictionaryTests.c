@@ -20,7 +20,7 @@ YM_EXTERN_C_PUSH
 #define RunFor 5.0
 #define MaxItemLength 2048
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION _dictionary_test_proc(YM_THREAD_PARAM ctx);
+YM_ENTRY_POINT(_dictionary_test_proc);
 
 typedef struct DictionaryTest
 {
@@ -65,9 +65,9 @@ void DictionaryTestsRun(ym_test_assert_func assert, const void *context)
     ymerr("YMDictionary test completed after %lu iterations",theTest.completedTests);
 }    
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION _dictionary_test_proc(YM_THREAD_PARAM ctx)
+YM_ENTRY_POINT(_dictionary_test_proc)
 {
-    struct DictionaryTest *theTest = ctx;
+    struct DictionaryTest *theTest = context;
     
     YMDictionaryKey string_key;
     YMDictionaryKey data_key;
@@ -135,8 +135,6 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _dictionary_test_proc(YM_THREAD_PARAM ctx
     }
     
     YMSemaphoreSignal(theTest->semaphore);
-
-	YM_THREAD_END
 }
 
 YM_EXTERN_C_POP

@@ -48,7 +48,7 @@ typedef struct __ym_task __ym_task_t;
 
 #define NULL_PID (-1)
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_task_read_output_proc(YM_THREAD_PARAM ctx_);
+YM_ENTRY_POINT(__ym_task_read_output_proc);
 void __ym_task_prepare_atfork();
 void __ym_task_parent_atfork();
 void __ym_task_child_atfork();
@@ -196,7 +196,7 @@ bool YMTaskLaunch(YMTaskRef t_)
         YMStringRef name = YMSTRC("ymtask");
         t->outputQueue = YMDispatchQueueCreate(name);
         YMRelease(name);
-        ym_dispatch_user_t dispatch = { (void (*)(void *))__ym_task_read_output_proc, (void *)YMRetain(t), NULL, ym_dispatch_user_context_noop };
+        ym_dispatch_user_t dispatch = { __ym_task_read_output_proc, (void *)YMRetain(t), NULL, ym_dispatch_user_context_noop };
         YMDispatchAsync(t->outputQueue,&dispatch);
     }
 	ymlog("forked: p%d", t->childPid);
@@ -273,9 +273,9 @@ void __ym_task_child_atfork() {
     fprintf(stderr,"__ym_task_child_atfork happened\n");
 }
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_task_read_output_proc(YM_THREAD_PARAM ctx_)
+YM_ENTRY_POINT(__ym_task_read_output_proc)
 {
-    __ym_task_t *t = ctx_;
+    __ym_task_t *t = context;
     
     ymlog("flush output started...");
     
@@ -324,8 +324,6 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_task_read_output_proc(YM_THREAD_PARA
     t->outputPipe = NULL;
     
     ymlog("flush output exiting");
-    
-    YM_THREAD_END
 }
 
 YM_EXTERN_C_POP

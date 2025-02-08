@@ -21,10 +21,9 @@ typedef void (*ym_void_voidp_func)(void *);
 typedef void *(*ym_voidp_voidp_func)(void *);
 
 #if !defined(YMWIN32)
-# define YM_THREAD_RETURN void *
+# define YM_THREAD_RETURN void
 # define YM_CALLING_CONVENTION
 # define YM_THREAD_PARAM void *
-# define YM_THREAD_END return NULL;
 #else
 //typedef DWORD(WINAPI *PTHREAD_START_ROUTINE)(
 //	LPVOID lpThreadParameter
@@ -32,12 +31,12 @@ typedef void *(*ym_voidp_voidp_func)(void *);
 # define YM_THREAD_RETURN DWORD
 # define YM_CALLING_CONVENTION WINAPI
 # define YM_THREAD_PARAM LPVOID
-# define YM_THREAD_END return 0;
 #endif
 
-typedef YM_THREAD_RETURN(YM_CALLING_CONVENTION *ym_thread_entry)(YM_THREAD_PARAM);
+#define YM_ENTRY_POINT(x) YM_THREAD_RETURN YM_CALLING_CONVENTION x(YM_THREAD_PARAM context)
+typedef YM_THREAD_RETURN(YM_CALLING_CONVENTION *ym_entry_point)(YM_THREAD_PARAM);
 
-YMThreadRef YMAPI YMThreadCreate(YMStringRef name, ym_thread_entry entryPoint, void *context);
+YMThreadRef YMAPI YMThreadCreate(YMStringRef name, ym_entry_point entryPoint, void *context);
 
 bool YMAPI YMThreadStart(YMThreadRef thread);
 bool YMAPI YMThreadJoin(YMThreadRef thread);

@@ -66,7 +66,7 @@ static void DNSSD_API __ym_mdns_browse_callback(DNSServiceRef sdRef, DNSServiceF
 void DNSSD_API __ym_mdns_resolve_callback(DNSServiceRef serviceRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *name,
                                       const char *host, uint16_t port, uint16_t txtLen, const unsigned char *txtRecord, void *context );
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_event_proc(YM_THREAD_PARAM);
+YM_ENTRY_POINT(__ym_mdns_event_proc);
 YMmDNSServiceRecord *__YMmDNSBrowserAddOrUpdateService(__ym_mdns_browser_t *, YMmDNSServiceRecord*);
 void __YMmDNSBrowserRemoveServiceNamed(__ym_mdns_browser_t *, YMStringRef);
 YMmDNSServiceRecord *__YMmDNSBrowserGetServiceWithName(__ym_mdns_browser_t *, YMStringRef, bool);
@@ -525,11 +525,11 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
 }
 
 // this function was mostly lifted from "Zero Configuration Networking: The Definitive Guide" -o'reilly
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_event_proc(YM_THREAD_PARAM ctx)
+YM_ENTRY_POINT(__ym_mdns_event_proc)
 {
     YM_IO_BOILERPLATE
     
-    __ym_mdns_browser_t *b = ctx;
+    __ym_mdns_browser_t *b = context;
     
     ymlog("event thread entered");
     
@@ -600,8 +600,6 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_mdns_event_proc(YM_THREAD_PARAM ctx)
     __YMmDNSBrowserRemoveServiceRef(b, NULL);
     
     ymlog("event thread exiting");
-
-	YM_THREAD_END
 }
 
 YM_EXTERN_C_POP

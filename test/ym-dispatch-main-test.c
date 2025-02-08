@@ -16,7 +16,7 @@
 # define myexit exit
 #endif
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_dispatch_main_test_proc(YM_THREAD_PARAM ctx);
+YM_ENTRY_POINT(_ym_dispatch_main_test_proc);
 
 void usage() { ymlog("usage: ym-dispatch-main-test [m|g[r]|u] (nReps)"); exit(1); }
 
@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
     
     ymlog("ym-dispatch-main-test targeting %s with %d %sreps",(gType==0)?"main":(gType==1)?"global":"user",gReps,gRacey?"*RACEY* ":"");
     
-    ym_dispatch_user_t dispatch = { (void (*)(void *))_ym_dispatch_main_test_proc, NULL, false, ym_dispatch_user_context_noop };
+    ym_dispatch_user_t dispatch = { _ym_dispatch_main_test_proc, NULL, false, ym_dispatch_user_context_noop };
     if ( gType == 0 ) {
         YMDispatchAsync(YMDispatchGetGlobalQueue(),&dispatch);
     } else if ( gType == 1 ) {
@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
     return 1;
 }
 
-void YM_CALLING_CONVENTION _ym_do_a_work(__unused YM_THREAD_PARAM context)
+YM_ENTRY_POINT(_do_a_work)
 {
     bool lock = gLock != NULL;
     if ( lock ) YMLockLock(gLock);
@@ -75,7 +75,7 @@ void YM_CALLING_CONVENTION _ym_do_a_work(__unused YM_THREAD_PARAM context)
     }
 }
 
-void valgrind_take_me_away(void *ptr)
+YM_ENTRY_POINT(valgrind_take_me_away)
 {
     free(ptr);
 }
@@ -86,7 +86,7 @@ void * valgrind_hit_me()
     return malloc(relativelyBig);
 }
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_dispatch_main_test_proc(__unused YM_THREAD_PARAM ctx)
+YM_ENTRY_POINT(_ym_dispatch_main_test_proc)
 {
     YMDispatchQueueRef queue = NULL;
     if ( gType == 0 )
@@ -97,7 +97,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_dispatch_main_test_proc(__unused YM_T
         queue = gUserQueue;
 
     for( gIter = 0; gIter < gReps; gIter++ ) {
-        ym_dispatch_user_t aDispatch = { _ym_do_a_work, NULL, false, ym_dispatch_user_context_noop };
+        ym_dispatch_user_t aDispatch = { _do_a_work, NULL, false, ym_dispatch_user_context_noop };
         switch(arc4random_uniform(3)) {
             case 0:
                 YMDispatchAsync(queue, &aDispatch);
@@ -120,6 +120,4 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_dispatch_main_test_proc(__unused YM_T
         printf("ym-dispatch-main-test assumes races have finished at (%d / %d)\n",gCompleted,gReps);
         myexit(1);
     }
-    
-    YM_THREAD_END
 }

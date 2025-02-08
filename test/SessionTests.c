@@ -95,11 +95,11 @@ typedef struct TestConnectionStream
 } TestConnectionStream;
 
 void _TestSessionWritingLargeAndReadingSparseFiles(struct SessionTest *theTest);
-YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteLargeFile(YM_THREAD_PARAM);
-YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteSparseFiles(YM_THREAD_PARAM);
-YM_THREAD_RETURN YM_CALLING_CONVENTION _FlushMiddleman(YM_THREAD_PARAM);
-void YM_CALLING_CONVENTION _EatLargeFile(YM_THREAD_PARAM);
-void YM_CALLING_CONVENTION _EatASparseFile(YM_THREAD_PARAM);
+YM_ENTRY_POINT(_ServerWriteLargeFile);
+YM_ENTRY_POINT(_ClientWriteSparseFiles);
+YM_ENTRY_POINT(_FlushMiddleman);
+YM_ENTRY_POINT(_EatLargeFile);
+YM_ENTRY_POINT(_EatASparseFile);
 void _AsyncForwardCallback(struct SessionTest *theTest, YMConnectionRef connection, YMStreamRef stream, YMIOResult result, uint64_t bytesWritten, bool isServer);
 
 void SessionTestsRun(ym_test_assert_func assert, ym_test_diff_func diff, const void *context)
@@ -256,9 +256,9 @@ typedef struct SparseFileThanks
     char thx4Sparse[NAME_MAX+1+15];
 } SparseFileThanks;
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteLargeFile(YM_THREAD_PARAM ctx_)
+YM_ENTRY_POINT(_ServerWriteLargeFile)
 {
-	struct SessionTest *theTest = ctx_;
+	struct SessionTest *theTest = context;
 
 	YM_IO_BOILERPLATE
 
@@ -344,13 +344,11 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ServerWriteLargeFile(YM_THREAD_PARAM ctx
     }
     
     ymlog("wrote large file thread (%sSYNC) exiting",theTest->serverAsync?"A":"");
-
-	YM_THREAD_END
 }
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION _FlushMiddleman(YM_THREAD_PARAM ctx_)
+YM_ENTRY_POINT(_FlushMiddleman)
 {
-	struct SessionTest *theTest = ctx_;
+	struct SessionTest *theTest = context;
 
     uint32_t writeLargeUnboundedFor = arc4random_uniform(10) + 10;
     YMFILE writeFd = YMPipeGetInputFile(theTest->middlemanPipe);
@@ -376,13 +374,11 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _FlushMiddleman(YM_THREAD_PARAM ctx_)
     
     if ( theTest->serverAsync )
         YMRelease(theTest->middlemanPipe);
-
-	YM_THREAD_END
 }
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteSparseFiles(YM_THREAD_PARAM ctx_)
+YM_ENTRY_POINT(_ClientWriteSparseFiles)
 {
-	struct SessionTest *theTest = ctx_;
+	struct SessionTest *theTest = context;
     YMSessionRef client = theTest->clientSession;
     YMConnectionRef connection = YMSessionGetDefaultConnection(client);
 
@@ -504,13 +500,11 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ClientWriteSparseFiles(YM_THREAD_PARAM c
     theTest->nSparseFilesToRead = actuallyWritten;
     YMSemaphoreSignal(theTest->threadExitSemaphore);
     ymlog("write sparse files thread exiting");
-
-	YM_THREAD_END
 }
 
-void YM_CALLING_CONVENTION _EatASparseFile(YM_THREAD_PARAM c)
+YM_ENTRY_POINT(_EatASparseFile)
 {
-	struct TestConnectionStream *ctx = c;
+	struct TestConnectionStream *ctx = context;
     struct SessionTest *theTest = ctx->theTest;
 
 	int result, error = 0;
@@ -566,9 +560,9 @@ catch_release:
     YMRelease(stream);
 }
 
-void YM_CALLING_CONVENTION _EatLargeFile(YM_THREAD_PARAM c)
+YM_ENTRY_POINT(_EatLargeFile)
 {
-	struct TestConnectionStream *ctx = c;
+	struct TestConnectionStream *ctx = context;
     struct SessionTest *theTest = ctx->theTest;
 
 	int result, error = 0;

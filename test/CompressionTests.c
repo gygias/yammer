@@ -40,7 +40,7 @@ void _GZTestRun(CompressionTest *);
 void _BZTestRun(CompressionTest *);
 void _CompressionTest(CompressionTest *theTest, const char *sourcePath, YMCompressionType type);
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION compression_test_read_proc(YM_THREAD_PARAM);
+YM_ENTRY_POINT(compression_test_read_proc);
 
 void CompressionTestsRun(ym_test_assert_func assert, const void *context)
 {
@@ -152,11 +152,11 @@ void _CompressionTest(CompressionTest *theTest, const char *sourcePath, YMCompre
     YM_CLOSE_FILE(theTest->sourceFd);
 }
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION compression_test_read_proc(YM_THREAD_PARAM ctx)
+YM_ENTRY_POINT(compression_test_read_proc)
 {
     YM_IO_BOILERPLATE
     
-    CompressionTest *theTest = ctx;
+    CompressionTest *theTest = context;
     
     uint8_t buf[by];
     theTest->outBytes = malloc(16384);
@@ -181,8 +181,6 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION compression_test_read_proc(YM_THREAD_PARA
         memcpy(theTest->outBytes + idx,buf,o);
         idx += o;
     }
-    
-    YM_THREAD_END
 }
 
 YM_EXTERN_C_POP

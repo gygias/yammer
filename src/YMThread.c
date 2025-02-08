@@ -34,7 +34,7 @@ typedef struct __ym_thread
     _YMType _typeID;
     
     YMStringRef name;
-    ym_thread_entry userEntryPoint;
+    ym_entry_point userEntryPoint;
     void *context;
     YM_THREAD_TYPE pthread;
     uint64_t threadId;
@@ -50,7 +50,7 @@ typedef struct __ym_thread __ym_thread_t;
 __ym_thread_t * __YMThreadInitCommon(YMStringRef, void *);
 void __YMThreadInitThreadDict(__ym_thread_t *);
 YM_THREAD_TYPE _YMThreadGetCurrentThread();
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_generic_entry_proc(YM_THREAD_PARAM);
+YM_ENTRY_POINT(__ym_thread_generic_entry_proc);
 
 
 __ym_thread_t *__YMThreadInitCommon(YMStringRef name, void *context)
@@ -68,7 +68,7 @@ __ym_thread_t *__YMThreadInitCommon(YMStringRef name, void *context)
     return t;
 }
 
-YMThreadRef YMThreadCreate(YMStringRef name, ym_thread_entry entryPoint, void *context)
+YMThreadRef YMThreadCreate(YMStringRef name, ym_entry_point entryPoint, void *context)
 {
     __ym_thread_t *t = __YMThreadInitCommon(name, context);
     t->userEntryPoint = entryPoint;
@@ -94,11 +94,11 @@ bool YMThreadStart(YMThreadRef t_)
     YM_THREAD_TYPE pthread;
     
     const void *context = YMRetain(t);
-    ym_thread_entry entry = __ym_thread_generic_entry_proc;
+    ym_entry_point entry = __ym_thread_generic_entry_proc;
     
 #if !defined(YMWIN32)
 	int result;
-    if ( 0 != ( result = pthread_create(&pthread, NULL, entry, (void *)context) ) ) { // todo eagain on pi
+    if ( 0 != ( result = pthread_create(&pthread, NULL, (void *(*)(void *))entry, (void *)context) ) ) {
         ymerr("pthread_create %d %s", result, strerror(result));
         goto catch_return;
     }
@@ -123,9 +123,9 @@ catch_return:
     return okay;
 }
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_generic_entry_proc(YM_THREAD_PARAM ctx)
+YM_ENTRY_POINT(__ym_thread_generic_entry_proc)
 {
-    __ym_thread_t *t = ctx;
+    __ym_thread_t *t = context;
     
     __YMThreadInitThreadDict(t);
     
@@ -133,8 +133,6 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_thread_generic_entry_proc(YM_THREAD_
     t->userEntryPoint((void *)t->context);
     ymlog("exiting");
     YMRelease(t);
-    
-    YM_THREAD_END
 }
 
 void __YMThreadInitThreadDict(__ym_thread_t *t)

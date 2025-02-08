@@ -56,7 +56,7 @@ typedef struct __ym_local_socket_pair
 typedef struct __ym_local_socket_pair __ym_local_socket_pair_t;
 
 int __YMLocalSocketPairCreateClient();
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_local_socket_accept_proc(YM_THREAD_PARAM);
+YM_ENTRY_POINT(__ym_local_socket_accept_proc);
 YM_ONCE_DEF(__YMLocalSocketPairInitOnce);
 
 static YM_ONCE_OBJ gYMLocalSocketOnce = YM_ONCE_INIT;
@@ -251,7 +251,7 @@ int __YMLocalSocketPairCreateClient()
     return sock;
 }
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_local_socket_accept_proc(__unused YM_THREAD_PARAM ctx)
+YM_ENTRY_POINT(__ym_local_socket_accept_proc)
 {
     ymlogg("__ym_local_socket_accept_proc entered");
     
@@ -338,8 +338,6 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_local_socket_accept_proc(__unused YM
     ymlogg("__ym_local_socket_accept_proc exiting");
     
     YMSemaphoreSignal(gYMLocalSocketThreadExited);
-
-	YM_THREAD_END
 }
 
 YM_EXTERN_C_POP

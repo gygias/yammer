@@ -3,6 +3,7 @@
 #include "YMStreamPriv.h"
 #include "YMPlexerPriv.h"
 
+#define ymlog_type YMLogDispatchForward
 #include "YMLog.h"
 
 typedef struct __ym_forward_file_async
@@ -19,7 +20,7 @@ typedef struct __ym_forward_file_async
 } __ym_forward_file_async;
 typedef struct __ym_forward_file_async __ym_forward_file_async_t;
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_dispatch_forward_file_proc(YM_THREAD_PARAM);
+YM_ENTRY_POINT(__ym_dispatch_forward_file_proc);
 bool __YMThreadDispatchForward(YMDispatchQueueRef, YMStreamRef, YMFILE, bool, const uint64_t *, bool, ym_forward_file_t *);
 
 bool YMDispatchForwardFile(YMDispatchQueueRef queue, YMFILE fromFile, YMStreamRef toStream, const uint64_t *nBytesPtr, bool sync, ym_forward_file_t *userInfo)
@@ -32,9 +33,9 @@ bool YMDispatchForwardStream(YMDispatchQueueRef queue, YMStreamRef fromStream, Y
     return __YMThreadDispatchForward(queue, fromStream, toFile, false, nBytesPtr, sync, userInfo);
 }
 
-void __ym_dispatch_utils_join_func(void *ctx)
+YM_ENTRY_POINT(__ym_dispatch_utils_join_func)
 {
-    printf("%s\n",(char *)ctx);
+    printf("%s\n",(char *)context);
 }
 
 void YMAPI YMDispatchJoin(YMDispatchQueueRef queue)
@@ -55,28 +56,28 @@ bool __YMThreadDispatchForward(YMDispatchQueueRef queue, YMStreamRef stream, YMF
     context->callbackInfo = userInfo;
     
     if ( sync ) {
-        __ym_dispatch_forward_file_proc((YM_THREAD_PARAM)context);
+        __ym_dispatch_forward_file_proc(context);
         YMIOResult result = context->result;
         YMFREE(context);
         return ( result == YMIOSuccess || ( ! nBytesPtr && result == YMIOEOF ) );
     }
     
-    ym_dispatch_user_t user = {(void (*)(void *)) __ym_dispatch_forward_file_proc, context, NULL, ym_dispatch_user_context_noop };
+    ym_dispatch_user_t user = { __ym_dispatch_forward_file_proc, context, NULL, ym_dispatch_user_context_noop };
     YMDispatchAsync(queue, &user);
     
     return true;
 }
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_dispatch_forward_file_proc(YM_THREAD_PARAM ctx_)
+YM_ENTRY_POINT(__ym_dispatch_forward_file_proc)
 {
-	__ym_forward_file_async_t *ctx = (__ym_forward_file_async_t *)ctx_;
-    YMFILE file = ctx->file;
-    YMStreamRef stream = ctx->stream;
-    bool toStream = ctx->toStream;
-    bool bounded = ctx->bounded;
-    uint64_t nBytes = ctx->nBytes;
-    bool sync = ctx->sync;
-    ym_forward_file_t *callbackInfo = ctx->callbackInfo;
+	__ym_forward_file_async_t *async = (__ym_forward_file_async_t *)context;
+    YMFILE file = async->file;
+    YMStreamRef stream = async->stream;
+    bool toStream = async->toStream;
+    bool bounded = async->bounded;
+    uint64_t nBytes = async->nBytes;
+    bool sync = async->sync;
+    ym_forward_file_t *callbackInfo = async->callbackInfo;
     
     uint64_t outBytes = 0;
     
@@ -96,12 +97,10 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_dispatch_forward_file_proc(YM_THREAD
     }
     
     YMRelease(stream);
-    YMFREE(ctx->callbackInfo);
+    YMFREE(async->callbackInfo);
     
-    if ( ! ctx->sync )
-        YMFREE(ctx);
+    if ( ! async->sync )
+        YMFREE(async);
     else
-        ctx->result = result;
-    
-    YM_THREAD_END
+        async->result = result;
 }

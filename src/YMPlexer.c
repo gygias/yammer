@@ -74,9 +74,9 @@ typedef enum
     YMPlexerCommandMin = YMPlexerCommandCloseStream
 } YMPlexerCommand;
 
-void YM_CALLING_CONVENTION __ym_plexer_notify_new_stream(YM_THREAD_PARAM context);
-void YM_CALLING_CONVENTION __ym_plexer_notify_stream_closing(YM_THREAD_PARAM context);
-void YM_CALLING_CONVENTION __ym_plexer_notify_interrupted(YM_THREAD_PARAM context);
+YM_ENTRY_POINT(__ym_plexer_notify_new_stream);
+YM_ENTRY_POINT(__ym_plexer_notify_stream_closing);
+YM_ENTRY_POINT(__ym_plexer_notify_interrupted);
 
 // linked to 'private' definition in YMPlexerPriv
 typedef struct __ym_plexer_stream_user_info
@@ -158,13 +158,13 @@ typedef struct _ym_plexer_and_stream _ym_plexer_and_stream_t;
 void __YMRegisterSigpipe();
 void __ym_sigpipe_handler (int signum);
 YMStreamRef __YMPlexerRetainReadyStream(__ym_plexer_t *);
-void __YMPlexerDispatchFunctionWithName(__ym_plexer_t *, YMStreamRef, YMDispatchQueueRef, ym_dispatch_user_func);
+void __YMPlexerDispatchFunctionWithName(__ym_plexer_t *, YMStreamRef, YMDispatchQueueRef, ym_entry_point);
 bool __YMPlexerStartServiceThreads(__ym_plexer_t *);
 bool __YMPlexerDoInitialization(__ym_plexer_t *, bool);
 bool __YMPlexerInitAsMaster(__ym_plexer_t *);
 bool __YMPlexerInitAsSlave(__ym_plexer_t *);
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_downstream_proc(YM_THREAD_PARAM);
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_upstream_proc(YM_THREAD_PARAM);
+YM_ENTRY_POINT(__ym_plexer_service_downstream_proc);
+YM_ENTRY_POINT(__ym_plexer_service_upstream_proc);
 bool __YMPlexerServiceADownstream(__ym_plexer_t *, YMStreamRef);
 YMStreamRef __YMPlexerRetainOrCreateRemoteStreamWithID(__ym_plexer_t *, YMPlexerStreamID);
 YMStreamRef __YMPlexerCreateStreamWithID(__ym_plexer_t *, YMPlexerStreamID, bool, YMStringRef);
@@ -304,10 +304,10 @@ bool YMPlexerStart(YMPlexerRef p_)
     p->active = true;
     
     YMDispatchQueueRef globalQueue = YMDispatchGetGlobalQueue();
-    ym_dispatch_user_t userDown = { (void (*)(void *))__ym_plexer_service_downstream_proc, (void *)YMRetain(p), NULL, ym_dispatch_user_context_release };
+    ym_dispatch_user_t userDown = { __ym_plexer_service_downstream_proc, (void *)YMRetain(p), NULL, ym_dispatch_user_context_release };
     YMDispatchAsync(globalQueue, &userDown);
     
-    ym_dispatch_user_t userUp = { (void (*)(void *))__ym_plexer_service_upstream_proc, (void *)YMRetain(p), NULL, ym_dispatch_user_context_release };
+    ym_dispatch_user_t userUp = { __ym_plexer_service_upstream_proc, (void *)YMRetain(p), NULL, ym_dispatch_user_context_release };
     YMDispatchAsync(globalQueue, &userUp);
     
     ymlog("started");
@@ -489,9 +489,9 @@ bool __YMPlexerInitAsSlave(__ym_plexer_t *p)
     return true;
 }
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_downstream_proc(YM_THREAD_PARAM ctx)
+YM_ENTRY_POINT(__ym_plexer_service_downstream_proc)
 {
-    __ym_plexer_t *p = (__ym_plexer_t *)ctx;
+    __ym_plexer_t *p = (__ym_plexer_t *)context;
     //YMRetain(p); // retained on thread creation, matched at the end of this function
     
     ymlog("downstream service thread entered");
@@ -531,8 +531,6 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_downstream_proc(YM_TH
     
     ymerr("downstream service thread exiting");
     YMSemaphoreSignal(p->localServiceExit);
-
-	YM_THREAD_END
 }
 
 YMStreamRef __YMPlexerRetainReadyStream(__ym_plexer_t *p)
@@ -708,9 +706,9 @@ bool __YMPlexerServiceADownstream(__ym_plexer_t *p, YMStreamRef stream)
     return true;
 }
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_upstream_proc(YM_THREAD_PARAM ctx)
+YM_ENTRY_POINT(__ym_plexer_service_upstream_proc)
 {
-    __ym_plexer_t *p = (__ym_plexer_t *)ctx;
+    __ym_plexer_t *p = (__ym_plexer_t *)context;
     
     ymlog("^ upstream service thread entered");
     
@@ -784,8 +782,6 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_upstream_proc(YM_THRE
     
     ymerr("upstream service thread exiting");
     YMSemaphoreSignal(p->remoteServiceExit);
-
-	YM_THREAD_END
 }
 
 YMStreamRef __YMPlexerRetainOrCreateRemoteStreamWithID(__ym_plexer_t *p, YMPlexerStreamID streamID)
@@ -946,7 +942,7 @@ bool __YMPlexerInterrupt(__ym_plexer_t *p)
 
 #pragma mark dispatch
 
-void __YMPlexerDispatchFunctionWithName(__ym_plexer_t *p, YMStreamRef stream, YMDispatchQueueRef queue, ym_dispatch_user_func function)
+void __YMPlexerDispatchFunctionWithName(__ym_plexer_t *p, YMStreamRef stream, YMDispatchQueueRef queue, ym_entry_point function)
 {
     _ym_plexer_and_stream_t *notifyDef = (_ym_plexer_and_stream_t *)YMALLOC(sizeof(_ym_plexer_and_stream_t));
     notifyDef->p = (__ym_plexer_t *)YMRetain(p);
@@ -962,7 +958,7 @@ void __YMPlexerDispatchFunctionWithName(__ym_plexer_t *p, YMStreamRef stream, YM
 #endif
 }
 
-void YM_CALLING_CONVENTION __ym_plexer_notify_new_stream(YM_THREAD_PARAM context)
+YM_ENTRY_POINT(__ym_plexer_notify_new_stream)
 {
     _ym_plexer_and_stream_t *notifyDef = (_ym_plexer_and_stream_t *)context;
     __ym_plexer_t *p = notifyDef->p;
@@ -976,10 +972,9 @@ void YM_CALLING_CONVENTION __ym_plexer_notify_new_stream(YM_THREAD_PARAM context
     
     YMRelease(p);
     YMRelease(stream);
-    //YMRelease(dispatch->description); // done by ThreadDispatch
 }
 
-void YM_CALLING_CONVENTION __ym_plexer_notify_stream_closing(YM_THREAD_PARAM context)
+YM_ENTRY_POINT(__ym_plexer_notify_stream_closing)
 {
     _ym_plexer_and_stream_t *notifyDef = (_ym_plexer_and_stream_t *)context;
     __ym_plexer_t *p = notifyDef->p;
@@ -999,7 +994,7 @@ void YM_CALLING_CONVENTION __ym_plexer_notify_stream_closing(YM_THREAD_PARAM con
     //YMRelease(dispatch->description); // done by ThreadDispatch
 }
 
-void YM_CALLING_CONVENTION __ym_plexer_notify_interrupted(YM_THREAD_PARAM context)
+YM_ENTRY_POINT(__ym_plexer_notify_interrupted)
 {
     _ym_plexer_and_stream_t *notifyDef = (_ym_plexer_and_stream_t *)context;
     __ym_plexer_t *p = notifyDef->p;

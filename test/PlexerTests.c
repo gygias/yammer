@@ -69,9 +69,9 @@ typedef struct PlexerTest
 } PlexerTest;
 
 void _DoManyRoundTripsTest(struct PlexerTest *);
-void YM_CALLING_CONVENTION _init_local_plexer_proc(YM_THREAD_PARAM);
-void YM_CALLING_CONVENTION _handle_remote_stream(YM_THREAD_PARAM);
-YM_THREAD_RETURN YM_CALLING_CONVENTION _RunLocalPlexer(YM_THREAD_PARAM);
+YM_ENTRY_POINT(_init_local_plexer_proc);
+YM_ENTRY_POINT(_handle_remote_stream);
+YM_ENTRY_POINT(_RunLocalPlexer);
 void _SendMessage(struct PlexerTest *theTest, YMStreamRef stream, uint8_t *message, uint16_t length);
 uint8_t *_ReceiveMessage(struct PlexerTest *theTest, YMStreamRef stream, uint16_t *outLen);
 
@@ -150,12 +150,11 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     
     int nSpawnConcurrentStreams = PlexerTest1Threads;
     while (nSpawnConcurrentStreams--) {
-        YMThreadRef aThread = YMThreadCreate(NULL, _RunLocalPlexer, theTest);
+        ym_dispatch_user_t anotherDispatch = { _RunLocalPlexer, theTest, NULL, ym_dispatch_user_context_noop };
+        YMDispatchAsync(YMDispatchGetGlobalQueue(),&anotherDispatch);
         YMRetain(theTest->localPlexer);
         YMRetain(theTest->plexerTest1Lock);
         YMRetain(theTest->lastMessageWrittenByStreamID);
-        YMThreadStart(aThread);
-        YMRelease(aThread);
     }
     
     if ( ! PlexerTest1TimeBased ) {
@@ -197,16 +196,16 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     YMRelease(socketPair);
 }
 
-void YM_CALLING_CONVENTION _init_local_plexer_proc(YM_THREAD_PARAM context)
+YM_ENTRY_POINT(_init_local_plexer_proc)
 {
     struct PlexerTest *theTest = context;
     bool okay = YMPlexerStart(theTest->localPlexer);
     testassert(okay,"master did not start");
 }
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION _RunLocalPlexer(YM_THREAD_PARAM ctx_)
+YM_ENTRY_POINT(_RunLocalPlexer)
 {
-    struct PlexerTest *theTest = ctx_;
+    struct PlexerTest *theTest = context;
     YMPlexerRef plexer = theTest->localPlexer;
     
     YMStreamRef aStream = NULL;
@@ -285,8 +284,6 @@ catch_release:
     YMRelease(plexer);
     YMRelease(theTest->plexerTest1Lock);
     YMRelease(theTest->lastMessageWrittenByStreamID);
-
-	YM_THREAD_END
 }
 
 
@@ -387,9 +384,9 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *cont
     YMDispatchAsync(theTest->fakeRemoteQueue, &dispatchDef);
 }
 
-void YM_CALLING_CONVENTION _handle_remote_stream(YM_THREAD_PARAM c)
+YM_ENTRY_POINT(_handle_remote_stream)
 {
-    struct HandleStreamContext *ctx = c;
+    struct HandleStreamContext *ctx = context;
     struct PlexerTest *theTest = ctx->theTest;
     YMStreamRef stream = ctx->stream;
     YMPlexerStreamID streamID = ((ym_pstream_user_info_t *)_YMStreamGetUserInfo(stream))->streamID;

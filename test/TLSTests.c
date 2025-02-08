@@ -59,7 +59,7 @@ typedef struct RunEndpointContext
     bool isServer;
 } RunEndpointContext;
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION _RunEndpoint(YM_THREAD_PARAM ctx);
+YM_ENTRY_POINT(_RunEndpoint);
 void _SendAMessage(struct TLSTest *theTest, YMTLSProviderRef tls, uint8_t *message, uint16_t messageLen);
 uint8_t *_ReceiveAMessage(struct TLSTest *theTest, YMTLSProviderRef tls, uint16_t *outLen);
 
@@ -172,12 +172,12 @@ void _TestTLS1(struct TLSTest *theTest)
 const char *testMessage = "security is important. put in the advanced technology. technology consultants international. please check. thanks.";
 const char *testResponse = "creative technologist? or technology creative? foodie. quirky. here is a picture of my half-eaten food. ask me about my background in typesetting.";
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION _RunEndpoint(YM_THREAD_PARAM ctx)
+YM_ENTRY_POINT(_RunEndpoint)
 {
-	struct RunEndpointContext *context = ctx;
-    struct TLSTest *theTest = context->theTest;
-    YMTLSProviderRef tls = context->tls;
-    bool isServer = context->isServer;
+	struct RunEndpointContext *ctx = context;
+    struct TLSTest *theTest = ctx->theTest;
+    YMTLSProviderRef tls = ctx->tls;
+    bool isServer = ctx->isServer;
     
     bool okay = YMSecurityProviderInit((YMSecurityProviderRef)tls);
     testassert(okay,"provider init");
@@ -232,8 +232,6 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _RunEndpoint(YM_THREAD_PARAM ctx)
     
     ymdbg("run %s exiting...",isServer?"server":"client");
     YMSemaphoreSignal(theTest->threadExitSemaphore);
-
-	YM_THREAD_END
 }
 
 void _SendAMessage(__unused struct TLSTest *theTest, YMTLSProviderRef tls, uint8_t *message, uint16_t messageLen)

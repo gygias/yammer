@@ -122,10 +122,10 @@ void __YMSessionUpdateNetworkConfigDate(__ym_session_t *);
 bool __YMSessionInterrupt(__ym_session_t *, YMConnectionRef floatConnection);
 bool __YMSessionCloseAllConnections(__ym_session_t *);
 void __YMSessionAddConnection(__ym_session_t *, YMConnectionRef connection);
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_accept_proc(YM_THREAD_PARAM);
-void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(YM_THREAD_PARAM context);
-void YM_CALLING_CONVENTION __ym_session_connect_async_proc(YM_THREAD_PARAM context);
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_listen_proc(YM_THREAD_PARAM c);
+YM_ENTRY_POINT(__ym_session_accept_proc);
+YM_ENTRY_POINT(__ym_session_init_incoming_connection_proc);
+YM_ENTRY_POINT(__ym_session_connect_async_proc);
+YM_ENTRY_POINT(__ym_session_listen_proc);
 
 void __ym_session_new_stream_proc(YMConnectionRef connection, YMStreamRef stream, void *context);
 void __ym_session_stream_closing_proc(YMConnectionRef connection, YMStreamRef stream, void *context);
@@ -420,14 +420,14 @@ catch_fail:
     return false;
 }
 
-void YM_CALLING_CONVENTION __ym_session_connect_async_proc(YM_THREAD_PARAM ctx)
+YM_ENTRY_POINT(__ym_session_connect_async_proc)
 {
-    __ym_session_connect_t *context = ctx;
-    YMSessionRef s = context->session;
-    YMPeerRef peer = context->peer;
-    YMConnectionRef connection = context->connection;
-    bool moreComing = context->moreComing;
-    bool userSync = context->userSync;
+    __ym_session_connect_t *sc = context;
+    YMSessionRef s = sc->session;
+    YMPeerRef peer = sc->peer;
+    YMConnectionRef connection = sc->connection;
+    bool moreComing = sc->moreComing;
+    bool userSync = sc->userSync;
     
     ymlog("__ym_session_connect_async_proc entered");
     
@@ -461,7 +461,7 @@ catch_release:
     YMRelease(peer);
     YMRelease(connection);
 
-    YMFREE(ctx);
+    YMFREE(sc);
     
     ymlog("__ym_session_connect_async_proc exiting: %s",okay?"success":"fail");
 }
@@ -493,14 +493,14 @@ bool YMSessionStartAdvertising(YMSessionRef s_, YMStringRef name)
     
     bool okay = false;
     __ym_session_async_bool asyncBool = {s,&okay};
-    ym_dispatch_user_t listenUser = { (void (*)(void *))__ym_session_listen_proc, &asyncBool, NULL, ym_dispatch_user_context_noop };
+    ym_dispatch_user_t listenUser = { __ym_session_listen_proc, &asyncBool, NULL, ym_dispatch_user_context_noop };
     YMDispatchSync(s->acceptQueue,&listenUser);
     return okay;
 }
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_listen_proc(YM_THREAD_PARAM c)
+YM_ENTRY_POINT(__ym_session_listen_proc)
 {
-    __ym_session_async_bool *asyncBool = c;
+    __ym_session_async_bool *asyncBool = context;
     __ym_session_t *s = asyncBool->s;
 
 
@@ -510,7 +510,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_listen_proc(YM_THREAD_PARAM 
     int32_t port = YMPortReserve(s->ipv4, &socket);
     if ( port < 0 || socket == -1 || socket > UINT16_MAX ) {
         ymerr("failed to reserve port for server start");
-        YM_THREAD_END;
+        return;
     }
     
     int aResult = listen(socket, 1);
@@ -525,7 +525,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_listen_proc(YM_THREAD_PARAM 
     
     s->listenSocket = socket;
         
-    ym_dispatch_user_t acceptUser = { (void (*)(void *))__ym_session_accept_proc, (void *)YMRetain(s), NULL, ym_dispatch_user_context_noop };
+    ym_dispatch_user_t acceptUser = { __ym_session_accept_proc, (void *)YMRetain(s), NULL, ym_dispatch_user_context_noop };
     YMDispatchAsync(s->acceptQueue, &acceptUser);
     
     s->service = YMmDNSServiceCreate(s->type, s->name, (uint16_t)port);
@@ -540,7 +540,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_listen_proc(YM_THREAD_PARAM 
     }
     
     *(asyncBool->okay) = __YMSessionObserveNetworkInterfaceChanges(s,true);
-    YM_THREAD_END;
+    return;
     
 rewind_fail:
     if ( socket >= 0 ) {
@@ -555,7 +555,6 @@ rewind_fail:
         YMRelease(s->service);
         s->service = NULL;
     }
-    YM_THREAD_END;
 }
 
 bool YMSessionStopAdvertising(YMSessionRef s_)
@@ -597,9 +596,9 @@ typedef struct __ym_connection_init
 } __ym_connection_init;
 typedef struct __ym_connection_init __ym_connection_init_t;
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_accept_proc(YM_THREAD_PARAM c)
+YM_ENTRY_POINT(__ym_session_accept_proc)
 {
-    __ym_session_t *s = c;
+    __ym_session_t *s = context;
     
     while ( ! s->acceptExitFlag ) {        
         struct sockaddr_in6 *bigEnoughAddr = YMALLOC(sizeof(struct sockaddr_in6));
@@ -640,10 +639,9 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_accept_proc(YM_THREAD_PARAM 
     }
     
     YMRelease(s);
-	YM_THREAD_END
 }
 
-void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(YM_THREAD_PARAM context)
+YM_ENTRY_POINT(__ym_session_init_incoming_connection_proc)
 {
     __ym_connection_init_t *initCtx = (__ym_connection_init_t *)context;
     __ym_session_t *s = initCtx->s;
@@ -949,9 +947,9 @@ void __ym_SCDynamicStoreCallBack(__unused SCDynamicStoreRef store, __unused CFAr
 	__YMSessionUpdateNetworkConfigDate(info);
 }
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_macos_sc_runloop_proc(YM_THREAD_PARAM ctx)
+YM_ENTRY_POINT(__ym_session_macos_sc_runloop_proc)
 {
-    __ym_session_t *s = ctx;
+    __ym_session_t *s = context;
 
     SCDynamicStoreContext storeCtx = { 0, s, NULL, NULL, NULL };
     
@@ -982,8 +980,6 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_macos_sc_runloop_proc(YM_THR
     storeCtx.version = 6969;
     ymerr("warning: network interface change observing unimplemented on ios");
 #endif
-    
-    YM_THREAD_END
 }
 
 bool __YMSessionObserveNetworkInterfaceChangesMacos(__ym_session_t *s, bool startStop)
@@ -1012,9 +1008,9 @@ bool __YMSessionObserveNetworkInterfaceChangesMacos(__ym_session_t *s, bool star
 
 #elif defined(YMLINUX)
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_linux_proc_net_dev_scrape_proc(YM_THREAD_PARAM ctx)
+YM_ENTRY_POINT(__ym_session_linux_proc_net_dev_scrape_proc)
 {
-	__ym_session_t *s = ctx;
+	__ym_session_t *s = context;
 	
 	YMDictionaryRef thisIter = NULL, prevIter = NULL;
 	// this /proc scraping method was cribbed from ifplugd. thanks ifplugd!
@@ -1025,7 +1021,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_linux_proc_net_dev_scrape_pr
 
 		if (!(f = fopen("/proc/net/dev", "r"))) {
 			ymerr("failed to open /proc/net/dev: %d %s", errno, strerror(errno));
-			YM_THREAD_END
+			return;
 		}
 		
 		fgets(ln,sizeof(ln),f);
@@ -1039,7 +1035,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_linux_proc_net_dev_scrape_pr
 			if (!(e = strchr(p, ':'))) {
 				ymerr("failed to parse /proc/net/dev");
 				fclose(f);
-				YM_THREAD_END
+				return;
 			}
 
 			*e = '\0';
@@ -1048,7 +1044,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_linux_proc_net_dev_scrape_pr
 			if ((fd = socket(PF_INET, SOCK_DGRAM, 0)) < 0) {
 				ymerr("failed to open /proc/net/dev: %d %s",errno,strerror(errno));
 				fclose(f);
-				YM_THREAD_END
+				return;
 			}
 			
 	        interface_status_t st;
@@ -1110,8 +1106,6 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_linux_proc_net_dev_scrape_pr
 		if ( prevIter ) YMRelease(prevIter);
 		prevIter = thisIter;
 	}
-
-	YM_THREAD_END
 }
 
 bool __YMSessionObserveNetworkInterfaceChangesLinux(__ym_session_t *s, bool startStop)

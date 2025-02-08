@@ -54,10 +54,9 @@ typedef enum
     YMLogSecurity = YMLogmDNS << 1,
     YMLogDispatch = YMLogSecurity << 1,
     YMLogThread = YMLogDispatch << 1,
-    YMLogThreadDebug = YMLogThread << 1,
-    YMLogThreadDispatch = YMLogThreadDebug << 1, // todo: time to split out dispatch
-    YMLogCombined2 = YMLogThreadDispatch,
-    YMLogPlexer = YMLogThreadDispatch << 1,
+    YMLogDispatchForward = YMLogDispatch << 1,
+    YMLogCombined2 = YMLogDispatchForward,
+    YMLogPlexer = YMLogDispatchForward << 1,
     YMLogCombined3 = YMLogPlexer,
     YMLogThreadSync = YMLogPlexer << 1,
     YMLogStream = YMLogThreadSync << 1,

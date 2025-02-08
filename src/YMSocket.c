@@ -49,8 +49,8 @@ typedef struct __ym_socket __ym_socket_t;
 
 #define SocketChunkSize 16384
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_socket_out_proc(YM_THREAD_PARAM);
-YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_socket_in_proc(YM_THREAD_PARAM);
+YM_ENTRY_POINT(_ym_socket_out_proc);
+YM_ENTRY_POINT(_ym_socket_in_proc);
 
 typedef struct ym_socketgram
 {
@@ -134,11 +134,9 @@ YMFILE YMSocketGetOutput(YMSocketRef s)
     return YMPipeGetOutputFile(s->outPipe);
 }
 
-// threads run for the lifetime of the socket object, across potentially many "underlying sockets"
-
-YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_socket_out_proc(YM_THREAD_PARAM ctx)
+YM_ENTRY_POINT(_ym_socket_out_proc)
 {
-    __ym_socket_t *s = ctx;
+    __ym_socket_t *s = context;
     ymlog("_ym_socket_out_proc entered");
     
     YMFILE outputOfInput = YMPipeGetOutputFile(s->inPipe);
@@ -195,13 +193,11 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_socket_out_proc(YM_THREAD_PARAM ctx)
     } while (true);
 out_proc_exit:
     ymlog("_ym_socket_out_proc exiting");
-    
-    YM_THREAD_END
 }
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_socket_in_proc(YM_THREAD_PARAM ctx)
+YM_ENTRY_POINT(_ym_socket_in_proc)
 {
-    __ym_socket_t *s = ctx;
+    __ym_socket_t *s = context;
     ymlog("_ym_socket_in_proc entered");
     
     YMFILE inputOfOutput = YMPipeGetInputFile(s->outPipe);
@@ -258,8 +254,6 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION _ym_socket_in_proc(YM_THREAD_PARAM ctx)
     
 in_proc_exit:
     ymlog("_ym_socket_in_proc exiting");
-    
-    YM_THREAD_END
 }
 
 YM_EXTERN_C_POP

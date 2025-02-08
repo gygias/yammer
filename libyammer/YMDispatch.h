@@ -18,12 +18,11 @@ typedef enum ym_dispatch_user_context_mode
     ym_dispatch_user_context_free = 2
 } ym_dispatch_user_context_mode;
 
-typedef void(YM_CALLING_CONVENTION *ym_dispatch_user_func)(YM_THREAD_PARAM);
 typedef struct ym_dispatch_user
 {
-    ym_dispatch_user_func dispatchProc;
+    ym_entry_point dispatchProc;
     void *context; // supermultimodal weak (wow!)
-    ym_dispatch_user_func onCompleteProc;
+    ym_entry_point onCompleteProc;
     ym_dispatch_user_context_mode mode;
 } ym_dispatch_user;
 typedef struct ym_dispatch_user ym_dispatch_user_t;
@@ -32,6 +31,8 @@ typedef struct ym_dispatch_user ym_dispatch_user_t;
 YMDispatchQueueRef YMAPI YMDispatchGetMainQueue();
 YMDispatchQueueRef YMAPI YMDispatchGetGlobalQueue();
 
+// userDispatch is copied and can be passed from the stack, to make up for some of the
+// inconvenience of not having language support for blocks
 void YMAPI YMDispatchAsync(YMDispatchQueueRef queue, ym_dispatch_user_t *userDispatch);
 void YMAPI YMDispatchSync(YMDispatchQueueRef queue, ym_dispatch_user_t *userDispatch);
 

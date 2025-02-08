@@ -57,7 +57,7 @@ typedef struct __ym_dispatch_queue_thread
 } __ym_dispatch_queue_thread_t;
 typedef struct __ym_dispatch_queue_thread __ym_dispatch_queue_thread_t;
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_dispatch_service_loop(YM_THREAD_PARAM ctx);
+YM_ENTRY_POINT(__ym_dispatch_service_loop);
 __ym_dispatch_queue_t *__YMDispatchQueueInitCommon(YMStringRef name, YMDispatchQueueType type);
 
 YM_ONCE_OBJ(gDispatchGlobalInitOnce);
@@ -109,7 +109,7 @@ void _YMDispatchQueueFree(YMDispatchQueueRef p_)
 
 uint8_t __YMDispatchMaxQueueThreads()
 {
-    // todo
+    #warning todo, at least based on cores available
     return 8;
 }
 
@@ -131,9 +131,10 @@ __ym_dispatch_queue_t *__YMDispatchQueueInitCommon(YMStringRef name, YMDispatchQ
         YMThreadRef first = YMThreadCreate(name, __ym_dispatch_service_loop, q);
         __ym_dispatch_queue_thread_t *qt = __YMDispatchQueueThreadCreate(first);
         bool okay = YMThreadStart(first);
-
+        #warning depends ymlog
         ymassert(okay, "ymdispatch failed to start %s queue thread", YMSTR(name));
         YMArrayAdd(q->queueThreads,qt); // no sync, guarded by once
+
 //#define YM_DISPATCH_LOG
 #ifdef YM_DISPATCH_LOG
         printf("started %s queue %p '%s'\n", ( type == YMDispatchQueueGlobal ) ? "global" : "user", q, YMSTR(name));
@@ -280,9 +281,9 @@ void __YMDispatchUserFinalize(ym_dispatch_user_t *user)
     }
 }
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_dispatch_service_loop(YM_THREAD_PARAM ctx)
+YM_ENTRY_POINT(__ym_dispatch_service_loop)
 {
-    __ym_dispatch_queue_t *q = ctx;
+    __ym_dispatch_queue_t *q = context;
     
     __ym_dispatch_dispatch_t *aDispatch = NULL;
 #ifdef YM_DISPATCH_LOG
@@ -310,11 +311,11 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_dispatch_service_loop(YM_THREAD_PARA
         YMSelfUnlock(q);
         
 #ifdef YM_DISPATCH_LOG
-        //printf("[%s:%08lx] entering dispatch\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber());
+        printf("[%s:%08lx] entering dispatch\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber());
 #endif
         aDispatch->user->dispatchProc(aDispatch->user->context);
 #ifdef YM_DISPATCH_LOG
-        //printf("[%s:%08lx] finished dispatch\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber());
+        printf("[%s:%08lx] finished dispatch\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber());
 #endif
         
         __YMDispatchUserFinalize(aDispatch->user);
@@ -331,13 +332,12 @@ catch_return:
 #ifdef YM_DISPATCH_LOG
     printf("[%s:%08lx] exiting\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber());
 #endif
-	
-	YM_THREAD_END
 }
 
 void YMDispatchMain()
 {
     YM_ONCE_DO(gDispatchGlobalInitOnce, __YMDispatchInitOnce);
     __ym_dispatch_service_loop((void *)gDispatch->mainQueue);
-    ymassert(false,"YMDispatchMain will return");
+    printf("YMDispatchMain will return\n");
+    abort();
 }

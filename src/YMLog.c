@@ -57,7 +57,7 @@ typedef struct ___ym_log_t
     char *string;
 } ___ym_log_t;
 
-void ___ym_log(void *ctx)
+YM_ENTRY_POINT(___ym_log)
 {
     ___ym_log_t *log = ctx;
     fprintf(log->file,log->string,NULL);
