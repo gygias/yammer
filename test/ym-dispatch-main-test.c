@@ -77,7 +77,7 @@ YM_ENTRY_POINT(_do_a_work)
 
 YM_ENTRY_POINT(valgrind_take_me_away)
 {
-    free(ptr);
+    free(context);
 }
 
 void * valgrind_hit_me()

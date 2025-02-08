@@ -59,7 +59,7 @@ typedef struct ___ym_log_t
 
 YM_ENTRY_POINT(___ym_log)
 {
-    ___ym_log_t *log = ctx;
+    ___ym_log_t *log = context;
     fprintf(log->file,log->string,NULL);
     fflush(log->file);
     YMFREE(log->string);
