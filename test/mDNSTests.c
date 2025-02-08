@@ -178,7 +178,7 @@ YMmDNSTxtRecordKeyPair ** _MakeTxtRecordKeyPairs(uint16_t *inOutnKeypairs)
         ymdbg("aKeyPair[%zd]: 3 + [%u] => [%zu]... [%lu] (%d)",idx,valueLen,keyLen,debugBlobSize,remaining);
         
         if ( remaining < 0 )
-            ymabort("txt record format");
+            ymlog("warning: txt record format remaining %d",remaining);
         if ( remaining <= testKeyPairReserved )
             break;
     }

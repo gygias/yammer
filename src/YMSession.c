@@ -15,7 +15,9 @@
 #include "YMStreamPriv.h"
 #include "YMPeerPriv.h"
 #include "YMLock.h"
-#include "YMThread.h"
+#include "YMDispatch.h"
+#include "YMDispatchUtils.h"
+#include "YMSemaphore.h"
 #include "YMAddress.h"
 #include "YMUtilities.h"
 
@@ -87,16 +89,15 @@ typedef struct __ym_session
     // server
     YMStringRef name;
     YMmDNSServiceRef service;
-    YMSOCKET ipv4ListenSocket;
-    YMSOCKET ipv6ListenSocket;
-    YMThreadRef acceptThread;
-    bool acceptThreadExitFlag;
-    YMThreadRef initConnectionDispatchThread;
+    YMSOCKET listenSocket;
+    YMDispatchQueueRef acceptQueue;
+    bool acceptExitFlag;
     
     // client
     YMmDNSBrowserRef browser;
     YMDictionaryRef knownPeers;
-    YMThreadRef connectDispatchThread;
+
+    bool ipv4;
     
     ym_session_added_peer_func addedFunc;
     ym_session_removed_peer_func removedFunc;
@@ -124,6 +125,7 @@ void __YMSessionAddConnection(__ym_session_t *, YMConnectionRef connection);
 YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_accept_proc(YM_THREAD_PARAM);
 void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(YM_THREAD_PARAM context);
 void YM_CALLING_CONVENTION __ym_session_connect_async_proc(YM_THREAD_PARAM context);
+YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_listen_proc(YM_THREAD_PARAM c);
 
 void __ym_session_new_stream_proc(YMConnectionRef connection, YMStreamRef stream, void *context);
 void __ym_session_stream_closing_proc(YMConnectionRef connection, YMStreamRef stream, void *context);
@@ -140,16 +142,16 @@ YMSessionRef YMSessionCreate(YMStringRef type)
 
     __ym_session_t *session = (__ym_session_t *)_YMAlloc(_YMSessionTypeID,sizeof(__ym_session_t));
     session->type = YMRetain(type);
-    session->ipv4ListenSocket = NULL_SOCKET;
-    session->ipv6ListenSocket = NULL_SOCKET;
+    session->listenSocket = NULL_SOCKET;
     session->logDescription = YMStringCreateWithFormat("session:%s",YMSTR(type),NULL);
     session->service = NULL;
     session->browser = NULL;
-    session->acceptThread = NULL;
-    session->acceptThreadExitFlag = false;
-    session->initConnectionDispatchThread = NULL;
+    session->acceptExitFlag = false;
+    session->acceptQueue = NULL;
     session->defaultConnection = NULL;
     session->connectionsByAddress = YMDictionaryCreate();
+
+    session->ipv4 = true;
 
 #if defined(YMAPPLE)
 	session->scObserverThread = NULL;
@@ -216,18 +218,9 @@ void _YMSessionFree(YMTypeRef o_)
     
     __YMSessionInterrupt(s, NULL);
     
-    // release these first, threads join on their exit flag when they're deallocated,
-    // and we have async stuff that depends on other session members below
-    s->acceptThreadExitFlag = false;
-    if ( s->acceptThread )
-        YMRelease(s->acceptThread);
-    if ( s->initConnectionDispatchThread ) {
-        YMThreadDispatchJoin(s->initConnectionDispatchThread);
-        YMRelease(s->initConnectionDispatchThread);
-    }
-    if ( s->connectDispatchThread ) {
-        YMThreadDispatchJoin(s->connectDispatchThread);
-        YMRelease(s->connectDispatchThread);
+    if ( s->acceptQueue ) {
+        YMDispatchJoin(s->acceptQueue);
+        YMRelease(s->acceptQueue);
     }
     
     // shared
@@ -364,7 +357,6 @@ bool YMSessionConnectToPeer(YMSessionRef s_, YMPeerRef peer, bool sync)
 {
     __ym_session_t *s = (__ym_session_t *)s_;
     
-    YMStringRef name = NULL;
     __ym_session_connect_t *context = NULL;
     YMDictionaryEnumRef addrEnum = NULL;
     
@@ -408,38 +400,21 @@ bool YMSessionConnectToPeer(YMSessionRef s_, YMPeerRef peer, bool sync)
         context->moreComing = ( i < YMArrayGetCount(addresses) - 1 );
         context->userSync = sync;
         
-        name = YMSTRC("session-async-connect");
-        ym_thread_dispatch_user_t connectDispatch = {__ym_session_connect_async_proc, NULL, false, context, name};
+        ym_dispatch_user_t connectDispatch = {__ym_session_connect_async_proc, context, NULL, ym_dispatch_user_context_noop};
         
         if ( ! sync ) {
-            if ( ! s->connectDispatchThread ) {
-                s->connectDispatchThread = YMThreadDispatchCreate(name);
-                if ( ! s->connectDispatchThread ) {
-                    ymerr("failed to create async connect thread");
-                    goto catch_fail;
-                }
-                bool okay = YMThreadStart(s->connectDispatchThread);
-                if ( ! okay ) {
-                    ymerr("failed to start async connect thread");
-                    goto catch_fail;
-                }
-            }
-            
-            YMThreadDispatchDispatch(s->connectDispatchThread, connectDispatch);
+            YMDispatchAsync(YMDispatchGetGlobalQueue(),&connectDispatch);
+        } else {
+            YMDispatchSync(YMDispatchGetGlobalQueue(),&connectDispatch);
         }
-        else
-            __ym_session_connect_async_proc(context);
         
         YMRelease(newConnection);
-        YMRelease(name);
     }
     
     return true;
     
 catch_fail:
-    free(context);
-    if ( name )
-        YMRelease(name);
+    YMFREE(context);
     if ( addrEnum )
         YMDictionaryEnumeratorEnd(addrEnum);
     return false;
@@ -453,7 +428,6 @@ void YM_CALLING_CONVENTION __ym_session_connect_async_proc(YM_THREAD_PARAM ctx)
     YMConnectionRef connection = context->connection;
     bool moreComing = context->moreComing;
     bool userSync = context->userSync;
-    free(ctx);
     
     ymlog("__ym_session_connect_async_proc entered");
     
@@ -486,18 +460,21 @@ catch_release:
     YMRelease(s);
     YMRelease(peer);
     YMRelease(connection);
+
+    YMFREE(ctx);
     
     ymlog("__ym_session_connect_async_proc exiting: %s",okay?"success":"fail");
 }
 
 #pragma mark server
 
-typedef struct __ym_session_accept
+// for some reason i found this hilarious
+typedef struct __ym_session_async_bool
 {
     __ym_session_t *s;
-    bool ipv4;
+    bool *okay;
 } __ym_session_accept;
-typedef struct __ym_session_accept __ym_session_accept_t;
+typedef struct __ym_session_async_bool __ym_session_async_bool;
 
 bool YMSessionStartAdvertising(YMSessionRef s_, YMStringRef name)
 {
@@ -505,17 +482,35 @@ bool YMSessionStartAdvertising(YMSessionRef s_, YMStringRef name)
     
     if ( s->service )
         return false;
+    if ( s->acceptQueue )
+        return false;
     
     s->name = YMRetain(name);
+
+    YMStringRef queueName = YMStringCreateWithFormat("com.combobulated.dispatch.ymsession.accept:%s",YMSTR(name),NULL);
+    s->acceptQueue = YMDispatchQueueCreate(queueName);
+    YMRelease(queueName);
     
     bool okay = false;
+    __ym_session_async_bool asyncBool = {s,&okay};
+    ym_dispatch_user_t listenUser = { (void (*)(void *))__ym_session_listen_proc, &asyncBool, NULL, ym_dispatch_user_context_noop };
+    YMDispatchSync(s->acceptQueue,&listenUser);
+    return okay;
+}
+
+YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_listen_proc(YM_THREAD_PARAM c)
+{
+    __ym_session_async_bool *asyncBool = c;
+    __ym_session_t *s = asyncBool->s;
+
+
+    *(asyncBool->okay) = false;
     int socket = -1;
-    bool ipv4 = true;
     
-    int32_t port = YMPortReserve(ipv4, &socket);
+    int32_t port = YMPortReserve(s->ipv4, &socket);
     if ( port < 0 || socket == -1 || socket > UINT16_MAX ) {
         ymerr("failed to reserve port for server start");
-        return false;
+        YM_THREAD_END;
     }
     
     int aResult = listen(socket, 1);
@@ -528,74 +523,39 @@ bool YMSessionStartAdvertising(YMSessionRef s_, YMStringRef name)
     
     ymlog("listening on %u",port);
     
-    if ( ipv4 )
-        s->ipv4ListenSocket = socket;
-    else
-        s->ipv6ListenSocket = socket;
-    
-    YMStringRef memberName = YMStringCreateWithFormat("session-accept-%s",YMSTR(s->type),NULL);
-    __ym_session_accept_t *ctx = YMALLOC(sizeof(__ym_session_accept_t));
-    ctx->s = (__ym_session_t *)YMRetain(s);
-    ctx->ipv4 = ipv4;
-    s->acceptThread = YMThreadCreate(memberName, __ym_session_accept_proc, ctx);
-    YMRelease(memberName);
-    if ( ! s->acceptThread ) {
-        ymerr("failed to create accept thread");
-        goto rewind_fail;
-    }
-    s->acceptThreadExitFlag = false;
-    okay = YMThreadStart(s->acceptThread);
-    if ( ! okay ) {
-        ymerr("failed to start accept thread");
-        goto rewind_fail;
-    }
-    
-    memberName = YMStringCreateWithFormat("session-init-%s",YMSTR(s->type),NULL);
-    s->initConnectionDispatchThread = YMThreadDispatchCreate(memberName);
-    YMRelease(memberName);
-    if ( ! s->initConnectionDispatchThread ) {
-        ymerr("failed to create connection init thread");
-        goto rewind_fail;
-    }
-    okay = YMThreadStart(s->initConnectionDispatchThread);
-    if ( ! okay ) {
-        ymerr("failed to start start connection init thread");
-        goto rewind_fail;
-    }
+    s->listenSocket = socket;
+        
+    ym_dispatch_user_t acceptUser = { (void (*)(void *))__ym_session_accept_proc, (void *)YMRetain(s), NULL, ym_dispatch_user_context_noop };
+    YMDispatchAsync(s->acceptQueue, &acceptUser);
     
     s->service = YMmDNSServiceCreate(s->type, s->name, (uint16_t)port);
     if ( ! s->service ) {
         ymerr("failed to create mdns service");
         goto rewind_fail;
     }
-    okay = YMmDNSServiceStart(s->service);
-    if ( ! okay ) {
+    *(asyncBool->okay) = YMmDNSServiceStart(s->service);
+    if ( ! asyncBool->s ) {
         ymerr("failed to start mdns service");
         goto rewind_fail;
     }
     
-    okay = __YMSessionObserveNetworkInterfaceChanges(s,true);
-    
-    return true;
+    *(asyncBool->okay) = __YMSessionObserveNetworkInterfaceChanges(s,true);
+    YM_THREAD_END;
     
 rewind_fail:
     if ( socket >= 0 ) {
 		int result, error; const char *errorStr;
         YM_CLOSE_SOCKET(socket);
 	}
-    s->ipv4ListenSocket = NULL_SOCKET;
-    s->ipv6ListenSocket = NULL_SOCKET;
-    if ( s->acceptThread ) {
-        s->acceptThreadExitFlag = true;
-        YMRelease(s->acceptThread);
-        s->acceptThread = NULL;
-    }
+    s->listenSocket = NULL_SOCKET;
+    s->acceptExitFlag = true;
+
     if ( s->service ) {
         YMmDNSServiceStop(s->service, false);
         YMRelease(s->service);
         s->service = NULL;
     }
-    return false;
+    YM_THREAD_END;
 }
 
 bool YMSessionStopAdvertising(YMSessionRef s_)
@@ -604,23 +564,15 @@ bool YMSessionStopAdvertising(YMSessionRef s_)
     
     __ym_session_t *s = (__ym_session_t *)s_;
     
-    s->acceptThreadExitFlag = true;
+    s->acceptExitFlag = true;
     bool okay = true;
-    if ( s->ipv4ListenSocket != NULL_SOCKET ) {
-		YM_CLOSE_SOCKET(s->ipv4ListenSocket);
+    if ( s->listenSocket != NULL_SOCKET ) {
+		YM_CLOSE_SOCKET(s->listenSocket);
         if ( result != 0 ) {
-            ymerr("warning: failed to close ipv4 socket: %d %s",error,errorStr);
+            ymerr("warning: failed to close listen socket: %d %s",error,errorStr);
             okay = false;
         }
-        s->ipv4ListenSocket = NULL_SOCKET;
-    }
-    if ( s->ipv6ListenSocket != NULL_SOCKET ) {
-        YM_CLOSE_SOCKET(s->ipv6ListenSocket);
-        if ( result != 0 ) {
-            ymerr("warning: failed to close ipv6 socket: %d %s",error,errorStr);
-            okay = false;
-        }
-        s->ipv6ListenSocket = NULL_SOCKET;
+        s->listenSocket = NULL_SOCKET;
     }
     
     if ( s->service ) {
@@ -642,27 +594,22 @@ typedef struct __ym_connection_init
     int socket;
     struct sockaddr *addr;
     socklen_t addrLen; // redundant?
-    bool ipv4;
 } __ym_connection_init;
 typedef struct __ym_connection_init __ym_connection_init_t;
 
-YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_accept_proc(YM_THREAD_PARAM ctx)
+YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_accept_proc(YM_THREAD_PARAM c)
 {
-    __ym_session_accept_t *context = ctx;
-    __ym_session_t *s = context->s;
-    bool ipv4 = context->ipv4;
+    __ym_session_t *s = c;
     
-    while ( ! s->acceptThreadExitFlag ) {
-        int socket = ipv4 ? s->ipv4ListenSocket : s->ipv6ListenSocket;
+    while ( ! s->acceptExitFlag ) {        
+        struct sockaddr_in6 *bigEnoughAddr = YMALLOC(sizeof(struct sockaddr_in6));
+        socklen_t thisLength = s->ipv4 ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6);
         
-        struct sockaddr_in6 *bigEnoughAddr = calloc(1,sizeof(struct sockaddr_in6));
-        socklen_t thisLength = ipv4 ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6);
-        
-        ymerr("accepting on sf%d...",socket);
-        int aResult = accept(socket, (struct sockaddr *)bigEnoughAddr, &thisLength);
+        ymerr("accepting on sf%d...",s->listenSocket);
+        int aResult = accept(s->listenSocket, (struct sockaddr *)bigEnoughAddr, &thisLength);
         if ( aResult < 0 ) {
-            ymerr("accept(sf%d) failed: %d (%s)",socket,errno,strerror(errno));
-            free(bigEnoughAddr);
+            ymerr("accept(sf%d) failed: %d (%s)",s->listenSocket,errno,strerror(errno));
+            YMFREE(bigEnoughAddr);
             continue;
         }
         
@@ -688,17 +635,11 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_accept_proc(YM_THREAD_PARAM 
         initCtx->socket = aResult;
         initCtx->addr = (struct sockaddr *)bigEnoughAddr;
         initCtx->addrLen = thisLength;
-        initCtx->ipv4 = ipv4;
-        YMStringRef description = YMSTRC("init-connection");
-        ym_thread_dispatch_user_t dispatch = { __ym_session_init_incoming_connection_proc, NULL, false, initCtx, description };
-        YMThreadDispatchDispatch(s->initConnectionDispatchThread, dispatch);
-        YMRelease(description);
+        ym_dispatch_user_t dispatch = { __ym_session_init_incoming_connection_proc, initCtx, NULL, ym_dispatch_user_context_noop };
+        YMDispatchAsync(YMDispatchGetGlobalQueue(), &dispatch);
     }
     
-    s->acceptThreadExitFlag = false;
-    
     YMRelease(s);
-    free(context);
 	YM_THREAD_END
 }
 
@@ -709,15 +650,14 @@ void YM_CALLING_CONVENTION __ym_session_init_incoming_connection_proc(YM_THREAD_
     int socket = initCtx->socket;
     struct sockaddr *addr = initCtx->addr;
     socklen_t addrLen = initCtx->addrLen;
-    __unused bool ipv4 = initCtx->ipv4;
     
     YMAddressRef peerAddress = NULL;
     YMPeerRef peer = NULL;
     YMConnectionRef newConnection = NULL;
     
-    ymlog("__ym_session_init_connection entered: sf%d %d %d",socket,addrLen,ipv4);
+    ymlog("__ym_session_init_connection entered: sf%d %d %s",socket,addrLen,s->ipv4?"ip4":"ip6");
     
-    peerAddress = YMAddressCreate(addr,ipv4?((struct sockaddr_in *)addr)->sin_port:((struct sockaddr_in6 *)addr)->sin6_port);
+    peerAddress = YMAddressCreate(addr,s->ipv4?((struct sockaddr_in *)addr)->sin_port:((struct sockaddr_in6 *)addr)->sin6_port);
     peer = _YMPeerCreateWithAddress(peerAddress);
     if ( ! s->shouldAcceptFunc(s, peer, s->callbackContext) ) {
         ymlog("client rejected peer %s",YMSTR(YMAddressGetDescription(peerAddress)));
@@ -747,8 +687,8 @@ catch_release:
     if ( newConnection )
         YMRelease(newConnection);
     YMRelease(s);
-    free(addr);
-    free(initCtx);
+    YMFREE(addr);
+    YMFREE(initCtx);
 }
 
 #pragma mark shared
@@ -1165,7 +1105,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_session_linux_proc_net_dev_scrape_pr
 		while ( prevIter && ( YMDictionaryGetCount(prevIter) > 0 ) ) {
 			YMDictionaryKey key = YMDictionaryGetRandomKey(prevIter);
 			YMDictionaryRemove(prevIter,key);
-			free((void *)key);
+			YMFREE((void *)key);
 		}
 		if ( prevIter ) YMRelease(prevIter);
 		prevIter = thisIter;
@@ -1273,8 +1213,8 @@ bool __YMSessionObserveNetworkInterfaceChangesWin32(__ym_session_t *s, bool star
 			// as if some standard com thing wraps them in something else.
 			// presumably they still need to be free'd, wherever it is they went.
 			// or maybe that's done for us in Release?
-			//free(s->my_gobbledygook->lpVtbl);
-			//free(s->my_gobbledygook);
+			//YMFREE(s->my_gobbledygook->lpVtbl);
+			//YMFREE(s->my_gobbledygook);
 			s->my_gobbledygook = NULL;
 
 			return true;
@@ -1386,8 +1326,8 @@ bool __YMSessionObserveNetworkInterfaceChangesWin32(__ym_session_t *s, bool star
 catch_release:
 
 	if (s->my_gobbledygook) {
-		free(s->my_gobbledygook->lpVtbl);
-		free(s->my_gobbledygook);
+		YMFREE(s->my_gobbledygook->lpVtbl);
+		YMFREE(s->my_gobbledygook);
 		s->my_gobbledygook = NULL;
 	}
 	if (s->gobbledygook) {

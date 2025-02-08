@@ -10,6 +10,7 @@
 
 #include "YMLock.h"
 #include "YMUtilities.h"
+#include "YMDispatch.h"
 #include "YMThreadPriv.h"
 
 #include <stdarg.h>
@@ -21,14 +22,15 @@ YM_EXTERN_C_PUSH
 
 void YMLog( char* format, ... ) __printflike(1, 2);
 
-static YMLockRef gYMLogLock = NULL;
+static YMDispatchQueueRef gYMLogQueue = NULL;
 static char *gTimeFormatBuf = NULL;
-static bool gIntraline = false;
 #define gTimeFormatBufLen 128
 
 YM_ONCE_FUNC(__YMLogInit,
 {
-    gYMLogLock = YMLockCreate();
+    YMStringRef name = YMSTRC("com.combobulated.dispatch.ymlog");
+    gYMLogQueue = YMDispatchQueueCreate(name);
+    YMRelease(name);
     gTimeFormatBuf = YMALLOC(gTimeFormatBufLen);
 })
 
@@ -49,65 +51,67 @@ int __YMLogIndent( int level )
 
 static YM_ONCE_OBJ gYMLogInitOnce = YM_ONCE_INIT;
 
-void __YMLogType( int level, bool newline, char* format, ... )
+typedef struct ___ym_log_t
+{
+    FILE *file;
+    char *string;
+} ___ym_log_t;
+
+void ___ym_log(void *ctx)
+{
+    ___ym_log_t *log = ctx;
+    fprintf(log->file,log->string,NULL);
+    fflush(log->file);
+    YMFREE(log->string);
+    YMFREE(log);
+}
+
+void __YMLogType( int level, char* format, ... )
 {
 	YM_ONCE_DO(gYMLogInitOnce,__YMLogInit);
+
+    uint16_t max = 512, off = 0;
+    char *line = YMALLOC(max*sizeof(char));
     
-    FILE *file = (level == YMLogError) ? stderr : stdout;
-    
-    if ( newline || ! gIntraline ) {
-        const char *timeStr = YMGetCurrentTimeString(gTimeFormatBuf, gTimeFormatBufLen);
-        uint64_t threadID = _YMThreadGetCurrentThreadNumber();
-        uint64_t pid =
+    const char *timeStr = YMGetCurrentTimeString(gTimeFormatBuf, gTimeFormatBufLen);
+    uint64_t threadID = _YMThreadGetCurrentThreadNumber();
+    uint64_t pid =
 #if !defined(YMWIN32)
-            getpid();
+        getpid();
 #else
-            GetCurrentProcessId();
+        GetCurrentProcessId();
 #endif
 
-        if (timeStr)
-            fprintf(file, "%s ", timeStr);
-        fprintf(file,"yammer[%lu:%lu]: ",pid,threadID);
-        
-        int indent = __YMLogIndent(level);
-        while ( indent-- > 0 )
-            fprintf(file," ");
-        if ( level == YMLogError ) fprintf(file, "!: ");
-    }
+    if (timeStr)
+        off += snprintf(line+off, max-off, "%s ", timeStr);
+    off += snprintf(line+off,max-off,"yammer[%lu:%08lx]: ",pid,threadID);
     
-    if ( ! newline )
-        gIntraline = true;
-    else
-        gIntraline = false;
+    int indent = __YMLogIndent(level);
+    while ( indent-- > 0 )
+        off += snprintf(line+off,max-off," ");
+    if ( level == YMLogError ) off += snprintf(line+off,max-off, "!: ");
     
     va_list args;
     va_start(args,format);
-    vfprintf(file,format, args);
+    off += vsnprintf(line+off,max-off,format, args);
     va_end(args);
     
-    if ( newline )
-        fprintf(file,"\n");
-    fflush(file);
-}
+    off += snprintf(line+off,max-off,"\n");
 
-void YMAPI __YMLogReturn( int level )
-{
-    FILE *file = (level == YMLogError) ? stderr : stdout;
-    fprintf(file,"\n");
-    fflush(file);
-    gIntraline = false;
+    ___ym_log_t *log = YMALLOC(sizeof(___ym_log_t));
+    log->file = (level == YMLogError) ? stderr : stdout;
+    log->string = line;
+    ym_dispatch_user_t dispatch = { ___ym_log, log, NULL, ym_dispatch_user_context_noop };
+    YMDispatchAsync(gYMLogQueue,&dispatch);
 }
-
-void _YMLogLock() { YM_ONCE_DO(gYMLogInitOnce,__YMLogInit); /*YMLockLock(gYMLogLock);*/ }
-void _YMLogUnlock() { YM_ONCE_DO(gYMLogInitOnce,__YMLogInit); /*YMLockUnlock(gYMLogLock);*/ }
 
 void YMLogFreeGlobals()
 {
-    if ( gYMLogLock ) {
-        YMRelease(gYMLogLock);
-        gYMLogLock = NULL;
+    if ( gYMLogQueue ) {
+        YMRelease(gYMLogQueue);
+        gYMLogQueue = NULL;
         
-        free(gTimeFormatBuf);
+        YMFREE(gTimeFormatBuf);
         gTimeFormatBuf = NULL;
         
         YM_ONCE_OBJ onceAgain = YM_ONCE_INIT;

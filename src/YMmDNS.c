@@ -62,7 +62,7 @@ void _YMmDNSServiceListFree(YMmDNSServiceList *serviceList)
         if ( service )
             _YMmDNSServiceRecordFree(service, false);
         listIter = listIter->next;
-        free(aListItem);
+        YMFREE(aListItem);
     }
 }
 
@@ -172,7 +172,7 @@ void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record, bool floatResolvedInf
         if ( record->txtRecordKeyPairs )
             _YMmDNSTxtKeyPairsFree( (YMmDNSTxtRecordKeyPair **)record->txtRecordKeyPairs, record->txtRecordKeyPairsSize );
     }
-    free(record);
+    YMFREE(record);
 }
 
 YMmDNSTxtRecordKeyPair **_YMmDNSTxtKeyPairsCreate(const unsigned char *txtRecord, uint16_t txtLength, size_t *outSize)
@@ -244,11 +244,11 @@ void _YMmDNSTxtKeyPairsFree(YMmDNSTxtRecordKeyPair **keyPairList, size_t size)
         YMmDNSTxtRecordKeyPair *aPair = keyPairList[idx];
         if ( aPair ) {
             YMRelease(aPair->key);
-            free((void*)aPair->value);
-            free(aPair);
+            YMFREE((void*)aPair->value);
+            YMFREE(aPair);
         }
     }
-    free(keyPairList);
+    YMFREE(keyPairList);
 }
 
 unsigned char  *_YMmDNSTxtBlobCreate(YMmDNSTxtRecordKeyPair **keyPairList, uint16_t *inSizeOutLength)

@@ -10,7 +10,8 @@
 
 #include "YMBase.h"
 #include "YMSession.h"
-#include "YMThread.h"
+#include "YMDispatch.h"
+#include "YMDispatchUtils.h"
 #include "YMStreamPriv.h" // todo need an 'internal' header
 #include "YMPipe.h"
 #include "YMPipePriv.h"
@@ -72,7 +73,7 @@ struct SessionTest
     uint64_t nSparseFilesToRead;
     uint64_t nSparseFilesRead;
     
-    YMThreadRef incomingDispatch;
+    YMDispatchQueueRef dispatchQueue;
     
     YMDictionaryRef nonRegularFileNames;
     YMStringRef tempServerSrc;
@@ -104,15 +105,15 @@ void _AsyncForwardCallback(struct SessionTest *theTest, YMConnectionRef connecti
 void SessionTestsRun(ym_test_assert_func assert, ym_test_diff_func diff, const void *context)
 {
     char *suffix = YMRandomASCIIStringWithMaxLength(10, true, false);
+    YMStringRef queueName = YMSTRC("SessionTestsQueue");
     struct SessionTest theTest = {  assert, diff, context,
                                     NULL, NULL, YMSTRC("_ymtest._tcp"), YMSTRCF("twitter-cliche:%s", suffix),
                                     NULL, NULL, false, false, false, false, NULL, NULL_FILE, 0, UINT64_MAX, 0,
-                                    YMThreadDispatchCreate(NULL),
+                                    YMDispatchQueueCreate(queueName),
                                     YMDictionaryCreate(), NULL, NULL, YMSTRC(OutSparseDir),
                                     YMSemaphoreCreate(0), YMSemaphoreCreate(0), false };
     free(suffix);
-    
-    YMThreadStart(theTest.incomingDispatch);
+    YMRelease(queueName);
     
     ymerr(" Session test: '%s'",YMSTR(theTest.testName));
     _TestSessionWritingLargeAndReadingSparseFiles(&theTest);
@@ -132,8 +133,8 @@ void SessionTestsRun(ym_test_assert_func assert, ym_test_diff_func diff, const v
     YMRelease(theTest.connectAndAsyncClientCallbackSemaphore);
     YMRelease(theTest.threadExitSemaphore);
     
-    YMThreadDispatchJoin(theTest.incomingDispatch);
-    YMRelease(theTest.incomingDispatch);
+    YMDispatchJoin(theTest.dispatchQueue);
+    YMRelease(theTest.dispatchQueue);
 }
 
 void _server_async_forward_callback(YMConnectionRef connection, YMStreamRef stream, YMIOResult result, uint64_t bytesWritten, void * ctx);
@@ -781,13 +782,13 @@ void _new_stream_func(YMSessionRef session, YMConnectionRef connection, YMStream
     
     bool isServer = session==theTest->serverSession;
     
-    struct TestConnectionStream *ctx = malloc(sizeof(struct TestConnectionStream));
+    struct TestConnectionStream *ctx = calloc(1,sizeof(struct TestConnectionStream));
     ctx->theTest = theTest;
     ctx->connection = YMRetain(connection);
     ctx->stream = YMRetain(stream);
     
-    ym_thread_dispatch_user_t dispatch = { (isServer ? _EatASparseFile : _EatLargeFile), NULL, true, ctx, NULL };
-    YMThreadDispatchDispatch(theTest->incomingDispatch, dispatch);
+    ym_dispatch_user_t dispatch = { (isServer ? _EatASparseFile : _EatLargeFile), ctx, NULL, ym_dispatch_user_context_free };
+    YMDispatchAsync(YMDispatchGetGlobalQueue(), &dispatch);
 }
 
 void _closing_func(YMSessionRef session, YMConnectionRef connection, YMStreamRef stream, void *context)

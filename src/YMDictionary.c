@@ -77,7 +77,7 @@ void _YMDictionaryFree(YMTypeRef d_)
         if ( d->ymtypeValues )
             YMRelease((YMTypeRef)itemIter->value);
         itemIter = itemIter->next;
-        free(thisItem);
+        YMFREE(thisItem);
     }
 }
 
@@ -189,7 +189,7 @@ YMDictionaryValue YMDictionaryRemove(YMDictionaryRef d, YMDictionaryKey key)
     if ( d->ymtypeValues )
         YMRelease((YMTypeRef)theItem->value);
     
-    free(theItem);
+    YMFREE(theItem);
     return outValue;
 }
 
@@ -222,7 +222,7 @@ YMDictionaryEnumRef YMDictionaryEnumeratorGetNext(YMDictionaryEnumRef aEnum)
     _YMDictionaryItemRef item = (_YMDictionaryItemRef)aEnum; // overlapping
     _YMDictionaryItemRef next = item->next;
     
-    free(item);
+    YMFREE(item);
     
     if ( ! next )
         return NULL;
@@ -236,7 +236,7 @@ YMDictionaryEnumRef YMDictionaryEnumeratorGetNext(YMDictionaryEnumRef aEnum)
 void YMDictionaryEnumeratorEnd(__unused YMDictionaryEnumRef aEnum) // xxx
 {
 #ifdef YM_DICT_MAYHAPS_SAFE_ENUM
-    free(aEnum);
+    YMFREE(aEnum);
 #endif
 }
 
@@ -277,7 +277,7 @@ bool __Broken_YMDictionaryPopKeyValue(YMDictionaryRef d, bool last, YMDictionary
     
     ((__ym_dictionary_t *)d)->count--;
     
-    free(outItem);
+    YMFREE(outItem);
     return true;
 }
 

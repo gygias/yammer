@@ -34,6 +34,7 @@ YMTypeID _YMSocketTypeID = 'O';
 YMTypeID _YMStreamTypeID = 'r';
 YMTypeID _YMStringTypeID = 'S';
 YMTypeID _YMThreadTypeID = 't';
+YMTypeID _YMDispatchQueueTypeID = 'q';
 YMTypeID _YMTLSProviderTypeID = 'T';
 YMTypeID _YMPlexerTypeID = 'x';
 YMTypeID _YMX509CertificateTypeID = 'X';
@@ -48,6 +49,7 @@ extern void _YMSessionFree(YMTypeRef);
 extern void _YMmDNSServiceFree(YMTypeRef);
 extern void _YMmDNSBrowserFree(YMTypeRef);
 extern void _YMThreadFree(YMTypeRef);
+extern void _YMDispatchQueueFree(YMTypeRef);
 extern void _YMLockFree(YMTypeRef);
 extern void _YMSemaphoreFree(YMTypeRef);
 extern void _YMDictionaryFree(YMTypeRef);
@@ -112,6 +114,11 @@ YMTypeRef YMAutorelease(YMTypeRef object)
     return object; // todo, lol
 }
 
+void __YM_CATCH_OVERRELEASE(__ym_type_t *p)
+{
+    ymassert(false, "something has overreleased %p (%c)",p,p->__type);
+}
+
 YM_RELEASE_RETURN_TYPE YMRelease(YMTypeRef o_)
 {
     __ym_type_t *o = (__ym_type_t *)o_;
@@ -121,7 +128,8 @@ YM_RELEASE_RETURN_TYPE YMRelease(YMTypeRef o_)
     bool dealloc = false;
     YMLockMutex(o->__mutex);
     {
-        ymassert(o->__retainCount >= 1, "something has overreleased %p (%c)",o,o->__type);
+        bool check = o->__retainCount < 1;
+        if ( check ) __YM_CATCH_OVERRELEASE(o);
         
         if ( o->__retainCount-- == 1 )
             dealloc = true;
@@ -131,7 +139,7 @@ YM_RELEASE_RETURN_TYPE YMRelease(YMTypeRef o_)
     if ( dealloc ) {
         __YMFree(o);
         YMDestroyMutex(o->__mutex);
-        free(o);
+        YMFREE(o);
     }
     
 #ifdef YMDEBUG
@@ -160,6 +168,8 @@ void __YMFree(__ym_type_t *o)
         _YMmDNSBrowserFree(o);
     else if ( type == _YMThreadTypeID )
         _YMThreadFree(o);
+    else if ( type == _YMDispatchQueueTypeID )
+        _YMDispatchQueueFree(o);
     else if ( type == _YMLockTypeID )
         _YMLockFree(o);
     else if ( type == _YMSemaphoreTypeID )

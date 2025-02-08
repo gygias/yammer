@@ -73,7 +73,7 @@
     outData = data;
     
 catch_return:
-    free(buf);
+    YMFREE(buf);
     return outData;
 }
 

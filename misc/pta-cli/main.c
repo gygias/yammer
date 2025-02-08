@@ -77,8 +77,7 @@ int main(int argc, const char * argv[]) {
         printf("looking for service...\n");
     }
     
-    int longTime = 999999999;
-    sleep(longTime);
+    YMDispatchMain();
     
     return 0;
 }

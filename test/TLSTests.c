@@ -85,7 +85,7 @@ void TLSTestsRun(ym_test_assert_func assert, const void *context)
     
     YMRelease(theTest.stateLock);
     YMRelease(theTest.threadExitSemaphore);
-    free(theTest.lastMessageSent);
+    YMFREE(theTest.lastMessageSent);
 }
 
 void _TestTLS1(struct TLSTest *theTest)

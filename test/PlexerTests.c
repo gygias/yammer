@@ -14,7 +14,8 @@
 #include "YMStreamPriv.h"
 #include "YMPipe.h"
 #include "YMPipePriv.h"
-#include "YMThread.h"
+#include "YMDispatch.h"
+#include "YMDispatchUtils.h"
 #include "YMLock.h"
 #include "YMSemaphore.h"
 #include "YMDictionary.h"
@@ -50,11 +51,12 @@ typedef struct PlexerTest
     bool plexerTest1Running;
     bool timeBasedTimeOver;
     bool awaitingInterrupt;
-    YMThreadRef dispatchThread;
     
     // for comparing callback contexts
     YMPlexerRef localPlexer;
+    YMDispatchQueueRef localQueue;
     YMPlexerRef fakeRemotePlexer;
+    YMDispatchQueueRef fakeRemoteQueue;
     YMPlexerRef closedPlexer;
     YMSemaphoreRef interruptNotificationSem;
     
@@ -84,10 +86,10 @@ void PlexerTestsRun(ym_test_assert_func assert, const void *context)
 {
     struct PlexerTest theTest = { assert, context,
                                 0, YMLockCreate(), true, false, false,
-                                YMThreadDispatchCreate(NULL),
-                                NULL, NULL, NULL, YMSemaphoreCreate(0),
+                                NULL, YMDispatchQueueCreate(YMSTRC("com.PlexerTests.local")),
+                                NULL, YMDispatchQueueCreate(YMSTRC("com.PlexerTests.remote")),
+                                NULL, YMSemaphoreCreate(0),
                                 0, 0, 0, 0, YMDictionaryCreate() };
-	YMThreadStart(theTest.dispatchThread);
     
     _DoManyRoundTripsTest(&theTest);
     
@@ -104,8 +106,8 @@ void PlexerTestsRun(ym_test_assert_func assert, const void *context)
     }
     YMRelease(theTest.lastMessageWrittenByStreamID);
     
-    YMThreadDispatchJoin(theTest.dispatchThread);
-    YMRelease(theTest.dispatchThread);
+    YMDispatchJoin(theTest.localQueue);
+    YMDispatchJoin(theTest.fakeRemoteQueue);
 }
 
 void _DoManyRoundTripsTest(struct PlexerTest *theTest)
@@ -140,8 +142,8 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     YMPlexerSetStreamClosingFunc(theTest->fakeRemotePlexer, remote_plexer_stream_closing);
     YMPlexerSetCallbackContext(theTest->fakeRemotePlexer, theTest);
     
-    ym_thread_dispatch_user_t dispatch = { _init_local_plexer_proc, NULL, false, theTest, NULL };
-    YMThreadDispatchDispatch(theTest->dispatchThread, dispatch);
+    ym_dispatch_user_t dispatch = { _init_local_plexer_proc, theTest, NULL, ym_dispatch_user_context_noop };
+    YMDispatchAsync(theTest->localQueue, &dispatch);
     
     bool okay = YMPlexerStart(theTest->fakeRemotePlexer);
     testassert(okay,"slave did not start");
@@ -381,8 +383,8 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *cont
     hContext->theTest = theTest;
     hContext->stream = YMRetain(stream);
     
-    ym_thread_dispatch_user_t dispatchDef = { _handle_remote_stream, NULL, true, hContext, NULL };
-    YMThreadDispatchDispatch(theTest->dispatchThread, dispatchDef);
+    ym_dispatch_user_t dispatchDef = { _handle_remote_stream, hContext, NULL, ym_dispatch_user_context_free };
+    YMDispatchAsync(theTest->fakeRemoteQueue, &dispatchDef);
 }
 
 void YM_CALLING_CONVENTION _handle_remote_stream(YM_THREAD_PARAM c)

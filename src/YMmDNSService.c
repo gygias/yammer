@@ -23,7 +23,7 @@
 
 #include <dns_sd.h>
 
-#define ymlog_type YMLogmDNS
+#define ymlog_type YMLogDefault
 #include "YMLog.h"
 
 YM_EXTERN_C_PUSH
@@ -91,7 +91,7 @@ void _YMmDNSServiceFree(YMTypeRef o_)
         YMRelease(s->name);
     if ( s->txtRecord ) {
         TXTRecordDeallocate((TXTRecordRef *)s->txtRecord);
-        free(s->txtRecord);
+        YMFREE(s->txtRecord);
     }
 }
 
@@ -124,7 +124,7 @@ bool YMmDNSServiceStart( YMmDNSServiceRef s_ )
 {
     __ym_mdns_service_t *s = (__ym_mdns_service_t *)s_;
     
-    DNSServiceRef *serviceRef = (DNSServiceRef *)calloc( 1, sizeof(DNSServiceRef) );
+    DNSServiceRef *serviceRef = YMALLOC( sizeof(DNSServiceRef) );
     uint16_t netPort = htons(s->port);
     bool txtExists = (s->txtRecord != NULL);
     uint16_t txtLength = txtExists ? TXTRecordGetLength((TXTRecordRef *)s->txtRecord) : 0;
@@ -145,7 +145,7 @@ bool YMmDNSServiceStart( YMmDNSServiceRef s_ )
     if( result != kDNSServiceErr_NoError ) {
         // on error "the callback is never invoked and the DNSServiceRef is not initialized"
         // leading me to think we free instead of DNSServiceRefDeallocate
-        free(serviceRef);
+        YMFREE(serviceRef);
         ymlog("mdns: DNSServiceRegister failed: %s/%s:%u: %d",YMSTR(s->type),YMSTR(s->name),(unsigned)s->port,result);
         return false;
     }
@@ -169,7 +169,7 @@ bool YMmDNSServiceStop( YMmDNSServiceRef s_, bool synchronous )
     bool okay = true;
     
     DNSServiceRefDeallocate(*(s->dnsService));
-    free(s->dnsService);
+    YMFREE(s->dnsService);
     s->dnsService = NULL;
     
     if ( synchronous )

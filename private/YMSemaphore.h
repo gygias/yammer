@@ -16,8 +16,9 @@ typedef struct __ym_semaphore * YMSemaphoreRef;
 YMSemaphoreRef YMAPI YMSemaphoreCreate(int initialValue);
 YMSemaphoreRef YMAPI YMSemaphoreCreateWithName(YMStringRef name, int initialValue);
 
-void YMAPI YMSemaphoreWait(YMSemaphoreRef semaphore);
-void YMAPI YMSemaphoreSignal(YMSemaphoreRef semaphore);
+void YMAPI YMSemaphoreWait(YMSemaphoreRef);
+bool YMAPI YMSemaphoreTest(YMSemaphoreRef);
+void YMAPI YMSemaphoreSignal(YMSemaphoreRef);
 
 YM_EXTERN_C_POP
 

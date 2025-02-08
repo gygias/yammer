@@ -119,6 +119,7 @@
 	#define YM_WRITE_SOCKET(s,b,l)	YM_WRITE_FILE(s,b,l)
     #define YM_CLOSE_SOCKET(x)		YM_CLOSE_FILE(x)
     #define YM_WAIT_SEMAPHORE(s)	{ result = sem_wait(s); if ( result != 0 ) { error = errno; errorStr = strerror(error); } }
+	#define YM_TRYWAIT_SEMAPHORE(s) { result = sem_trywait(s); if ( result != 0 ) { error = errno; errorStr = strerror(error); } }
     #define YM_POST_SEMAPHORE(s)	{ result = sem_post(s); if ( result != 0 ) { error = errno; errorStr = strerror(error); } }
     #define YM_RETRY_SEMAPHORE		( error == EINTR )
     #define YM_CLOSE_SEMAPHORE(so)	{ result = sem_unlink(YMSTR(so->semName)); if ( result != 0 ) { error = errno; errorStr = strerror(error); } }
@@ -173,6 +174,7 @@
 											else error = (int)__wfso; \
 											result = -1; errorStr = GENERIC_WERROR_STR; } \
 										else result = 0; }
+	#error implement YM_TRYWAIT_SEMAPHORE
     #define YM_POST_SEMAPHORE(s)	{ BOOL __rs = ReleaseSemaphore(s, 1, NULL); if ( ! __rs ) { result = -1; error = GetLastError(); errorStr = GENERIC_WERROR_STR; } else result = 0; }
     #define YM_RETRY_SEMAPHORE		false
     #define YM_CLOSE_SEMAPHORE(s)	{ BOOL __ch = CloseHandle(s->sem); if ( ! __ch ) { result = -1; error = (int)GetLastError(); errorStr = GENERIC_WERROR_STR; } else result = 0; }

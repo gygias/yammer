@@ -19,6 +19,7 @@
 #else
 # define YMALLOC(x) malloc(x)
 #endif
+# define YMFREE(x) free(x)
 
 #if !defined(YMWIN32)
 # define YM_ONCE_OBJ pthread_once_t
@@ -77,6 +78,7 @@ extern YMTypeID _YMSecurityProviderTypeID;
 extern YMTypeID _YMPlexerTypeID;
 extern YMTypeID _YMSessionTypeID;
 extern YMTypeID _YMThreadTypeID;
+extern YMTypeID _YMDispatchQueueTypeID;
 extern YMTypeID _YMNumberTypeID;
 extern YMTypeID _YMmDNSServiceTypeID;
 extern YMTypeID _YMmDNSBrowserTypeID;

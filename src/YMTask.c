@@ -9,7 +9,8 @@
 #include "YMTask.h"
 
 #include "YMPipePriv.h"
-#include "YMThread.h"
+#include "YMDispatch.h"
+#include "YMDispatchUtils.h"
 
 #if defined(YMLINUX)
 # include <sys/wait.h>
@@ -38,7 +39,7 @@ typedef struct __ym_task
     unsigned char *output;
     uint32_t outputLen;
     YMPipeRef outputPipe;
-    YMThreadRef outputThread;
+    YMDispatchQueueRef outputQueue;
 #if defined(YMWIN32)
 	HANDLE childHandle;
 #endif
@@ -64,7 +65,7 @@ YMTaskRef YMTaskCreate(YMStringRef path, YMArrayRef args, bool saveOutput)
     t->exited = false;
     t->output = NULL;
     t->outputPipe = NULL;
-    t->outputThread = NULL;
+    t->outputQueue = NULL;
     t->outputLen = 0;
     t->result = -1;
     return t;
@@ -76,9 +77,9 @@ void _YMTaskFree(YMTaskRef t)
     if ( t->args )
         YMRelease(t->args);
     if ( t->output )
-        free(t->output);
-    if ( t->outputThread )
-        YMRelease(t->outputThread);
+        YMFREE(t->output);
+    if ( t->outputQueue )
+        YMRelease(t->outputQueue);
 }
 
 #if defined(YMWIN32)
@@ -103,7 +104,6 @@ bool YMTaskLaunch(YMTaskRef t_)
     if ( t->save ) {
         t->outputPipe = YMPipeCreate(NULL);
         ymlog("output pipe %d -> %d",YMPipeGetInputFile(t->outputPipe),YMPipeGetOutputFile(t->outputPipe));
-        t->outputThread = YMThreadCreate(t->path, __ym_task_read_output_proc, (void *)YMRetain(t));
     }
 
 #if !defined(YMWIN32)
@@ -121,22 +121,26 @@ bool YMTaskLaunch(YMTaskRef t_)
         argv[0] = YMSTR(t->path);
         argv[argvSize - 1] = NULL;
         
-        ymlogi("%s",argv[0]);
+#define ymtask_aline 512
+        uint16_t max = ymtask_aline, off = 0;
+        char line[ymtask_aline];
+        off += snprintf(line+off,max-off,"%s",argv[0]);
         for(int64_t i = 0; i < nArgs; i++) {
             argv[i + 1] = YMArrayGet(t->args, i);
-            ymlogi(" %s",argv[i + 1]);
+            off += snprintf(line+off,max-off," %s",argv[i + 1]);
         }
-        ymlogr();
+
+        printf("%s\n",argv[0]);
 
         if ( t->save ) {
             int pipeIn = YMPipeGetInputFile(t->outputPipe);
             result = dup2(pipeIn, STDOUT_FILENO);
-            if ( result == -1 ) { ymerr("dup2(%d<-%d): %d %s",pipeIn,STDOUT_FILENO,errno,strerror(errno)); abort(); }
+            if ( result == -1 ) { printf("fatal: %s: dup2(%d<-%d): %d %s\n",argv[0],pipeIn,STDOUT_FILENO,errno,strerror(errno)); abort(); }
             YMRelease(t->outputPipe); // closes in and out
         }
 
         execv(argv[0], (char * const *)argv);
-        ymerr("execv: %d %s",errno,strerror(errno));
+        printf("fatal: %s: execv: %d %s\n",argv[0],errno,strerror(errno));
         exit(EXIT_FAILURE);
     }
 
@@ -156,7 +160,7 @@ bool YMTaskLaunch(YMTaskRef t_)
 
 	int cmdLen = strlen(YMSTR(t->path));
 	int cmdlineSize = cmdLen + 128;
-	wchar_t *cmdline = calloc(cmdlineSize,sizeof(wchar_t));
+	wchar_t *cmdline = YMALLOC(cmdlineSize,sizeof(wchar_t));
 
 	int cmdLenNull = strlen(YMSTR(t->path)) + 1;
 	swprintf(cmdline, cmdlineSize, L"%hs", YMSTR(t->path));
@@ -181,16 +185,20 @@ bool YMTaskLaunch(YMTaskRef t_)
 	}
 
 	okay = CreateProcess(NULL,cmdline,NULL,NULL,true,0,NULL,NULL,&startupInfo,&procInfo);
-	free(cmdline);
+	YMFREE(cmdline);
 
 	t->childPid = procInfo.dwProcessId;
 	t->childHandle = procInfo.hProcess;
 
 #endif
 
-	if (t->save)
-		YMThreadStart(t->outputThread);
-
+    if ( t->save ) {
+        YMStringRef name = YMSTRC("ymtask");
+        t->outputQueue = YMDispatchQueueCreate(name);
+        YMRelease(name);
+        ym_dispatch_user_t dispatch = { (void (*)(void *))__ym_task_read_output_proc, (void *)YMRetain(t), NULL, ym_dispatch_user_context_noop };
+        YMDispatchAsync(t->outputQueue,&dispatch);
+    }
 	ymlog("forked: p%d", t->childPid);
 
 	return okay;
@@ -230,7 +238,7 @@ void YMTaskWait(YMTaskRef t_)
 #endif
     
     if (t->save) {
-        YMThreadJoin(t->outputThread);
+        YMDispatchJoin(t->outputQueue);
         ymerr("joined on output thread...");
     }
 
@@ -248,7 +256,7 @@ const unsigned char *YMTaskGetOutput(YMTaskRef t_, uint32_t *outLength)
 {
     __ym_task_t *t = (__ym_task_t *)t_;
     if ( t->save )
-      YMThreadJoin(t->outputThread);
+      YMDispatchJoin(t->outputQueue);
     *outLength = t->outputLen;
     return t->output;
 }
@@ -260,7 +268,6 @@ void __ym_task_prepare_atfork() {
 
 void __ym_task_parent_atfork() {
     fprintf(stderr,"__ym_task_parent_atfork happened\n");
-    
 }
 void __ym_task_child_atfork() {
     fprintf(stderr,"__ym_task_child_atfork happened\n");

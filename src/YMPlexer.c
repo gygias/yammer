@@ -14,8 +14,8 @@
 #include "YMStreamPriv.h"
 #include "YMDictionary.h"
 #include "YMLock.h"
-#include "YMThread.h"
-#include "YMThreadPriv.h"
+#include "YMDispatch.h"
+#include "YMDispatchUtils.h"
 
 #define ymlog_pre "plexer[%s]: "
 #define ymlog_args p->name?YMSTR(p->name):"*"
@@ -133,9 +133,9 @@ typedef struct __ym_plexer
     uint8_t *remotePlexBuffer;
     uint32_t remotePlexBufferSize;
     
-    YMThreadRef localServiceThread;
-    YMThreadRef remoteServiceThread;
-    YMThreadRef eventDeliveryThread;
+    YMSemaphoreRef localServiceExit;
+    YMSemaphoreRef remoteServiceExit;
+    YMDispatchQueueRef eventDeliveryQueue;
     YMLockRef interruptionLock;
     YMSemaphoreRef downstreamReadySemaphore;
     
@@ -158,7 +158,7 @@ typedef struct _ym_plexer_and_stream _ym_plexer_and_stream_t;
 void __YMRegisterSigpipe();
 void __ym_sigpipe_handler (int signum);
 YMStreamRef __YMPlexerRetainReadyStream(__ym_plexer_t *);
-void __YMPlexerDispatchFunctionWithName(__ym_plexer_t *, YMStreamRef, YMThreadRef, ym_dispatch_user_func, YMStringRef);
+void __YMPlexerDispatchFunctionWithName(__ym_plexer_t *, YMStreamRef, YMDispatchQueueRef, ym_dispatch_user_func);
 bool __YMPlexerStartServiceThreads(__ym_plexer_t *);
 bool __YMPlexerDoInitialization(__ym_plexer_t *, bool);
 bool __YMPlexerInitAsMaster(__ym_plexer_t *);
@@ -202,16 +202,11 @@ YMPlexerRef YMPlexerCreate(YMStringRef name, YMSecurityProviderRef provider, boo
     p->remotePlexBufferSize = YMPlexerDefaultBufferSize;
     p->remotePlexBuffer = YMALLOC(p->remotePlexBufferSize);
     
-    aString = YMStringCreateWithFormat("%s-down",YMSTR(p->name),NULL);
-    p->localServiceThread = YMThreadCreate(aString, __ym_plexer_service_downstream_proc, (void *)YMRetain(p));
-    YMRelease(aString);
+    p->localServiceExit = YMSemaphoreCreate(0);
+    p->remoteServiceExit = YMSemaphoreCreate(0);
     
-    aString = YMStringCreateWithFormat("%s-up",YMSTR(p->name),NULL);
-    p->remoteServiceThread = YMThreadCreate(aString, __ym_plexer_service_upstream_proc, (void *)YMRetain(p));
-    YMRelease(aString);
-    
-    aString = YMStringCreateWithFormat("%s-event",YMSTR(p->name),NULL);
-    p->eventDeliveryThread = YMThreadDispatchCreate(aString);
+    aString = YMStringCreateWithFormat("com.combobulated.dispatch.%s-event",YMSTR(p->name),NULL);
+    p->eventDeliveryQueue = YMDispatchQueueCreate(aString);
     YMRelease(aString);
     
     aString = YMStringCreateWithFormat("%s-interrupt",YMSTR(p->name),NULL);
@@ -246,21 +241,21 @@ void _YMPlexerFree(YMPlexerRef p_)
     YMRelease(p->provider);
     
     YMSemaphoreSignal(p->downstreamReadySemaphore);
-    YMThreadJoin(p->localServiceThread);
-    YMThreadJoin(p->remoteServiceThread);
+    YMSemaphoreWait(p->localServiceExit);
+    YMSemaphoreWait(p->remoteServiceExit);
     
     YMRelease(p->downstreamReadySemaphore);
     
-    free(p->localPlexBuffer);
+    YMFREE(p->localPlexBuffer);
     YMRelease(p->localStreamsByID);
     YMRelease(p->localAccessLock);
-    YMRelease(p->localServiceThread);
-    free(p->remotePlexBuffer);
+    YMRelease(p->localServiceExit);
+    YMFREE(p->remotePlexBuffer);
     YMRelease(p->remoteStreamsByID);
     YMRelease(p->remoteAccessLock);
-    YMRelease(p->remoteServiceThread);
+    YMRelease(p->remoteServiceExit);
     
-    YMRelease(p->eventDeliveryThread);
+    YMRelease(p->eventDeliveryQueue);
     YMRelease(p->interruptionLock);
 }
 
@@ -308,23 +303,12 @@ bool YMPlexerStart(YMPlexerRef p_)
     // this flag is used to let our threads exit, among other things
     p->active = true;
     
-    okay = YMThreadStart(p->localServiceThread);
-    if ( ! okay ) {
-        ymerr("failed to detach down service thread");
-        goto catch_fail;
-    }
+    YMDispatchQueueRef globalQueue = YMDispatchGetGlobalQueue();
+    ym_dispatch_user_t userDown = { (void (*)(void *))__ym_plexer_service_downstream_proc, (void *)YMRetain(p), NULL, ym_dispatch_user_context_release };
+    YMDispatchAsync(globalQueue, &userDown);
     
-    okay = YMThreadStart(p->remoteServiceThread);
-    if ( ! okay ) {
-        ymerr("failed to detach up service thread");
-        goto catch_fail;
-    }
-    
-    okay = YMThreadStart(p->eventDeliveryThread);
-    if ( ! okay ) {
-        ymerr("failed to detach event thread");
-        goto catch_fail;
-    }
+    ym_dispatch_user_t userUp = { (void (*)(void *))__ym_plexer_service_upstream_proc, (void *)YMRetain(p), NULL, ym_dispatch_user_context_release };
+    YMDispatchAsync(globalQueue, &userUp);
     
     ymlog("started");
     
@@ -400,7 +384,7 @@ bool YMPlexerStop(YMPlexerRef p_)
     //
     // we can't do this from the common __Interrupt method, because a thread might be the first to report a
     // real error (disconnect), so clients must stop the plexer even after 'interrupted' event before deallocating
-    YMThreadDispatchJoin(p->eventDeliveryThread);
+    YMDispatchJoin(p->eventDeliveryQueue);
     YMSemaphoreSignal(p->downstreamReadySemaphore);
     
     return interrupted;
@@ -546,8 +530,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_downstream_proc(YM_TH
     }
     
     ymerr("downstream service thread exiting");
-    
-    YMRelease(p);
+    YMSemaphoreSignal(p->localServiceExit);
 
 	YM_THREAD_END
 }
@@ -764,11 +747,10 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_upstream_proc(YM_THRE
         userInfo->muxerRead += sizeof(plexerMessage);
         
         if ( streamClosing ) {
-            YMStringRef memberName = YMStringCreateWithFormat("%s-s%lu-%s",YMSTR(p->name),streamID,YM_TOKEN_STR(__ym_plexer_notify_stream_closing), NULL);
             // close 'read up', so that if client (or forward file) is reading unbounded data it will get signaled
             _YMStreamCloseWriteUp(theStream);
 			if ( p->closingFunc )
-				__YMPlexerDispatchFunctionWithName(p, theStream, p->eventDeliveryThread, __ym_plexer_notify_stream_closing, memberName);
+				__YMPlexerDispatchFunctionWithName(p, theStream, p->eventDeliveryQueue, __ym_plexer_notify_stream_closing);
             ymlog("^-s%lu stream closing (rW%lu,pW%lu,rR%lu,pR%lu)",plexerMessage.streamID,userInfo->rawWritten,userInfo->muxerWritten,userInfo->rawRead,userInfo->muxerRead);
             YMRelease(theStream);
             continue;
@@ -801,8 +783,7 @@ YM_THREAD_RETURN YM_CALLING_CONVENTION __ym_plexer_service_upstream_proc(YM_THRE
     }
     
     ymerr("upstream service thread exiting");
-    
-    YMRelease(p);
+    YMSemaphoreSignal(p->remoteServiceExit);
 
 	YM_THREAD_END
 }
@@ -843,16 +824,14 @@ YMStreamRef __YMPlexerRetainOrCreateRemoteStreamWithID(__ym_plexer_t *p, YMPlexe
                 
                 ymlog("L-%lu notifying new incoming",streamID);
                 
-                YMStringRef name = YMSTRC("remote");
-                theStream = __YMPlexerCreateStreamWithID(p,streamID,false,name);
+                theStream = __YMPlexerCreateStreamWithID(p,streamID,false,YMSTRC("remote"));
                 
                 YMDictionaryAdd(p->remoteStreamsByID, (YMDictionaryKey)streamID, theStream);
                 YMRetain(theStream); // retain for user (complements close)
                 YMRetain(theStream); // retain for function
                 
-                name = YMStringCreateWithFormat("%s-notify-new-%lu",YMSTR(p->name),streamID,NULL);
 				if ( p->newIncomingFunc )
-					__YMPlexerDispatchFunctionWithName(p, theStream, p->eventDeliveryThread, __ym_plexer_notify_new_stream, name);
+					__YMPlexerDispatchFunctionWithName(p, theStream, p->eventDeliveryQueue, __ym_plexer_notify_new_stream);
             }
         }    
         YMLockUnlock(p->remoteAccessLock);
@@ -895,8 +874,8 @@ void __ym_plexer_free_stream_info(YMStreamRef stream)
     __ym_plexer_stream_user_info_t *userInfo = YM_STREAM_INFO(stream);
     YMRelease(userInfo->lock);
     YMRelease(userInfo->plexer);
-    free(userInfo->lastServiceTime);
-    free(userInfo);
+    YMFREE(userInfo->lastServiceTime);
+    YMFREE(userInfo);
 }
 
 void __ym_plexer_stream_data_available_proc(YMStreamRef stream, uint32_t bytes, void *ctx)
@@ -958,43 +937,29 @@ bool __YMPlexerInterrupt(__ym_plexer_t *p)
     
     // if the client stops us, they don't expect a callback
     if ( p->interruptedFunc )
-		__YMPlexerDispatchFunctionWithName(p, NULL, p->eventDeliveryThread, __ym_plexer_notify_interrupted, YMSTRC("plexer-interrupted"));
+		__YMPlexerDispatchFunctionWithName(p, NULL, p->eventDeliveryQueue, __ym_plexer_notify_interrupted);
     
-//    // also created on init, so long as we're locking might be redundant
-//    if ( plexer->eventDeliveryThread )
-//    {
-//        // releasing a dispatch thread should cause YMThreadDispatch to set the stop flag
-//        // in the context struct (allocated on creation, free'd by the exiting thread)
-//        // allowing it to go away. don't null it, or we'd need another handshake on the
-//        // thread referencing itself via plexer and exiting.
-//        YMRelease(plexer->eventDeliveryThread);
-//    }
-    
-    if ( _YMThreadGetCurrentThreadNumber() != _YMThreadGetThreadNumber(p->eventDeliveryThread) )
-        YMThreadDispatchJoin(p->eventDeliveryThread);
+    YMDispatchJoin(p->eventDeliveryQueue);
     
     return true;
 }
 
 #pragma mark dispatch
 
-void __YMPlexerDispatchFunctionWithName(__ym_plexer_t *p, YMStreamRef stream, YMThreadRef targetThread, ym_dispatch_user_func function, YMStringRef nameToRelease)
+void __YMPlexerDispatchFunctionWithName(__ym_plexer_t *p, YMStreamRef stream, YMDispatchQueueRef queue, ym_dispatch_user_func function)
 {
     _ym_plexer_and_stream_t *notifyDef = (_ym_plexer_and_stream_t *)YMALLOC(sizeof(_ym_plexer_and_stream_t));
     notifyDef->p = (__ym_plexer_t *)YMRetain(p);
     notifyDef->s = stream ? YMRetain(stream) : NULL;
-    ym_thread_dispatch_user_t dispatch = { function, NULL, true, notifyDef, nameToRelease };
-    
+
 //#define YMPLEXER_NO_EVENT_QUEUE // for debugging
 #ifdef YMPLEXER_NO_EVENT_QUEUE
-    __unused const void *silence = targetThread;
-    function(&dispatch);
-    free(notifyDef);
+    function(notifyDef);
+    YMFREE(notifyDef);
 #else
-    YMThreadDispatchDispatch(targetThread, dispatch);
+    ym_dispatch_user_t dispatch = { function, notifyDef, NULL, ym_dispatch_user_context_free };
+    YMDispatchAsync(queue, &dispatch);
 #endif
-    
-    YMRelease(nameToRelease);
 }
 
 void YM_CALLING_CONVENTION __ym_plexer_notify_new_stream(YM_THREAD_PARAM context)

@@ -231,7 +231,7 @@ catch_fail:
 void _YMStringFree(YMTypeRef o_)
 {
     YMStringRef s = (YMStringRef)o_;
-    free((void *)s->cString);
+    YMFREE((void *)s->cString);
 }
 
 size_t YMStringGetLength(YMStringRef s)

@@ -108,8 +108,8 @@ YMAddressRef YMAddressCreate(const void *sockaddr_, uint16_t port)
     return address;
     
 rewind_fail:
-    free(address->address);
-    free(address);
+    YMFREE(address->address);
+    YMFREE(address);
     return NULL;
 }
 
@@ -127,7 +127,7 @@ YMAddressRef YMAddressCreateLocalHostIPV4(uint16_t port)
 #endif
     
     YMAddressRef address = YMAddressCreate(newAddr, newAddr->sin_port);
-    free(newAddr);
+    YMFREE(newAddr);
     return address;
 }
 
@@ -156,7 +156,7 @@ YMAddressRef YMAddressCreateWithIPStringAndPort(YMStringRef ipString, uint16_t p
 void _YMAddressFree(YMTypeRef object)
 {
     __ym_address_t *address = (__ym_address_t *)object;
-    free((void *)address->address);
+    YMFREE((void *)address->address);
     YMRelease(address->description);
 }
 

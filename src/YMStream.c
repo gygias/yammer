@@ -357,7 +357,7 @@ YMIOResult __YMStreamForward(YMStreamRef s, YMFILE file, bool fromFileToStream, 
         off += aActualLength;
     } while ( ! lastIter );
     
-    free(buffer);
+    YMFREE(buffer);
     
     if ( outBytes )
         *outBytes = off;

@@ -103,7 +103,7 @@ YM_ONCE_FUNC(__YMTLSInit,
 	OpenSSL_add_all_algorithms();
 	__YMTLSInitPlatform();
 
-	gYMTLSLocks = calloc(CRYPTO_num_locks(),sizeof(YMLockRef));
+	gYMTLSLocks = YMALLOC(CRYPTO_num_locks()*sizeof(YMLockRef));
 
 	CRYPTO_THREADID_set_callback(ym_tls_thread_id_callback);
 	CRYPTO_set_locking_callback(__ym_tls_lock_callback);
@@ -385,7 +385,7 @@ void __YMTLSProviderInitSslCtx(__ym_tls_provider_t *tls)
             ymerr("yammer uses the first certificate specified");
         // todo, are we really going to do anything with a list here?
         cert = certList[0];
-        free((void *)certList);
+        YMFREE((void *)certList);
     } else {
         ymerr("user doesn't provide certificates, creating self-signed");
         tls->usingGeneratedCert = true;

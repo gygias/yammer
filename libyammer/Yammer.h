@@ -22,5 +22,6 @@
 #include <libyammer/YMStream.h>
 #include <libyammer/YMConnection.h>
 #include <libyammer/YMSession.h>
+#include <libyammer/YMDispatch.h>
 
 #endif /* Yammer_h */

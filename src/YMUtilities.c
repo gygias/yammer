@@ -261,7 +261,7 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
 		}
     }
     
-    free(addr);
+    YMFREE(addr);
     return okay ? (uint32_t)thePort : -1;
 }
 
@@ -316,7 +316,7 @@ int YMGetNumberOfOpenFilesForCurrentProcess()
     status = NtQuerySystemInformation( SystemHandleInformation,
                                         pSysHandleInformation, sysHandleInformationSize, &sysHandleInformationSize);
     if( !NT_SUCCESS(status) ) {
-		free(pSysHandleInformation);
+		YMFREE(pSysHandleInformation);
 		return -1;
 	}
     
@@ -331,7 +331,7 @@ int YMGetNumberOfOpenFilesForCurrentProcess()
 		nFiles++;
 	}
 
-	free(pSysHandleInformation);
+	YMFREE(pSysHandleInformation);
 #endif
     
     ymlog("open files: %d",nFiles);
@@ -437,7 +437,7 @@ YMDictionaryRef YMInterfaceMapCreateLocal()
 		}
 	}
 
-	free(apInfo);
+	YMFREE(apInfo);
 #else
 #error if mapping unimplemented for this platform
 #endif
@@ -448,14 +448,18 @@ YMDictionaryRef YMInterfaceMapCreateLocal()
         YMStringRef ifName = (YMStringRef)denum->key;
         YMDictionaryRef ifInfo = denum->value;
         YMInterfaceType thisType = YMNumberInt32Value((YMNumberRef)YMDictionaryGetItem(ifInfo, kYMIFMapTypeKey));
-        ymlogi(" %s (%s):",YMSTR(ifName),YMInterfaceTypeDescription(thisType));
+
+        #define ymif_aline 1024
+        uint16_t max = ymif_aline, off = 0;
+        char line[ymif_aline];
+        off += snprintf(line+off,max-off," %s (%s):",YMSTR(ifName),YMInterfaceTypeDescription(thisType));
         YMArrayRef addresses = YMDictionaryGetItem(ifInfo, kYMIFMapAddressesKey);
         if ( addresses ) {
             for ( int i = 0; i < YMArrayGetCount(addresses); i++ ) {
-                ymlogi(" %s",YMSTR(YMAddressGetDescription((YMAddressRef)YMArrayGet(addresses, i))));
+                off += snprintf(line+off,max-off," %s",YMSTR(YMAddressGetDescription((YMAddressRef)YMArrayGet(addresses, i))));
             }
         }
-        ymlogr();
+        ymlog("%s",line);
         denum = YMDictionaryEnumeratorGetNext(denum);
     }
     YMDictionaryEnumeratorEnd(denum);
@@ -553,7 +557,7 @@ YMInterfaceType YMInterfaceTypeForName(YMStringRef ifName)
 	char *nakedGuid = strdup(YMSTR(ifName));
 	nakedGuid[strlen(nakedGuid)-1] = '\0';
 	RPC_STATUS result2 = UuidFromStringA(nakedGuid + 1,&guid);
-	free(nakedGuid);
+	YMFREE(nakedGuid);
 	if ( result2 != RPC_S_OK ) {
 		ymerr("CLSIDFromString failed: %08x", GetLastError());
 		goto catch_return;
@@ -713,7 +717,7 @@ pthread_mutex_t *YMCreateMutexWithOptions(YMLockOptions options)
     result = pthread_mutex_init(mutex, attributesPtr);
     if ( result != 0 ) {
         fprintf(stderr,"pthread_mutex_init failed: %d (%s)\n", result, strerror(result));
-        free(mutex);
+        YMFREE(mutex);
         mutex = NULL;
     }
     
@@ -773,7 +777,7 @@ bool YMDestroyMutex(pthread_mutex_t *mutex)
 {
     int result = pthread_mutex_destroy(mutex);
     if ( result != 0 ) fprintf(stderr,"mutex: failed to destroy mutex: %d %s\n",errno,strerror(errno));
-    free(mutex);
+    YMFREE(mutex);
     return ( result == 0 );
 }
 

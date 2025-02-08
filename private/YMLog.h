@@ -33,13 +33,11 @@ YM_WPPUSH // Token pasting of ',' and __VA_ARGS__ is a GNU extension
 # define ymlog_args ""
 #endif
 
-#define ymlogg(x,...)   { if ( ymlog_type & ymlog_target ) __YMLogType(ymlog_type,true,(x),##__VA_ARGS__); }
-#define ymlog(x,...)    { if ( ymlog_type & ymlog_target ) __YMLogType(ymlog_type,true,ymlog_pre x,ymlog_args,##__VA_ARGS__); }
-#define ymlogi(x,...)   { if ( ymlog_type & ymlog_target ) __YMLogType(ymlog_type,false,x,##__VA_ARGS__); }
-#define ymlogr()        { if ( ymlog_type & ymlog_target ) __YMLogReturn(ymlog_type); }
-#define ymdbg(x,...)    { if ( ymlog_type_debug & ymlog_target_debug ) __YMLogType(ymlog_type_debug,true,ymlog_pre x,ymlog_args,##__VA_ARGS__); }
-#define ymerr(x,...)    __YMLogType(YMLogError,true,ymlog_pre x,ymlog_args,##__VA_ARGS__)
-#define ymerrg(x,...)   __YMLogType(YMLogError,true,x,##__VA_ARGS__)
+#define ymlogg(x,...)   { if ( ymlog_type & ymlog_target ) __YMLogType(ymlog_type,(x),##__VA_ARGS__); }
+#define ymlog(x,...)    { if ( ymlog_type & ymlog_target ) __YMLogType(ymlog_type,ymlog_pre x,ymlog_args,##__VA_ARGS__); }
+#define ymdbg(x,...)    { if ( ymlog_type_debug & ymlog_target_debug ) __YMLogType(ymlog_type_debug,ymlog_pre x,ymlog_args,##__VA_ARGS__); }
+#define ymerr(x,...)    __YMLogType(YMLogError,ymlog_pre x,ymlog_args,##__VA_ARGS__)
+#define ymerrg(x,...)   __YMLogType(YMLogError,x,##__VA_ARGS__)
 YM_WPOP
 
 YM_EXTERN_C_PUSH
@@ -54,7 +52,8 @@ typedef enum
     YMLogCombined1 = YMLogConnection,
     YMLogmDNS = YMLogCombined1 << 1,
     YMLogSecurity = YMLogmDNS << 1,
-    YMLogThread = YMLogSecurity << 1,
+    YMLogDispatch = YMLogSecurity << 1,
+    YMLogThread = YMLogDispatch << 1,
     YMLogThreadDebug = YMLogThread << 1,
     YMLogThreadDispatch = YMLogThreadDebug << 1, // todo: time to split out dispatch
     YMLogCombined2 = YMLogThreadDispatch,
@@ -69,7 +68,7 @@ typedef enum
     YMLogEverything = 0xFFFF
 } YMLogLevel;
 
-void YMAPI __YMLogType( int level, bool newline, char* format, ... ) __printflike(3, 4);
+void YMAPI __YMLogType( int level, char* format, ... ) __printflike(2, 3);
 void YMAPI __YMLogReturn( int level );
 
 void YMLogFreeGlobals();

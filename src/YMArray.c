@@ -137,7 +137,7 @@ void _YMArrayRemoveAll(YMArrayRef a_, bool ymRelease, bool free_)
         int64_t aKey = (int64_t)YMDictionaryGetRandomKey(a->dict);
         const void *object = YMDictionaryGetItem(a->dict, (YMDictionaryKey)aKey);
         if ( ymRelease ) YMRelease(object);
-        else if ( free_ ) free((void *)object);
+        else if ( free_ ) YMFREE((void *)object);
         YMDictionaryRemove(a->dict, (YMDictionaryKey)aKey);
     }
 }

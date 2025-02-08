@@ -132,7 +132,7 @@ char *YMRandomASCIIStringWithMaxLength(uint16_t maxLength, bool for_mDNSServiceN
     uint8_t randomLength = (uint8_t)arc4random_uniform(maxLength + 1 + 1);
     if ( randomLength < 2 ) randomLength = 2;
     
-    char *string = malloc(randomLength);
+    char *string = calloc(1,randomLength);
     string[--randomLength] = '\0';
     
     uint8_t maxChar = for_mDNSServiceName ? 'z' : 0x7E, minChar = for_mDNSServiceName ? 'a' : 0x20;
@@ -153,7 +153,7 @@ uint8_t *YMRandomDataWithMaxLength(uint16_t length, uint16_t *outLength)
 {
     uint16_t randomLength = (uint16_t)arc4random_uniform(length+1);
     if ( randomLength == 0 ) randomLength = 1;
-    uint8_t *randomData = malloc(randomLength);
+    uint8_t *randomData = calloc(1,randomLength);
     
     uint16_t countdown = randomLength;
     while ( countdown-- ) {

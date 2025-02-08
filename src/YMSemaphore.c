@@ -21,6 +21,8 @@
 
 #if defined(YMLINUX)
 # include <sys/stat.h>
+# include <sys/time.h>
+# include <time.h>
 #endif
 
 #if !defined(YMWIN32)
@@ -137,12 +139,24 @@ void YMSemaphoreWait(__ym_semaphore_t *s)
             retry = YM_RETRY_SEMAPHORE;
             ymerr("sem_wait failed%s: %d (%s)", retry ? ", retrying" : "", errno, strerror(errno));
             ymassert(retry,"sem_wait");
-        }
-        else
+        } else
             break;
     }
+}
 
-	ymlog("released");
+bool YMSemaphoreTest(__ym_semaphore_t *s)
+{
+    int result, error = 0;
+    const char *errorStr = NULL;
+    YM_TRYWAIT_SEMAPHORE(s->sem);
+    if ( result != 0 ) {
+        ymassert(error == EAGAIN,"trywait sem failed, but errno is %d (%s)",error,errorStr);
+        return false;
+    }
+
+    YM_POST_SEMAPHORE(s->sem);
+	ymassert(result==0, "fatal: sem trywait repost failed: %d (%s)", error, errorStr);
+    return true;
 }
 
 void YMSemaphoreSignal(__ym_semaphore_t *s)
@@ -150,9 +164,7 @@ void YMSemaphoreSignal(__ym_semaphore_t *s)
 	int result, error = 0;
 	const char *errorStr = NULL;
 	YM_POST_SEMAPHORE(s->sem);
-	ymassert(result==0, "fatal: sem_post failed: %d (%s)", errno, strerror(errno));
-	
-	ymlog("posted");
+	ymassert(result==0, "fatal: sem_post failed: %d (%s)", error, errorStr);
 }
 
 YM_EXTERN_C_POP

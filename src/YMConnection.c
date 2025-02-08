@@ -14,7 +14,7 @@
 #include "YMSecurityProvider.h"
 #include "YMTLSProvider.h"
 #include "YMUtilities.h"
-#include "YMThread.h"
+#include "YMDispatchUtils.h"
 
 #include "YMStreamPriv.h"
 
@@ -184,7 +184,7 @@ void _YMConnectionFree(YMTypeRef c_)
     if ( c->remoteIFName )
         YMRelease(c->remoteIFName);
     if ( c->remoteAddr )
-        free((void *)c->remoteAddr);
+        YMFREE((void *)c->remoteAddr);
 }
 
 void YMConnectionSetCallbacks(YMConnectionRef c_,
@@ -708,10 +708,8 @@ bool YMConnectionForwardStream(YMConnectionRef c, YMStreamRef fromStream, YMFILE
     return __YMConnectionForward(c, true, fromStream, toFile, nBytesPtr, sync, callbackInfo);
 }
 
-//#warning i think this fails when nBytes==0, e.g. /usr/share/cups/templates/help-trailer.tmpl
 bool __YMConnectionForward(YMConnectionRef c, bool toFile, YMStreamRef stream, YMFILE file, const uint64_t *nBytesPtr, bool sync, ym_connection_forward_context_t *callbackInfo)
 {
-    
     __ym_connection_forward_callback_t *myContext = NULL;
     ym_forward_file_t *threadContext = NULL;
     
@@ -731,9 +729,9 @@ bool __YMConnectionForward(YMConnectionRef c, bool toFile, YMStreamRef stream, Y
     
     bool ret;
     if ( toFile )
-        ret = YMThreadDispatchForwardStream(stream, file, nBytesPtr, sync, threadContext);
+        ret = YMDispatchForwardStream(YMDispatchGetGlobalQueue(), stream, file, nBytesPtr, sync, threadContext);
     else
-        ret = YMThreadDispatchForwardFile(file, stream, nBytesPtr, sync, threadContext);
+        ret = YMDispatchForwardFile(YMDispatchGetGlobalQueue(), file, stream, nBytesPtr, sync, threadContext);
     
     return ret;
 }
@@ -754,8 +752,8 @@ void _ym_connection_forward_callback_proc(void *context, YMIOResult result, uint
     
     YMRelease(c);
     YMRelease(stream);
-    free(myContext->userContext);
-    free(myContext);
+    YMFREE(myContext->userContext);
+    YMFREE(myContext);
 }
 
 void ym_connection_new_stream_proc(__unused YMPlexerRef plexer,YMStreamRef stream, void *context)
