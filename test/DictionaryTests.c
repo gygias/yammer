@@ -15,8 +15,7 @@
 
 YM_EXTERN_C_PUSH
 
-#define NumberOfThreads 8
-#define RunFor 5.0
+#define RunFor 15.0
 #define MaxItemLength 2048
 
 YM_ENTRY_POINT(_dictionary_test_proc);
@@ -40,20 +39,17 @@ void DictionaryTestsRun(ym_test_assert_func assert, const void *context)
     YMStringRef name = YMSTRC("DictionaryTestQueue");
     YMRelease(name);
     
-    YMThreadRef threads[NumberOfThreads];
-    for ( int i = 0; i < NumberOfThreads; i++ ) {
-        name = YMSTRCF("DictionaryTest-%d",i);
-        threads[i] = YMThreadCreate(name, _dictionary_test_proc, &theTest);
-        YMRelease(name);
-        
-        YMThreadStart(threads[i]);
-        YMRelease(threads[i]);
+    unsigned int nThreads = (arc4random_uniform(16) + 1);
+    ymlog("DictionaryTests has decided to run with %u threads",nThreads);
+    ym_dispatch_user_t dispatch = { _dictionary_test_proc, &theTest, NULL, ym_dispatch_user_context_noop };
+    for ( int i = 0; i < nThreads; i++ ) {
+        YMDispatchAsync(YMDispatchGetGlobalQueue(), &dispatch);
     }
     
     sleep(RunFor);
     theTest.endTest = true;
     
-    for ( int i = 0; i < NumberOfThreads; i++ )
+    for ( int i = 0; i < nThreads; i++ )
         YMSemaphoreWait(theTest.semaphore);
     
     YMRelease(theTest.dictionary);
