@@ -35,6 +35,7 @@ YMDispatchQueueRef YMAPI YMDispatchGetGlobalQueue();
 // inconvenience of not having language support for blocks
 void YMAPI YMDispatchAsync(YMDispatchQueueRef queue, ym_dispatch_user_t *userDispatch);
 void YMAPI YMDispatchSync(YMDispatchQueueRef queue, ym_dispatch_user_t *userDispatch);
+void YMAPI YMDispatchAfter(YMDispatchQueueRef queue, ym_dispatch_user_t *userDispatch, double seconds);
 
 _Noreturn void YMAPI YMDispatchMain();
 

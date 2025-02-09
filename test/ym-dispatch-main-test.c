@@ -10,6 +10,8 @@
 #include "YMDispatch.h"
 #include "YMLock.h"
 
+#include "YMDispatchPriv.h"
+
 #ifndef YMWIN32
 # define myexit _Exit
 #else
@@ -17,8 +19,9 @@
 #endif
 
 YM_ENTRY_POINT(_ym_dispatch_main_test_proc);
+YM_ENTRY_POINT(_ym_dispatch_denial_of_service_test_proc);
 
-void usage() { ymlog("usage: ym-dispatch-main-test [m|g[r]|u] (nReps)"); exit(1); }
+void usage() { ymlog("usage: ym-dispatch-main-test [m|g[r]|u|dos] [#nReps]"); exit(1); }
 
 static int gReps = 0, gIter = 0, gCompleted = 0;
 static bool gRacey = false;
@@ -28,7 +31,7 @@ static YMDispatchQueueRef gUserQueue;
 
 int main(int argc, char *argv[])
 {
-    if ( argc != 3 )
+    if ( argc < 2 || argc > 3 )
         usage();
     if ( strcmp(argv[1],"m") == 0 )
         gType = 0;
@@ -36,24 +39,37 @@ int main(int argc, char *argv[])
         gType = 1;
     else if ( strcmp(argv[1],"u") == 0 )
         gType = 2;
+    else if ( strcmp(argv[1],"dos") == 0 )
+        gType = 4;
     else
         usage();
-    gReps = atoi(argv[2]);
-    if ( gReps <= 0 )
-        usage();
     
-    ymlog("ym-dispatch-main-test targeting %s with %d %sreps",(gType==0)?"main":(gType==1)?"global":"user",gReps,gRacey?"*RACEY* ":"");
+    if ( gType != 4 ) {
+        gReps = atoi(argv[2]);
+
+        if ( gReps <= 0 )
+            usage();
+    }
     
-    ym_dispatch_user_t dispatch = { _ym_dispatch_main_test_proc, NULL, false, ym_dispatch_user_context_noop };
-    if ( gType == 0 ) {
-        YMDispatchAsync(YMDispatchGetGlobalQueue(),&dispatch);
-    } else if ( gType == 1 ) {
-        if ( ! gRacey )
-            gLock = YMLockCreate();
-        YMDispatchAsync(YMDispatchGetMainQueue(), &dispatch);
+    if ( gType != 4 ) {
+        ymlog("ym-dispatch-test targeting %s with %d %sreps",(gType==0)?"main":(gType==1)?"global":"user",gReps,gRacey?"*RACEY* ":"");
+
+        ym_dispatch_user_t dispatch = { _ym_dispatch_main_test_proc, NULL, false, ym_dispatch_user_context_noop };
+        if ( gType == 0 ) {
+            YMDispatchAsync(YMDispatchGetGlobalQueue(),&dispatch);
+        } else if ( gType == 1 ) {
+            if ( ! gRacey )
+                gLock = YMLockCreate();
+            YMDispatchAsync(YMDispatchGetMainQueue(), &dispatch);
+        } else {
+            gUserQueue = YMDispatchQueueCreate(YMSTRC("ym-dispatch-main-test-queue"));
+            YMDispatchAsync(YMDispatchGetGlobalQueue(), &dispatch);
+        }
     } else {
-        gUserQueue = YMDispatchQueueCreate(YMSTRC("ym-dispatch-main-test-queue"));
-        YMDispatchAsync(YMDispatchGetGlobalQueue(), &dispatch);
+        ymlog("ym-dispatch-test running denial-of-service test");
+
+        ym_dispatch_user_t dispatch = { _ym_dispatch_denial_of_service_test_proc, NULL, false, ym_dispatch_user_context_noop };
+        YMDispatchAsync(YMDispatchGetMainQueue(), &dispatch);
     }
     
     YMDispatchMain();
@@ -120,4 +136,39 @@ YM_ENTRY_POINT(_ym_dispatch_main_test_proc)
         printf("ym-dispatch-main-test assumes races have finished at (%d / %d)\n",gCompleted,gReps);
         myexit(1);
     }
+}
+
+YM_ENTRY_POINT(_ym_dispatch_denial_of_service)
+{
+    ymlog("sorry, basement flooded again");
+    sleep(99999999);
+}
+
+YM_ENTRY_POINT(_ym_dispatch_denial_of_service_check)
+{
+    ymlog("i will fix your bugs!");
+    myexit(0);
+}
+
+YM_ENTRY_POINT(_ym_dispatch_denial_of_service_finally)
+{
+    ymlog("rush limbaugh");
+    sleep(5);
+    myexit(1);
+}
+
+YM_ENTRY_POINT(_ym_dispatch_denial_of_service_test_proc)
+{
+    int threadsPerGlobalQueue = _YMDispatchMaxQueueThreads();
+    int idx = threadsPerGlobalQueue;
+    for ( idx = threadsPerGlobalQueue; idx; idx-- ) {
+        ym_dispatch_user_t user = { _ym_dispatch_denial_of_service, NULL, NULL, ym_dispatch_user_context_noop };
+        YMDispatchAsync(YMDispatchGetGlobalQueue(),&user);
+    }
+
+    ym_dispatch_user_t check = { _ym_dispatch_denial_of_service_check, NULL, NULL, ym_dispatch_user_context_noop };
+    YMDispatchAsync(YMDispatchGetGlobalQueue(),&check);
+
+    ym_dispatch_user_t finally = { _ym_dispatch_denial_of_service_finally, NULL, NULL, ym_dispatch_user_context_noop };
+    YMDispatchAfter(YMDispatchGetMainQueue(),&finally, 5);
 }

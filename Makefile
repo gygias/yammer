@@ -34,7 +34,7 @@ else
 	CC=$(CLANG)
 	STD=gnu17
 	IEX=-Ilinux
-	LLEX=-ldns_sd -lbz2 -lz
+	LLEX=-ldns_sd -lbz2 -lz -lm
 	PT=-pthread
 endif
 LOBJ=$(LSRC:%.c=%.o)
