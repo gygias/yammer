@@ -27,6 +27,7 @@
 # include <dirent.h>
 # if defined(YMLINUX)
 #  include <sys/resource.h>
+# include <sys/sysinfo.h>
 #  include <signal.h>
 #  define __USE_UNIX98
 # else // YMAPPLE, YMIsDebuggerAttached stuff
@@ -727,6 +728,11 @@ catch_release:
     return mutex;
 }
 
+void __YM_MUTEX_CATCH()
+{
+    ymassert(false,"mutex error: %d %s",errno,strerror(errno));
+}
+
 bool YMLockMutex(pthread_mutex_t *mutex)
 {
     int result = pthread_mutex_lock(mutex);
@@ -746,6 +752,9 @@ bool YMLockMutex(pthread_mutex_t *mutex)
             fprintf(stderr,"mutex: error: %p unknown error\n", mutex);
             break;
     }
+
+    if ( ! okay )
+        __YM_MUTEX_CATCH();
     
     return okay;
 }
@@ -858,6 +867,48 @@ bool YMIsDebuggerAttached()
 #endif
 
     return false;
+}
+
+int YMAPI YMGetNumberOfCoresAvailable()
+{
+    int nCores = 0;
+#if defined(YMLINUX)
+    nCores = get_nprocs();
+#else
+#error implement me
+#endif
+    return nCores;
+}
+
+int YMAPI YMGetDefaultThreadsForCores(int cores)
+{
+    return cores * 2;
+}
+
+int YMAPI YMGetNumberOfThreadsInCurrentProcess()
+{
+    int nThreads = 0;
+#if defined(YMLINUX)
+    pid_t pid = getpid();
+    int nBuf = 256, off = 0;
+    char buf[nBuf];
+    off += snprintf(buf,nBuf,"/proc/%d/task",pid);
+    DIR *dir = opendir(buf);
+    if ( ! dir ) {
+        ymlog("opendir(%s) failed: %d %s",buf,errno,strerror(errno));
+        return -1;
+    }
+
+    struct dirent *aFile;
+    while ( ( aFile = readdir(dir) ) )
+        nThreads++;
+
+    if ( closedir(dir) != 0 )
+        ymlog("closedir(%s) failed: %d %s",buf,errno,strerror(errno));
+#else
+#error implement me
+#endif
+    return nThreads;
 }
 
 void YMUtilitiesFreeGlobals()

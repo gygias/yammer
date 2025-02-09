@@ -9,7 +9,6 @@
 #include "DictionaryTests.h"
 
 #include "YMDictionary.h"
-#include "YMThread.h"
 #include "YMLock.h"
 #include "YMSemaphore.h"
 #include "YMString.h"

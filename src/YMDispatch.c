@@ -1,10 +1,10 @@
 #include "YMDispatch.h"
-#include "YMDispatchPriv.h"
 #include "YMThreadPriv.h"
 #include "YMDictionary.h"
 #include "YMLock.h"
 #include "YMSemaphore.h"
 #include "YMArray.h"
+#include "YMUtilities.h"
 
 #define ymlog_type YMLogDispatch
 #include "YMLog.h"
@@ -12,6 +12,9 @@
 #include <time.h>
 #include <math.h>
 #include <signal.h>
+
+//#define YM_DISPATCH_LOG
+//#define YM_DISPATCH_LOG_1
 
 YM_EXTERN_C_PUSH
 
@@ -23,24 +26,6 @@ typedef struct __ym_dispatch_timer
     ym_dispatch_user_t *dispatch;
 } __ym_dispatch_timer;
 typedef struct __ym_dispatch_timer __ym_dispatch_timer_t;
-
-typedef struct __ym_dispatch
-{
-    YMDispatchQueueRef mainQueue;
-    YMDispatchQueueRef globalQueue;
-    YMArrayRef userQueues;
-    YMLockRef lock;
-    YMArrayRef timers; // excluding next
-    __ym_dispatch_timer_t *nextTimer;
-} __ym_dispatch;
-typedef struct __ym_dispatch __ym_dispatch_t;
-__ym_dispatch_t *gDispatch = NULL;
-
-YM_ONCE_DEF(__YMDispatchInitOnce);
-void YMDispatchInit()
-{
-    YM_ONCE_DO_LOCAL(__YMDispatchInitOnce);
-}
 
 typedef enum
 {
@@ -61,14 +46,34 @@ typedef struct __ym_dispatch_queue
     YMArrayRef queueThreads; // __ym_dispatch_queue_thread_t
 
     uint8_t nThreads;
+    uint8_t nOverflowThreads;
 
     bool exit;
 } __ym_dispatch_queue;
 typedef struct __ym_dispatch_queue __ym_dispatch_queue_t;
 
+typedef struct __ym_dispatch
+{
+    __ym_dispatch_queue_t *mainQueue;
+    __ym_dispatch_queue_t *globalQueue;
+    YMArrayRef userQueues;
+    YMLockRef lock;
+    YMArrayRef timers; // excluding next
+    __ym_dispatch_timer_t *nextTimer;
+} __ym_dispatch;
+typedef struct __ym_dispatch __ym_dispatch_t;
+__ym_dispatch_t *gDispatch = NULL;
+
+YM_ONCE_DEF(__YMDispatchInitOnce);
+void YMDispatchInit()
+{
+    YM_ONCE_DO_LOCAL(__YMDispatchInitOnce);
+}
+
 typedef struct __ym_dispatch_queue_thread
 {
     YMThreadRef thread; // weak
+    bool busy;
 } __ym_dispatch_queue_thread_t;
 typedef struct __ym_dispatch_queue_thread __ym_dispatch_queue_thread_t;
 
@@ -102,6 +107,7 @@ __ym_dispatch_queue_thread_t *__YMDispatchQueueThreadCreate(YMThreadRef thread)
 {
     __ym_dispatch_queue_thread_t *qt = YMALLOC(sizeof(__ym_dispatch_queue_thread_t));
     qt->thread = thread;
+    qt->busy = false;
     return qt;
 }
 
@@ -117,7 +123,7 @@ void _YMDispatchQueueFree(YMDispatchQueueRef p_)
         __YM_DISPATCH_CATCH_MISUSE(q);
 
     YMSelfLock(q);
-    uint8_t nThreads = q->nThreads;
+    uint8_t nThreads = q->nThreads + q->nOverflowThreads;
     bool willExit = ! q->exit;
     YMSelfUnlock(q);
 
@@ -133,6 +139,13 @@ void _YMDispatchQueueFree(YMDispatchQueueRef p_)
     YMRelease(q->queueThreads);
 }
 
+typedef struct __ym_dispatch_service_loop_context
+{
+    __ym_dispatch_queue_t *q;
+    __ym_dispatch_queue_thread_t *qt;
+} __ym_dispatch_service_loop_context;
+typedef struct __ym_dispatch_service_loop_context __ym_dispatch_service_loop_context_t;
+
 __ym_dispatch_queue_t *__YMDispatchQueueInitCommon(YMStringRef name, YMDispatchQueueType type)
 {
     __ym_dispatch_queue_t *q = (__ym_dispatch_queue_t *)_YMAlloc(_YMDispatchQueueTypeID,sizeof(__ym_dispatch_queue_t));
@@ -142,19 +155,27 @@ __ym_dispatch_queue_t *__YMDispatchQueueInitCommon(YMStringRef name, YMDispatchQ
     q->queueSem = YMSemaphoreCreate(0);
     q->queueThreads = YMArrayCreate();
     q->nThreads = 0;
+    q->nOverflowThreads = 0;
     q->exit = false;
 
     if ( type != YMDispatchQueueMain ) {
-        YMThreadRef first = YMThreadCreate(name, __ym_dispatch_service_loop, q);
+        __ym_dispatch_service_loop_context_t *c = YMALLOC(sizeof(__ym_dispatch_service_loop_context_t));
+        YMThreadRef first = YMThreadCreate(name, __ym_dispatch_service_loop, c);
+        c->q = (__ym_dispatch_queue_t *)YMRetain(q);
         __ym_dispatch_queue_thread_t *qt = __YMDispatchQueueThreadCreate(first);
+        c->qt = qt;
+
         bool okay = YMThreadStart(first);
-        #warning depends ymlog
-        ymassert(okay, "ymdispatch failed to start %s queue thread", YMSTR(name));
+        if ( ! okay ) {
+            printf("ymdispatch failed to start %s queue thread\n", YMSTR(name));
+            abort();
+        }
+
         YMArrayAdd(q->queueThreads,qt); // no sync, guarded by once
 
-#define YM_DISPATCH_LOG
+
 #ifdef YM_DISPATCH_LOG
-        printf("started %s queue %p '%s'\n", ( type == YMDispatchQueueGlobal ) ? "global" : "user", q, YMSTR(name));
+        printf("started %s queue thread %p[%p,%p] '%s'\n", ( type == YMDispatchQueueGlobal ) ? "global" : "user", c, c->q, c->qt, YMSTR(name));
 #endif
         q->nThreads++;
     }
@@ -207,7 +228,7 @@ void __YMDispatchDispatch(YMDispatchQueueRef queue, ym_dispatch_user_t *user, YM
     YMArrayAdd(q->queueStack,d);
     YMSelfUnlock(queue);
 #ifdef YM_DISPATCH_LOG_1
-    printf("signaling %s\n",YMSTR(q->name));
+    printf("signaling %s for %p[%p,%p]\n",YMSTR(q->name),user,user->dispatchProc,user->context);
 #endif
     YMSemaphoreSignal(q->queueSem);
 
@@ -226,19 +247,38 @@ void __YMDispatchCheckExpandGlobalQueue(__ym_dispatch_queue_t *queue)
     if ( queue->type != YMDispatchQueueGlobal )
         return;
 
-    int maxThreadsNow = _YMDispatchMaxQueueThreads();
-    ymassert(queue->nThreads <= maxThreadsNow, "%s has too many threads!",YMSTR(queue->name));
-    if ( queue->nThreads == maxThreadsNow ) {
-        //printf("%s is at max threads (%u)",YMSTR(queue->name),maxThreadsNow);
-        return;
+    int maxThreadsNow = YMGetDefaultThreadsForCores(YMGetNumberOfCoresAvailable());
+    ymassert(queue->nThreads - queue->nOverflowThreads <= maxThreadsNow, "%s has too many threads!",YMSTR(queue->name));
+    if ( queue->nThreads - queue->nOverflowThreads == maxThreadsNow ) {
+        YMSelfLock(queue);
+        bool allBusy = true;
+        for(int i = 0; i < YMArrayGetCount(queue->queueThreads); i++) {
+            __ym_dispatch_queue_thread_t *qt = (__ym_dispatch_queue_thread_t *)YMArrayGet(queue->queueThreads,i);
+            if ( ! qt->busy ) {
+                allBusy = false;
+                break;
+            }
+        }
+        if ( allBusy )
+            queue->nOverflowThreads++;
+        YMSelfUnlock(queue);
+#ifdef YM_DISPATCH_LOG
+        printf("%s is at max threads (%u), %s\n",YMSTR(queue->name),maxThreadsNow,allBusy?"but all are busy":"some available");
+#endif
+
+        if ( ! allBusy )
+            return;
     }
 
     bool busy = YMSemaphoreTest(queue->queueSem);
     if ( busy ) {
         name = YMSTRC("com.combobulated.dispatch.global");
-        YMThreadRef next = YMThreadCreate(name, __ym_dispatch_service_loop, queue);
+        __ym_dispatch_service_loop_context_t *c = YMALLOC(sizeof(__ym_dispatch_service_loop_context_t));
+        YMThreadRef next = YMThreadCreate(name, __ym_dispatch_service_loop, c);
         __ym_dispatch_queue_thread_t *qt = __YMDispatchQueueThreadCreate(next);
-
+        c->q = queue;
+        c->qt = qt;
+#warning two atomic blocks in this function, okay?
         YMSelfLock(queue);
         {
             queue->nThreads++;
@@ -396,7 +436,7 @@ void __ym_dispatch_sigalarm(int signum)
     }
     YMLockUnlock(gDispatch->lock);
 
-    #ifdef YM_DISPATCH_LOG
+#ifdef YM_DISPATCH_LOG
     printf("dispatching %p[%p,%p] on %p(%s)\n",thisTimer->dispatch,thisTimer->dispatch->dispatchProc,thisTimer->dispatch->context,thisTimer->queue,YMSTR((((__ym_dispatch_queue_t *)(thisTimer->queue))->name)));
 #endif
     YMDispatchAsync(thisTimer->queue,thisTimer->dispatch);
@@ -406,10 +446,18 @@ void __ym_dispatch_sigalarm(int signum)
     YMFREE(thisTimer->dispatch);
     YMFREE(thisTimer);
 
+    struct timespec now;
+
+    int ret = clock_gettime(CLOCK_REALTIME,&now);
+    if ( ret != 0 ) {
+        printf("clock_gettime failed: %d %s",errno,strerror(errno));
+        return;
+    }
+
 #ifdef YM_DISPATCH_LOG
-    if ( nextTimer )
-        printf("nextTimer is now %p on %s\n",nextTimer->dispatch,YMSTR(((__ym_dispatch_queue_t *)(nextTimer->queue))->name));
-    else
+    if ( nextTimer ) {
+        printf("nextTimer is now %p[%p,%p] in %ld.%9ldf on %s\n",nextTimer->dispatch,nextTimer->dispatch->dispatchProc,nextTimer->dispatch->context,nextTimer->time->tv_sec-now.tv_sec,nextTimer->time->tv_nsec-now.tv_nsec,YMSTR(((__ym_dispatch_queue_t *)(nextTimer->queue))->name));
+    } else
         printf("nextTimer is now (null)\n");
 #endif
 }
@@ -434,7 +482,9 @@ void __YMDispatchUserFinalize(ym_dispatch_user_t *user)
 
 YM_ENTRY_POINT(__ym_dispatch_service_loop)
 {
-    __ym_dispatch_queue_t *q = context;
+    __ym_dispatch_service_loop_context_t *c = context;
+    __ym_dispatch_queue_t *q = c->q;
+    __ym_dispatch_queue_thread_t *qt = c->qt;
     
     __ym_dispatch_dispatch_t *aDispatch = NULL;
 #ifdef YM_DISPATCH_LOG
@@ -450,7 +500,6 @@ YM_ENTRY_POINT(__ym_dispatch_service_loop)
         if(q->exit)
             goto catch_return;
 
-//#define YM_DISPATCH_LOG_1
 #ifdef YM_DISPATCH_LOG_1
         printf("[%s:%08lx] woke for service\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber());
 #endif
@@ -465,7 +514,9 @@ YM_ENTRY_POINT(__ym_dispatch_service_loop)
 #ifdef YM_DISPATCH_LOG_1
         printf("[%s:%08lx] entering dispatch\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber());
 #endif
+        if ( qt ) qt->busy = true;
         aDispatch->user->dispatchProc(aDispatch->user->context);
+        if ( qt ) qt->busy = false;
 #ifdef YM_DISPATCH_LOG_1
         printf("[%s:%08lx] finished dispatch\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber());
 #endif
@@ -481,21 +532,26 @@ YM_ENTRY_POINT(__ym_dispatch_service_loop)
     }
     
 catch_return:
+
+    if ( c->qt ) YMFREE(c->qt);
+    YMRelease(c->q);
+    YMFREE(c);
+
 #ifdef YM_DISPATCH_LOG
     printf("[%s:%08lx] exiting\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber());
 #endif
 }
 
-uint8_t _YMDispatchMaxQueueThreads()
-{
-    #warning todo, at least based on cores available
-    return 8;
-}
-
 void YMDispatchMain()
 {
     YM_ONCE_DO(gDispatchGlobalInitOnce, __YMDispatchInitOnce);
-    __ym_dispatch_service_loop((void *)gDispatch->mainQueue);
+    __ym_dispatch_service_loop_context_t *c = YMALLOC(sizeof(__ym_dispatch_service_loop_context_t));
+    __ym_dispatch_queue_thread_t *qt = YMALLOC(sizeof(__ym_dispatch_queue_thread_t));
+    qt->thread = NULL;
+    qt->busy = false;
+    c->q = gDispatch->mainQueue;
+    c->qt = qt;
+    __ym_dispatch_service_loop(c);
     printf("YMDispatchMain will return\n");
     abort();
 }

@@ -10,7 +10,7 @@
 #include "YMDispatch.h"
 #include "YMLock.h"
 
-#include "YMDispatchPriv.h"
+#include "YMUtilities.h"
 
 #ifndef YMWIN32
 # define myexit _Exit
@@ -159,16 +159,25 @@ YM_ENTRY_POINT(_ym_dispatch_denial_of_service_finally)
 
 YM_ENTRY_POINT(_ym_dispatch_denial_of_service_test_proc)
 {
-    int threadsPerGlobalQueue = _YMDispatchMaxQueueThreads();
+    int threadsPerGlobalQueue = YMGetDefaultThreadsForCores(YMGetNumberOfCoresAvailable());
     int idx = threadsPerGlobalQueue;
     for ( idx = threadsPerGlobalQueue; idx; idx-- ) {
         ym_dispatch_user_t user = { _ym_dispatch_denial_of_service, NULL, NULL, ym_dispatch_user_context_noop };
         YMDispatchAsync(YMDispatchGetGlobalQueue(),&user);
     }
 
+#warning this
+#ifdef this_race_can_dos
     ym_dispatch_user_t check = { _ym_dispatch_denial_of_service_check, NULL, NULL, ym_dispatch_user_context_noop };
     YMDispatchAsync(YMDispatchGetGlobalQueue(),&check);
+#endif
 
     ym_dispatch_user_t finally = { _ym_dispatch_denial_of_service_finally, NULL, NULL, ym_dispatch_user_context_noop };
     YMDispatchAfter(YMDispatchGetMainQueue(),&finally, 5);
+
+    while (1) {
+        ym_dispatch_user_t check = { _ym_dispatch_denial_of_service_check, NULL, NULL, ym_dispatch_user_context_noop };
+        YMDispatchAsync(YMDispatchGetGlobalQueue(),&check);
+        sleep(1);
+    }
 }

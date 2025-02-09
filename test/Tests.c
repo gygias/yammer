@@ -28,6 +28,7 @@ YM_EXTERN_C_PUSH
 
 #include "YMLock.h"
 #include "YMTask.h"
+#include "YMUtilities.h"
 
 #include <stdarg.h>
 
@@ -95,36 +96,47 @@ void RunAllTests()
     ymerr("------ misc tests start ------");
     GrabBagTestsRun(_ym_test_assert_func, NULL);
     ymerr("------ misc tests end ------");
+    ymlog("there are %d threads in the current process",YMGetNumberOfThreadsInCurrentProcess());
     ymerr("------ task tests start ------");
     TaskTestsRun(_ym_test_assert_func, NULL);
     ymerr("------ task tests end ------");
+    ymlog("there are %d threads in the current process",YMGetNumberOfThreadsInCurrentProcess());
     ymerr("------ thread tests start ------");
     ThreadTestsRun(_ym_test_assert_func, NULL);
     ymerr("------ thread tests end ------");
+    ymlog("there are %d threads in the current process",YMGetNumberOfThreadsInCurrentProcess());
     ymerr("------ compression tests start ------");
     CompressionTestsRun(_ym_test_assert_func, NULL);
     ymerr("------ compression tests end ------");
+    ymlog("there are %d threads in the current process",YMGetNumberOfThreadsInCurrentProcess());
 	ymerr("------ dictionary tests start ------");
 	DictionaryTestsRun(_ym_test_assert_func, NULL);
 	ymerr("------ dictionary tests end ------");
+    ymlog("there are %d threads in the current process",YMGetNumberOfThreadsInCurrentProcess());
 	ymerr("------ crypto tests start ------");
 	CryptoTestsRun(_ym_test_assert_func, NULL);
 	ymerr("------ crypto tests end ------");
+    ymlog("there are %d threads in the current process",YMGetNumberOfThreadsInCurrentProcess());
 	ymerr("------ local socket pair tests start ------");
 	LocalSocketPairTestsRun(_ym_test_assert_func, NULL);
 	ymerr("------ local socket pair tests end ------");
+    ymlog("there are %d threads in the current process",YMGetNumberOfThreadsInCurrentProcess());
 	ymerr("------ mdns tests start ------");
 	mDNSTestsRun(_ym_test_assert_func, NULL);
 	ymerr("------ mdns tests end ------");
+    ymlog("there are %d threads in the current process",YMGetNumberOfThreadsInCurrentProcess());
 	ymerr("------ tls tests start ------");
 	TLSTestsRun(_ym_test_assert_func, NULL);
 	ymerr("------ tls tests end ------");
+    ymlog("there are %d threads in the current process",YMGetNumberOfThreadsInCurrentProcess());
 	ymerr("------ plexer tests start ------");
 	PlexerTestsRun(_ym_test_assert_func, NULL);
 	ymerr("------ plexer tests end ------");
+    ymlog("there are %d threads in the current process",YMGetNumberOfThreadsInCurrentProcess());
 	ymerr("------ session tests start ------");
 	SessionTestsRun(_ym_test_assert_func, _ym_test_diff_func, NULL);
 	ymerr("------ session tests end ------");
+    ymlog("there are %d threads in the current process",YMGetNumberOfThreadsInCurrentProcess());
 }
 
 char *YMRandomASCIIStringWithMaxLength(uint16_t maxLength, bool for_mDNSServiceName, bool for_txtKey)

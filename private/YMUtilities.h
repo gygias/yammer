@@ -67,6 +67,10 @@ bool YMAPI YMDestroyMutex(MUTEX_PTR_TYPE mutex);
 
 bool YMAPI YMIsDebuggerAttached();
 
+int YMAPI YMGetNumberOfCoresAvailable();
+int YMAPI YMGetDefaultThreadsForCores(int cores);
+int YMAPI YMGetNumberOfThreadsInCurrentProcess();
+
 void YMAPI YMUtilitiesFreeGlobals();
 
 #if defined(YMWIN32) || defined(_YOLO_DONT_TELL_PROFESSOR)
