@@ -991,7 +991,6 @@ YM_ENTRY_POINT(__ym_plexer_notify_stream_closing)
     
     YMRelease(p);
     YMRelease(stream);
-    //YMRelease(dispatch->description); // done by ThreadDispatch
 }
 
 YM_ENTRY_POINT(__ym_plexer_notify_interrupted)
@@ -1005,7 +1004,6 @@ YM_ENTRY_POINT(__ym_plexer_notify_interrupted)
     ymlog("ym_notify_interrupted exiting");
     
     YMRelease(p);
-    //YMRelease(dispatch->description); // done by ThreadDispatch
 }
 
 YM_EXTERN_C_POP

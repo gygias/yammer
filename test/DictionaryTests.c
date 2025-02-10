@@ -39,8 +39,8 @@ void DictionaryTestsRun(ym_test_assert_func assert, const void *context)
     YMStringRef name = YMSTRC("DictionaryTestQueue");
     YMRelease(name);
     
-    unsigned int nThreads = (arc4random_uniform(16) + 1);
-    ymlog("DictionaryTests has decided to run with %u threads",nThreads);
+    unsigned int nThreads = arc4random_uniform(16) + 1;
+    ymlog("DictionaryTests has decided to run %u instances",nThreads);
     ym_dispatch_user_t dispatch = { _dictionary_test_proc, &theTest, NULL, ym_dispatch_user_context_noop };
     for ( int i = 0; i < nThreads; i++ ) {
         YMDispatchAsync(YMDispatchGetGlobalQueue(), &dispatch);
@@ -73,7 +73,7 @@ YM_ENTRY_POINT(_dictionary_test_proc)
         } while ( YMDictionaryContains(theTest->dictionary, string_key) );
         
         do { data_key = (YMDictionaryKey)(int64_t)arc4random();
-        } while ( YMDictionaryContains(theTest->dictionary, data_key) );
+        } while ( YMDictionaryContains(theTest->dictionary, data_key) || data_key == string_key );
     }
     YMLockUnlock(theTest->lock);
     
