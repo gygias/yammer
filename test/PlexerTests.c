@@ -19,6 +19,7 @@
 #include "YMLock.h"
 #include "YMSemaphore.h"
 #include "YMDictionary.h"
+#include "YMUtilities.h"
 
 YM_EXTERN_C_PUSH
 
@@ -210,7 +211,7 @@ YM_ENTRY_POINT(_RunLocalPlexer)
     
     YMStreamRef aStream = NULL;
     unsigned idx = 0;
-    size_t staticMessageLen = strlen(testLocalMessage);
+    size_t staticMessageLen = strlen(testLocalMessage) + 1;
 #ifdef PlexerTest1TimeBased
     while ( ! theTest->timeBasedTimeOver )
 #else
@@ -226,13 +227,15 @@ YM_ENTRY_POINT(_RunLocalPlexer)
             streamID = ((ym_pstream_user_info_t *)_YMStreamGetUserInfo(aStream))->streamID;
         }
         
-        uint8_t *outgoingMessage;
+        uint8_t *outgoingMessage = NULL;
         uint16_t outgoingMessageLen;
-        if ( PlexerTest1RandomMessages )
-            outgoingMessage = YMRandomDataWithMaxLength(PlexerTest1RandomMessageMaxLength, &outgoingMessageLen);
-        else {
-            outgoingMessage = (uint8_t *)testLocalMessage;
-            outgoingMessageLen = (uint16_t)staticMessageLen + 1;
+        if ( PlexerTest1RandomMessages ) {
+            outgoingMessageLen = arc4random_uniform(PlexerTest1RandomMessageMaxLength) + 1;
+            outgoingMessage = calloc(1,outgoingMessageLen);
+            YMRandomDataWithLength(outgoingMessage,outgoingMessageLen);
+        } else {
+            outgoingMessage = (uint8_t *)strdup(testLocalMessage);
+            outgoingMessageLen = staticMessageLen;
         }
         
         bool protectTheList = ( PlexerTest1Threads > 1 );
@@ -391,6 +394,7 @@ YM_ENTRY_POINT(_handle_remote_stream)
     YMStreamRef stream = ctx->stream;
     YMPlexerStreamID streamID = ((ym_pstream_user_info_t *)_YMStreamGetUserInfo(stream))->streamID;
     bool protectTheList = ( PlexerTest1Threads > 1 );
+    size_t staticMessageLen = strlen(testRemoteResponse) + 1;
     
     unsigned iterations = PlexerTest1NewStreamPerRoundTrip ? 1 : PlexerTest1RoundTripsPerThread;
     for ( unsigned idx = 0; idx < iterations; idx++ ) {
@@ -413,11 +417,13 @@ YM_ENTRY_POINT(_handle_remote_stream)
         
         uint8_t *outgoingMessage;
         uint16_t outgoingMessageLen;
-        if ( PlexerTest1RandomMessages )
-            outgoingMessage = YMRandomDataWithMaxLength(PlexerTest1RandomMessageMaxLength, &outgoingMessageLen);
-        else {
-            outgoingMessage = (void*)testRemoteResponse;
-            outgoingMessageLen = (uint16_t)strlen(testRemoteResponse) + 1;
+        if ( PlexerTest1RandomMessages ) {
+            outgoingMessageLen = arc4random_uniform(PlexerTest1RandomMessageMaxLength) + 1;
+            outgoingMessage = calloc(1,outgoingMessageLen);
+            YMRandomDataWithLength(outgoingMessage, outgoingMessageLen);
+        } else {
+            outgoingMessage = (uint8_t *)strdup(testRemoteResponse);
+            outgoingMessageLen = staticMessageLen;
         }
     
         if ( protectTheList )

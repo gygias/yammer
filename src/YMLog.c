@@ -102,7 +102,7 @@ void __YMLogType( int level, char* format, ... )
     log->file = (level == YMLogError) ? stderr : stdout;
     log->string = line;
     ym_dispatch_user_t dispatch = { ___ym_log, log, NULL, ym_dispatch_user_context_noop };
-    YMDispatchAsync(gYMLogQueue,&dispatch);
+    YMDispatchSync(gYMLogQueue,&dispatch);
 }
 
 void YMLogFreeGlobals()

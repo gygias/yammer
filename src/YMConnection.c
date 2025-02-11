@@ -358,41 +358,58 @@ int64_t __YMConnectionDoSample(__unused __ym_connection_t *c, YMSOCKET socket, u
 {
     YM_IO_BOILERPLATE
     
-    uint32_t sample = -1;
+    uint64_t sample = -1;
     
-    int remain = length % 4;
-    if ( remain != 0 ) {
-        ymerr("warning: sample length not word-aligned, snapping to next word length: %u",length);
-        length += remain;
+    #define bufLen 16384
+    if ( length % bufLen != 0 ) {
+        ymerr("sample must be divisible by 2^14");
+        return sample;
     }
     
-    time_t startTime = time(NULL);
+    struct timeval start;
+    gettimeofday(&start, NULL);
+
+    uint8_t *buf = calloc(1,bufLen);
+    if ( ! buf ) {
+        ymerr("failed to allocate sample buffer: %d %s",errno,strerror(errno));
+        return sample;
+    }
     
-    uint32_t halfLength = length / 2;
+    uint64_t halfLength = length / 2;
     for( int i = 0; i < 2; i++ ) {
         bool writing = ( i == 0 ) ^ !asServer;
-        uint32_t sentReceived = 0;
+        uint64_t sentReceived = 0;
         
         while ( sentReceived < halfLength ) {
-            uint32_t random;
-            ssize_t toReadWrite = ( sizeof(random) + sentReceived > halfLength ) ? ( halfLength - sentReceived ) : sizeof(random);
+            ssize_t toReadWrite = ( bufLen + sentReceived > halfLength ) ? ( halfLength - sentReceived ) : bufLen;
             if ( writing ) {
-                random = arc4random();
-                YM_WRITE_SOCKET(socket, (const char *)&random, (size_t)toReadWrite);
-                if ( result != toReadWrite ) return sample;
+                YMRandomDataWithLength(buf,toReadWrite);
+                YM_WRITE_SOCKET(socket, buf, (size_t)toReadWrite);
+                if ( result == -1 ) {
+                    ymerr("%zd = YM_WRITE_SOCKET(%d, %p, %ld): %d %s",result,socket,buf,toReadWrite,errno,strerror(errno));
+                    goto catch_return;
+                }
                 sentReceived += result;
             } else {
-                YM_READ_SOCKET(socket, (char *)&random, (size_t)toReadWrite);
-                if ( result != toReadWrite ) return sample;
+                YM_READ_SOCKET(socket, buf, (size_t)toReadWrite);
+                if ( result == -1 ) {
+                    ymerr("%zd = YM_READ_SOCKET(%d, %p, %ld): %d %s",result,socket,buf,toReadWrite,errno,strerror(errno));
+                    goto catch_return;
+                }
                 sentReceived += result;
             }
         }
         ymlog("%s back sample",writing?"reading":"writing");
     }
     
-    sample = (uint32_t)(length / ( time(NULL) - startTime ));
-    ymlog("approximated sample to %ub/s",sample);
+    struct timeval end;
+    gettimeofday(&end,NULL);
+    uint64_t usecsElapsed = ( end.tv_sec - start.tv_sec ) * 1000000000 + ( end.tv_usec - start.tv_usec );
+    sample = length / ((double)usecsElapsed / 1000000000);
+    ymlog("approximated sample to %lub/s",sample);
     
+catch_return:
+    free(buf);
     return sample;
 }
 
@@ -474,9 +491,8 @@ bool __YMConnectionInitCommon(__ym_connection_t *c, YMSOCKET newSocket, bool asS
                 if ( sample >= 0 ) {
                     conCmdOkay = true;
                     c->sample = sample;
-                    YM_DEBUG_SAMPLE
-                }
-                YM_DEBUG_SAMPLE
+                } else
+                    ymerr("sample failed");
             }
             
             if ( ! conCmdOkay ) {
@@ -502,8 +518,8 @@ bool __YMConnectionInitCommon(__ym_connection_t *c, YMSOCKET newSocket, bool asS
                 if ( sample >= 0 ) {
                     conCmdOkay = true;
                     c->sample = sample;
-                    YM_DEBUG_SAMPLE
-                }
+                } else
+                    ymerr("sample failed");
             } else if ( command.command == YMConnectionCommandIFExchange ) {
                 ymlog("performing ifinfo exchange");
                 conCmdOkay = __YMConnectionDoIFExchange(c, newSocket, false);

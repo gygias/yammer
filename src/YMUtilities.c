@@ -939,4 +939,29 @@ int gettimeofday(struct timeval * tp, struct timezone * tzp)
 }
 #endif
 
+void YMRandomDataWithLength(uint8_t *buf, uint32_t len)
+{
+    uint16_t countdown = len;
+    while ( countdown-- ) {
+        uint8_t aByte = (uint8_t)arc4random_uniform(0x100);
+        buf[countdown] = aByte;
+    }
+}
+
+void YMRandomASCIIStringWithLength(char *buf, uint16_t len, bool for_mDNSServiceName, bool for_txtKey)
+{
+    buf[--len] = '\0';
+
+    uint8_t maxChar = for_mDNSServiceName ? 'z' : 0x7E, minChar = for_mDNSServiceName ? 'a' : 0x20;
+    uint8_t range = maxChar - minChar;
+    while ( len-- ) {
+        char aChar;
+        do {
+            aChar = (char)arc4random_uniform(range + 1) + minChar;
+        } while ( for_txtKey && (aChar == '='));
+
+        buf[len] = aChar;
+    }
+}
+
 YM_EXTERN_C_POP

@@ -379,14 +379,14 @@ void YMAPI YMDispatchAfter(YMDispatchQueueRef queue, ym_dispatch_user_t *userDis
     }
     YMLockUnlock(gDispatch->lock);
 
-#ifdef YM_DISPATCH_LOG
+#ifdef YM_DISPATCH_LOG_1
     printf("scheduled %p[%p,%p] after %f seconds on %p(%s)  \n",userDispatch,userDispatch->dispatchProc,userDispatch->context,secondsAfter,queue,YMSTR(((__ym_dispatch_queue_t *)queue)->name));
 #endif
 }
 
 void __ym_dispatch_sigalarm(int signum)
 {
-#ifdef YM_DISPATCH_LOG
+#ifdef YM_DISPATCH_LOG_1
     printf("__ym_dispatch_sigalarm\n");
 #endif
     if ( signum != SIGALRM ) {
@@ -425,7 +425,7 @@ void __ym_dispatch_sigalarm(int signum)
     }
     YMLockUnlock(gDispatch->lock);
 
-#ifdef YM_DISPATCH_LOG
+#ifdef YM_DISPATCH_LOG_1
     printf("dispatching %p[%p,%p] on %p(%s)\n",thisTimer->dispatch,thisTimer->dispatch->dispatchProc,thisTimer->dispatch->context,thisTimer->queue,YMSTR((((__ym_dispatch_queue_t *)(thisTimer->queue))->name)));
 #endif
     YMDispatchAsync(thisTimer->queue,thisTimer->dispatch);
@@ -443,7 +443,7 @@ void __ym_dispatch_sigalarm(int signum)
         return;
     }
 
-#ifdef YM_DISPATCH_LOG
+#ifdef YM_DISPATCH_LOG_1
     if ( nextTimer ) {
         printf("nextTimer is now %p[%p,%p] in %ld.%9ldf on %s\n",nextTimer->dispatch,nextTimer->dispatch->dispatchProc,nextTimer->dispatch->context,nextTimer->time->tv_sec-now.tv_sec,nextTimer->time->tv_nsec-now.tv_nsec,YMSTR(((__ym_dispatch_queue_t *)(nextTimer->queue))->name));
     } else

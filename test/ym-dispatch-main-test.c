@@ -83,6 +83,7 @@ YM_ENTRY_POINT(_do_a_work)
     bool lock = gLock != NULL;
     if ( lock ) YMLockLock(gLock);
     gCompleted++;
+    if ( gCompleted % 10000 == 0 ) { printf("%d%s",gCompleted,gCompleted==gReps?"\n":" "); fflush(stdout); }
     if ( lock ) YMLockUnlock(gLock);
     
     if ( gCompleted == gReps ) {

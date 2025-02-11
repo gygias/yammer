@@ -139,44 +139,4 @@ void RunAllTests()
     ymlog("there are %d threads in the current process",YMGetNumberOfThreadsInCurrentProcess());
 }
 
-char *YMRandomASCIIStringWithMaxLength(uint16_t maxLength, bool for_mDNSServiceName, bool for_txtKey)
-{
-    uint8_t randomLength = (uint8_t)arc4random_uniform(maxLength + 1 + 1);
-    if ( randomLength < 2 ) randomLength = 2;
-    
-    char *string = calloc(1,randomLength);
-    string[--randomLength] = '\0';
-    
-    uint8_t maxChar = for_mDNSServiceName ? 'z' : 0x7E, minChar = for_mDNSServiceName ? 'a' : 0x20;
-    uint8_t range = maxChar - minChar;    
-    while ( randomLength-- ) {
-        char aChar;
-        do {
-            aChar = (char)arc4random_uniform(range + 1) + minChar;
-        } while ( for_txtKey && (aChar == '='));
-        
-        string[randomLength] = aChar;
-    }
-    
-    return string;
-}
-
-uint8_t *YMRandomDataWithMaxLength(uint16_t length, uint16_t *outLength)
-{
-    uint16_t randomLength = (uint16_t)arc4random_uniform(length+1);
-    if ( randomLength == 0 ) randomLength = 1;
-    uint8_t *randomData = calloc(1,randomLength);
-    
-    uint16_t countdown = randomLength;
-    while ( countdown-- ) {
-        uint8_t aByte = (uint8_t)arc4random_uniform(0x100);
-        randomData[countdown] = aByte;
-    }
-    
-    if ( outLength )
-        *outLength = randomLength;
-    
-    return randomData;
-}
-
 YM_EXTERN_C_POP

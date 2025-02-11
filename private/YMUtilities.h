@@ -77,6 +77,9 @@ void YMAPI YMUtilitiesFreeGlobals();
 int YMAPI gettimeofday(struct timeval * tp, struct timezone * tzp);
 #endif
 
+void YMRandomDataWithLength(uint8_t *buf, uint32_t len);
+void YMRandomASCIIStringWithLength(char *buf, uint16_t len, bool for_mDNSServiceName, bool for_txtKey);
+
 YM_EXTERN_C_POP
 
 #endif /* YMUtilities_h */

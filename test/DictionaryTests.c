@@ -12,6 +12,7 @@
 #include "YMLock.h"
 #include "YMSemaphore.h"
 #include "YMString.h"
+#include "YMUtilities.h"
 
 YM_EXTERN_C_PUSH
 
@@ -39,7 +40,7 @@ void DictionaryTestsRun(ym_test_assert_func assert, const void *context)
     YMStringRef name = YMSTRC("DictionaryTestQueue");
     YMRelease(name);
     
-    unsigned int nThreads = arc4random_uniform(16) + 1;
+    unsigned int nThreads = 16;
     ymlog("DictionaryTests has decided to run %u instances",nThreads);
     ym_dispatch_user_t dispatch = { _dictionary_test_proc, &theTest, NULL, ym_dispatch_user_context_noop };
     for ( int i = 0; i < nThreads; i++ ) {
@@ -78,8 +79,10 @@ YM_ENTRY_POINT(_dictionary_test_proc)
     YMLockUnlock(theTest->lock);
     
     while (!theTest->endTest) {
-        char *random_string = YMRandomASCIIStringWithMaxLength((uint16_t)arc4random_uniform(MaxItemLength), false, false);
-        uint8_t *random_data = YMRandomDataWithMaxLength(MaxItemLength,NULL);
+        char random_string[MaxItemLength];
+        YMRandomASCIIStringWithLength(random_string,MaxItemLength,false,false);
+        uint8_t random_data[MaxItemLength];
+        YMRandomDataWithLength(random_data,MaxItemLength);
         
         YMLockLock(theTest->lock);
         {
@@ -124,9 +127,6 @@ YM_ENTRY_POINT(_dictionary_test_proc)
             theTest->completedTests++;
         }
         YMLockUnlock(theTest->lock);
-        
-        free((void *)random_string);
-        free((void *)random_data);
     }
     
     YMSemaphoreSignal(theTest->semaphore);

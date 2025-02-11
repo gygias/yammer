@@ -41,9 +41,6 @@ typedef bool (*ym_test_diff_func)(const void *ctx, const char *path1, const char
 
 void RunAllTests();
 
-char *YMRandomASCIIStringWithMaxLength(uint16_t maxLength, bool for_mDNSServiceName, bool for_txtKey);
-uint8_t *YMRandomDataWithMaxLength(uint16_t length, uint16_t *outLength);
-
 YM_EXTERN_C_POP
 
 #endif /* Tests_h */

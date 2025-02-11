@@ -104,7 +104,8 @@ void _AsyncForwardCallback(struct SessionTest *theTest, YMConnectionRef connecti
 
 void SessionTestsRun(ym_test_assert_func assert, ym_test_diff_func diff, const void *context)
 {
-    char *suffix = YMRandomASCIIStringWithMaxLength(10, true, false);
+    char suffix[10];
+    YMRandomASCIIStringWithLength(suffix, arc4random_uniform(10)+1, true, false);
     YMStringRef queueName = YMSTRC("SessionTestsQueue");
     struct SessionTest theTest = {  assert, diff, context,
                                     NULL, NULL, YMSTRC("_ymtest._tcp"), YMSTRCF("twitter-cliche:%s", suffix),
@@ -112,7 +113,6 @@ void SessionTestsRun(ym_test_assert_func assert, ym_test_diff_func diff, const v
                                     YMDispatchQueueCreate(queueName),
                                     YMDictionaryCreate(), NULL, NULL, YMSTRC(OutSparseDir),
                                     YMSemaphoreCreate(0), YMSemaphoreCreate(0), false };
-    free(suffix);
     YMRelease(queueName);
     
     ymerr(" Session test: '%s'",YMSTR(theTest.testName));

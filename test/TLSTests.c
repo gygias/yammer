@@ -14,6 +14,7 @@
 #include "YMLocalSocketPair.h"
 #include "YMSocket.h"
 #include "YMThread.h"
+#include "YMUtilities.h"
 
 #if defined (YMLINUX)
 #include <signal.h>
@@ -190,9 +191,11 @@ YM_ENTRY_POINT(_RunEndpoint)
         uint8_t *outgoingMessage;
         uint16_t outgoingMessageLen;
         uint16_t incomingMessageLen;
-        if ( TLSTestRandomMessages )
-            outgoingMessage = YMRandomDataWithMaxLength(TLSTestRandomMessageMaxLength,&outgoingMessageLen);
-        else {
+        if ( TLSTestRandomMessages ) {
+            outgoingMessageLen = arc4random_uniform(TLSTestRandomMessageMaxLength) + 1;
+            outgoingMessage = calloc(1,outgoingMessageLen);
+            YMRandomDataWithLength(outgoingMessage,outgoingMessageLen);
+        } else {
             outgoingMessage = (uint8_t *)testMessage;
             outgoingMessageLen = (uint16_t)strlen(testMessage);
         }

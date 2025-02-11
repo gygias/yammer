@@ -10,6 +10,7 @@
 
 #include "YMmDNSBrowser.h"
 #include "YMmDNSService.h"
+#include "YMUtilities.h"
 
 YM_EXTERN_C_PUSH
 
@@ -85,7 +86,8 @@ void _TestmDNSTxtRecordParsing(struct mDNSTest *theTest)
 void _TestmDNSCreateDiscoverResolve(struct mDNSTest *theTest)
 {
     bool okay;
-    theTest->testServiceName = YMRandomASCIIStringWithMaxLength(mDNS_SERVICE_NAME_LENGTH_MAX - 1, true, false);
+    theTest->testServiceName = calloc(1,mDNS_SERVICE_NAME_LENGTH_MAX + 1);
+    YMRandomASCIIStringWithLength(theTest->testServiceName,mDNS_SERVICE_NAME_LENGTH_MAX, true, false);
     YMStringRef serviceType = YMSTRC(testServiceType);
     YMStringRef serviceName = YMSTRC(theTest->testServiceName);
     theTest->service = YMmDNSServiceCreate(serviceType, serviceName, 5050); // todo making our own bogus name
@@ -156,18 +158,19 @@ YMmDNSTxtRecordKeyPair ** _MakeTxtRecordKeyPairs(uint16_t *inOutnKeypairs)
         
         // The "Name" MUST be at least one character. Strings beginning with an '=' character (i.e. the name is missing) SHOULD be silently ignored.
         uint8_t aKeyLenMax = (uint8_t)(( testKeyMaxLen > remaining ) ? ( remaining - testKeyPairReserved ) : testKeyMaxLen);
-        char *randomKey = YMRandomASCIIStringWithMaxLength(aKeyLenMax, false, true);
+        char randomKey[testKeyMaxLen];
+        YMRandomASCIIStringWithLength(randomKey,aKeyLenMax, false, true);
         keyPairs[idx]->key = YMSTRC(randomKey);//"test-key";
         
         size_t keyLen = strlen(randomKey);
-        free(randomKey);
         remaining -= (uint16_t)keyLen;
         
         // as far as i can tell, value can be empty
         uint8_t valueLenMax = (uint8_t)( UINT8_MAX - keyLen - testKeyPairReserved );
         uint16_t aValueLenMax = ( valueLenMax > remaining ) ? remaining : valueLenMax;
         uint16_t valueLen;
-        const uint8_t *value_data = YMRandomDataWithMaxLength(aValueLenMax, &valueLen);
+        uint8_t *value_data = calloc(1,aValueLenMax);
+        YMRandomDataWithLength((uint8_t *)value_data, aValueLenMax);
         keyPairs[idx]->value = value_data;
         keyPairs[idx]->valueLen = (uint8_t)valueLen;
         

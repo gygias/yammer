@@ -31,6 +31,7 @@
 
 YMSessionRef gYMSession = NULL;
 bool gIsServer;
+bool gExited = false;
 
 #ifndef YMWIN32
 void __sigint_handler (__unused int signum)
@@ -92,11 +93,26 @@ void thread(void (*func)(YMStreamRef), YMStreamRef context)
 #endif
 }
 
-void print_stuff(bool server, uint64_t this, struct timeval *start)
+typedef struct print_stuff_context
 {
+    bool server;
+    uint64_t *off;
+    uint64_t *thenOff;
+} print_stuff_context;
+
+#define LogInterval 1
+
+YM_ENTRY_POINT(print_stuff)
+{
+    if ( gExited )
+        return;
+
+    print_stuff_context *p = context;
+    bool server = p->server;
+    uint64_t this = *(p->off) - *(p->thenOff);
+    *(p->thenOff) = *(p->off);
+
     printf("%s: wrote %lu: ",server?"s":"c",this);
-    struct timeval end;
-    gettimeofday(&end, NULL);
     
     YMArrayRef connections = YMSessionCopyConnections(gYMSession);
     for( int i = 0; i < YMArrayGetCount(connections); i++ ) {
@@ -105,8 +121,7 @@ void print_stuff(bool server, uint64_t this, struct timeval *start)
         const char *rDesc = YMInterfaceTypeDescription(YMConnectionGetRemoteInterface(aConnection));
         double sampleMBs = (double)YMConnectionGetSample(aConnection) / 1024. / 1024.;
         if ( YMSessionGetDefaultConnection(gYMSession) == aConnection ) {
-            double interval = (double)(( end.tv_sec - start->tv_sec ) * 1000000 + end.tv_usec - start->tv_usec) / 1000000.;
-            double tputMBs = (double)this / interval / 1024. / 1024.;
+            double tputMBs = (double)this / LogInterval / 1024. / 1024.;
             double ratio = tputMBs / sampleMBs;
             printf("* (%0.2f mb/s, %0.0f%%) ",tputMBs,ratio*100);
         }
@@ -115,49 +130,66 @@ void print_stuff(bool server, uint64_t this, struct timeval *start)
     YMRelease(connections);
     
     printf("\n");
+
+    ym_dispatch_user_t u = { print_stuff, p, NULL, ym_dispatch_user_context_noop };
+    YMDispatchAfter(YMDispatchGetGlobalQueue(), &u, 1);
 }
 
-#define LogIntervalBytes 1048576
-    
 void run_client_loop(YMStreamRef stream)
 {
     YMIOResult ymResult;
-    uint64_t off = 0;
-    struct timeval start;
-    gettimeofday(&start, NULL);
-    
+    uint64_t off = 0, thenOff = 0;
+
+    print_stuff_context c = {0};
+    c.server = false;
+    c.off = &off;
+    c.thenOff = &thenOff;
+    ym_dispatch_user_t u = { print_stuff, &c, NULL, ym_dispatch_user_context_noop };
+    YMDispatchAfter(YMDispatchGetGlobalQueue(), &u, 1);
+
     do {
-        uint32_t random = arc4random();
-        ymResult = YMStreamWriteDown(stream, (uint8_t *)&random, sizeof(random));
-        off += sizeof(random);
-        
-        if ( ( off % LogIntervalBytes ) == 0 ) { print_stuff(false,LogIntervalBytes,&start); gettimeofday(&start, NULL); }
-            
-    } while ( ymResult == YMIOSuccess );
-    
-    printf("client write returned %d, breaking.",ymResult);
+#define bufSize UINT16_MAX
+        uint8_t buf[bufSize];
+        YMRandomDataWithLength(buf,bufSize);
+        ymResult = YMStreamWriteDown(stream, buf, bufSize);
+        if ( ymResult != YMIOSuccess ) {
+            printf("%d = YMStreamWriteDown(%p, %p, %d)\n",ymResult,stream,buf,bufSize);
+            break;
+        }
+        off += bufSize;
+    } while ( ! gExited && ymResult == YMIOSuccess );
+
+    gExited = true;
 }
 
 void run_server_loop(YMStreamRef stream)
 {
     YMIOResult ymResult;
-    uint64_t off = 0;
-    struct timeval start;
-    gettimeofday(&start, NULL);
+    uint64_t off = 0, thenOff = 0;
+
+    print_stuff_context c = {0};
+    c.server = true;
+    c.off = &off;
+    c.thenOff = &thenOff;
+    ym_dispatch_user_t u = { print_stuff, &c, NULL, ym_dispatch_user_context_noop };
+    YMDispatchAfter(YMDispatchGetGlobalQueue(), &u, 1);
     
     do {
-        uint32_t random;
+        uint8_t buf[bufSize];
+
         uint16_t o = 0;
-        ymResult = YMStreamReadUp(stream, (uint8_t *)&random, sizeof(random), &o);
-        if ( o != sizeof(random) ) {
-            printf("server read incomplete");
+        ymResult = YMStreamReadUp(stream, buf, bufSize, &o);
+        if ( ymResult != YMIOSuccess ) {
+            printf("%d = YMStreamReadUp(%p, %p, %d, &%u)\n",ymResult,stream,buf,bufSize,o);
+            break;
+        } else if ( o != bufSize ) {
+            printf("server read incomplete\n");
             break;
         }
         off += o;
-        if ( ( off % LogIntervalBytes ) == 0 ) { print_stuff(true,LogIntervalBytes,&start); gettimeofday(&start, NULL); }
-    } while ( ymResult == YMIOSuccess );
-    
-    printf("server breaking.");
+    } while ( ! gExited &&  ymResult == YMIOSuccess );
+
+    gExited = true;
 }
     
 // client, discover->connect
@@ -215,6 +247,7 @@ void _connected_func(YMSessionRef session, YMConnectionRef connection, __unused 
 
 void _interrupted_func(__unused YMSessionRef session, __unused void* context)
 {
+    gExited = true;
     printf("session interrupted\n");
     //myexit(1);
 }
