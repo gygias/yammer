@@ -196,16 +196,17 @@ bool YMLocalSocketPairShutdown(YMLocalSocketPairRef p)
 
 void _YMLocalSocketPairFree(YMTypeRef o_)
 {
+    YM_IO_BOILERPLATE
+
     __ym_local_socket_pair_t *p = (__ym_local_socket_pair_t *)o_;
     
-	int result, error; const char *errorStr;
     YM_CLOSE_SOCKET(p->socketA);
     if ( result != 0 )
-        ymabort("close failed (%d): %d (%s)",result,errno,strerror(errno));
+        ymabort("close failed (%zd): %d (%s)",result,errno,strerror(errno));
 
     YM_CLOSE_SOCKET(p->socketB);
     if ( result != 0 )
-        ymabort("close failed (%d): %d (%s)",result,errno,strerror(errno));
+        ymabort("close failed (%zd): %d (%s)",result,errno,strerror(errno));
     
     YMRelease(p->userName);
     YMRelease(p->socketName);
@@ -213,6 +214,8 @@ void _YMLocalSocketPairFree(YMTypeRef o_)
 
 int __YMLocalSocketPairCreateClient()
 {
+    YM_IO_BOILERPLATE
+
     YMSOCKET sock = socket(LOCAL_SOCKET_DOMAIN, SOCK_STREAM, LOCAL_SOCKET_PROTOCOL/* IP, /etc/sockets man 5 protocols*/);
 #if !defined(YMWIN32)
 	ymassert(sock>=0,"socket failed: %d (%s)",errno,strerror(errno));
@@ -221,9 +224,9 @@ int __YMLocalSocketPairCreateClient()
 #endif
     
     int yes = 1;
-    int result = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const void *)&yes, sizeof(yes));
+    result = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const void *)&yes, sizeof(yes));
     if ( result != 0 )
-        ymerrg("setsockopt failed on %d: %d: %d (%s)",sock,result,errno,strerror(errno));
+        ymerrg("setsockopt failed on %d: %zd: %d (%s)",sock,result,errno,strerror(errno));
     
     /* Bind a name to the socket. */
 #if !defined(YMWIN32)
@@ -240,8 +243,7 @@ int __YMLocalSocketPairCreateClient()
     
     result = connect(sock, (struct sockaddr *) &sockName, size);
     if ( result != 0 ) {
-        ymerrg("connect failed: %d: %d (%s)",result,errno,strerror(errno));
-		int error; const char *errorStr;
+        ymerrg("connect failed: %zd: %d (%s)",result,errno,strerror(errno));
         YM_CLOSE_SOCKET(sock);
         return -1;
     }
@@ -253,6 +255,8 @@ int __YMLocalSocketPairCreateClient()
 
 YM_ENTRY_POINT(__ym_local_socket_accept_proc)
 {
+    YM_IO_BOILERPLATE
+
     ymlogg("__ym_local_socket_accept_proc entered");
     
     YMSOCKET listenSocket = -1;
@@ -277,9 +281,9 @@ YM_ENTRY_POINT(__ym_local_socket_accept_proc)
 #endif
     
     int yes = 1;
-    int result = setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, (const void *)&yes, sizeof(yes));
-    if (result != 0 )
-        ymerrg("setsockopt failed on sf%d: %d: %d (%s)",listenSocket,result,errno,strerror(errno));
+    result = setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, (const void *)&yes, sizeof(yes));
+    if ( result != 0 )
+        ymerrg("setsockopt failed on sf%d: %zd: %d (%s)",listenSocket,result,errno,strerror(errno));
     
     /* Bind a name to the socket. */
 #if !defined(YMWIN32)
@@ -297,7 +301,6 @@ YM_ENTRY_POINT(__ym_local_socket_accept_proc)
 	result = bind (listenSocket, (struct sockaddr *) &sockName, size);
     if ( result != 0 ) {
         int bindErrno = errno;
-		int error; const char *errorStr;
         YM_CLOSE_SOCKET(listenSocket);
         if ( bindErrno == EADDRINUSE ) {
             ymerrg("%s in use, retrying",YMSTR(socketName));

@@ -31,10 +31,11 @@
 # define YM_SEMAPHORE_TYPE HANDLE
 #endif
 
-#define ymlog_pre "sem[%s,%d,%s]: "
-#define ymlog_args YMSTR(s->semName),(int)s->sem,YMSTR(s->userName)
-#define ymlog_type YMLogThreadSync
-#include "YMLog.h"
+// dispatch circular dependency
+//#define ymlog_pre "sem[%s,%d,%s]: "
+//#define ymlog_args YMSTR(s->semName),(int)s->sem,YMSTR(s->userName)
+//#define ymlog_type YMLogThreadSync
+//#include "YMLog.h"
 
 YM_EXTERN_C_PUSH
 
@@ -72,8 +73,10 @@ YMSemaphoreRef YMSemaphoreCreateWithName(YMStringRef name, int initialValue)
 
 YMSemaphoreRef __YMSemaphoreCreate(YMStringRef name, int initialValue)
 {
-    if (initialValue < 0)
-        ymabort("fatal: semaphore initial value cannot be negative");
+    if ( initialValue < 0 ) {
+        printf("fatal: semaphore initial value cannot be negative\n");
+        abort();
+    }
 
 	YM_ONCE_DO_LOCAL(__YMSemaphoreInit);
     
@@ -82,11 +85,10 @@ YMSemaphoreRef __YMSemaphoreCreate(YMStringRef name, int initialValue)
     s->userName = YMStringCreateWithFormat("%s-%p",name?YMSTR(name):"*",s, NULL);
     
     YMLockLock(gYMSemaphoreIndexLock);
-    uint16_t thisIndex = gYMSemaphoreIndex++;
+    uint32_t thisIndex = gYMSemaphoreIndex++;
     s->semName = YMStringCreateWithFormat("ym-%u",thisIndex,NULL);
     if ( gYMSemaphoreIndex == 0 )
-        ymerr("warning: semaphore name index reset");
-    ymlog("created");
+        printf("warning: semaphore name index reset\n");
     YMLockUnlock(gYMSemaphoreIndexLock);
 
 #if !defined(YMWIN32)
@@ -95,20 +97,24 @@ try_again:; // XXX
     if ( s->sem == SEM_FAILED ) {
         if ( errno == EEXIST ) {
             if ( sem_unlink(YMSTR(s->semName)) == 0 ) {
-                ymlog("exists");
+                //printf("error: sem_unlink(%s) %s exists\n",YMSTR(s->semName),YMSTR(s->userName));
                 goto try_again;
             } else {
-				ymerr("sem_unlink failed %d (%s)",errno,strerror(errno));
+				printf("sem_unlink(%s) %s failed %d (%s)\n",YMSTR(s->semName),YMSTR(s->userName),errno,strerror(errno));
 				goto try_again;
 			}
         }
-        else
-            ymabort("fatal: sem_open failed: %d (%s)",errno,strerror(errno));
+        else {
+            printf("fatal: sem_open(%s) %s failed: %d (%s)\n",YMSTR(s->semName),YMSTR(s->userName),errno,strerror(errno));
+            abort();
+        }
     }
 #else
 	s->sem = CreateSemaphore(NULL, 0, LONG_MAX, NULL);
-	if (s->sem == NULL)
-		ymabort("fatal: CreateSemaphore failed: %x", GetLastError());
+	if ( s->sem == NULL ) {
+		printf("fatal: CreateSemaphore failed: %x\n", GetLastError());
+        abort();
+    }
 #endif
     
     return s;
@@ -116,13 +122,17 @@ try_again:; // XXX
 
 void _YMSemaphoreFree(YMSemaphoreRef s)
 {
-    ymlog("deallocating");
-    
-    int result, error = 0;
-    const char *errorStr = NULL;
+    YM_IO_BOILERPLATE
+
+#if defined(YMAPPLE)
+#warning i believe sem_unlink is/was 10 years ago what you were supposed to do on macos with named semaphores, \
+        no idea if that's still the case, on my current debian-based it leaks open files, though the man page isn't specific
+    YM_UNLINK_SEMAPHORE(s);
+#else
 	YM_CLOSE_SEMAPHORE(s);
-	if (result == -1)
-		ymerr("warning: sem_unlink failed: %d (%s)", error, errorStr);
+#endif
+	if ( result != 0 )
+		printf("warning: YM_CLOSE_SEMAPHORE(?) %s %s failed: %d (%s)\n",YMSTR(s->semName),YMSTR(s->userName), error, errorStr);
     
     YMRelease(s->userName);
     YMRelease(s->semName);
@@ -130,15 +140,15 @@ void _YMSemaphoreFree(YMSemaphoreRef s)
 
 void YMSemaphoreWait(__ym_semaphore_t *s)
 {
+    YM_IO_BOILERPLATE
+
     bool retry = true;
     while ( retry ) {
-        int result, error = 0;
-        const char *errorStr = NULL;
         YM_WAIT_SEMAPHORE(s->sem);
         if (result != 0) {
             retry = YM_RETRY_SEMAPHORE;
-            ymerr("sem_wait failed%s: %d (%s)", retry ? ", retrying" : "", errno, strerror(errno));
-            ymassert(retry,"sem_wait");
+            printf("sem_wait(%s) %s failed%s: %d (%s)\n",YMSTR(s->semName),YMSTR(s->userName), retry ? ", retrying" : "", errno, strerror(errno));
+            abort();
         } else
             break;
     }
@@ -146,25 +156,34 @@ void YMSemaphoreWait(__ym_semaphore_t *s)
 
 bool YMSemaphoreTest(__ym_semaphore_t *s)
 {
-    int result, error = 0;
-    const char *errorStr = NULL;
+    YM_IO_BOILERPLATE
+
     YM_TRYWAIT_SEMAPHORE(s->sem);
     if ( result != 0 ) {
-        ymassert(error == EAGAIN,"trywait sem failed, but errno is %d (%s)",error,errorStr);
+        if (error != EAGAIN) {
+            printf("trywait sem(%s) %s failed, but errno is %d (%s)\n",YMSTR(s->semName),YMSTR(s->userName),error,errorStr);
+            abort();
+        }
         return false;
     }
 
     YM_POST_SEMAPHORE(s->sem);
-	ymassert(result==0, "fatal: sem trywait repost failed: %d (%s)", error, errorStr);
+	if ( result != 0 ) {
+        printf("fatal: sem trywait(%s) %s repost failed: %d (%s)\n",YMSTR(s->semName),YMSTR(s->userName), error, errorStr);
+        abort();
+    }
     return true;
 }
 
 void YMSemaphoreSignal(__ym_semaphore_t *s)
 {
-	int result, error = 0;
-	const char *errorStr = NULL;
+    YM_IO_BOILERPLATE
+
 	YM_POST_SEMAPHORE(s->sem);
-	ymassert(result==0, "fatal: sem_post failed: %d (%s)", error, errorStr);
+	if ( result != 0 ) {
+        printf("fatal: sem_post(%s) %s failed: %d (%s)\n",YMSTR(s->semName),YMSTR(s->userName), error, errorStr);
+        abort();
+    }
 }
 
 YM_EXTERN_C_POP

@@ -192,13 +192,15 @@ void __YMRSAKeyPairSeed()
 #ifdef YMDEBUG
     struct timeval then;
     int timeResult = gettimeofday(&then,NULL);
+    uint64_t iters = 0;
 #endif
     
-    uint64_t iters = 0;
     do {
         uint32_t aRandom = arc4random();
         RAND_seed(&aRandom, sizeof(aRandom));
+#ifdef YMDEBUG
         iters++;
+#endif
     } while ( RAND_status() == 0 ); // all the solar flares
     
 #ifdef YMDEBUG

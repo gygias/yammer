@@ -97,6 +97,10 @@ void RunAllTests()
     GrabBagTestsRun(_ym_test_assert_func, NULL);
     ymerr("------ misc tests end ------");
     ymlog("there are %d threads in the current process",YMGetNumberOfThreadsInCurrentProcess());
+    ymerr("------ compression tests start ------");
+    CompressionTestsRun(_ym_test_assert_func, NULL);
+    ymerr("------ compression tests end ------");
+    ymlog("there are %d threads in the current process",YMGetNumberOfThreadsInCurrentProcess());
     ymerr("------ task tests start ------");
     TaskTestsRun(_ym_test_assert_func, NULL);
     ymerr("------ task tests end ------");
@@ -104,10 +108,6 @@ void RunAllTests()
     ymerr("------ thread tests start ------");
     ThreadTestsRun(_ym_test_assert_func, NULL);
     ymerr("------ thread tests end ------");
-    ymlog("there are %d threads in the current process",YMGetNumberOfThreadsInCurrentProcess());
-    ymerr("------ compression tests start ------");
-    CompressionTestsRun(_ym_test_assert_func, NULL);
-    ymerr("------ compression tests end ------");
     ymlog("there are %d threads in the current process",YMGetNumberOfThreadsInCurrentProcess());
 	ymerr("------ dictionary tests start ------");
 	DictionaryTestsRun(_ym_test_assert_func, NULL);

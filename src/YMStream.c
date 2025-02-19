@@ -24,16 +24,10 @@
 
 //#define LOG_STREAM_LIFECYCLE
 #ifdef LOG_STREAM_LIFECYCLE
-#undef LOG_STREAM_LIFECYCLE
-#define LOG_STREAM_LIFECYCLE(x) \
-                ymerr("stream[%s,if%d->of%dV,^of%d<-if%d]: %p %sallocating",YMSTR(s->name), \
-                      YMPipeGetInputFile(s->downstreamPipe), \
-                      YMPipeGetOutputFile(s->downstreamPipe), \
-                      YMPipeGetOutputFile(s->upstreamPipe), \
-                      YMPipeGetInputFile(s->upstreamPipe), \
-                      s, (x) ? "":"de" );
+#define LOG_STREAM_EVENT(x) \
+                ymerr("stream[%s,if%d->of%dV,^of%d<-if%d]: %p %sallocating",YMSTR(s->name), s->dI, s->dO, s->uO, s->uI, s, (x) ? "":"de" );
 #else
-#define LOG_STREAM_LIFECYCLE(x) ;
+#define LOG_STREAM_EVENT(x) ;
 #endif
 
 YM_EXTERN_C_PUSH
@@ -53,17 +47,18 @@ typedef struct __ym_stream
     YMCompressionRef downCompression;
     YMCompressionRef upCompression;
     
-    _ym_stream_data_available_func dataAvailableFunc;
-    void *dataAvailableContext;
-    _ym_stream_free_user_info_func freeUserInfoFunc; // made necessary because clients can hold stream objs longer than we do
-    
     ym_stream_user_info_t *userInfo; // weak, plexer
+
+    // we aggressively clear state to find bugs (or, at least maintain the happy status quo), so, this is tedious but worth it imo
+#ifdef LOG_STREAM_LIFECYCLE
+    YMFILE dI, dO, uI, uO;
+#endif
 } __ym_stream;
 typedef struct __ym_stream __ym_stream_t;
 
 YMIOResult __YMStreamForward(YMStreamRef s, YMFILE file, bool toStream, uint64_t *inBytes, uint64_t *outBytes);
 
-YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_t *userInfo, _ym_stream_free_user_info_func callback)
+YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_t *userInfo, YMFILE *downOut)
 {
     __ym_stream_t *s = (__ym_stream_t *)_YMAlloc(_YMStreamTypeID,sizeof(__ym_stream_t));
     
@@ -81,35 +76,32 @@ YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_t *userInfo, _
     s->downstreamWriteClosed = false;
     s->downstreamReadClosed = false;
     
-    s->dataAvailableFunc = NULL;
-    s->dataAvailableContext = NULL;
-    
     s->userInfo = userInfo;
-    s->freeUserInfoFunc = callback;
-    
+
+    #warning compression is set by the (potentially remote) stream originator, and initialized by rpc at the stream level,\
+             this initializer is shared in ways that can make these redundant and short-lived, fix.
     s->downCompression = YMCompressionCreate(YMCompressionNone,YMPipeGetInputFile(s->downstreamPipe),true);
     s->upCompression = YMCompressionCreate(YMCompressionNone,YMPipeGetOutputFile(s->upstreamPipe),false);
     
-    LOG_STREAM_LIFECYCLE(true);
+    if ( downOut ) *downOut = YMPipeGetOutputFile(s->downstreamPipe);
+#ifdef LOG_STREAM_LIFECYCLE
+    s->dI = YMPipeGetInputFile(s->downstreamPipe);
+    s->dO = YMPipeGetOutputFile(s->downstreamPipe);
+    s->uO = YMPipeGetOutputFile(s->upstreamPipe);
+    s->uI = YMPipeGetInputFile(s->upstreamPipe);
+    LOG_STREAM_EVENT(true)
+#endif
     
     return s;
-}
-
-void _YMStreamSetDataAvailableCallback(YMStreamRef s_, _ym_stream_data_available_func func, void *ctx)
-{
-    __ym_stream_t *s = (__ym_stream_t *)s_;
-    s->dataAvailableFunc = func;
-    s->dataAvailableContext = ctx;
 }
 
 void _YMStreamFree(YMTypeRef o_)
 {
     YMStreamRef s = (__ym_stream_t *)o_;
     
-    LOG_STREAM_LIFECYCLE(false);
-    
-    if ( s->freeUserInfoFunc )
-        s->freeUserInfoFunc(s);
+#ifdef LOG_STREAM_LIFECYCLE
+    LOG_STREAM_EVENT(false)
+#endif
     
     YMRelease(s->downstreamPipe);
     YMRelease(s->upstreamPipe);
@@ -129,6 +121,7 @@ bool _YMStreamSetCompression(YMStreamRef s_, YMCompressionType type)
         YMCompressionRef upCompression = YMCompressionCreate(type,YMPipeGetOutputFile(s->upstreamPipe),false);
         okay = YMCompressionInit(upCompression);
         if ( okay ) {
+            #warning leaky codepaths
             YMRelease(s->downCompression); // nocompression on create
             s->downCompression = downCompression;
             YMRelease(s->upCompression);
@@ -138,29 +131,29 @@ bool _YMStreamSetCompression(YMStreamRef s_, YMCompressionType type)
     return okay;
 }
 
-// because user data is opaque (even to user), this should expose eof
 YMIOResult YMStreamReadUp(YMStreamRef s, uint8_t *buffer, uint16_t length, uint16_t *outLength)
 {
-    ymlog("reading %ub user data",length);
-    size_t off = 0, iters = 0;
+    ymlog("reading %ub stream user data",length);
+
+    size_t off = 0;
     YMIOResult result;
     do {
-        size_t actual = 0;
-        result = YMCompressionRead(s->upCompression, buffer + off, length - off, &actual);
-        off += actual;
-        iters++;
-    } while ( (off < length) && result == YMIOSuccess );
-    ymassert(off<=UINT16_MAX,"fatal: compression read %zu",off);
+        size_t o = 0;
+        result = YMCompressionRead(s->upCompression,buffer + off,length - off,&o);
+        off += o;
+        if ( result == YMIOError )
+            ymabort("fatal: reading %ub up to user: %d (%s)",length,errno,strerror(errno));
+        if ( result == YMIOEOF ) {
+            ymerr("EOF: reading %ub up to user:",length);
+            break;
+        //else if ( length != o ) {
+        //    ymabort("fatal: stream read %d %hu != %zu",result,length,o);
+        //}
+        } else
+            ymlog("read %ub stream user data",length);
+    } while ( off < length );
     
-    if ( outLength )
-        *outLength = (uint16_t)off;
-    if ( result == YMIOError )
-        ymerr("fatal: reading %ub user data: %d (%s)",length,errno,strerror(errno));
-    else if ( result == YMIOEOF )
-        ymerr("EOF from upstream");
-    else
-        ymlog("read %ub from upstream",length);
-    
+    if ( outLength ) *outLength = off;
     return result;
 }
 
@@ -168,49 +161,72 @@ YMIOResult YMStreamWriteDown(YMStreamRef s, const uint8_t *buffer, uint16_t leng
 {
     YM_DEBUG_CHUNK_SIZE(length);
     
-    size_t off = 0, iters = 0;
+    ymlog("writing %hub to downstream",length);
+    size_t rawOff = 0, off = 0;
     YMIOResult result;
     do {
-        size_t actual = 0;
-        result = YMCompressionWrite(s->downCompression, buffer, length, &actual);
-        off += actual;
-        iters++;
-    } while ( (off < length) && result == YMIOSuccess );
+        size_t actual = 0, overhead = 0;
+        result = YMCompressionWrite(s->downCompression, buffer + rawOff, length - rawOff, &actual, &overhead);
+        ymassert((result==YMIOSuccess),"stream compression write failed %d %zu %zu",result,length-rawOff,actual);
+        rawOff += length;
+        off += actual + overhead;
+    } while ( (rawOff < length) && result == YMIOSuccess );
     
     if ( result != YMIOSuccess ) {
         ymerr("failed writing stream chunk with size %ub",length);
         return result;
     }
-    ymlog("wrote buffer for chunk with size %ub",length);
     
     // signal the plexer to wake and service this stream
-    s->dataAvailableFunc(s,length,s->dataAvailableContext);
+    #warning dispatch? YES this is gross and causes problems with how lower layers segment data ([4][2][4][1803])
+    //s->dataAvailableFunc(s,off,s->dataAvailableContext);
     
-    ymlog("wrote %ub chunk",length);
+    ymlog("wrote %zub chunk",off);
     
     return result;
 }
 
-YMIOResult _YMStreamReadDown(YMStreamRef s, void *buffer, uint32_t length)
+YM_IO_RESULT _YMStreamPlexReadDown(YMStreamRef s, void *buffer, uint32_t length)
 {
+    YM_IO_BOILERPLATE
+
 	YMFILE downstreamRead = YMPipeGetOutputFile(s->downstreamPipe);
-    ymlog("reading %ub from downstream",length);
-    YMIOResult result = YMReadFull(downstreamRead, buffer, length, NULL);
-    if ( result != YMIOSuccess )
-        ymerr("failed reading %ub from downstream",length);
-    else
-        ymlog("read %ub from downstream",length);
+    ymlog("reading[%d] %ub from downstream",downstreamRead,length);
+    YM_READ_FILE(downstreamRead,buffer,length);
+    if ( result == 0 ) {
+        ymlog("%s read EOF %p %p %u",__FUNCTION__,s,buffer,length);
+    } else if ( result == -1 ) {
+        ymerr("%s failed reading %ub from downstream",__FUNCTION__,length);
+    } else
+        ymlog("%s read %ub from downstream",__FUNCTION__,length);
+
     return result;
 }
 
-YMIOResult _YMStreamWriteUp(YMStreamRef s, const void *buffer, uint32_t length)
+YMIOResult _YMStreamPlexWriteUp(YMStreamRef s, const void *buffer, uint32_t length)
 {
+    YM_DEBUG_CHUNK_SIZE(length);
+
     YMFILE upstreamWrite = YMPipeGetInputFile(s->upstreamPipe);
-    YMIOResult result = YMWriteFull(upstreamWrite, buffer, length, NULL);
+    size_t o = 0;
+    YMIOResult result = YMWriteFull(upstreamWrite, buffer, length, &o);
     if ( result == YMIOError )
         ymerr("fatal: failed writing %u bytes to upstream",length);
     else
-        ymlog("wrote %ub to upstream",length);
+        ymlog("%d[%zu] = YMWriteFull(%d, %p, %u, &o) to upstream",result,o,upstreamWrite,buffer,length);
+
+    return result;
+}
+
+YMIOResult _YMStreamPlexWriteDown(YMStreamRef s, const uint8_t *buffer, uint16_t length)
+{
+    YMFILE upstreamWrite = YMPipeGetInputFile(s->downstreamPipe);
+    size_t o = 0;
+    YMIOResult result = YMWriteFull(upstreamWrite, buffer, length, &o);
+    if ( result == YMIOError )
+        ymerr("fatal: failed writing %u bytes to upstream",length);
+    else
+        ymlog("%d[%zu] = YMWriteFull(%d, %p, %u, &o) to upstream",result,o,upstreamWrite,buffer,length);
     
     return result;
 }
@@ -223,6 +239,13 @@ YMIOResult YMStreamWriteToFile(YMStreamRef s, YMFILE file, uint64_t *inBytes, ui
 YMIOResult YMStreamReadFromFile(YMStreamRef s, YMFILE file, uint64_t *inBytes, uint64_t *outBytes)
 {
     return __YMStreamForward(s, file, true, inBytes, outBytes);
+}
+
+void YMStreamGetPerformance(YMStreamRef s_, uint64_t *oDownIn, uint64_t *oDownOut, uint64_t *oUpIn, uint64_t *oUpOut)
+{
+    __ym_stream_t *s = (__ym_stream_t *)s_;
+    YMCompressionGetPerformance(s->downCompression,oDownIn,oDownOut);
+    YMCompressionGetPerformance(s->upCompression,oUpIn,oUpOut);
 }
 
 // for the love of god break this into at least 2 functions

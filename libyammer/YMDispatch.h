@@ -27,7 +27,6 @@ typedef struct ym_dispatch_user
 } ym_dispatch_user;
 typedef struct ym_dispatch_user ym_dispatch_user_t;
 
-
 YMDispatchQueueRef YMAPI YMDispatchGetMainQueue();
 YMDispatchQueueRef YMAPI YMDispatchGetGlobalQueue();
 
@@ -36,6 +35,16 @@ YMDispatchQueueRef YMAPI YMDispatchGetGlobalQueue();
 void YMAPI YMDispatchAsync(YMDispatchQueueRef queue, ym_dispatch_user_t *userDispatch);
 void YMAPI YMDispatchSync(YMDispatchQueueRef queue, ym_dispatch_user_t *userDispatch);
 void YMAPI YMDispatchAfter(YMDispatchQueueRef queue, ym_dispatch_user_t *userDispatch, double seconds);
+
+typedef enum ym_dispatch_source_type
+{
+    ym_dispatch_source_readable = 0,
+    ym_dispatch_source_writeable = 1
+} ym_dispatch_source_type;
+
+typedef void * ym_dispatch_source_t;
+ym_dispatch_source_t YMAPI YMDispatchSourceCreate(YMDispatchQueueRef queue, ym_dispatch_source_type type, uint64_t data, ym_dispatch_user_t *user);
+void YMAPI YMDispatchSourceDestroy(ym_dispatch_source_t source);
 
 _Noreturn void YMAPI YMDispatchMain();
 

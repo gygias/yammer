@@ -240,9 +240,9 @@ YM_ENTRY_POINT(_RunEndpoint)
 void _SendAMessage(__unused struct TLSTest *theTest, YMTLSProviderRef tls, uint8_t *message, uint16_t messageLen)
 {
     bool okay = YMSecurityProviderWrite((YMSecurityProviderRef)tls, (void *)&messageLen, sizeof(messageLen));
-    //testassert(okay,"failed to write message length");
+    testassert(okay,"failed to write message length");
     okay = YMSecurityProviderWrite((YMSecurityProviderRef)tls, message, messageLen);
-    //testassert(okay,"failed to write message");
+    testassert(okay,"failed to write message");
 }
 
 uint8_t *_ReceiveAMessage(struct TLSTest *theTest, YMTLSProviderRef tls, uint16_t *outLen)

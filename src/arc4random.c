@@ -80,7 +80,7 @@ static inline void arc4_addrandom(u_char *dat, int datlen)
 	rs.j = rs.i;
 }
 
-static const char * urandom = "/dev/urandom";
+//static const char * urandom = "/dev/urandom";
 
 static void fillRandom(u_char *rnd, size_t len)
 {

@@ -378,12 +378,11 @@ YM_ENTRY_POINT(_FlushMiddleman)
 
 YM_ENTRY_POINT(_ClientWriteSparseFiles)
 {
+    YM_IO_BOILERPLATE
+
 	struct SessionTest *theTest = context;
     YMSessionRef client = theTest->clientSession;
     YMConnectionRef connection = YMSessionGetDefaultConnection(client);
-
-	int result, error = 0;
-	const char *errorStr = NULL;
     
     bool okay = YMRecursiveDelete(theTest->tempSparseDir);
     testassert(okay,"delete temp sparse failed");
@@ -404,7 +403,7 @@ YM_ENTRY_POINT(_ClientWriteSparseFiles)
     DIR *dir = opendir(ClientSparsePath);
     testassert(dir, "opendir");
     
-    for ( int i = 0 ; ; i++ ) {
+    while (1) {
         struct dirent *dir_ent = readdir(dir);
         if ( ! dir_ent )
             break;
@@ -504,11 +503,10 @@ YM_ENTRY_POINT(_ClientWriteSparseFiles)
 
 YM_ENTRY_POINT(_EatASparseFile)
 {
+    YM_IO_BOILERPLATE
+
 	struct TestConnectionStream *ctx = context;
     struct SessionTest *theTest = ctx->theTest;
-
-	int result, error = 0;
-	const char *errorStr = NULL;
 
     YMConnectionRef connection = ctx->connection;
     YMStreamRef stream = ctx->stream;
@@ -562,11 +560,10 @@ catch_release:
 
 YM_ENTRY_POINT(_EatLargeFile)
 {
+    YM_IO_BOILERPLATE;
+
 	struct TestConnectionStream *ctx = context;
     struct SessionTest *theTest = ctx->theTest;
-
-	int result, error = 0;
-	const char *errorStr = NULL;
 
     YMConnectionRef connection = ctx->connection;
     YMStreamRef stream = ctx->stream;

@@ -45,6 +45,23 @@ int YMAPI YMGetNumberOfOpenFilesForCurrentProcess();
 void YMAPI YMNetworkingInit();
 int32_t YMAPI YMPortReserve(bool ipv4, int *outSocket);
 
+typedef enum
+{
+    YMInterfaceUnknown = 0,
+    YMInterfaceLoopback = 1,
+    YMInterfaceAWDL = 50,
+    YMInterfaceIPSEC = 60,
+    YMInterfaceCellular = 100,
+    YMInterfaceWirelessEthernet = 200,
+    YMInterfaceBluetooth = 300,
+    YMInterfaceWiredEthernet = 400,
+    YMInterfaceFirewire400 = 500,
+    YMInterfaceFirewire800 = 501,
+    YMInterfaceFirewire1600 = 502,
+    YMInterfaceFirewire3200 = 503,
+    YMInterfaceThunderbolt = 600
+} YMInterfaceType;
+
 // { en0 :
 //      { "addresses" : ( 0x123456789, ... ),
 //        "type" : YMInterfaceType } }

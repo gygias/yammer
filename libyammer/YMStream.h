@@ -20,6 +20,8 @@ YMAPI YMIOResult YMStreamReadUp(YMStreamRef stream_, uint8_t *buffer, uint16_t l
 YMAPI YMIOResult YMStreamReadFromFile(YMStreamRef stream, YMFILE file, uint64_t *inBytes, uint64_t *outBytes);
 YMAPI YMIOResult YMStreamWriteToFile(YMStreamRef stream, YMFILE file, uint64_t *inBytes, uint64_t *outBytes);
 
+YMAPI void YMStreamGetPerformance(YMStreamRef stream, uint64_t *oDownIn, uint64_t *oDownOut, uint64_t *oUpIn, uint64_t *oUpOut);
+
 YM_EXTERN_C_POP
 
 #endif /* YMStream_h */

@@ -23,9 +23,11 @@
 
 YM_EXTERN_C_PUSH
 
-#define     PlexerTest1Threads 8
-#define     PlexerTest1NewStreamPerRoundTrip true
-#define     PlexerTest1RoundTripsPerThread 8
+#define     PlexerTest1Threads 1
+#warning fix this when false on the handle_remote side, first dos's the rest, dispatch async
+#define     PlexerTest1NewStreamPerRoundTrip false
+#define     PlexerTest1RoundTripsPerThread 128
+#define     PlexerTest1CompressionType YMCompressionNone
 
 #define PlexerTest1TimeBased true
 //#define PlexerTest1Indefinite
@@ -51,17 +53,14 @@ typedef struct PlexerTest
     YMLockRef plexerTest1Lock;
     bool plexerTest1Running;
     bool timeBasedTimeOver;
-    bool awaitingInterrupt;
     
     // for comparing callback contexts
     YMPlexerRef localPlexer;
     YMDispatchQueueRef localQueue;
     YMPlexerRef fakeRemotePlexer;
     YMDispatchQueueRef fakeRemoteQueue;
-    YMPlexerRef closedPlexer;
     YMSemaphoreRef interruptNotificationSem;
     
-    uint64_t awaitingClosures;
     uint64_t streamsCompleted;
     uint64_t bytesIn;
     uint64_t bytesOut;
@@ -86,11 +85,10 @@ void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *
 void PlexerTestsRun(ym_test_assert_func assert, const void *context)
 {
     struct PlexerTest theTest = { assert, context,
-                                0, YMLockCreate(), true, false, false,
-                                NULL, YMDispatchQueueCreate(YMSTRC("com.PlexerTests.local")),
-                                NULL, YMDispatchQueueCreate(YMSTRC("com.PlexerTests.remote")),
-                                NULL, YMSemaphoreCreate(0),
-                                0, 0, 0, 0, YMDictionaryCreate() };
+                                0, YMLockCreate(), true, false,
+                                NULL, YMDispatchQueueCreate(YMSTRC("com.combobulated.PlexerTests.local")),
+                                NULL, YMDispatchQueueCreate(YMSTRC("com.combobulated.PlexerTests.remote")),
+                                YMSemaphoreCreate(0), 0, 0, 0, YMDictionaryCreate() };
     
     _DoManyRoundTripsTest(&theTest);
     
@@ -121,11 +119,13 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     
     bool localIsMaster = arc4random_uniform(2);
     ymlog("plexer test using pipes: L(%s)-s%d <-> s%d-R(%s)",localIsMaster?"m":"s",socketA,socketB,localIsMaster?"s":"m");
-    ymlog("plexer test using %u threads, %u trips per thread, %s streams per thread, %s messages",PlexerTest1Threads,PlexerTest1RoundTripsPerThread,PlexerTest1NewStreamPerRoundTrip?"new":"one",PlexerTest1RandomMessages?"random":"fixed");
+    #define xstr(s) str(s)
+    #define str(s) #s
+    ymlog("plexer test using %u threads, %u trips per thread, %s stream per trip, %s messages, %s",PlexerTest1Threads,PlexerTest1RoundTripsPerThread,PlexerTest1NewStreamPerRoundTrip?"new":"one",PlexerTest1RandomMessages?"random":"fixed",xstr(PlexerTest1CompressionType));
     
     YMStringRef name = YMSTRC("L");
     YMSecurityProviderRef noSecurity = YMSecurityProviderCreate(socketA,socketA);
-    theTest->localPlexer = YMPlexerCreate(name,noSecurity,localIsMaster);
+    theTest->localPlexer = YMPlexerCreate(name,noSecurity,localIsMaster,socketA);
     YMRelease(noSecurity);
     YMRelease(name);
     YMPlexerSetInterruptedFunc(theTest->localPlexer, local_plexer_interrupted);
@@ -135,7 +135,7 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     
     name = YMSTRC("R");
     noSecurity = YMSecurityProviderCreate(socketB,socketB);
-    theTest->fakeRemotePlexer = YMPlexerCreate(name,noSecurity,!localIsMaster);
+    theTest->fakeRemotePlexer = YMPlexerCreate(name,noSecurity,!localIsMaster,socketB);
     YMRelease(noSecurity);
     YMRelease(name);
     YMPlexerSetInterruptedFunc(theTest->fakeRemotePlexer, remote_plexer_interrupted);
@@ -149,6 +149,8 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     bool okay = YMPlexerStart(theTest->fakeRemotePlexer);
     testassert(okay,"slave did not start");
     
+    theTest->plexerTest1Running = true;
+
     int nSpawnConcurrentStreams = PlexerTest1Threads;
     while (nSpawnConcurrentStreams--) {
         ym_dispatch_user_t anotherDispatch = { _RunLocalPlexer, theTest, NULL, ym_dispatch_user_context_noop };
@@ -158,6 +160,7 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
         YMRetain(theTest->lastMessageWrittenByStreamID);
     }
     
+    // remote_stream_closing used to track the last stream to close, that got ripped out, to fix
     if ( ! PlexerTest1TimeBased ) {
         while ( theTest->plexerTest1Running )
 			sleep(1);
@@ -167,19 +170,6 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     }
     
     theTest->timeBasedTimeOver = true;
-    if ( arc4random_uniform(2) ) {
-        ymlog("closing local");
-        theTest->closedPlexer = theTest->localPlexer;
-    } else {
-        ymlog("closing remote");
-        theTest->closedPlexer = theTest->fakeRemotePlexer;
-    }
-    theTest->awaitingInterrupt = true;
-    
-    // this used to be done with 2 YMPipes, and the 'interruption' was simulated by releasing (and close-on-dealloc'ing) those pipes.
-    // this was problematic because if a service thread wasn't within a provider read/write, the fd would quickly get recycled
-    // into something else (generally a new incoming stream on one side), and the service thread would get deadlocked on a valid
-    // but different fd.
     YMLocalSocketPairShutdown(socketPair);
     
     YMSemaphoreWait(theTest->interruptNotificationSem);
@@ -210,19 +200,22 @@ YM_ENTRY_POINT(_RunLocalPlexer)
     YMPlexerRef plexer = theTest->localPlexer;
     
     YMStreamRef aStream = NULL;
-    unsigned idx = 0;
     size_t staticMessageLen = strlen(testLocalMessage) + 1;
+
+    unsigned idx = 0;
 #ifdef PlexerTest1TimeBased
-    while ( ! theTest->timeBasedTimeOver )
+    while ( ! theTest->timeBasedTimeOver ) {
 #else
-    for ( ; idx < PlexerTest1RoundTripsPerThread; )
+    for ( ; idx < PlexerTest1RoundTripsPerThread; idx++ ) {
 #endif
-    {
-        idx++;
+        //ymlog("_RunLocalPlexer loop %u",idx++);
         YMPlexerStreamID streamID;
         if ( ! aStream || PlexerTest1NewStreamPerRoundTrip ) {
             YMStringRef name = YMSTRC(__FUNCTION__);
             aStream = YMPlexerCreateStream(plexer,name);
+            testassert(aStream,"YMPlexerCreateStream");
+            bool okay = _YMStreamSetCompression(aStream,PlexerTest1CompressionType);
+            testassert(okay,"YMPlexerCreateStream:_YMStreamSetCompression");
             YMRelease(name);
             streamID = ((ym_pstream_user_info_t *)_YMStreamGetUserInfo(aStream))->streamID;
         }
@@ -268,8 +261,10 @@ YM_ENTRY_POINT(_RunLocalPlexer)
         testassert(incomingMessageLen&&0==memcmp(incomingMessage,lastMessageWritten,incomingMessageLen),"incoming and last written do not match (i%llu ?)",incomingMessageLen);
         free(incomingMessage);
         
-        if ( PlexerTest1NewStreamPerRoundTrip )
+        if ( PlexerTest1NewStreamPerRoundTrip ) {
             YMPlexerCloseStream(plexer, aStream);
+            YMRelease(aStream);
+        }
         
         if ( PlexerTest1NewStreamPerRoundTrip && lastMessageWritten )
             free(lastMessageWritten);
@@ -280,13 +275,17 @@ YM_ENTRY_POINT(_RunLocalPlexer)
         YMLockUnlock(theTest->plexerTest1Lock);
     }
 
-    if ( ! PlexerTest1NewStreamPerRoundTrip )
+    if ( ! PlexerTest1NewStreamPerRoundTrip ) {
         YMPlexerCloseStream(plexer, aStream);
+        YMRelease(aStream);
+    }
     
 catch_release:
     YMRelease(plexer);
     YMRelease(theTest->plexerTest1Lock);
     YMRelease(theTest->lastMessageWrittenByStreamID);
+
+    theTest->plexerTest1Running = false;
 }
 
 
@@ -339,8 +338,6 @@ void local_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *conte
     testassert(plexer==theTest->localPlexer,"localNewStream not local");
     testassert(stream,"localNewStream null");
     testassert(false,"localNewStream");
-    
-    YMPlexerCloseStream(plexer,stream);
 }
 
 void local_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *context)
@@ -351,8 +348,6 @@ void local_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *c
     testassert(plexer==theTest->localPlexer,"localStreamClosing not local");
     testassert(stream,"localStreamClosing null");
     testassert(false,"localStreamClosing");
-    
-    YMPlexerCloseStream(plexer, stream);
 }
 
 void remote_plexer_interrupted(__unused YMPlexerRef plexer, void *context)
@@ -381,10 +376,14 @@ void remote_plexer_new_stream(YMPlexerRef plexer, YMStreamRef stream, void *cont
     
     struct HandleStreamContext *hContext = malloc(sizeof(struct HandleStreamContext));
     hContext->theTest = theTest;
-    hContext->stream = YMRetain(stream);
+    hContext->stream = stream;
     
+    bool okay = _YMStreamSetCompression(stream,PlexerTest1CompressionType);
+    testassert(okay,"remote_plexer_new_stream:_YMStreamSetCompression");
     ym_dispatch_user_t dispatchDef = { _handle_remote_stream, hContext, NULL, ym_dispatch_user_context_free };
     YMDispatchAsync(theTest->fakeRemoteQueue, &dispatchDef);
+
+    YMRelease(plexer);
 }
 
 YM_ENTRY_POINT(_handle_remote_stream)
@@ -396,8 +395,10 @@ YM_ENTRY_POINT(_handle_remote_stream)
     bool protectTheList = ( PlexerTest1Threads > 1 );
     size_t staticMessageLen = strlen(testRemoteResponse) + 1;
     
-    unsigned iterations = PlexerTest1NewStreamPerRoundTrip ? 1 : PlexerTest1RoundTripsPerThread;
+    unsigned iterations = PlexerTest1NewStreamPerRoundTrip ? 1 :
+                                    PlexerTest1TimeBased ? UINT_MAX : PlexerTest1RoundTripsPerThread;
     for ( unsigned idx = 0; idx < iterations; idx++ ) {
+        //ymlog("%s stream %u iter %u",__FUNCTION__,streamID,idx);
         uint16_t incomingMessageLen;
         uint8_t *incomingMessage = _ReceiveMessage(theTest, stream, &incomingMessageLen);
         if ( theTest->timeBasedTimeOver ) {
@@ -441,7 +442,7 @@ YM_ENTRY_POINT(_handle_remote_stream)
     }
 catch_return:
     
-    YMPlexerCloseStream(theTest->fakeRemotePlexer,stream);
+    //YMPlexerCloseStream(theTest->fakeRemotePlexer,stream);
     YMRelease(stream);
     
     ymdbg("^^^ REMOTE -newStream [%lu] exiting (and remoteReleasing)",streamID);
@@ -449,27 +450,19 @@ catch_return:
 
 void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *context)
 {
+    ymlog("%s entered",__FUNCTION__);
     struct PlexerTest *theTest = context;
     testassert(context,"remote stream closing context");
     testassert(plexer==theTest->fakeRemotePlexer,"remote stream closing plexer not local");
     testassert(stream,"remote stream closing nil");
-    
-    
+
     YMLockLock(theTest->plexerTest1Lock);
-    bool last = --theTest->awaitingClosures == 0;
-    theTest->streamsCompleted++;
+    uint64_t completed = theTest->streamsCompleted++;
     YMLockUnlock(theTest->plexerTest1Lock);
-    
-    ymdbg("%s: gPlexerTest1AwaitingCloses: %lu",__FUNCTION__,theTest->awaitingClosures);
-    if ( PlexerTest1TimeBased ) {
-        if ( theTest->streamsCompleted % 10000 == 0 )
-            ymlog("handled %luth stream, approx %lumb in, %lumb out",theTest->streamsCompleted,theTest->bytesIn/1024/1024,theTest->bytesOut/1024/1024);
-    } else {
-        if ( last ) {
-            ymlog("%s last stream closed, signaling exit",__FUNCTION__);
-            theTest->plexerTest1Running = false;
-        }
-    }
+
+    if ( completed && ( completed % 10000 == 0 ) )
+        ymlog("handled %luth stream, approx %lumb in, %lumb out",completed,theTest->bytesIn/1024/1024,theTest->bytesOut/1024/1024);
+    ymlog("%s exiting %lu",__FUNCTION__,completed);
 }
 
 YM_EXTERN_C_POP

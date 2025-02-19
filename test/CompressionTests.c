@@ -28,118 +28,152 @@ typedef struct CompressionTest
     ym_test_assert_func assert;
     const void *context;
     
-    YMCompressionRef writeC;
-    YMCompressionRef readC;
-    size_t rawWritten;
+    YMCompressionRef compressC;
+    YMCompressionRef decompressC;
     size_t rawRead;
+    size_t compressedWrite;
+    size_t rawWritten;
     uint8_t *outBytes;
     YMFILE sourceFd;
+    YMFILE destFd;
 } CompressionTest;
 
+#ifdef YM_IMPLEMENTED
 void _GZTestRun(CompressionTest *);
 void _BZTestRun(CompressionTest *);
-void _CompressionTest(CompressionTest *theTest, const char *sourcePath, YMCompressionType type);
+#endif
+void _LZ4TestRun(CompressionTest *);
+void _CompressionTest(CompressionTest *, const char *, const char *, YMCompressionType type);
 
-YM_ENTRY_POINT(compression_test_read_proc);
+YM_ENTRY_POINT(compression_test_compress_proc);
 
 void CompressionTestsRun(ym_test_assert_func assert, const void *context)
 {
-    struct CompressionTest theTest = { assert, context, NULL, NULL, 0, 0, NULL, NULL_FILE };
+    struct CompressionTest theTest = { assert, context, NULL, NULL, 0, 0, 0, NULL, NULL_FILE, NULL_FILE };
+#ifdef YM_IMPLEMENTED
 #if !defined(YMWIN32)
     _GZTestRun(&theTest);
     ymerr("_GZTestRun completed");
     _BZTestRun(&theTest);
     ymerr("_BZTestRun completed");
 #endif
+#endif
+    _LZ4TestRun(&theTest);
 }
 
+#ifdef YM_IMPLEMENTED
 void _GZTestRun(CompressionTest *theTest)
 {
 #if defined(YMAPPLE)
     const char *sourcePath = "/usr/share/man/man1/gzip.1";
-	YMCompressionType type = YMCompressionGZ;
 #elif defined(YMLINUX)
     const char *sourcePath = "/usr/share/man/man1/gzip.1.gz";
-	YMCompressionType type = YMCompressionGZ;
 #else
 	const char *sourcePath = "\\\\Windows\\system.ini";
-	YMCompressionType type = YMCompressionNone;
 #endif
-    _CompressionTest(theTest, sourcePath, type);
+    _CompressionTest(theTest, sourcePath, YMCompressionGZ);
 }
 
 void _BZTestRun(CompressionTest *theTest)
 {
 #if defined(YMAPPLE)
     const char *sourcePath = "/usr/share/man/man1/bzip2.1";
-	YMCompressionType type = YMCompressionBZ2;
 #elif defined(YMLINUX)
     const char *sourcePath = "/usr/share/man/man1/bzip2.1.gz";
-	YMCompressionType type = YMCompressionBZ2;
 #else
 	const char *sourcePath = TEXT("\\\\Windows\\system.ini");
-	YMCompressionType type = YMCompressionNone;
 #endif
-    _CompressionTest(theTest, sourcePath, type);
+    _CompressionTest(theTest, sourcePath, YMCompressionBZ2);
+}
+#endif
+
+void _LZ4TestRun(CompressionTest *theTest)
+{
+#if defined(YMAPPLE)
+    const char *sourcePath = "/private/var/log/system.log";
+#elif defined(YMLINUX)
+    const char *sourcePath = "/var/log/syslog";
+#else
+    const char *sourcePath = TEXT("\\\\Windows\\system.ini");
+    #error destpath
+#endif
+    _CompressionTest(theTest, sourcePath, "/tmp/YMLZ4TestOut.txt", YMCompressionLZ4);
+
 }
 
-void _CompressionTest(CompressionTest *theTest, const char *sourcePath, YMCompressionType type)
+void _CompressionTest(CompressionTest *theTest, const char *sourcePath, const char *destPath, YMCompressionType type)
 {
     YM_IO_BOILERPLATE
     
     YM_OPEN_FILE(sourcePath, READ_FLAG);
     theTest->sourceFd = (YMFILE)result;
 	testassert(result!=-1,"open %s",sourcePath);
-    testassert(theTest->sourceFd>=0,"open %s",sourcePath);
+    testassert(theTest->sourceFd>=0,"open fd %s",sourcePath);
+
+    YM_STOMP_FILE(destPath, READ_WRITE_FLAG);
+    theTest->destFd = (YMFILE)result;
+    testassert(result!=-1,"open %s %d %s",destPath,error,errorStr);
+    testassert(theTest->destFd>=0,"open fd %s %d %s",destPath,error,errorStr);
     
     YMPipeRef pipe = YMPipeCreate(NULL);
     testassert(pipe,"pipe");
     
-    theTest->writeC = YMCompressionCreate(type, YMPipeGetInputFile(pipe), true);
-    bool okay = YMCompressionInit(theTest->writeC);
+    theTest->compressC = YMCompressionCreate(type, YMPipeGetInputFile(pipe), true);
+    bool okay = YMCompressionInit(theTest->compressC);
     testassert(okay,"write init");
-    theTest->readC = YMCompressionCreate(type, YMPipeGetOutputFile(pipe), false);
-    okay = YMCompressionInit(theTest->readC);
+    theTest->decompressC = YMCompressionCreate(type, YMPipeGetOutputFile(pipe), false);
+    okay = YMCompressionInit(theTest->decompressC);
     testassert(okay,"read init");
     
     
-    YMThreadRef readThread = YMThreadCreate(NULL, compression_test_read_proc, theTest);
+    YMThreadRef readThread = YMThreadCreate(NULL, compression_test_compress_proc, theTest);
     YMThreadStart(readThread);
     
-#define by 128
-    uint8_t outBuf[by];
-    YMIOResult ymResult;
-    do {
-        
-        size_t o = UINT32_MAX;
-        ymResult = YMCompressionRead(theTest->readC, outBuf, by, &o);
-        testassert(((ymResult==YMIOSuccess)&&o>0)||ymResult==YMIOEOF,"read");
+#define by UINT16_MAX
+    int nOutBytes = by;
+    theTest->outBytes = malloc(nOutBytes);
+    theTest->rawWritten = 0;
+
+    while(true) {
+
+        while ( theTest->rawWritten + by > nOutBytes ) {
+            theTest->outBytes = realloc(theTest->outBytes,nOutBytes*2);
+            testassert(theTest->outBytes,"failed to reallocate outBytes");
+            nOutBytes = nOutBytes * 2;
+        }
+
+        size_t o = 0;
+        YMIOResult ymResult = YMCompressionRead(theTest->decompressC, theTest->outBytes + theTest->rawWritten, by, &o);
+        testassert(((ymResult==YMIOSuccess)&&o>0)||ymResult==YMIOEOF,"YMCompressionRead failed %d %zu",ymResult,o);
         if ( ymResult == YMIOEOF )
             break;
+
+        size_t destWritten = 0;
+        ymResult = YMWriteFull(theTest->destFd,theTest->outBytes + theTest->rawWritten,o,&destWritten);
+        testassert(ymResult==YMIOSuccess&&o==destWritten,"write dest file failed (%d %zu) %d %s",destWritten,o,errno,strerror(errno));
+
         theTest->rawWritten += o;
-        // todo factor low level FS stuff into library and diff this.
-    } while (true);
+    }
     
-    okay = YMCompressionClose(theTest->readC);
+    okay = YMCompressionClose(theTest->decompressC);
     ymassert(okay,"read close");
     
+    // these are available from YMCompressionGetPerformance, but since it's already here leaving as another sanity check
     ymassert(theTest->rawWritten==theTest->rawRead,"raw mismatch w%lu v r%lu",theTest->rawWritten,theTest->rawRead);
     
     YMThreadJoin(readThread);
     YMRelease(readThread);
-    
-    YMRelease(theTest->writeC);
-    YMRelease(theTest->readC);
     _YMPipeSetClosed(pipe);
     YMRelease(pipe);
     
     size_t idx = 0;
     YM_REWIND_FILE(theTest->sourceFd);
+    char buf[by];
     while(true) {
-        YM_READ_FILE(theTest->sourceFd,outBuf,by);
+        YM_READ_FILE(theTest->sourceFd,buf,by);
         testassert(result>=0,"compare source");
         
-        int cmp = memcmp(theTest->outBytes + idx, outBuf, result);
+        int cmp = memcmp(theTest->outBytes + idx, buf, result);
         testassert(cmp==0,"compare from %zd",idx);
         
         if ( result == 0 )
@@ -147,40 +181,45 @@ void _CompressionTest(CompressionTest *theTest, const char *sourcePath, YMCompre
         
         idx += result;
     }
-    
+
+    uint64_t cIn,cOut;
+    YMCompressionGetPerformance(theTest->compressC,&cIn,&cOut);
+    ymlog("compression test succeeded with %0.2f percent compression (%lu vs %lu)",(1 - (double)cOut/(double)cIn)*100,cOut,cIn);
+
+    YMRelease(theTest->compressC);
+    YMRelease(theTest->decompressC);
     free(theTest->outBytes);
     YM_CLOSE_FILE(theTest->sourceFd);
+    YM_CLOSE_FILE(theTest->destFd);
 }
 
-YM_ENTRY_POINT(compression_test_read_proc)
+YM_ENTRY_POINT(compression_test_compress_proc)
 {
     YM_IO_BOILERPLATE
     
     CompressionTest *theTest = context;
     
     uint8_t buf[by];
-    theTest->outBytes = malloc(16384);
-    size_t idx = 0;
-    
-    while(true) {
-        YM_READ_FILE(theTest->sourceFd,buf,by);
-        testassert(result>=0,"read source");
-        if ( result == 0 ) {
-            bool okay = YMCompressionClose(theTest->writeC);
-            testassert(okay,"write close");
-            break;
+    bool hitEOF = false;
+
+    do {
+        size_t aRead = 0;
+        YMIOResult result = YMReadFull(theTest->sourceFd,buf,by,&aRead);
+        testassert((result==YMIOSuccess&&aRead==by)||result==YMIOEOF,"read source %d[%zu]",result,aRead);
+        if ( result == YMIOEOF ) {
+            ymlog("compressor hit EOF (aRead %zu)",aRead);
+            hitEOF = true;
         }
         
-        size_t o = UINT32_MAX;
-        YMIOResult ymResult = YMCompressionWrite(theTest->writeC, buf, result, &o);
-        testassert(ymResult==YMIOSuccess,"write");
-        testassert((ssize_t)o==result,"o!=aRead");
-        theTest->rawRead += o;
-        
-        testassert((idx+o)<16384,"overflow");
-        memcpy(theTest->outBytes + idx,buf,o);
-        idx += o;
-    }
+        size_t o = 0, oh = 0;
+        YMIOResult ymResult = YMCompressionWrite(theTest->compressC, buf, aRead, &o, &oh);
+        testassert((ymResult==YMIOSuccess)&&(o>0),"write failed %d %zu %zu",ymResult,o,aRead);
+        theTest->rawRead += aRead;
+        theTest->compressedWrite += o + oh;
+    } while(!hitEOF);
+
+    bool okay = YMCompressionClose(theTest->compressC);
+    testassert(okay,"write close");
 }
 
 YM_EXTERN_C_POP

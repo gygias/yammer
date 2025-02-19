@@ -139,10 +139,10 @@ __ym_connection_t *__YMConnectionCreate(bool isIncoming, YMAddressRef address, Y
         return NULL;
     if ( securityType < __YMConnectionSecurityTypeMin || securityType > __YMConnectionSecurityTypeMax )
         return NULL;
-
-	YMNetworkingInit();
     
     __ym_connection_t *c = (__ym_connection_t *)_YMAlloc(_YMConnectionTypeID,sizeof(__ym_connection_t));
+
+	YMNetworkingInit();
     
     c->isIncoming = isIncoming;
     c->address = (YMAddressRef)YMRetain(address);
@@ -250,9 +250,6 @@ bool YMConnectionConnect(YMConnectionRef c_)
         ((struct sockaddr_in6 *)addr)->sin6_port = htons(((struct sockaddr_in6 *)addr)->sin6_port);
     else
         ymabort("connect: address family %d unsupported",addr->sa_family);
-    
-    __unused struct sockaddr_in *addrAsIPV4 = (struct sockaddr_in *)addr;
-    __unused struct sockaddr_in6 *addrAsIPV6 = (struct sockaddr_in6 *)addr;
     
     result = connect(newSocket, addr, addrLen);
     if ( result != 0 ) {
@@ -573,7 +570,7 @@ bool __YMConnectionInitCommon(__ym_connection_t *c, YMSOCKET newSocket, bool asS
         goto rewind_fail;
     }
     
-    plexer = YMPlexerCreate(YMAddressGetDescription(c->address), security, asServer);
+    plexer = YMPlexerCreate(YMAddressGetDescription(c->address), security, asServer, inputFile);
 	YMPlexerSetNewIncomingStreamFunc(plexer, ym_connection_new_stream_proc);
 	YMPlexerSetInterruptedFunc(plexer, ym_connection_interrupted_proc);
 	YMPlexerSetStreamClosingFunc(plexer, ym_connection_stream_closing_proc);
@@ -675,7 +672,7 @@ YMAddressRef YMConnectionGetAddress(YMConnectionRef c_)
 typedef struct _ymconnection_stream_init
 {
     uint16_t version;
-    YMCompressionType compressionType;
+    uint16_t compressionType;
 } _ymconnection_stream_init;
 typedef struct _ymconnection_stream_init _ymconnection_stream_init_t;
 
@@ -687,14 +684,17 @@ YMStreamRef YMAPI YMConnectionCreateStream(YMConnectionRef c_, YMStringRef name,
         return NULL;
     
     YMStreamRef stream = YMPlexerCreateStream(c->plexer, name);
-    bool okay = _YMStreamSetCompression(stream,compression);
-    ymassert(okay,"set compression for outgoing stream %s",YMSTR(name));
     
-    _ymconnection_stream_init_t init = { YMStreamInitBuiltinVersion, compression };
-    YMIOResult ymResult = YMStreamWriteDown(stream, (const uint8_t *)&init, sizeof(init));
+    _ymconnection_stream_init_t init = { YMStreamInitBuiltinVersion, compression }; // endian?
+    YMIOResult ymResult = YMStreamWriteDown(stream, (const uint8_t *)&init, sizeof(_ymconnection_stream_init_t));
     if ( ymResult != YMIOSuccess )
         ymerr("outgoing stream init failed");
     
+    ymdbg("YMConnectionCreateStream sent initialization %hu %hu",init.version,init.compressionType);
+
+    bool okay = _YMStreamSetCompression(stream,compression);
+    ymassert(okay,"set compression for outgoing stream %s",YMSTR(name));
+
     return stream;
 }
 
@@ -785,6 +785,7 @@ void ym_connection_new_stream_proc(__unused YMPlexerRef plexer,YMStreamRef strea
     bool okay = _YMStreamSetCompression(stream, init.compressionType);
     ymassert(okay,"set compression for outgoing stream");
     
+    ymdbg("ym_connection_new_stream_proc initialized %hu %hu",init.version,init.compressionType);
     if ( c->newFunc )
         c->newFunc(c, stream, c->newFuncContext);
 }
@@ -805,7 +806,6 @@ void ym_connection_interrupted_proc(__unused YMPlexerRef plexer, void *context)
 
 void ym_connection_socket_disconnected(YMSocketRef s, const void *ctx)
 {
-    __unused YMConnectionRef c = ctx; // warning! volatile vs interrupt until those are refactored
     ymlogg("socket disconnected!: %p",s);
 }
 

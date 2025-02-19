@@ -168,7 +168,7 @@ YMIOResult YMWriteFull(YMFILE fd, const uint8_t *buffer, size_t bytes, size_t *o
                 ymabort("io: write(f%d, %p + %zu, %zu - %zu) failed 0?: %d (%s)",fd, buffer, off, bytes, off, error, errorStr);
                 //goto catch_fail;
             case -1:
-                ymerr("io: write(f%d, %p + %zu, %zu - %zu) failed: %d (%s)",fd, buffer, off, bytes, off, error, errorStr);
+                ymabort("io: write(f%d, %p + %zu, %zu - %zu) failed: %d (%s)",fd, buffer, off, bytes, off, error, errorStr);
                 ioResult = YMIOError;
                 goto catch_fail;
             default:
@@ -178,10 +178,9 @@ YMIOResult YMWriteFull(YMFILE fd, const uint8_t *buffer, size_t bytes, size_t *o
         off += result;
     }
     
+catch_fail:
     if ( outWritten )
         *outWritten = off;
-    
-catch_fail:
     return ioResult;
 }
     
@@ -206,6 +205,8 @@ void YMNetworkingInit()
 
 int32_t YMPortReserve(bool ipv4, int *outSocket)
 {
+    YM_IO_BOILERPLATE
+
     bool okay = false;
     uint16_t aPort = IPPORT_RESERVED;
     uint16_t thePort = aPort;
@@ -257,7 +258,6 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
         
     catch_continue:
         if ( aSocket > 0 ) {
-			int result, error; const char *errorStr;
             YM_CLOSE_SOCKET(aSocket);
 		}
     }
@@ -604,7 +604,6 @@ catch_close:
 #error if-matching not implemented for this configuration
 #endif
 
-catch_return:
     return defaultType;
 }
 
@@ -655,7 +654,7 @@ bool YMRecursiveDelete(YMStringRef rootPath)
     DIR *dir = opendir(YMSTR(rootPath));
     struct dirent *dir_ent = NULL;
     if ( dir ) {
-        for ( int i = 0 ; ; i++ ) {
+        while (1) {
             dir_ent = readdir(dir);
             if ( ! dir_ent )
                 break;
@@ -890,9 +889,9 @@ int YMAPI YMGetNumberOfThreadsInCurrentProcess()
     int nThreads = 0;
 #if defined(YMLINUX)
     pid_t pid = getpid();
-    int nBuf = 256, off = 0;
+    int nBuf = 256;
     char buf[nBuf];
-    off += snprintf(buf,nBuf,"/proc/%d/task",pid);
+    snprintf(buf,nBuf,"/proc/%d/task",pid);
     DIR *dir = opendir(buf);
     if ( ! dir ) {
         ymlog("opendir(%s) failed: %d %s",buf,errno,strerror(errno));

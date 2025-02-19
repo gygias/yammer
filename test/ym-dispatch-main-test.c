@@ -167,12 +167,6 @@ YM_ENTRY_POINT(_ym_dispatch_denial_of_service_test_proc)
         YMDispatchAsync(YMDispatchGetGlobalQueue(),&user);
     }
 
-#warning this
-#ifdef this_race_can_dos
-    ym_dispatch_user_t check = { _ym_dispatch_denial_of_service_check, NULL, NULL, ym_dispatch_user_context_noop };
-    YMDispatchAsync(YMDispatchGetGlobalQueue(),&check);
-#endif
-
     ym_dispatch_user_t finally = { _ym_dispatch_denial_of_service_finally, NULL, NULL, ym_dispatch_user_context_noop };
     YMDispatchAfter(YMDispatchGetMainQueue(),&finally, 5);
 

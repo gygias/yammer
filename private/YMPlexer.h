@@ -22,7 +22,7 @@ typedef void (*ym_plexer_interrupted_func)      (YMPlexerRef,void*);
 typedef void (*ym_plexer_new_upstream_func)     (YMPlexerRef,YMStreamRef,void*);
 typedef void (*ym_plexer_stream_closing_func)   (YMPlexerRef,YMStreamRef,void*);
 
-YMPlexerRef YMAPI YMPlexerCreate(YMStringRef name, YMSecurityProviderRef provider, bool master);
+YMPlexerRef YMAPI YMPlexerCreate(YMStringRef name, YMSecurityProviderRef provider, bool master, YMFILE upIn);
 
 // init
 void YMAPI YMPlexerSetInterruptedFunc(YMPlexerRef plexer, ym_plexer_interrupted_func func);

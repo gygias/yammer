@@ -167,18 +167,17 @@ YMmDNSTxtRecordKeyPair ** _MakeTxtRecordKeyPairs(uint16_t *inOutnKeypairs)
         
         // as far as i can tell, value can be empty
         uint8_t valueLenMax = (uint8_t)( UINT8_MAX - keyLen - testKeyPairReserved );
-        uint16_t aValueLenMax = ( valueLenMax > remaining ) ? remaining : valueLenMax;
-        uint16_t valueLen;
-        uint8_t *value_data = calloc(1,aValueLenMax);
-        YMRandomDataWithLength((uint8_t *)value_data, aValueLenMax);
+        uint8_t aValueLen = ( valueLenMax > remaining ) ? remaining : valueLenMax;
+        uint8_t *value_data = calloc(1,aValueLen);
+        YMRandomDataWithLength((uint8_t *)value_data, aValueLen);
         keyPairs[idx]->value = value_data;
-        keyPairs[idx]->valueLen = (uint8_t)valueLen;
+        keyPairs[idx]->valueLen = (uint8_t)aValueLen;
         
-        remaining -= valueLen;
+        remaining -= aValueLen;
         
         actualSize++;
-        debugBlobSize += ( testKeyPairReserved + keyLen + valueLen );
-        ymdbg("aKeyPair[%zd]: 3 + [%u] => [%zu]... [%lu] (%d)",idx,valueLen,keyLen,debugBlobSize,remaining);
+        debugBlobSize += ( testKeyPairReserved + keyLen + aValueLen );
+        ymdbg("aKeyPair[%zd]: 3 + [%u] => [%zu]... [%lu] (%d)",idx,aValueLen,keyLen,debugBlobSize,remaining);
         
         if ( remaining < 0 )
             ymlog("warning: txt record format remaining %d",remaining);

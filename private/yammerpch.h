@@ -101,9 +101,13 @@
 
 	#define READ_FLAG O_RDONLY
 	#define WRITE_FLAG O_WRONLY
+	#define CREATE_FLAG O_CREAT
+	#define TRUNCATE_FLAG O_TRUNC
 	#define READ_WRITE_FLAG O_RDWR
 
-	#define YM_IO_BOILERPLATE		 __unused int error = 0; __unused const char *errorStr = NULL; __unused ssize_t result = 0, __r = 0, __w = 0;
+	#define YM_IO_RESULT ssize_t
+
+	#define YM_IO_BOILERPLATE		 __unused int error = 0; __unused const char *errorStr = NULL; __unused YM_IO_RESULT result = 0, __r = 0, __w = 0; __r = __w; __w = __r; errorStr = errorStr; result = result; error = error;// -Wall
 	
 	#define YM_OPEN_FILE(p,f)				{ result = open(p,f,0644); if ( result != 0 ) { error = errno; errorStr = strerror(errno); } }
 	#define YM_OPEN_FILE_2(p,f,m)			{ result = open(p,(f)|O_CREAT,m); if ( result != 0 ) { error = errno; errorStr = strerror(errno); } }
@@ -121,7 +125,8 @@
 	#define YM_TRYWAIT_SEMAPHORE(s) { result = sem_trywait(s); if ( result != 0 ) { error = errno; errorStr = strerror(error); } }
     #define YM_POST_SEMAPHORE(s)	{ result = sem_post(s); if ( result != 0 ) { error = errno; errorStr = strerror(error); } }
     #define YM_RETRY_SEMAPHORE		( error == EINTR )
-    #define YM_CLOSE_SEMAPHORE(so)	{ result = sem_unlink(YMSTR(so->semName)); if ( result != 0 ) { error = errno; errorStr = strerror(error); } }
+    #define YM_UNLINK_SEMAPHORE(so)	{ result = sem_unlink(YMSTR(so->semName)); if ( result != 0 ) { error = errno; errorStr = strerror(error); } }
+    #define YM_CLOSE_SEMAPHORE(so)	{ result = sem_close(so->sem); if ( result != 0 ) { error = errno; errorStr = strerror(error); } }
 	#define YM_CREATE_PIPE(fds)		{ result = pipe(fds); if ( result != 0 ) { error = errno; errorStr = strerror(error); } }
 #else
 	#define YMSOCKET SOCKET
@@ -129,6 +134,8 @@
 
 	#define READ_FLAG FILE_GENERIC_READ
 	#define WRITE_FLAG FILE_GENERIC_WRITE
+	#define CREATE_FLAG
+	#define TRUNCATE_FLAG
 	#define READ_WRITE_FLAG ( READ_FLAG | WRITE_FLAG )
 
 	#ifndef SEEK_CUR
@@ -176,6 +183,7 @@
 	#error implement YM_TRYWAIT_SEMAPHORE
     #define YM_POST_SEMAPHORE(s)	{ BOOL __rs = ReleaseSemaphore(s, 1, NULL); if ( ! __rs ) { result = -1; error = GetLastError(); errorStr = GENERIC_WERROR_STR; } else result = 0; }
     #define YM_RETRY_SEMAPHORE		false
+	#error implement YM_UNLINK_SEMAPHORE (or make it a no-op)
     #define YM_CLOSE_SEMAPHORE(s)	{ BOOL __ch = CloseHandle(s->sem); if ( ! __ch ) { result = -1; error = (int)GetLastError(); errorStr = GENERIC_WERROR_STR; } else result = 0; }
 	#define YM_CREATE_PIPE(fds)		{ SECURITY_ATTRIBUTES saAttr; saAttr.nLength = sizeof(SECURITY_ATTRIBUTES); saAttr.bInheritHandle = TRUE; saAttr.lpSecurityDescriptor = NULL; \
 										BOOL __cp = CreatePipe(&fds[0],&fds[1],&saAttr,UINT16_MAX); if ( ! __cp) { result = -1; error = (int)GetLastError(); errorStr = GENERIC_WERROR_STR; } else result = 0; }

@@ -15,6 +15,8 @@ YM_EXTERN_C_PUSH
 
 #include <libyammer/YMStream.h>
 #include <libyammer/YMAddress.h>
+#include <libyammer/YMCompression.h>
+#include <libyammer/YMUtilities.h>
 
 #if defined(YMWIN32)
 # include <winsock2.h>

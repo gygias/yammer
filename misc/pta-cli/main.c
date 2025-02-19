@@ -98,6 +98,7 @@ typedef struct print_stuff_context
     bool server;
     uint64_t *off;
     uint64_t *thenOff;
+    YMStreamRef stream;
 } print_stuff_context;
 
 #define LogInterval 1
@@ -126,6 +127,10 @@ YM_ENTRY_POINT(print_stuff)
             printf("* (%0.2f mb/s, %0.0f%%) ",tputMBs,ratio*100);
         }
         printf("%s <-> %s (%0.2f mb/s)%s", lDesc, rDesc, sampleMBs,i<YMArrayGetCount(connections)-1?", ":"");
+
+        uint64_t dIn,dOut,uIn,uOut;
+        YMStreamGetPerformance(p->stream,&dIn,&dOut,&uIn,&uOut);
+        printf(" (%0.2f down, %0.2f up)",(1 - ((double)dIn/(double)dOut))*100,(1 - ((double)uIn/(double)uOut))*100);
     }
     YMRelease(connections);
     
@@ -144,6 +149,7 @@ void run_client_loop(YMStreamRef stream)
     c.server = false;
     c.off = &off;
     c.thenOff = &thenOff;
+    c.stream = stream;
     ym_dispatch_user_t u = { print_stuff, &c, NULL, ym_dispatch_user_context_noop };
     YMDispatchAfter(YMDispatchGetGlobalQueue(), &u, 1);
 
@@ -171,6 +177,7 @@ void run_server_loop(YMStreamRef stream)
     c.server = true;
     c.off = &off;
     c.thenOff = &thenOff;
+    c.stream = stream;
     ym_dispatch_user_t u = { print_stuff, &c, NULL, ym_dispatch_user_context_noop };
     YMDispatchAfter(YMDispatchGetGlobalQueue(), &u, 1);
     
@@ -239,7 +246,7 @@ void _connected_func(YMSessionRef session, YMConnectionRef connection, __unused 
     
     if ( ! gIsServer ) {
         if ( YMSessionGetDefaultConnection(session) == connection ) {
-            YMStreamRef stream = YMConnectionCreateStream(connection, YMSTRC("outgoing"), YMCompressionNone);
+            YMStreamRef stream = YMConnectionCreateStream(connection, YMSTRC("outgoing"), YMCompressionLZ4);
             thread(run_client_loop, stream);
         }
     }

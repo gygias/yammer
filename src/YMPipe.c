@@ -121,18 +121,18 @@ void YMAPI _YMPipeSetClosed(YMPipeRef p_)
 
 void __YMPipeCloseFile(__ym_pipe_t *p, YMFILE *fdPtr)
 {
+    YM_IO_BOILERPLATE
+
     YMFILE fd = *fdPtr;
     *fdPtr = NULL_FILE;
     if ( fd != NULL_FILE ) {
-        int result, error = 0;
-        const char *errorStr = NULL;
         
         ymlog("closing f%d",fd);
 		YM_CLOSE_FILE(fd);
 
         if ( result != 0 ) {
-            ymerr("close on f%d failed: %d (%s)", fd, result, errorStr);
-            //abort(); plexer
+            ymerr("close on f%d failed: %zd (%s)", fd, result, errorStr);
+            //abort(); bubble up to plexer
         }
     }
 }

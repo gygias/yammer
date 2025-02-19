@@ -2,6 +2,9 @@
 # ARCH=macos hasn't been tested since 10.11.* in 2016-ish, no longer have access to hardware
 # DEBUG=1, RPI=1 (working around compatibility issue between clang and valgrind on my rpi default environment)
 
+# gcc-multilib-mips-linux-gnu gcc-mips-linux-gnu qemu-user
+# QEMUBUILD=1
+
 OUT=out
 
 LSRC=YMAddress.c YMArray.c YMBase.c YMCompression.c YMConnection.c YMDictionary.c YMLocalSocketPair.c YMLock.c YMLog.c \
@@ -17,6 +20,7 @@ TDEP=$(TOBJ:%.o=%.o)
 
 GCC=gcc
 CLANG=clang
+MIPSGCC=mips-linux-gnu-gcc
 
 ifeq ($(ARCH),macos)
 	DEFS=-DYMAPPLE
@@ -31,7 +35,11 @@ ifeq ($(ARCH),macos)
 else
 	LSRC+= arc4random.c interface.c
 	DEFS=-DYMLINUX
-	CC=$(CLANG)
+	ifeq ($(QEMUBUILD),1)
+		CC=$(MIPSGCC)
+	else
+		CC=$(CLANG)
+	endif
 	STD=gnu17
 	IEX=-Ilinux
 	LLEX=-ldns_sd -lbz2 -lz -lm
@@ -50,7 +58,7 @@ ifeq ($(DEBUG),1)
 else
 	DBGO=-O3
 endif
-FLG=-include private/yammerpch.h -std=$(STD) $(DEFS) $(PT) -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast -fPIC
+FLG=-Wall -include private/yammerpch.h -std=$(STD) $(DEFS) $(PT) -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast -fPIC
 DLIBS=-L. -lyammer
 
 

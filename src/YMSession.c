@@ -358,7 +358,6 @@ bool YMSessionConnectToPeer(YMSessionRef s_, YMPeerRef peer, bool sync)
     __ym_session_t *s = (__ym_session_t *)s_;
     
     __ym_session_connect_t *context = NULL;
-    YMDictionaryEnumRef addrEnum = NULL;
     
     bool knownPeer = true;
     YMSelfLock(s);
@@ -379,6 +378,7 @@ bool YMSessionConnectToPeer(YMSessionRef s_, YMPeerRef peer, bool sync)
         bool existing = false;
         YMDictionaryEnumRef denum = YMDictionaryEnumeratorBegin(s->connectionsByAddress);
         while ( denum ) {
+            #warning comparing the wrong thing here?
             if ( YMAddressIsEqualIncludingPort(address, address, false) ) {
                 YMDictionaryEnumeratorEnd(denum);
                 existing = true;
@@ -412,12 +412,6 @@ bool YMSessionConnectToPeer(YMSessionRef s_, YMPeerRef peer, bool sync)
     }
     
     return true;
-    
-catch_fail:
-    YMFREE(context);
-    if ( addrEnum )
-        YMDictionaryEnumeratorEnd(addrEnum);
-    return false;
 }
 
 YM_ENTRY_POINT(__ym_session_connect_async_proc)
@@ -500,6 +494,8 @@ bool YMSessionStartAdvertising(YMSessionRef s_, YMStringRef name)
 
 YM_ENTRY_POINT(__ym_session_listen_proc)
 {
+    YM_IO_BOILERPLATE
+
     __ym_session_async_bool *asyncBool = context;
     __ym_session_t *s = asyncBool->s;
 
@@ -516,7 +512,6 @@ YM_ENTRY_POINT(__ym_session_listen_proc)
     int aResult = listen(socket, 1);
     if ( aResult != 0 ) {
         ymerr("failed to listen for server start");
-		int result, error; const char *errorStr;
         YM_CLOSE_SOCKET(socket);
         goto rewind_fail;
     }
@@ -544,7 +539,6 @@ YM_ENTRY_POINT(__ym_session_listen_proc)
     
 rewind_fail:
     if ( socket >= 0 ) {
-		int result, error; const char *errorStr;
         YM_CLOSE_SOCKET(socket);
 	}
     s->listenSocket = NULL_SOCKET;

@@ -497,7 +497,7 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
             record->addrinfoSdref = YMALLOC(sizeof(DNSServiceRef));
             __YMmDNSBrowserAddServiceRef(b, record->addrinfoSdref);
 
-            struct addrinfo a, *c;
+            struct addrinfo *c;
             char portstr[10];
             snprintf(portstr, 10, "%u", hostPort);
             int ret = getaddrinfo(host, portstr, NULL, &c);
@@ -562,6 +562,7 @@ YM_ENTRY_POINT(__ym_mdns_event_proc)
         }
         YMSelfUnlock(b);
         
+        #warning improve this
         // wait for pending data or .5 secs to elapse:
         result = select(maxFd + 1, &readfds, nullFd, nullFd, &tv);
         if (result > 0) {

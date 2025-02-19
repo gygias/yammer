@@ -32,7 +32,6 @@ void _ThreadDispatchMainTestRun(struct ThreadTest *theTest)
     YMArrayAdd(options,"gr");
     YMArrayAdd(options,"u");
     YMArrayAdd(options,"dos");
-#warning magic is forbidden
 #define magic_index 4
 #define black_magic_index 2
     for ( int i = 0; i < YMArrayGetCount(options); i++ ) {

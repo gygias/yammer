@@ -123,7 +123,7 @@ YM_RELEASE_RETURN_TYPE YMRelease(YMTypeRef o_)
 {
     __ym_type_t *o = (__ym_type_t *)o_;
     
-    ymassert(o, "released null");
+    if(!o) __YM_CATCH_OVERRELEASE(o);
     
     bool dealloc = false;
     YMLockMutex(o->__mutex);

@@ -153,7 +153,7 @@ bool YMmDNSServiceStart( YMmDNSServiceRef s_ )
     s->dnsService = serviceRef;
     s->advertising = true;
 
-    ymlog("mdns: published %s/%s:%u",YMSTR(s->type),YMSTR(s->name),(unsigned)s->port);
+    ymlog("mdns: published %s/%s[%lu]]:%u",YMSTR(s->type),YMSTR(s->name),strlen(YMSTR(s->name)),(unsigned)s->port);
     return true;
 }
 

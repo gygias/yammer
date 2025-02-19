@@ -11,6 +11,8 @@
 
 #include "YMStream.h"
 
+#include "YMCompression.h"
+
 YM_EXTERN_C_PUSH
 
 typedef int32_t _YMStreamCommandType;
@@ -44,18 +46,20 @@ typedef struct _ym_stream_user_info
 typedef struct _ym_stream_user_info ym_stream_user_info_t;
 typedef void (*_ym_stream_free_user_info_func)(YMStreamRef);
 
-YMStreamRef YMAPI _YMStreamCreate(YMStringRef name, ym_stream_user_info_t *userInfo, _ym_stream_free_user_info_func callback);
-bool YMAPI _YMStreamSetCompression(YMStreamRef stream, YMCompressionType compression);
-typedef void (*_ym_stream_data_available_func)(YMStreamRef,uint32_t,void *);
-void YMAPI _YMStreamSetDataAvailableCallback(YMStreamRef stream, _ym_stream_data_available_func, void *ctx);
+YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_t *userInfo, YMFILE *downOut);
+bool _YMStreamSetCompression(YMStreamRef stream, YMCompressionType compression);
 
-YMIOResult YMAPI _YMStreamReadDown(YMStreamRef stream, void *buffer, uint32_t length);
-YMIOResult YMAPI _YMStreamWriteUp(YMStreamRef stream, const void *buffer, uint32_t length);
+// with dispatchify, only exposed to keep lower-level fds private
+YM_IO_RESULT _YMStreamPlexReadDown(YMStreamRef stream, void *buffer, uint32_t length);
+YMIOResult _YMStreamPlexWriteUp(YMStreamRef stream, const void *buffer, uint32_t length);
 
-void YMAPI _YMStreamCloseWriteUp(YMStreamRef stream);
+// bypasses compression for stream close
+YMIOResult _YMStreamPlexWriteDown(YMStreamRef s, const uint8_t *buffer, uint16_t length);
 
-ym_stream_user_info_t YMAPI * _YMStreamGetUserInfo(YMStreamRef);
-YMStringRef YMAPI _YMStreamGetName(YMStreamRef stream);
+void _YMStreamCloseWriteUp(YMStreamRef stream);
+
+ym_stream_user_info_t * _YMStreamGetUserInfo(YMStreamRef);
+YMStringRef _YMStreamGetName(YMStreamRef stream);
 
 YM_EXTERN_C_POP
 

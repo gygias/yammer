@@ -94,32 +94,6 @@ typedef enum
     GreaterThan = 1
 } ComparisonResult;
 
-typedef enum
-{
-    YMInterfaceUnknown = 0,
-    YMInterfaceLoopback = 1,
-    YMInterfaceAWDL = 50,
-    YMInterfaceIPSEC = 60,
-    YMInterfaceCellular = 100,
-    YMInterfaceWirelessEthernet = 200,
-    YMInterfaceBluetooth = 300,
-    YMInterfaceWiredEthernet = 400,
-    YMInterfaceFirewire400 = 500,
-    YMInterfaceFirewire800 = 501,
-    YMInterfaceFirewire1600 = 502,
-    YMInterfaceFirewire3200 = 503,
-    YMInterfaceThunderbolt = 600
-} YMInterfaceType;
-
-typedef enum YMCompressionType {
-    YMCompressionNone = 0,
-#if !defined(YMWIN32)
-    YMCompressionGZ = 100,
-    YMCompressionBZ2 = 200,
-    YMCompressionLZ = 300
-#endif
-} YMCompressionType;
-
 void YMAPI YMFreeGlobalResources();
 
 YM_EXTERN_C_POP

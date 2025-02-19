@@ -19,6 +19,7 @@
 #else
 # define YMALLOC(x) malloc(x)
 #endif
+# define YMREALLOC(x,y) realloc(x,y)
 # define YMFREE(x) free(x)
 
 #if !defined(YMWIN32)
