@@ -79,7 +79,7 @@ YMStringRef YMStringCreateWithFormat(const char *format,...)
         newStr = (char *)YMALLOC(length);
         vsnprintf(newStr, length, format, formatArgs);
         va_end(formatArgs);
-    }    
+    }
     va_end(formatArgs2);
     return __YMStringCreate(newStr, length - 1);
 }

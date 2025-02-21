@@ -250,7 +250,7 @@ typedef struct SparseFileHeader
     bool     willBoundDataStream;
 } SparseFileHeader;
 
-#define THXFORSPARSETEMPLATE "thx 4 sparse, man!%s"
+#define THXFORSPARSETEMPLATE "%s thx 4 sparse, man!"
 typedef struct SparseFileThanks
 {
     char thx4Sparse[NAME_MAX+1+15];
@@ -441,7 +441,7 @@ YM_ENTRY_POINT(_ClientWriteSparseFiles)
         testassert(length==outLength,"length!=outLength");
         YMStringRef thxFormatStr = YMSTRCF(THXFORSPARSETEMPLATE,header.name);
         const char *thxFormat = YMSTR(thxFormatStr);
-        testassert(0==strcmp(thx.thx4Sparse,thxFormat),"is this how one thx for sparse, man? %s",thx.thx4Sparse);
+        testassert(0==strcmp(thx.thx4Sparse,thxFormat),"%s, is this how one thx for sparse, man? %s",YMSTR(_YMStreamGetName(stream)),thx.thx4Sparse);
         YMRelease(thxFormatStr);
 
         YMConnectionCloseStream(connection, stream);
@@ -534,11 +534,11 @@ YM_ENTRY_POINT(_EatLargeFile)
     testassert(largeOutFd>=0,"create out file");
 
     uint64_t outBytes = 0;
-    ymerr("reading large %sbounded...",theTest->serverBounding?"":"un");
+    ymlog("reading large %sbounded...",theTest->serverBounding?"":"un");
     YMIOResult ymResult = YMStreamWriteToFile(stream, largeOutFd, theTest->serverBounding ? &gSomeLength : NULL, &outBytes);
     testassert(ymResult!=YMIOError,"eat large result");
     testassert(!theTest->serverBounding||outBytes==gSomeLength,"eat large outBytes");
-    ymerr("reading large finished: %lu bytes",outBytes);
+    ymlog("reading large finished: %lu bytes",outBytes);
 
     YM_CLOSE_FILE(largeOutFd);
     testassert(result==0, "close large out fd %d %s",errno,strerror(errno));
@@ -589,7 +589,7 @@ void _AsyncForwardCallback(struct SessionTest *theTest, YMConnectionRef connecti
     if ( isServer ) {
         ymlog("_async_forward_callback (large): %lu",bytesWritten);
     } else
-        ymdbg("_async_forward_callback (sparse): %lu",bytesWritten);
+        ymlog("_async_forward_callback (sparse): %lu",bytesWritten);
     
     if ( isServer ) {
         YMConnectionCloseStream(connection, stream);

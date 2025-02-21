@@ -99,9 +99,9 @@ void __YMLogType( int level, char* format, ... )
     off += snprintf(line+off,max-off,"\n");
 
     if ( level == YMLogError ) {
-        fprintf(stderr,line);
+        fprintf(stderr,"%s",line);
         fflush(stderr);
-        free(line);
+        YMFREE(line);
         return;
     }
 

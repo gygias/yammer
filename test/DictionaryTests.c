@@ -59,7 +59,7 @@ void DictionaryTestsRun(ym_test_assert_func assert, const void *context)
     YMRelease(theTest.existingKeys);
     
     ymerr("YMDictionary test completed after %lu iterations",theTest.completedTests);
-}    
+}
 
 YM_ENTRY_POINT(_dictionary_test_proc)
 {

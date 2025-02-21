@@ -211,7 +211,7 @@ bool YMConnectionConnect(YMConnectionRef c_)
     if ( c->socket != NULL_SOCKET || c->isIncoming ) {
         ymerr("connect called on connected socket");
         return false;
-    }    
+    }
     
     int type;
     switch(c->type) {

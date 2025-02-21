@@ -321,7 +321,7 @@ YMIOResult __YMStreamForward(YMStreamRef stream, YMFILE file, bool fromFileToStr
                 } else
                     ymsoftassert(false,"%s read a forward command",YMSTR(s->name));
             }
-            
+
             aResult = YMStreamReadUp(s, buffer, aDesiredLength, &aActualLength);
         }
         

@@ -91,9 +91,12 @@ typedef struct __ym_dispatch_queue_thread
 } __ym_dispatch_queue_thread_t;
 typedef struct __ym_dispatch_queue_thread __ym_dispatch_queue_thread_t;
 
-YM_ENTRY_POINT(__ym_dispatch_service_loop);
+YM_ENTRY_POINT(__ym_dispatch_main_service_loop);
+YM_ENTRY_POINT(__ym_dispatch_global_service_loop);
 YM_ENTRY_POINT(__ym_dispatch_user_service_loop);
-__ym_dispatch_queue_t *__YMDispatchQueueInitCommon(YMStringRef name, YMDispatchQueueType type);
+YM_ENTRY_POINT(__ym_dispatch_service_loop);
+
+__ym_dispatch_queue_t *__YMDispatchQueueInitCommon(YMStringRef name, YMDispatchQueueType type, ym_entry_point entry);
 void __YMDispatchQueueStop(__ym_dispatch_queue_t *q);
 
 void __ym_dispatch_sigalarm(int);
@@ -105,11 +108,11 @@ YM_ONCE_FUNC(__YMDispatchInitOnce,
     gDispatch = YMALLOC(sizeof(__ym_dispatch_t));
 
     YMStringRef name = YMSTRC("com.combobulated.dispatch.main");
-    gDispatch->mainQueue = __YMDispatchQueueInitCommon(name, YMDispatchQueueMain);
+    gDispatch->mainQueue = __YMDispatchQueueInitCommon(name, YMDispatchQueueMain, __ym_dispatch_main_service_loop);
     YMRelease(name);
 
     name = YMSTRC("com.combobulated.dispatch.global");
-    gDispatch->globalQueue = __YMDispatchQueueInitCommon(name, YMDispatchQueueGlobal);
+    gDispatch->globalQueue = __YMDispatchQueueInitCommon(name, YMDispatchQueueGlobal, __ym_dispatch_global_service_loop);
     YMRelease(name);
 	gDispatch->userQueues = YMArrayCreate();
     gDispatch->lock = YMLockCreate(); // not a ymtype
@@ -161,7 +164,7 @@ typedef struct __ym_dispatch_service_loop_context
 } __ym_dispatch_service_loop_context;
 typedef struct __ym_dispatch_service_loop_context __ym_dispatch_service_loop_context_t;
 
-__ym_dispatch_queue_t *__YMDispatchQueueInitCommon(YMStringRef name, YMDispatchQueueType type)
+__ym_dispatch_queue_t *__YMDispatchQueueInitCommon(YMStringRef name, YMDispatchQueueType type, ym_entry_point entry)
 {
     __ym_dispatch_queue_t *q = (__ym_dispatch_queue_t *)_YMAlloc(_YMDispatchQueueTypeID,sizeof(__ym_dispatch_queue_t));
     q->name = name ? YMRetain(name) : YMSTRC("*");
@@ -172,8 +175,8 @@ __ym_dispatch_queue_t *__YMDispatchQueueInitCommon(YMStringRef name, YMDispatchQ
     q->queueExitSem = YMSemaphoreCreate(0);
     q->exit = false;
 
-    ym_entry_point entry = ( type == YMDispatchQueueUser ) ? __ym_dispatch_user_service_loop : __ym_dispatch_service_loop;
     if ( type != YMDispatchQueueMain ) {
+#warning watchlist todo recycle user threads
         __ym_dispatch_service_loop_context_t *c = YMALLOC(sizeof(__ym_dispatch_service_loop_context_t));
         YMThreadRef first = YMThreadCreate(name, entry, c);
         c->q = (__ym_dispatch_queue_t *)YMRetain(q); // matched on thread return
@@ -201,7 +204,7 @@ YMDispatchQueueRef YMDispatchQueueCreate(YMStringRef name)
 {
     YM_ONCE_DO(gDispatchGlobalInitOnce, __YMDispatchInitOnce);
 
-    __ym_dispatch_queue_t *q = __YMDispatchQueueInitCommon(name, YMDispatchQueueUser);
+    __ym_dispatch_queue_t *q = __YMDispatchQueueInitCommon(name, YMDispatchQueueUser, __ym_dispatch_user_service_loop);
 
     YMLockLock(gDispatch->lock);
     YMArrayAdd(gDispatch->userQueues,q);
@@ -289,7 +292,7 @@ void __YMDispatchCheckExpandGlobalQueue(__ym_dispatch_queue_t *queue)
 
         name = YMStringCreateWithFormat("com.combobulated.dispatch.global-%ld",YMArrayGetCount(queue->queueThreads),NULL);
         __ym_dispatch_service_loop_context_t *c = YMALLOC(sizeof(__ym_dispatch_service_loop_context_t));
-        YMThreadRef next = YMThreadCreate(name, __ym_dispatch_service_loop, c);
+        YMThreadRef next = YMThreadCreate(name, __ym_dispatch_global_service_loop, c);
         __ym_dispatch_queue_thread_t *qt = __YMDispatchQueueThreadCreate(next);
         c->q = (__ym_dispatch_queue_t *)YMRetain(queue);
         c->qt = qt;
@@ -302,7 +305,7 @@ void __YMDispatchCheckExpandGlobalQueue(__ym_dispatch_queue_t *queue)
         YMRelease(name);
 #ifdef YM_DISPATCH_LOG
         printf("added %sworker to busy global queue %s [%ld]\n",overflow?"overflow ":"",YMSTR(name),YMArrayGetCount(queue->queueThreads));
-    #endif
+#endif
     }
     YMSelfUnlock(queue);
 }
@@ -319,12 +322,15 @@ ym_dispatch_user_t *__YMUserDispatchCopy(ym_dispatch_user_t *userDispatch)
     return copy;
 }
 
+[[clang::optnone]]
 void YMAPI YMDispatchAsync(YMDispatchQueueRef queue, ym_dispatch_user_t *userDispatch)
 {
     __YMDispatchCheckExpandGlobalQueue((__ym_dispatch_queue_t *)queue);
     ym_dispatch_user_t *copy = __YMUserDispatchCopy(userDispatch);
     __YMDispatchDispatch(queue, copy, NULL, false);
 }
+
+[[clang::optnone]]
 void YMAPI YMDispatchSync(YMDispatchQueueRef queue, ym_dispatch_user_t *userDispatch)
 {
     __YMDispatchCheckExpandGlobalQueue((__ym_dispatch_queue_t *)queue);
@@ -438,9 +444,12 @@ void YMAPI YMDispatchSourceDestroy(ym_dispatch_source_t source)
 
     __ym_dispatch_source_t *s = source;
 
-    __YMDispatchQueueStop(s->queue);
+#warning watchlist recycle user threads
+    if ( s->queue->type == YMDispatchQueueUser ) {
+        __YMDispatchQueueStop(s->queue);
+        YMSemaphoreWait(s->servicingSem);
+    }
 
-    YMSemaphoreWait(s->servicingSem);
     __YMDispatchUserFinalize(s->user);
 
     YMLockLock(gDispatch->sourcesLock);
@@ -456,12 +465,15 @@ void YMAPI YMDispatchSourceDestroy(ym_dispatch_source_t source)
             YMArrayRemove(gDispatch->sources,i);
             break;
         }
-    }    
+    }
     YMLockUnlock(gDispatch->sourcesLock);
 
     ymassert(item,"source %p not in list[%ld]",source,count);
-    YMRelease(s->servicingSem);
-    //YMRelease(s->queue);
+
+    if ( s->queue->type == YMDispatchQueueUser )
+        YMRelease(s->servicingSem);
+        //YMRelease(s->queue);
+
     YMFREE(s->user);
     YMFREE(s);
 }
@@ -629,6 +641,19 @@ YM_ENTRY_POINT(__ym_dispatch_user_service_loop)
     __ym_dispatch_service_loop(context);
 }
 
+[[clang::optnone]]
+YM_ENTRY_POINT(__ym_dispatch_global_service_loop)
+{
+    __ym_dispatch_service_loop(context);
+}
+
+[[clang::optnone]]
+YM_ENTRY_POINT(__ym_dispatch_main_service_loop)
+{
+    __ym_dispatch_service_loop(context);
+}
+
+[[clang::optnone]]
 YM_ENTRY_POINT(__ym_dispatch_service_loop)
 {
     __ym_dispatch_service_loop_context_t *c = context;
@@ -928,7 +953,7 @@ void YMDispatchMain()
     qt->busy = false;
     c->q = (__ym_dispatch_queue_t *)YMRetain(gDispatch->mainQueue);
     c->qt = qt;
-    __ym_dispatch_service_loop(c);
+    __ym_dispatch_main_service_loop(c);
     printf("YMDispatchMain will return\n");
     abort();
 }
