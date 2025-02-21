@@ -17,7 +17,7 @@ YMSemaphoreRef YMAPI YMSemaphoreCreate(int initialValue);
 YMSemaphoreRef YMAPI YMSemaphoreCreateWithName(YMStringRef name, int initialValue);
 
 void YMAPI YMSemaphoreWait(YMSemaphoreRef);
-bool YMAPI YMSemaphoreTest(YMSemaphoreRef);
+bool YMAPI YMSemaphoreTest(YMSemaphoreRef,bool);
 void YMAPI YMSemaphoreSignal(YMSemaphoreRef);
 
 YM_EXTERN_C_POP

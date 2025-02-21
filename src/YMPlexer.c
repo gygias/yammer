@@ -222,7 +222,7 @@ YMPlexerRef YMPlexerCreate(YMStringRef name, YMSecurityProviderRef provider, boo
     e->p = (__ym_plexer_t *)YMRetain(p);
     e->stream = NULL;
     e->queue = p->upQueue;
-    ym_dispatch_user_t user = {__ym_plexer_service_upstream,e,__ym_plexer_source_destroy,ym_dispatch_user_context_noop };
+    ym_dispatch_user_t user = {__ym_plexer_service_upstream,e,__ym_plexer_source_destroy,ym_dispatch_user_context_noop};
     ym_dispatch_source_t upstreamSource = YMDispatchSourceCreate(p->upQueue,ym_dispatch_source_readable,upIn,&user);
     __ym_plexer_source_context_t *c = YMALLOC(sizeof(__ym_plexer_source_context_t));
     c->source = upstreamSource;

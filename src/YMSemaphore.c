@@ -75,6 +75,7 @@ YMSemaphoreRef __YMSemaphoreCreate(YMStringRef name, int initialValue)
 {
     if ( initialValue < 0 ) {
         printf("fatal: semaphore initial value cannot be negative\n");
+        fflush(stdout);
         abort();
     }
 
@@ -106,6 +107,7 @@ try_again:; // XXX
         }
         else {
             printf("fatal: sem_open(%s) %s failed: %d (%s)\n",YMSTR(s->semName),YMSTR(s->userName),errno,strerror(errno));
+            fflush(stdout);
             abort();
         }
     }
@@ -148,30 +150,36 @@ void YMSemaphoreWait(__ym_semaphore_t *s)
         if (result != 0) {
             retry = YM_RETRY_SEMAPHORE;
             printf("sem_wait(%s) %s failed%s: %d (%s)\n",YMSTR(s->semName),YMSTR(s->userName), retry ? ", retrying" : "", errno, strerror(errno));
+            fflush(stdout);
             abort();
         } else
             break;
     }
 }
 
-bool YMSemaphoreTest(__ym_semaphore_t *s)
+bool YMSemaphoreTest(__ym_semaphore_t *s, bool r)
 {
     YM_IO_BOILERPLATE
 
     YM_TRYWAIT_SEMAPHORE(s->sem);
     if ( result != 0 ) {
-        if (error != EAGAIN) {
-            printf("trywait sem(%s) %s failed, but errno is %d (%s)\n",YMSTR(s->semName),YMSTR(s->userName),error,errorStr);
+        if ( error != EAGAIN && error != EINTR ) {
+            printf("trywait sem(%s) %s failed, but errno is %d (%s)\n",YMSTR(s->semName),YMSTR(s->userName),error,errorStr); 
+            fflush(stdout);
             abort();
         }
         return false;
     }
 
-    YM_POST_SEMAPHORE(s->sem);
-	if ( result != 0 ) {
-        printf("fatal: sem trywait(%s) %s repost failed: %d (%s)\n",YMSTR(s->semName),YMSTR(s->userName), error, errorStr);
-        abort();
+    if ( r ) {
+        YM_POST_SEMAPHORE(s->sem);
+        if ( result != 0 ) {
+            printf("fatal: sem trywait(%s) %s repost failed: %d (%s)\n",YMSTR(s->semName),YMSTR(s->userName), error, errorStr);
+            fflush(stdout);
+            abort();
+        }
     }
+
     return true;
 }
 
@@ -182,6 +190,7 @@ void YMSemaphoreSignal(__ym_semaphore_t *s)
 	YM_POST_SEMAPHORE(s->sem);
 	if ( result != 0 ) {
         printf("fatal: sem_post(%s) %s failed: %d (%s)\n",YMSTR(s->semName),YMSTR(s->userName), error, errorStr);
+        fflush(stdout);
         abort();
     }
 }

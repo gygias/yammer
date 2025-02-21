@@ -98,11 +98,19 @@ void __YMLogType( int level, char* format, ... )
     
     off += snprintf(line+off,max-off,"\n");
 
+    if ( level == YMLogError ) {
+        fprintf(stderr,line);
+        fflush(stderr);
+        free(line);
+        return;
+    }
+
     ___ym_log_t *log = YMALLOC(sizeof(___ym_log_t));
     log->file = (level == YMLogError) ? stderr : stdout;
     log->string = line;
     ym_dispatch_user_t dispatch = { ___ym_log, log, NULL, ym_dispatch_user_context_noop };
-    YMDispatchSync(gYMLogQueue,&dispatch);
+
+    YMDispatchAsync(gYMLogQueue,&dispatch);
 }
 
 void YMLogFreeGlobals()

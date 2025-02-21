@@ -440,29 +440,30 @@ void YMAPI YMDispatchSourceDestroy(ym_dispatch_source_t source)
 
     __YMDispatchQueueStop(s->queue);
 
-    YMLockLock(gDispatch->sourcesLock);
     YMSemaphoreWait(s->servicingSem);
     __YMDispatchUserFinalize(s->user);
+
+    YMLockLock(gDispatch->sourcesLock);
     int64_t count = YMArrayGetCount(gDispatch->sources);
     const void *item = NULL;
     for ( int i = 0; i < count; i++ ) {
-        item = YMArrayGet(gDispatch->sources,i);
-        if ( item == s ) {
+        const void *anItem = YMArrayGet(gDispatch->sources,i);
+        if ( anItem == s ) {
 #ifdef YM_SOURCE_LOG_1
             printf("removed source with index %d[%ld]\n",i,count);
 #endif
+            item = anItem;
             YMArrayRemove(gDispatch->sources,i);
-            YMRelease(s->servicingSem);
-            //YMRelease(s->queue);
-            YMFREE(s->user);
-            YMFREE(s);
             break;
         }
-    }
-    ymassert(item,"source %p not in list[%ld]",source,count);
-    #warning put me back or fixme
-    //YMArrayRemoveObject(gDispatch->sources,source);
+    }    
     YMLockUnlock(gDispatch->sourcesLock);
+
+    ymassert(item,"source %p not in list[%ld]",source,count);
+    YMRelease(s->servicingSem);
+    //YMRelease(s->queue);
+    YMFREE(s->user);
+    YMFREE(s);
 }
 
 void YMAPI YMDispatchAfter(YMDispatchQueueRef queue, ym_dispatch_user_t *userDispatch, double secondsAfter)
@@ -764,7 +765,7 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
             for ( int i = 0; i < YMArrayGetCount(gDispatch->sources); i++ ) {
                 __ym_dispatch_source_t *source = (__ym_dispatch_source_t *)YMArrayGet(gDispatch->sources, i);
                 YMFILE anFd = (YMFILE)source->data;
-                bool servicing = ! YMSemaphoreTest(source->servicingSem);
+                bool servicing = ! YMSemaphoreTest(source->servicingSem,true);
 #ifdef YM_SOURCE_LOG_2
                 printf("\t%s%p[%d]%p,%p,%p,%p:",servicing?"(servicing) ":"",source,source->type,source->queue,source->user,source->user->dispatchProc,source->user->context);
 #endif
@@ -825,15 +826,15 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
             YMLockLock(gDispatch->sourcesLock);
             {
                 if ( FD_ISSET(signalFd,&readFds) ) {
-#ifdef YM_SOURCE_LOG_1
-#endif
                     int i = 0;
-                    while ( YMSemaphoreTest(gDispatch->selectSignalSemaphore) ) {
+                    while ( YMSemaphoreTest(gDispatch->selectSignalSemaphore, false) ) {
                         char buf[1];
                         YM_READ_FILE(signalFd,buf,1);
                         i++;
-                        printf(">>> %d select loop $ignal consumed <<<\n",i);
                     }
+#ifdef YM_SOURCE_LOG_1
+                    printf(">>> %d select loop %cignal%s consumed <<<\n",i,buf,i>1?"s":"");
+#endif
                 }
 
                 for ( int i = 0; i < YMArrayGetCount(gDispatch->sources); i++ ) {
@@ -841,12 +842,14 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
                     YMFILE anFd = (YMFILE)source->data;
                     if ( source->type == ym_dispatch_source_readable ) {
                         if ( FD_ISSET(anFd, &readFds) ) {
+                            bool serviceable = YMSemaphoreTest(source->servicingSem, false);
 #ifdef YM_SOURCE_LOG_1
-                            printf(">>>readable fd %d %s %p %p %p %p<<<\n",anFd,YMSTR(source->queue->name),source,source->user,source->user->dispatchProc,source->user->context);
+                            printf(">>>%sreadable fd %d %s %p %p %p %p<<<\n",serviceable?"":"BUSY",anFd,YMSTR(source->queue->name),source,source->user,source->user->dispatchProc,source->user->context);
 #endif
 //#define source_dispatch_sync
 #ifndef source_dispatch_direct
-                            YMSemaphoreWait(source->servicingSem);
+                            if ( ! serviceable )
+                                continue;
                             ym_dispatch_user_t *wrapper = YMALLOC(sizeof(ym_dispatch_user_t));
                             wrapper->dispatchProc = __ym_source_select_wrapper;
                             wrapper->context = source;
@@ -864,11 +867,14 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
                         }
                     } else if ( source->type == ym_dispatch_source_writeable ) {
                         if( FD_ISSET(anFd, &writeFds) ) {
+                            bool serviceable = YMSemaphoreTest(source->servicingSem, false);
 #ifdef YM_SOURCE_LOG_1
-                            printf(">>>writeable fd %d %s %p %p %p %p<<<\n",anFd,YMSTR(source->queue->name),source,source->user,source->user->dispatchProc,source->user->context);
+                            printf(">>>%swriteable fd %d %s %p %p %p %p<<<\n",serviceable?"":"BUSY ",anFd,YMSTR(source->queue->name),source,source->user,source->user->dispatchProc,source->user->context);
 #endif
 #ifndef source_dispatch_direct
-                            YMSemaphoreWait(source->servicingSem);
+                            if ( ! serviceable )
+                                continue;
+
                             ym_dispatch_user_t *wrapper = YMALLOC(sizeof(ym_dispatch_user_t));
                             wrapper->dispatchProc = __ym_source_select_wrapper;
                             wrapper->context = source;
@@ -904,7 +910,7 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
 			errorStr = strerror(errno);
 #endif
             printf("select failed from n%d fds: %d: %d (%s)\n",nfds,result,error,errorStr);
-            keepGoing = false;
+            //keepGoing = false;
         }
         idx++;
     }
