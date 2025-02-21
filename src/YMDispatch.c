@@ -19,9 +19,9 @@
 # error implement me
 #endif
 
-#define YM_DISPATCH_LOG
+//#define YM_DISPATCH_LOG
 //#define YM_DISPATCH_LOG_1
-#define YM_SOURCE_LOG
+//#define YM_SOURCE_LOG
 //#define YM_SOURCE_LOG_1
 //#define YM_SOURCE_LOG_2
 
@@ -108,7 +108,7 @@ YM_ONCE_FUNC(__YMDispatchInitOnce,
     gDispatch->mainQueue = __YMDispatchQueueInitCommon(name, YMDispatchQueueMain);
     YMRelease(name);
 
-    name = YMSTRC("com.combobulated.dispatch.global-0");
+    name = YMSTRC("com.combobulated.dispatch.global");
     gDispatch->globalQueue = __YMDispatchQueueInitCommon(name, YMDispatchQueueGlobal);
     YMRelease(name);
 	gDispatch->userQueues = YMArrayCreate();
@@ -141,7 +141,7 @@ void __YM_DISPATCH_CATCH_MISUSE(__ym_dispatch_queue_t *q)
 
 void _YMDispatchQueueFree(YMDispatchQueueRef p_)
 {
-    //printf("%s %p",__FUNCTION__,p_);
+    //printf("%s %p\n",__FUNCTION__,p_);
     __ym_dispatch_queue_t *q = (__ym_dispatch_queue_t *)p_;
     if ( q->type == YMDispatchQueueGlobal || q->type == YMDispatchQueueMain )
         __YM_DISPATCH_CATCH_MISUSE(q);
@@ -341,7 +341,6 @@ YM_ONCE_FUNC(__YMDispatchSelectOnce,
     YM_IO_BOILERPLATE
 
     gDispatch->sources = YMArrayCreate();
-    #warning temporary?
     gDispatch->sourcesLock = YMLockCreateWithOptions(YMLockRecursive);
 
     gDispatch->selectSignalPipe = YMPipeCreate(NULL);
@@ -445,15 +444,18 @@ void YMAPI YMDispatchSourceDestroy(ym_dispatch_source_t source)
     YMSemaphoreWait(s->servicingSem);
     __YMDispatchUserFinalize(s->user);
     int64_t count = YMArrayGetCount(gDispatch->sources);
-    void *item = NULL;
+    const void *item = NULL;
     for ( int i = 0; i < count; i++ ) {
         item = YMArrayGet(gDispatch->sources,i);
-        if ( item == source ) {
+        if ( item == s ) {
 #ifdef YM_SOURCE_LOG_1
             printf("removed source with index %d[%ld]\n",i,count);
 #endif
             YMArrayRemove(gDispatch->sources,i);
-            YMFREE(item);
+            YMRelease(s->servicingSem);
+            //YMRelease(s->queue);
+            YMFREE(s->user);
+            YMFREE(s);
             break;
         }
     }
@@ -746,7 +748,7 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
 #ifdef debug_timeout
         struct timeval tv;
         tv.tv_sec = 0;
-        tv.tv_usec = 100000;
+        tv.tv_usec = 10000;
 #endif
 
         FD_ZERO(&readFds);

@@ -23,7 +23,7 @@
 
 YM_EXTERN_C_PUSH
 
-#define     PlexerTest1Threads 1
+#define     PlexerTest1Threads 2
 #warning fix this when false on the handle_remote side, first dos's the rest, dispatch async
 #define     PlexerTest1NewStreamPerRoundTrip false
 #define     PlexerTest1RoundTripsPerThread 128
@@ -258,7 +258,7 @@ YM_ENTRY_POINT(_RunLocalPlexer)
         uint8_t *lastMessageWritten = (uint8_t *)YMDictionaryRemove(theTest->lastMessageWrittenByStreamID, (YMDictionaryKey)streamID);
         if ( protectTheList )
             YMLockUnlock(theTest->plexerTest1Lock);
-        testassert(incomingMessageLen&&0==memcmp(incomingMessage,lastMessageWritten,incomingMessageLen),"incoming and last written do not match (i%llu ?)",incomingMessageLen);
+        testassert(incomingMessageLen&&0==memcmp(incomingMessage,lastMessageWritten,incomingMessageLen),"incoming and last written do not match (o%llu i%llu?)",outgoingMessageLen,incomingMessageLen);
         free(incomingMessage);
         
         if ( PlexerTest1NewStreamPerRoundTrip ) {

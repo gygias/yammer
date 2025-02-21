@@ -379,7 +379,7 @@ bool YMSessionConnectToPeer(YMSessionRef s_, YMPeerRef peer, bool sync)
         YMDictionaryEnumRef denum = YMDictionaryEnumeratorBegin(s->connectionsByAddress);
         while ( denum ) {
             #warning comparing the wrong thing here?
-            if ( YMAddressIsEqualIncludingPort(address, address, false) ) {
+            if ( YMAddressIsEqualIncludingPort(address, (YMAddressRef)denum->value, false) ) {
                 YMDictionaryEnumeratorEnd(denum);
                 existing = true;
                 break;
@@ -391,7 +391,7 @@ bool YMSessionConnectToPeer(YMSessionRef s_, YMPeerRef peer, bool sync)
             continue;
         }
         
-        YMConnectionRef newConnection = YMConnectionCreate(address, YMConnectionStream, YMTLS, true);
+        YMConnectionRef newConnection = YMConnectionCreate(address, YMConnectionStream, YMInsecure, true);
         
         context = (__ym_session_connect_t *)YMALLOC(sizeof(__ym_session_connect_t));
         context->session = YMRetain(s);
@@ -656,7 +656,7 @@ YM_ENTRY_POINT(__ym_session_init_incoming_connection_proc)
         goto catch_release;
     }
     
-    newConnection = YMConnectionCreateIncoming(socket, peerAddress, YMConnectionStream, YMTLS, true);
+    newConnection = YMConnectionCreateIncoming(socket, peerAddress, YMConnectionStream, YMInsecure, true);
     if ( ! newConnection ) {
         ymlog("failed to create new connection");
 		if ( s->connectFailedFunc )
@@ -782,7 +782,7 @@ void __ym_session_new_stream_proc(YMConnectionRef connection, YMStreamRef stream
     
     YMAddressRef address = YMConnectionGetAddress(connection);
     YMPlexerStreamID streamID = YM_STREAM_INFO(stream)->streamID;
-    ymlog("new incoming stream %lu on %s",streamID,YMSTR(YMAddressGetDescription(address)));
+    ymdbg("new incoming stream %lu on %s",streamID,YMSTR(YMAddressGetDescription(address)));
     
     if ( connection != s->defaultConnection )
         ymerr("warning: new stream on non-default connection");
@@ -798,7 +798,7 @@ void __ym_session_stream_closing_proc(YMConnectionRef connection, YMStreamRef st
     
     YMAddressRef address = YMConnectionGetAddress(connection);
     YMPlexerStreamID streamID = YM_STREAM_INFO(stream)->streamID;
-    ymlog("remote stream %lu closing on %s",streamID,YMSTR(YMAddressGetDescription(address)));
+    ymdbg("remote stream %lu closing on %s",streamID,YMSTR(YMAddressGetDescription(address)));
     
     if ( connection != s->defaultConnection ) {
         ymerr("warning: closing remote stream on non-default connection");
@@ -876,11 +876,12 @@ void __ym_mdns_service_removed_func(__unused YMmDNSBrowserRef browser, YMStringR
         
         if ( ! found ) {
             ymerr("warning: notified of removal of unknown peer: %s", YMSTR(name));
-            return;
+            goto catch_return;
         }
         
         YMDictionaryRemove(s->knownPeers, mysteryKey);
     }
+catch_return:
     YMSelfUnlock(s);
 }
 

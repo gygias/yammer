@@ -554,8 +554,7 @@ bool __YMTLSProviderRead(__ym_security_provider_t *p, uint8_t *buffer, size_t by
     
     if ( result <= 0 ) {
         unsigned long sslError = SSL_get_error(tls->ssl, result);
-        ymerr("SSL_read: %d: ssl err: %lu (%s)",result,sslError,ERR_error_string(sslError, NULL));
-        if ( sslError == SSL_ERROR_SYSCALL ) ymerr("          errno: %d (%s)",errno,strerror(errno));
+        ymerr("SSL_read(%p,%p,%zu): %d: ssl err: %lu (%s) errno%s: %d (%s)",tls->ssl,buffer,bytes,result,sslError,ERR_error_string(sslError, NULL),( sslError == SSL_ERROR_SYSCALL )?"":" probably irrelevant",errno,strerror(errno));
         return false;
     }
     return true;
@@ -572,8 +571,7 @@ bool __YMTLSProviderWrite(__ym_security_provider_t *p, const uint8_t *buffer, si
     
     if ( result <= 0 ) {
         unsigned long sslError = SSL_get_error(tls->ssl, result);
-        ymerr("SSL_write failed: %d: ssl err: %lu (%s)",result,sslError,ERR_error_string(sslError, NULL));
-        if ( sslError == SSL_ERROR_SYSCALL ) ymerr("          errno: %d (%s)",errno,strerror(errno));
+        ymerr("SSL_write failed(%p,%p,%zu): %d: ssl err: %lu (%s) errno%s: %d (%s)",tls->ssl,buffer,bytes,result,sslError,ERR_error_string(sslError, NULL),( sslError == SSL_ERROR_SYSCALL )?"":" probably irrelevant",errno,strerror(errno));
         return false;
     }
     
@@ -587,7 +585,7 @@ bool __YMTLSProviderClose(__ym_security_provider_t *p)
     int result = SSL_shutdown(tls->ssl); // TODO
     if ( result ) {
         unsigned long sslError = SSL_get_error(tls->ssl, result);
-        ymerr("SSL_shutdown failed: %d: ssl err: %lu (%s)",result,sslError,ERR_error_string(sslError, NULL));
+        ymerr("SSL_shutdown(%p) failed: %d: ssl err: %lu (%s) errno%s %d (%s)",tls->ssl,result,sslError,ERR_error_string(sslError, NULL),( sslError == SSL_ERROR_SYSCALL )?"":" probably irrelevant",errno,strerror(errno));
         return false;
     }
     

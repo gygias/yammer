@@ -146,9 +146,8 @@ YMIOResult YMStreamReadUp(YMStreamRef s, uint8_t *buffer, uint16_t length, uint1
         if ( result == YMIOEOF ) {
             ymerr("EOF: reading %ub up to user:",length);
             break;
-        //else if ( length != o ) {
-        //    ymabort("fatal: stream read %d %hu != %zu",result,length,o);
-        //}
+        } else if ( length != o ) {
+            ymabort("fatal: stream read %d %hu != %zu",result,length,o);
         } else
             ymlog("read %ub stream user data",length);
     } while ( off < length );
@@ -176,10 +175,6 @@ YMIOResult YMStreamWriteDown(YMStreamRef s, const uint8_t *buffer, uint16_t leng
         ymerr("failed writing stream chunk with size %ub",length);
         return result;
     }
-    
-    // signal the plexer to wake and service this stream
-    #warning dispatch? YES this is gross and causes problems with how lower layers segment data ([4][2][4][1803])
-    //s->dataAvailableFunc(s,off,s->dataAvailableContext);
     
     ymlog("wrote %zub chunk",off);
     
@@ -249,8 +244,10 @@ void YMStreamGetPerformance(YMStreamRef s_, uint64_t *oDownIn, uint64_t *oDownOu
 }
 
 // for the love of god break this into at least 2 functions
-YMIOResult __YMStreamForward(YMStreamRef s, YMFILE file, bool fromFileToStream, uint64_t *inBytes, uint64_t *outBytes)
+YMIOResult __YMStreamForward(YMStreamRef stream, YMFILE file, bool fromFileToStream, uint64_t *inBytes, uint64_t *outBytes)
 {
+    __ym_stream_t *s = (__ym_stream_t *)stream;
+
     uint64_t off = 0;
     bool boundedByCallerOrRemote = ( inBytes != NULL );
     uint64_t remainingIfBounded = inBytes ? *inBytes : 0;
@@ -265,35 +262,35 @@ YMIOResult __YMStreamForward(YMStreamRef s, YMFILE file, bool fromFileToStream, 
     if ( fromFileToStream ) {
         _YMStreamCommand prefixCommand = { boundedByCallerOrRemote ? YMStreamForwardFileBounded : YMStreamForwardFileUnbounded };
         aResult = YMStreamWriteDown(s, (uint8_t *)&prefixCommand, sizeof(prefixCommand));
-        ymsoftassert(aResult==YMIOSuccess, "write forward init");
+        ymsoftassert(aResult==YMIOSuccess, "%s write forward init",YMSTR(s->name));
         
         if ( boundedByCallerOrRemote ) {
             _YMStreamBoundType length = *inBytes;
             aResult = YMStreamWriteDown(s, (uint8_t *)&length, sizeof(length));
-            ymsoftassert(aResult==YMIOSuccess, "write forward bound");
-            ymlog("beginning bounded file write (%lub)",length);
+            ymsoftassert(aResult==YMIOSuccess, "%s write forward bound",YMSTR(s->name));
+            ymlog("%s beginning bounded file write (%lub)",YMSTR(s->name),length);
         } else
-            ymlog("beginning unbounded file write");
+            ymlog("%s beginning unbounded file write",YMSTR(s->name));
     // if we're writing to file, read the coordination stuff above
     } else {
         _YMStreamCommand peekCommand;
         uint16_t peekLength = sizeof(_YMStreamCommand);
         aResult = YMStreamReadUp(s, (uint8_t *)&peekCommand, peekLength, &debugOutLength);
-        ymsoftassert(aResult==YMIOSuccess&&debugOutLength==peekLength,"peek forward command");
+        ymsoftassert(aResult==YMIOSuccess&&debugOutLength==peekLength,"%s peek forward command",YMSTR(s->name));
         
         if ( peekCommand.command == YMStreamForwardFileBounded ) {
             _YMStreamBoundType length;
             debugOutLength = 0;
             aResult = YMStreamReadUp(s, (uint8_t *)&length, sizeof(length), &debugOutLength);
-            ymsoftassert(aResult==YMIOSuccess&&debugOutLength==sizeof(length),"peek forward length");
+            ymsoftassert(aResult==YMIOSuccess&&debugOutLength==sizeof(length),"%s peek forward length",YMSTR(s->name));
             
             remainingIfBounded = length;
             boundedByCallerOrRemote = true;
-            ymlog("beginning remote-bounded file read (%lub)",remainingIfBounded);
+            ymlog("%s beginning remote-bounded file read (%lub)",YMSTR(s->name),remainingIfBounded);
         } else if ( peekCommand.command == YMStreamForwardFileUnbounded ) {
             ymlog("beginning unbounded file read");
             boundedByCallerOrRemote = false; // expect a 'forward end' command
-        } else ymsoftassert(false,"peek forward command bogus");
+        } else ymsoftassert(false,"%s peek forward command bogus %d (%hu)",YMSTR(s->name),peekCommand.command,debugOutLength);
     }
     
     uint16_t aActualLength = 0;
@@ -305,13 +302,13 @@ YMIOResult __YMStreamForward(YMStreamRef s, YMFILE file, bool fromFileToStream, 
 			size_t actual = 0;
             aResult = YMReadFull(file, buffer, aDesiredLength, &actual);
 			aActualLength = (uint16_t)actual;
-            ymsoftassert(aResult==YMIOSuccess&&aActualLength==aDesiredLength||aResult==YMIOEOF,"read user forward file");
+            ymsoftassert(aResult==YMIOSuccess&&aActualLength==aDesiredLength||aResult==YMIOEOF,"%s read user forward file %d %hu",YMSTR(s->name),aResult,aActualLength);
         } else { // stream to file
             if ( ! boundedByCallerOrRemote ) {
                 _YMStreamCommand aCommand;
                 debugOutLength = 0;
                 aResult = YMStreamReadUp(s, (uint8_t *)&aCommand, sizeof(aCommand), &debugOutLength);
-                ymsoftassert(aResult==YMIOSuccess&&debugOutLength==sizeof(aCommand),"read a forward command");
+                ymsoftassert(aResult==YMIOSuccess&&debugOutLength==sizeof(aCommand),"%s read a forward command",YMSTR(s->name));
                 
                 if ( aCommand.command == YMStreamForwardFileEnd ) {
                     aDesiredLength = 0; // omg refactor this function
@@ -319,51 +316,51 @@ YMIOResult __YMStreamForward(YMStreamRef s, YMFILE file, bool fromFileToStream, 
                     aResult = YMIOEOF;
                     goto unbounded_no_raw_read;
                 } else if ( aCommand.command > 0 ) {
-                    if ( aCommand.command > UINT16_MAX ) ymabort("stream command: %d",aCommand.command);
+                    if ( aCommand.command > UINT16_MAX ) ymabort("%s stream command: %d",YMSTR(s->name),aCommand.command);
                     aDesiredLength = (uint16_t)aCommand.command;
                 } else
-                    ymsoftassert(false,"read a forward command");
+                    ymsoftassert(false,"%s read a forward command",YMSTR(s->name));
             }
             
             aResult = YMStreamReadUp(s, buffer, aDesiredLength, &aActualLength);
         }
         
     unbounded_no_raw_read:
-        ymsoftassert(aDesiredLength==aActualLength||aResult==YMIOEOF,"forward early eof");
+        ymsoftassert(aDesiredLength==aActualLength||aResult==YMIOEOF,"%s forward early eof",YMSTR(s->name));
         
         if ( aResult == YMIOError ) {
-            ymerr("f%d%s forward read %lu-%lu: %d (%s)",file,fromFileToStream?"->":"<-",off,off+aActualLength,errno,strerror(errno));
+            ymerr("%s f%d%s forward read %lu-%lu: %d (%s)",YMSTR(s->name),file,fromFileToStream?"->":"<-",off,off+aActualLength,errno,strerror(errno));
             break;
         } else if ( aResult == YMIOEOF )
             lastIter = true;
         else if ( fromFileToStream && aDesiredLength != aActualLength )
-            ymerr("f%d%s forward read %lu-%lu %u != %u: %d (%s)",file,fromFileToStream?"->":"<-",off,off+aDesiredLength,aActualLength,aDesiredLength,errno,strerror(errno));
+            ymerr("%s f%d%s forward read %lu-%lu %u != %u: %d (%s)",YMSTR(s->name),file,fromFileToStream?"->":"<-",off,off+aDesiredLength,aActualLength,aDesiredLength,errno,strerror(errno));
         else
-            ymlog("f%d%s read %ub (%lu) remaining...",file,fromFileToStream?"F>S":"F<S",aActualLength,remainingIfBounded);
+            ymlog("%s f%d%s read %ub (%lu) remaining...",YMSTR(s->name),file,fromFileToStream?"F>S":"F<S",aActualLength,remainingIfBounded);
         
         if ( fromFileToStream ) {
             // if we're unbounded, write a chunk header if we got raw data, raw data if it exists, and 'unbounded end' if we hit EOF
             if ( ! boundedByCallerOrRemote && aActualLength > 0 ) {
                 _YMStreamCommand aChunkCommand = { aActualLength };
                 aResult = YMStreamWriteDown(s, (uint8_t *)&aChunkCommand, sizeof(aChunkCommand));
-                ymsoftassert(aResult==YMIOSuccess, "write forward chunk length");
+                ymsoftassert(aResult==YMIOSuccess, "%s write forward chunk length",YMSTR(s->name));
             }
             
             if ( aActualLength > 0 ) {
                 aResult = YMStreamWriteDown(s, buffer, aActualLength);
-                ymsoftassert(aResult==YMIOSuccess, "write forward chunk");
+                ymsoftassert(aResult==YMIOSuccess, "%s write forward chunk",YMSTR(s->name));
             }
         }
         else if ( aActualLength > 0 ) {
             aResult = YMWriteFull(file, buffer, aActualLength, &outWritten);
-            ymsoftassert(aActualLength==outWritten,"write forward file");
+            ymsoftassert(aActualLength==outWritten,"%s write forward file",YMSTR(s->name));
         }
         
         if ( aResult == YMIOError ) {
-            ymerr("f%d%s forward write %lu-%lu: %d (%s)",file,fromFileToStream?"->":"<-",off,off+aActualLength,errno,strerror(errno));
+            ymerr("%s f%d%s forward write %lu-%lu: %d (%s)",YMSTR(s->name),file,fromFileToStream?"->":"<-",off,off+aActualLength,errno,strerror(errno));
             lastIter = true;
         } else if ( ! fromFileToStream && aActualLength != outWritten ) {
-            ymerr("f%d%s forward write %lu-%lu %zu != %u: %d (%s)",file,fromFileToStream?"->":"<-",off,off+aActualLength,outWritten,aActualLength,errno,strerror(errno));
+            ymerr("%s f%d%s forward write %lu-%lu %zu != %u: %d (%s)",YMSTR(s->name),file,fromFileToStream?"->":"<-",off,off+aActualLength,outWritten,aActualLength,errno,strerror(errno));
             ymsoftassert(false, "forward read/write mismatch");
         }
         
@@ -375,7 +372,7 @@ YMIOResult __YMStreamForward(YMStreamRef s, YMFILE file, bool fromFileToStream, 
                 lastIter = true;
         }
         
-        ymlog("%s wrote [%lu,%ub] (%lu remaining)...",fromFileToStream?"F>S":"F<S",off,aActualLength,remainingIfBounded);
+        ymlog("%s %s wrote [%lu,%ub] (%lu remaining)...",YMSTR(s->name),fromFileToStream?"F>S":"F<S",off,aActualLength,remainingIfBounded);
         
         off += aActualLength;
     } while ( ! lastIter );
@@ -388,16 +385,16 @@ YMIOResult __YMStreamForward(YMStreamRef s, YMFILE file, bool fromFileToStream, 
     if ( ! boundedByCallerOrRemote && fromFileToStream ) {
         _YMStreamCommand endCommand = { YMStreamForwardFileEnd };
         aResult = YMStreamWriteDown(s, (uint8_t *)&endCommand, sizeof(endCommand));
-        ymsoftassert(aResult==YMIOSuccess, "write forward file end");
-        ymlog("wrote ForwardFileEnd");
+        ymsoftassert(aResult==YMIOSuccess, "%s write forward file end",YMSTR(s->name));
+        ymlog("%s wrote ForwardFileEnd",YMSTR(s->name));
     }
     
     if ( inBytes && (off != *inBytes) ) {
-        ymerr("forwarded %lu bytes of requested %lu",off,*inBytes);
-        ymsoftassert(false,"forward bounds mismatch");
+        ymerr("%s forwarded %lu bytes of requested %lu",YMSTR(s->name),off,*inBytes);
+        ymsoftassert(false,"%s forward bounds mismatch",YMSTR(s->name));
     } else {
-        if ( fromFileToStream ) { ymlog("forwarded %lu bytes from %d to stream",off,file); }
-        else { ymlog("forwarded %lu bytes to stream from %d",off,file); }
+        if ( fromFileToStream ) { ymlog("%s forwarded %lu bytes from %d to stream",YMSTR(s->name),off,file); }
+        else { ymlog("%s forwarded %lu bytes to stream from %d",YMSTR(s->name),off,file); }
     }
     
     return aResult;

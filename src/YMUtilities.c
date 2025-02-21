@@ -126,8 +126,10 @@ YMIOResult YMReadFull(YMFILE fd, uint8_t *buffer, size_t bytes, size_t *outRead)
 {
     YM_IO_BOILERPLATE
     
-    if ( buffer == NULL || bytes == 0 || fd < 0 )
-        return YMIOError; // is this success or failure? :)
+    if ( buffer == NULL || bytes == 0 || fd < 0 ) {
+        ymabort("io: invalid params %d %p %zu",fd,buffer,bytes);
+        return YMIOError;
+    }
     
     size_t off = 0;
     YMIOResult ioResult = YMIOSuccess;
@@ -156,8 +158,10 @@ YMIOResult YMWriteFull(YMFILE fd, const uint8_t *buffer, size_t bytes, size_t *o
 {
     YM_IO_BOILERPLATE
     
-    if ( buffer == NULL || bytes == 0 || fd < 0 )
+    if ( buffer == NULL || bytes == 0 || fd < 0 ) {
+        ymabort("io: invalid params %d %p %zu",fd,buffer,bytes);
         return YMIOError;
+    }
     
     size_t off = 0;
     YMIOResult ioResult = YMIOSuccess;
@@ -266,6 +270,7 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
     return okay ? (uint32_t)thePort : -1;
 }
 
+#warning this doesn't seem to count semaphores, or match lsof -p | wc -l, fix
 int YMGetNumberOfOpenFilesForCurrentProcess()
 {
     int nFiles = 0;

@@ -246,7 +246,7 @@ void _connected_func(YMSessionRef session, YMConnectionRef connection, __unused 
     
     if ( ! gIsServer ) {
         if ( YMSessionGetDefaultConnection(session) == connection ) {
-            YMStreamRef stream = YMConnectionCreateStream(connection, YMSTRC("outgoing"), YMCompressionLZ4);
+            YMStreamRef stream = YMConnectionCreateStream(connection, YMSTRC("outgoing"), YMCompressionNone);
             thread(run_client_loop, stream);
         }
     }
@@ -263,8 +263,6 @@ void _interrupted_func(__unused YMSessionRef session, __unused void* context)
 void _new_stream_func(__unused YMSessionRef session, __unused YMConnectionRef connection, YMStreamRef stream, __unused void* context)
 {
     printf("stream arrived\n");
-    char hello;
-    YMStreamReadUp(stream, (uint8_t *)&hello, 1, NULL);
     if ( gIsServer ) {
         thread(run_server_loop,stream);
     }

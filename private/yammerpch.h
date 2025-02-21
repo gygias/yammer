@@ -114,6 +114,7 @@
 	#define YM_STOMP_FILE(p,f)				{ result = open(p,(f)|O_CREAT|O_TRUNC,0644); if ( result != 0 ) { error = errno; errorStr = strerror(errno); } }
 	#define YM_REWIND_FILE(f)				{ result = (int)lseek(f,0,SEEK_SET); if ( result != 0 ) { error = errno; errorStr = strerror(errno); } }
 	#define YM_SEEK_FILE(f,o,r)				{ result = lseek(f,o,,r); if ( result != 0 ) { error = errno; errorStr = strerror(errno); } }
+	//#warning th[ese] could be optimized, at least for this platform
     #define YM_READ_FILE(fd,addr,count)		{ __r = read(fd, addr, count); if ( __r == -1 ) { result = -1; error = errno; errorStr = strerror(errno); } else { result = __r; } }
     #define YM_WRITE_FILE(fd,addr,count)	{ __w = write(fd,addr,count); if ( __w == -1 ) { result = -1; error = errno; errorStr = strerror(errno); } else { result = __w; } }
     #define YM_CLOSE_FILE(fd)				{ if ( gYMWatchFile != NULL_FILE && fd == gYMWatchFile ) abort(); result = close(fd); if ( result != 0 ) { error = errno; errorStr = strerror(error); } }

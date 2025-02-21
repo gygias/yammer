@@ -75,7 +75,7 @@ bool YMNoSecurityRead(__ym_security_provider_t *p, uint8_t *buffer, size_t bytes
 {
 	YM_IO_BOILERPLATE
     YM_READ_FILE(p->outFile, buffer, bytes);
-    //ymlog("%zd = read(%d,,%zu),p->outFile",result,p->outFile,bytes);
+    //ymlog("%zd = read(%d,,%zu)",result,p->outFile,bytes);
     return ( (size_t)result == bytes );
 }
 
@@ -83,7 +83,7 @@ bool YMNoSecurityWrite(__ym_security_provider_t *p, const uint8_t *buffer, size_
 {
     YM_IO_BOILERPLATE
     YM_WRITE_FILE(p->inFile, buffer, bytes);
-    //ymlog("%zd = write(%d,,%zu),p->outFile",result,p->inFile,bytes);
+    //ymlog("%zd = write(%d,,%zu)",result,p->inFile,bytes);
     return ( (size_t)result == bytes );
 }
 
