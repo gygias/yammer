@@ -58,7 +58,10 @@ ifeq ($(DEBUG),1)
 else
 	DBGO=-O3
 endif
-FLG=-Wall -include private/yammerpch.h -std=$(STD) $(DEFS) $(PT) -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast -fPIC
+ifeq ($(STACK),1)
+	STACKFLAG=-fstack-protector
+endif
+FLG=-Wall -include private/yammerpch.h -std=$(STD) $(DEFS) $(PT) -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast -fPIC $(STACKFLAG)
 DLIBS=-L. -lyammer
 
 

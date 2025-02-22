@@ -15,13 +15,15 @@
 #include <signal.h>
 #if defined(YMLINUX)
 # include <sys/select.h>
+# include <fcntl.h>
 #else
 # error implement me
 #endif
 
-//#define YM_DISPATCH_LOG
+#define YM_DISPATCH_LOG
 //#define YM_DISPATCH_LOG_1
-//#define YM_SOURCE_LOG
+#define YM_SOURCE_LOG
+//#define YM_SOURCE_LOG_point_5
 //#define YM_SOURCE_LOG_1
 //#define YM_SOURCE_LOG_2
 
@@ -73,7 +75,6 @@ typedef struct __ym_dispatch
     YMLockRef sourcesLock;
     YMThreadRef selectThread;
     YMPipeRef selectSignalPipe;
-    YMSemaphoreRef selectSignalSemaphore;
 } __ym_dispatch;
 typedef struct __ym_dispatch __ym_dispatch_t;
 __ym_dispatch_t *gDispatch = NULL;
@@ -97,7 +98,7 @@ YM_ENTRY_POINT(__ym_dispatch_user_service_loop);
 YM_ENTRY_POINT(__ym_dispatch_service_loop);
 
 __ym_dispatch_queue_t *__YMDispatchQueueInitCommon(YMStringRef name, YMDispatchQueueType type, ym_entry_point entry);
-void __YMDispatchQueueStop(__ym_dispatch_queue_t *q);
+void __YMDispatchQueueExitSync(__ym_dispatch_queue_t *q);
 
 void __ym_dispatch_sigalarm(int);
 
@@ -126,7 +127,6 @@ YM_ONCE_FUNC(__YMDispatchInitOnce,
     gDispatch->sourcesLock = NULL;
     gDispatch->selectThread = NULL;
     gDispatch->selectSignalPipe = NULL;
-    gDispatch->selectSignalSemaphore = NULL;
 })
 
 __ym_dispatch_queue_thread_t *__YMDispatchQueueThreadCreate(YMThreadRef thread)
@@ -149,7 +149,7 @@ void _YMDispatchQueueFree(YMDispatchQueueRef p_)
     if ( q->type == YMDispatchQueueGlobal || q->type == YMDispatchQueueMain )
         __YM_DISPATCH_CATCH_MISUSE(q);
 
-    __YMDispatchQueueStop(q);
+    __YMDispatchQueueExitSync(q);
     YMRelease(q->name);
     YMRelease(q->queueStack);
     YMRelease(q->queueSem);
@@ -350,7 +350,6 @@ YM_ONCE_FUNC(__YMDispatchSelectOnce,
     gDispatch->sourcesLock = YMLockCreateWithOptions(YMLockRecursive);
 
     gDispatch->selectSignalPipe = YMPipeCreate(NULL);
-    gDispatch->selectSignalSemaphore = YMSemaphoreCreate(0);
     YMStringRef name = YMSTRC("com.combobulated.dispatch.select");
     gDispatch->selectThread = YMThreadCreate(name,__ym_dispatch_source_select_loop,NULL);
     YMThreadStart(gDispatch->selectThread);
@@ -404,38 +403,33 @@ ym_dispatch_source_t YMAPI YMDispatchSourceCreate(YMDispatchQueueRef queue, ym_d
     YMLockUnlock(gDispatch->sourcesLock);
 
     if ( type == ym_dispatch_source_readable || type == ym_dispatch_source_writeable ) {
-        char signal[] = { '$' };
+        char signalBuf[] = { '$' };
         YMFILE signalFile = YMPipeGetInputFile(gDispatch->selectSignalPipe);
-        YM_WRITE_FILE(signalFile,signal,1);
+        YM_WRITE_FILE(signalFile,signalBuf,1);
         if ( result != 1 ) {
             printf("failed to $ignal $elect loop %d %d %s\n",signalFile,error,errorStr);
             abort();
         }
-
-        YMSemaphoreSignal(gDispatch->selectSignalSemaphore);
 #ifdef YM_SOURCE_LOG_1
-        printf("$ignaled $elect loop '$' %d for %p\n",signalFile,source);
+        else
+            printf("$->%d for %p\n",signalFile,source);
 #endif
     }
 
     return source;
 }
 
-void __YMDispatchQueueStop(__ym_dispatch_queue_t *q)
+void __YMDispatchQueueExitSync(__ym_dispatch_queue_t *q)
 {
-
+    ymerr("%s: %s!",__FUNCTION__,YMSTR(q->name));
     YMSelfLock(q);
-    uint8_t nThreads = YMArrayGetCount(q->queueThreads);
-    bool willExit = ! q->exit;
-    YMSelfUnlock(q);
-
-    if ( willExit ) {
-        q->exit = true;
-        while ( nThreads-- ) {
-            YMSemaphoreSignal(q->queueSem);
-            YMSemaphoreWait(q->queueExitSem);
-        }
+    q->exit = true;
+    for( int i = 0; i < YMArrayGetCount(q->queueThreads); ) {
+        YMSemaphoreSignal(q->queueSem);
+        YMSemaphoreWait(q->queueExitSem);
+        YMArrayRemove(q->queueThreads,i);
     }
+    YMSelfUnlock(q);
 }
 
 void YMAPI YMDispatchSourceDestroy(ym_dispatch_source_t source)
@@ -444,14 +438,6 @@ void YMAPI YMDispatchSourceDestroy(ym_dispatch_source_t source)
 
     __ym_dispatch_source_t *s = source;
 
-#warning watchlist recycle user threads
-    if ( s->queue->type == YMDispatchQueueUser ) {
-        __YMDispatchQueueStop(s->queue);
-        YMSemaphoreWait(s->servicingSem);
-    }
-
-    __YMDispatchUserFinalize(s->user);
-
     YMLockLock(gDispatch->sourcesLock);
     int64_t count = YMArrayGetCount(gDispatch->sources);
     const void *item = NULL;
@@ -459,7 +445,7 @@ void YMAPI YMDispatchSourceDestroy(ym_dispatch_source_t source)
         const void *anItem = YMArrayGet(gDispatch->sources,i);
         if ( anItem == s ) {
 #ifdef YM_SOURCE_LOG_1
-            printf("removed source with index %d[%ld]\n",i,count);
+            printf("removed source %ld with index %d[%ld]\n",s->data,i,count);
 #endif
             item = anItem;
             YMArrayRemove(gDispatch->sources,i);
@@ -470,10 +456,16 @@ void YMAPI YMDispatchSourceDestroy(ym_dispatch_source_t source)
 
     ymassert(item,"source %p not in list[%ld]",source,count);
 
-    if ( s->queue->type == YMDispatchQueueUser )
-        YMRelease(s->servicingSem);
-        //YMRelease(s->queue);
+#warning watchlist recycle user threads
+    if ( s->queue->type == YMDispatchQueueUser ) {
+        //__YMDispatchQueueExitSync(s->queue);
+        YMSemaphoreWait(s->servicingSem);
+    }
 
+    __YMDispatchUserFinalize(s->user);
+
+    YMRelease(s->servicingSem);
+    YMRelease(s->queue);
     YMFREE(s->user);
     YMFREE(s);
 }
@@ -507,26 +499,34 @@ void YMAPI YMDispatchAfter(YMDispatchQueueRef queue, ym_dispatch_user_t *userDis
         if ( ! gDispatch->nextTimer ) {
             gDispatch->nextTimer = timer;
         } else {
-            __ym_dispatch_timer_t *prevNextTimer = gDispatch->nextTimer;
-            for ( int i = 0; i < YMArrayGetCount(gDispatch->timers); i++ ) {
-                __ym_dispatch_timer_t *aTimer = (__ym_dispatch_timer_t *)YMArrayGet(gDispatch->timers,i);
-                if ( timespec->tv_sec < aTimer->time->tv_sec )
-                    gDispatch->nextTimer = timer;
-                else if ( timespec->tv_sec == aTimer->time->tv_sec ) {
-                    if ( timespec->tv_nsec < aTimer->time->tv_nsec ) {
-                        gDispatch->nextTimer = timer;
-                    } else if ( timespec->tv_nsec == aTimer->time->tv_nsec ) {
-                        if ( timespec->tv_nsec == NSEC_PER_SEC - 1 )
-                            timespec->tv_sec++;
-                        else
-                            timespec->tv_nsec++;
+            ComparisonResult result = YMTimevalCompare(timer->time, gDispatch->nextTimer->time);
+            if ( result == LessThan ) {
+                YMArrayInsert(gDispatch->timers,0,gDispatch->nextTimer);
+                gDispatch->nextTimer = timer;
+            } else if ( result == EqualTo ) {
+                timer->time->tv_nsec++;
+                YMArrayInsert(gDispatch->timers,0,timer);
+            } else {
+                bool added = false;
+                for ( int i = 0; i < YMArrayGetCount(gDispatch->timers); i++ ) {
+                    __ym_dispatch_timer_t *aTimer = YMArrayGet(gDispatch->timers,i);
+                    result = YMTimevalCompare(timer->time, aTimer->time);
+                    if ( result == LessThan ) {
+                        YMArrayInsert(gDispatch->timers,i,timer);
+                        added = true;
+                        break;
+                    } else if ( result == EqualTo ) {
+                        timer->time->tv_nsec++;
+                        YMArrayInsert(gDispatch->timers,i+1,timer);
+                        added = true;
+                        break;
                     }
                 }
-            }
 
-            if ( timer == gDispatch->nextTimer ) {
-                if ( prevNextTimer )
-                    YMArrayAdd(gDispatch->timers,prevNextTimer);
+                if ( ! added ) {
+                    YMArrayAdd(gDispatch->timers,timer);
+                }
+
             }
         }
 
@@ -562,7 +562,7 @@ void __ym_dispatch_sigalarm(int signum)
         abort();
     } else if ( ! gDispatch->nextTimer ) {
         printf("__ym_dispatch_sigalarm: next timer not set %ld\n",YMArrayGetCount(gDispatch->timers));
-        abort();
+        return;
     }
 
     __ym_dispatch_timer_t *thisTimer = gDispatch->nextTimer;
@@ -725,17 +725,31 @@ catch_return:
 
 YM_ENTRY_POINT(__ym_source_select_wrapper)
 {
+    YM_IO_BOILERPLATE
+
     __ym_dispatch_source_t *s = context;
 #ifdef YM_SOURCE_LOG_1
-    printf("%s: %d is servicing\n",__FUNCTION__,s->data);
+    printf("%s: %ld is servicing %p(%p)\n",__FUNCTION__,s->data,s->user->dispatchProc,s->user->context); fflush(stdout);
 #endif
 
     s->user->dispatchProc(s->user->context);
 
 #ifdef YM_SOURCE_LOG_1
-    printf("%s: %d is no longer servicing\n",__FUNCTION__,s->data);
+    printf("%s: %ld is no longer servicing %p(%p)\n",__FUNCTION__,s->data,s->user->dispatchProc,s->user->context);
 #endif
     YMSemaphoreSignal(s->servicingSem);
+
+    char buf[] = {'$'};
+    int syncFd = YMPipeGetInputFile(gDispatch->selectSignalPipe);
+    YM_WRITE_FILE(syncFd,buf,1);
+    if ( result != 1 ) {
+        printf("failed to alert signal loop init %d %s\n",error,errorStr);
+        abort();
+    }
+#ifdef YM_SOURCE_LOG_1
+    else
+        printf("$->%d\n",syncFd);
+#endif
 }
 
 YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
@@ -765,7 +779,13 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
         printf("#->%d\n",syncFd);
 #endif
 
-    uint64_t idx = 0;
+    int signalFlags = fcntl(signalFd, F_GETFL, 0);
+    ymassert(signalFlags != -1,"%s fcntl(syncFd,F_GETFL,0): %d %d %s",__FUNCTION__,signalFlags,errno,strerror(errno));
+    signalFlags = signalFlags | O_NONBLOCK;
+    int rFcntl = fcntl(signalFd, F_SETFL, signalFlags);
+    ymassert(rFcntl == 0,"%s fcntl(signalFd,F_SETFL,%0x): %d %d %s",__FUNCTION__,signalFlags,rFcntl,errno,strerror(errno));
+
+    uint64_t nServiced = 0, nIterations = 0, nTimeouts = 0, nSignals = 0, nBusySignals = 0, consecutiveFailures = 0;
     while ( keepGoing ) {
 		int nfds = 1;
         int maxFd = -1; // unused on win32, parameter only exists for compatibility
@@ -773,18 +793,19 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
 #define debug_timeout
 #ifdef debug_timeout
         struct timeval tv;
-        tv.tv_sec = 0;
-        tv.tv_usec = 10000;
+        tv.tv_sec = 1;
+        tv.tv_usec = 000000;
 #endif
 
         FD_ZERO(&readFds);
         FD_ZERO(&writeFds);
 
-        //FD_SET(signalFd, &readFds);
+        uint64_t nServicedThis = 0;
+
+        FD_SET(signalFd, &readFds);
 #ifdef YM_SOURCE_LOG_2
         printf("dispatch source select loop $%d\n",signalFd);
 #endif
-        //YMArrayRef selectSources = YMArrayCreate();
         YMLockLock(gDispatch->sourcesLock);
         {
             for ( int i = 0; i < YMArrayGetCount(gDispatch->sources); i++ ) {
@@ -806,7 +827,6 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
                         maxFd = anFd;
                     FD_SET(anFd, &readFds);
                     nfds++;
-                    //YMArrayAdd(selectSources,source);
 #ifdef YM_SOURCE_LOG_2
                     printf(" r%d",anFd);
 #endif
@@ -816,7 +836,6 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
                     FD_SET(anFd, &writeFds);
                     nfds++;
 #ifdef YM_SOURCE_LOG_2
-                    //YMArrayAdd(selectSources,source);
                     printf(" w%d",anFd);
 #endif
                 }
@@ -836,7 +855,7 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
 #ifdef debug_timeout
 //#define debug_timeout_once
 #ifdef debug_timeout_once
-                                     (idx > 0) ? NULL : &tv
+                                     (nServiced > 0) ? NULL : &tv
 #else
                                                     &tv
 #endif
@@ -844,24 +863,16 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
                             NULL
 #endif
                                 );
-#ifdef YM_SOURCE_LOG_1
-        printf(">>>source select: %d<<<\n",result);
+#ifdef YM_SOURCE_LOG_point_5
+        if ( nIterations % 1000 == 0 )
+            printf(">>> source select: %zd (%lu serviced, %lu loops (%0.2f%%) %lu timeouts (%0.2f%%), %lu $ignals (%0.2f busy))<<<\n",result,
+                nServiced,nIterations,nIterations>0?100*((double)nServiced/(double)nIterations):0.0,
+                nTimeouts,nIterations>0?100*((double)nTimeouts/(double)nServiced):0.0,
+                nSignals,nSignals>0?100*((double)nBusySignals/(double)nSignals):0.0);
 #endif
         if (result > 0) {
             YMLockLock(gDispatch->sourcesLock);
             {
-                if ( FD_ISSET(signalFd,&readFds) ) {
-                    int i = 0;
-                    while ( YMSemaphoreTest(gDispatch->selectSignalSemaphore, false) ) {
-                        char buf[1];
-                        YM_READ_FILE(signalFd,buf,1);
-                        i++;
-                    }
-#ifdef YM_SOURCE_LOG_1
-                    printf(">>> %d select loop %cignal%s consumed <<<\n",i,buf,i>1?"s":"");
-#endif
-                }
-
                 for ( int i = 0; i < YMArrayGetCount(gDispatch->sources); i++ ) {
                     __ym_dispatch_source_t *source = (__ym_dispatch_source_t *)YMArrayGet(gDispatch->sources,i);
                     YMFILE anFd = (YMFILE)source->data;
@@ -869,7 +880,7 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
                         if ( FD_ISSET(anFd, &readFds) ) {
                             bool serviceable = YMSemaphoreTest(source->servicingSem, false);
 #ifdef YM_SOURCE_LOG_1
-                            printf(">>>%sreadable fd %d %s %p %p %p %p<<<\n",serviceable?"":"BUSY",anFd,YMSTR(source->queue->name),source,source->user,source->user->dispatchProc,source->user->context);
+                            printf(">>> %sreadable fd %d %s %p %p %p %p<<<\n",serviceable?"":"BUSY ",anFd,YMSTR(source->queue->name),source,source->user,source->user->dispatchProc,source->user->context);
 #endif
 //#define source_dispatch_sync
 #ifndef source_dispatch_direct
@@ -889,6 +900,7 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
 #else
                             source->user->dispatchProc(source->user->context);
 #endif
+                            nServicedThis++;
                         }
                     } else if ( source->type == ym_dispatch_source_writeable ) {
                         if( FD_ISSET(anFd, &writeFds) ) {
@@ -914,13 +926,44 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
 #else
                             source->user->dispatchProc(source->user->context);
 #endif
+                            nServicedThis++;
                         }
                     }
                 }
+
+                if ( FD_ISSET(signalFd,&readFds) ) {
+                    int i = 0;
+                    char flushBuf[1];
+                    while(1) {
+                        YM_READ_FILE(signalFd,flushBuf,1);
+                        if ( result == -1 && errno == EAGAIN )
+                            break;
+                        ymassert(result==1,"%s YM_READ_FILE(signalFd,,)[%d] %d %d %s",__FUNCTION__,i,result,errno,strerror(errno));
+
+                        if ( flushBuf[0] == 'x' ) {
+                            printf("select thread signaled to xit\n");
+                            keepGoing = false;
+                            break;
+                        }
+
+                        i++;
+                        nSignals++;
+                    }
+
+#ifdef YM_SOURCE_LOG_2
+                    printf(">>> %d select %cignal%s consumed <<<\n",i,flushBuf[0],i>1?"s":"");
+#endif
+                    if ( i > 0 && nServicedThis == 0 ) nBusySignals++;
+                }
+
+                nServiced += nServicedThis;
             }
             YMLockUnlock(gDispatch->sourcesLock);
+            consecutiveFailures = 0;
         } else if (result == 0) {
             // timeout elapsed but no fd-s were signalled.
+            consecutiveFailures = 0;
+            nTimeouts++;
         } else {
 
             #warning add YM_SELECT
@@ -935,13 +978,72 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
 			errorStr = strerror(errno);
 #endif
             printf("select failed from n%d fds: %d: %d (%s)\n",nfds,result,error,errorStr);
-            //keepGoing = false;
+            consecutiveFailures++;
+            if ( consecutiveFailures > 1 )
+                keepGoing = false;
         }
-        idx++;
+        nIterations++;
     }
-#ifdef YM_SOURCE_LOG
-    printf("dispatch source select loop exiting\n");
-#endif
+
+    printf("dispatch select exiting: %lu serviced, %lu loops (%0.2f%%) %lu timeouts (%0.2f%%), %lu $ignals (%0.2f busy)\n",
+            nServiced,nIterations,nIterations>0?100*((double)nServiced/(double)nIterations):0.0,
+            nTimeouts,nIterations>0?100*((double)nTimeouts/(double)nServiced):0.0,
+            nSignals,nSignals>0?100*((double)nBusySignals/(double)nSignals):0.0);
+    fflush(stdout);
+}
+
+YM_ONCE_OBJ(gDispatchSourcesResetOnce);
+static double gDispatchSourcesResetAfter = 0.0;
+
+YM_ENTRY_POINT(_ym_dispatch_sources_reset_after);
+YM_ENTRY_POINT(_ym_dispatch_sources_reset_after)
+{
+    printf("*** %s ***\n",__FUNCTION__); fflush(stdout);
+    gDispatchGlobalInitSelect = PTHREAD_ONCE_INIT;
+    gDispatchSourcesResetOnce = PTHREAD_ONCE_INIT;
+}
+
+YM_ENTRY_POINT(_ym_dispatch_sources_signal_after);
+YM_ENTRY_POINT(_ym_dispatch_sources_signal_after)
+{
+    YM_IO_BOILERPLATE
+
+    char buf = 'x';
+    YMFILE signalFile = YMPipeGetInputFile(gDispatch->selectSignalPipe);
+    YM_WRITE_FILE(signalFile,&buf,1);
+    if ( result != 1 ) {
+        printf("*** failed to $ignal $elect loop to xit %d %d %s***\n",signalFile,error,errorStr);
+    }
+    else
+        printf("*** x->%d for xit ***\n",signalFile);
+
+    ym_dispatch_user_t *after = YMALLOC(sizeof(ym_dispatch_user_t));
+    after->dispatchProc = _ym_dispatch_sources_reset_after;
+    after->context = NULL;
+    after->onCompleteProc = NULL;
+    after->mode = ym_dispatch_user_context_noop;
+    YMDispatchAfter(YMDispatchGetGlobalQueue(),after,gDispatchSourcesResetAfter);
+}
+
+YM_ONCE_DEF(__YMDispatchSourcesResetOnce);
+YM_ONCE_FUNC(__YMDispatchSourcesResetOnce,
+{
+    printf("%s\n",__FUNCTION__);
+
+    ym_dispatch_user_t *after = YMALLOC(sizeof(ym_dispatch_user_t));
+    after->dispatchProc = _ym_dispatch_sources_signal_after;
+    after->context = NULL;
+    after->onCompleteProc = NULL;
+    after->mode = ym_dispatch_user_context_noop;
+    YMDispatchAfter(YMDispatchGetGlobalQueue(),after,gDispatchSourcesResetAfter / 2);
+    YMFREE(after);
+})
+
+// wow, what a hack for client and server running in the same process!
+void _YMDispatchSourcesReset(double seconds)
+{
+    gDispatchSourcesResetAfter = seconds;
+    YM_ONCE_DO(gDispatchSourcesResetOnce, __YMDispatchSourcesResetOnce);
 }
 
 void YMDispatchMain()

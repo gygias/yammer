@@ -378,7 +378,6 @@ bool YMSessionConnectToPeer(YMSessionRef s_, YMPeerRef peer, bool sync)
         bool existing = false;
         YMDictionaryEnumRef denum = YMDictionaryEnumeratorBegin(s->connectionsByAddress);
         while ( denum ) {
-            #warning comparing the wrong thing here?
             if ( YMAddressIsEqualIncludingPort(address, (YMAddressRef)denum->value, false) ) {
                 YMDictionaryEnumeratorEnd(denum);
                 existing = true;
@@ -391,7 +390,7 @@ bool YMSessionConnectToPeer(YMSessionRef s_, YMPeerRef peer, bool sync)
             continue;
         }
         
-        YMConnectionRef newConnection = YMConnectionCreate(address, YMConnectionStream, YMInsecure, true);
+        YMConnectionRef newConnection = YMConnectionCreate(address, YMConnectionStream, YMTLS, true);
         
         context = (__ym_session_connect_t *)YMALLOC(sizeof(__ym_session_connect_t));
         context->session = YMRetain(s);
@@ -656,7 +655,7 @@ YM_ENTRY_POINT(__ym_session_init_incoming_connection_proc)
         goto catch_release;
     }
     
-    newConnection = YMConnectionCreateIncoming(socket, peerAddress, YMConnectionStream, YMInsecure, true);
+    newConnection = YMConnectionCreateIncoming(socket, peerAddress, YMConnectionStream, YMTLS, true);
     if ( ! newConnection ) {
         ymlog("failed to create new connection");
 		if ( s->connectFailedFunc )
