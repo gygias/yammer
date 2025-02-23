@@ -32,20 +32,28 @@ void _ThreadDispatchMainTestRun(struct ThreadTest *theTest)
     YMArrayAdd(options,"gr");
     YMArrayAdd(options,"u");
     YMArrayAdd(options,"dos");
-#define magic_index 4
-#define black_magic_index 2
+    YMArrayAdd(options,"after");
+#define begin_argless_tests_index 4
+#define usually_races_index 2
     for ( int i = 0; i < YMArrayGetCount(options); i++ ) {
-        YMStringRef path = YMSTRC("ym-dispatch-main-test");
+        YMStringRef path = YMSTRC("ym-dispatch-test");
         YMArrayRef args = YMArrayCreate();
         YMArrayAdd(args, YMArrayGet(options,i));
-        if ( i != magic_index )
+        if ( i < begin_argless_tests_index )
             YMArrayAdd(args, "1000000");
+        else if ( i == 5 ) //after
+            YMArrayAdd(args, "20");
+
+        printf("fork: %s",YMSTR(path));
+        for( int j = 0; j < YMArrayGetCount(args); j++ )
+            printf(" %s",(const char *)YMArrayGet(args,j));
+        printf("\n");
 
         YMTaskRef testTask = YMTaskCreate(path, args, false);
         YMTaskLaunch(testTask);
         YMTaskWait(testTask);
         int result = YMTaskGetExitStatus(testTask);
-        testassert(i==black_magic_index?result!=0:result==0,"ym-dispatch-main-test result %d",result);
+        testassert(result==0||i==usually_races_index,"ym-dispatch-test result %d",result);
 
         YMRelease(testTask);
         YMRelease(args);

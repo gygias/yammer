@@ -65,7 +65,7 @@ FLG=-Wall -include private/yammerpch.h -std=$(STD) $(DEFS) $(PT) -Wno-pointer-to
 DLIBS=-L. -lyammer
 
 
-all: $(OUT) $(TGT) ymtest ymchat ym-dispatch-main-test pta
+all: $(OUT) $(TGT) ymtest ymchat ym-dispatch-test pta
 
 clean:
 	rm -r "$(OUT)"
@@ -97,11 +97,11 @@ ymchat: $(LTGT) chat.o
 chat.o:
 	$(CC) -c misc/chat/main.c $(CCF) -o "$(OUT)/$@" $(INC) $(FLG) $(DBGO)
 
-ym-dispatch-main-test: $(LTGT) ym-dispatch-main-test.o
-	cd "$(OUT)" ;	$(CC) -o $@ $(PT) ym-dispatch-main-test.o $(DLIBS) $(DBGO) $(TDEP)
+ym-dispatch-test: $(LTGT) ym-dispatch-test.o
+	cd "$(OUT)" ;	$(CC) -o $@ $(PT) ym-dispatch-test.o $(DLIBS) $(DBGO) $(TDEP)
 
-ym-dispatch-main-test.o:
-	$(CC) -c test/ym-dispatch-main-test.c -o "$(OUT)/$@" $(CCF) $(INC) $(FLG) $(DBGO)
+ym-dispatch-test.o:
+	$(CC) -c test/ym-dispatch-test.c -o "$(OUT)/$@" $(CCF) $(INC) $(FLG) $(DBGO)
 
 pta: $(LTGT) pta.o
 	cd "$(OUT)" ; $(CC) -o $@ $(PT) $(DLIBS) $(DBGO) pta.o

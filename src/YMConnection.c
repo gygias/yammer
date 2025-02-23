@@ -10,7 +10,6 @@
 #include "YMConnectionPriv.h"
 
 #include "YMPlexer.h"
-#include "YMSocket.h"
 #include "YMSecurityProvider.h"
 #include "YMTLSProvider.h"
 #include "YMUtilities.h"
@@ -41,13 +40,16 @@ typedef enum {
 } YMIFAPType;
 
 typedef enum {
-    YMConnectionCommandIFExchange = -1,
-    YMConnectionCommandSample = -2,
+    YMConnectionCommandOkay = -1,
+    YMConnectionCommandError = -2,
+    YMConnectionCommandSecurity = -3,
+    YMConnectionCommandIFExchange = -4,
+    YMConnectionCommandSample = -5,
     YMConnectionCommandInit = INT32_MIN
 } __YMConnectionCommand;
 
 typedef struct __ym_connection_command {
-    __YMConnectionCommand command;
+    int32_t command;
     uint32_t userInfo;
 } __ym_connection_command;
 
@@ -58,7 +60,6 @@ typedef struct __ym_connection
     _YMType _common;
     
 	YMSOCKET socket;
-    YMSocketRef ymSocket;
     bool isIncoming;
     YMIFAPType apType;
     YMStringRef localIFName;
@@ -102,27 +103,33 @@ void ym_connection_new_stream_proc(YMPlexerRef plexer, YMStreamRef stream, void 
 void ym_connection_stream_closing_proc(YMPlexerRef plexer, YMStreamRef stream, void *context);
 void ym_connection_interrupted_proc(YMPlexerRef plexer, void *context);
 
-__ym_connection_t *__YMConnectionCreate(bool isIncoming, YMAddressRef peerAddress, YMConnectionType type, YMConnectionSecurityType securityType, bool closeWhenDone);
+__ym_connection_t *__YMConnectionCreate(bool isIncoming, YMAddressRef peerAddress, YMConnectionType type, bool closeWhenDone);
 bool __YMConnectionDestroy(__ym_connection_t *, bool explicit);
+YMSecurityProviderRef __YMConnectionInitSecurity(__ym_connection_t *, YMSOCKET socket, int securityType, bool asServer);
 int64_t __YMConnectionDoSample(__ym_connection_t *, YMSOCKET socket, uint32_t length, bool asServer);
 bool __YMConnectionDoIFExchange(__ym_connection_t *, YMSOCKET socket, bool asServer);
 bool __YMConnectionInitCommon(__ym_connection_t *, YMSOCKET newSocket, bool asServer);
 
+bool __YMConnectionInitializeIncomingStream(__ym_connection_t *c, YMStreamRef stream);
+bool __YMConnectionInitializeOutgoingStream(__ym_connection_t *c, YMStreamRef stream, YMCompressionType compression);
+
 bool __YMConnectionForward(YMConnectionRef connection, bool toFile, YMStreamRef stream, YMFILE file, const uint64_t *nBytesPtr, bool sync, ym_connection_forward_context_t*);
 void _ym_connection_forward_callback_proc(void *context, YMIOResult result, uint64_t bytesForwarded);
 
-void ym_connection_socket_disconnected(YMSocketRef, const void *);
-
 YMConnectionRef YMConnectionCreate(YMAddressRef peerAddress, YMConnectionType type, YMConnectionSecurityType securityType, bool closeWhenDone)
 {
-    __ym_connection_t *c = __YMConnectionCreate(false, peerAddress, type, securityType, closeWhenDone);
+    if ( securityType < __YMConnectionSecurityTypeMin || securityType > __YMConnectionSecurityTypeMax )
+        return NULL;
+
+    __ym_connection_t *c = __YMConnectionCreate(false, peerAddress, type, closeWhenDone);
     c->socket = NULL_SOCKET;
+    c->securityType = securityType;
     return c;
 }
 
-YMConnectionRef YMConnectionCreateIncoming(YMSOCKET socket, YMAddressRef peerAddress, YMConnectionType type, YMConnectionSecurityType securityType, bool closeWhenDone)
+YMConnectionRef YMConnectionCreateIncoming(YMSOCKET socket, YMAddressRef peerAddress, YMConnectionType type, bool closeWhenDone)
 {
-    __ym_connection_t *c = __YMConnectionCreate(true, peerAddress, type, securityType, closeWhenDone);
+    __ym_connection_t *c = __YMConnectionCreate(true, peerAddress, type, closeWhenDone);
     bool commonInitOK = __YMConnectionInitCommon(c, socket, true);
     if ( ! commonInitOK ) {
         ymlog("server init failed");
@@ -133,11 +140,10 @@ YMConnectionRef YMConnectionCreateIncoming(YMSOCKET socket, YMAddressRef peerAdd
     return c;
 }
 
-__ym_connection_t *__YMConnectionCreate(bool isIncoming, YMAddressRef address, YMConnectionType type, YMConnectionSecurityType securityType, bool closeWhenDone)
+__ym_connection_t *__YMConnectionCreate(bool isIncoming, YMAddressRef address, YMConnectionType type, bool closeWhenDone)
 {
+    // not sure what i had envisioned here so long ago
     if ( type < __YMConnectionTypeMin || type > __YMConnectionTypeMax )
-        return NULL;
-    if ( securityType < __YMConnectionSecurityTypeMin || securityType > __YMConnectionSecurityTypeMax )
         return NULL;
     
     __ym_connection_t *c = (__ym_connection_t *)_YMAlloc(_YMConnectionTypeID,sizeof(__ym_connection_t));
@@ -147,7 +153,6 @@ __ym_connection_t *__YMConnectionCreate(bool isIncoming, YMAddressRef address, Y
     c->isIncoming = isIncoming;
     c->address = (YMAddressRef)YMRetain(address);
     c->type = type;
-    c->securityType = securityType;
     c->closeWhenDone = closeWhenDone;
     
     c->newFunc = NULL;
@@ -351,6 +356,36 @@ catch_return:;
     return okay;
 }
 
+YMSecurityProviderRef __YMConnectionInitSecurity(__ym_connection_t *c, YMSOCKET socket, int securityType, bool asServer)
+{
+    YMSecurityProviderRef security = NULL;
+
+    switch( securityType ) {
+        case YMInsecure:
+            security = YMSecurityProviderCreate(socket,socket);
+            break;
+        case YMTLS:
+            security = (YMSecurityProviderRef)YMTLSProviderCreate(socket, socket, asServer);
+            break;
+        default:
+            ymerr("security init: unknown type %d",securityType);
+            return NULL;
+    }
+
+    if ( ! security ) {
+        ymerr("security init: failed to instantiate");
+        return NULL;
+    }
+
+    bool securityOK = YMSecurityProviderInit(security);
+    if ( ! securityOK ) {
+        ymerr("security type %d failed to initialize",securityType);
+        return NULL;
+    }
+
+    return security;
+}
+
 int64_t __YMConnectionDoSample(__unused __ym_connection_t *c, YMSOCKET socket, uint32_t length, bool asServer)
 {
     YM_IO_BOILERPLATE
@@ -460,6 +495,41 @@ bool __YMConnectionInitCommon(__ym_connection_t *c, YMSOCKET newSocket, bool asS
     }
     
     if ( asServer ) {
+
+        YM_READ_SOCKET(newSocket, (char *)&command, sizeof(command));
+        if ( result != sizeof(command) ) {
+            ymerr("server failed to recv security: %zd %d %s",result,error,errorStr);
+            YM_CLOSE_SOCKET(newSocket);
+            return false;
+        }
+
+        if ( ( command.command != YMConnectionCommandSecurity ) ||
+                ( ( command.userInfo != YMTLS ) && ( command.userInfo != YMInsecure ) ) ) {
+            ymerr("server unknown security init %d %u",command.command,command.userInfo);
+            YM_CLOSE_SOCKET(newSocket);
+            return false;
+        }
+
+        c->securityType = command.userInfo;
+
+        command.command = YMConnectionCommandOkay;
+        command.userInfo = 0;
+
+        YM_WRITE_SOCKET(newSocket, (const char *)&command, sizeof(command));
+        if ( result != sizeof(command) ) {
+            ymerr("server failed to send security ok %zd %d %s",result,error,errorStr);
+            YM_CLOSE_SOCKET(newSocket);
+            return false;
+        }
+
+        ymlog("server initializing security %d",c->securityType);
+        security = __YMConnectionInitSecurity(c, newSocket, c->securityType, true);
+        if ( ! security ) {
+            ymerr("server failed to init security %d",c->securityType);
+            YM_CLOSE_SOCKET(newSocket);
+            return false;
+        }
+
         // when/if optional, sampling is done serially upon connection before the "line" is released to the client.
         // can't assume client will continuously send/receive data to the point that an accurate sample is gathered,
         // yet don't want client data borrowing throughput from the sample.
@@ -472,10 +542,10 @@ bool __YMConnectionInitCommon(__ym_connection_t *c, YMSOCKET newSocket, bool asS
             else if ( i == 1 )  { command.command = YMConnectionCommandSample; command.userInfo = sampleSize; }
             else                { command.command = YMConnectionCommandInit; command.userInfo = 0; }
             
-            YM_WRITE_SOCKET(newSocket, (const char *)&command, sizeof(command));
-            if ( result != sizeof(command) ) {
+            bool okay = YMSecurityProviderWrite(security, (const uint8_t *)&command, sizeof(command));
+            if ( ! okay ) {
                 ymerr("connection failed to initialize: %d %d %s",i,error,errorStr);
-                YM_CLOSE_SOCKET(newSocket);
+                YMSecurityProviderClose(security);
                 return false;
             }
             
@@ -488,24 +558,55 @@ bool __YMConnectionInitCommon(__ym_connection_t *c, YMSOCKET newSocket, bool asS
                 if ( sample >= 0 ) {
                     conCmdOkay = true;
                     c->sample = sample;
-                } else
-                    ymerr("sample failed");
+                } else {
+                    YMSecurityProviderClose(security);
+                    return false;
+                }
             }
             
             if ( ! conCmdOkay ) {
                 ymerr("connection command failed");
-                YM_CLOSE_SOCKET(newSocket);
+                YMSecurityProviderClose(security);
                 return false;
             }
         }
         
         
     } else {
+        command.command = YMConnectionCommandSecurity;
+        command.userInfo = c->securityType;
+        YM_WRITE_SOCKET(newSocket, (const char *)&command, sizeof(command));
+        if ( result != sizeof(command) ) {
+            ymerr("client failed to send security: %zd %d %s",result,error,errorStr);
+            YM_CLOSE_SOCKET(newSocket);
+            return false;
+        }
+
+        YM_READ_SOCKET(newSocket, (char *)&command, sizeof(command));
+        if ( result != sizeof(command) ) {
+            ymerr("failed to read security response: %zd %d %s",result,error,errorStr);
+            return false;
+        }
+
+        if ( command.command != YMConnectionCommandOkay ) {
+            ymerr("failed to init security: %zd %d %s",result,error,errorStr);
+            return false;
+        }
+
+        ymlog("client initializing security %d",c->securityType);
+        security = __YMConnectionInitSecurity(c,newSocket,c->securityType,false);
+        if ( ! security ) {
+            ymerr("client failed to init security %d",c->securityType);
+            YM_CLOSE_SOCKET(newSocket);
+            return false;
+        }
+
         while(1) {
-            YM_READ_SOCKET(newSocket, (char *)&command, sizeof(command));
-            if ( result != sizeof(command) ) {
+
+            bool okay = YMSecurityProviderRead(security, (uint8_t *)&command, sizeof(command));
+            if ( ! okay ) {
                 ymerr("connection failed to initialize: %d %s",error,errorStr);
-                YM_CLOSE_SOCKET(newSocket);
+                YMSecurityProviderClose(security);
                 return false;
             }
             
@@ -515,8 +616,10 @@ bool __YMConnectionInitCommon(__ym_connection_t *c, YMSOCKET newSocket, bool asS
                 if ( sample >= 0 ) {
                     conCmdOkay = true;
                     c->sample = sample;
-                } else
-                    ymerr("sample failed");
+                } else {
+                    YMSecurityProviderClose(security);
+                    return false;
+                }
             } else if ( command.command == YMConnectionCommandIFExchange ) {
                 ymlog("performing ifinfo exchange");
                 conCmdOkay = __YMConnectionDoIFExchange(c, newSocket, false);
@@ -525,7 +628,7 @@ bool __YMConnectionInitCommon(__ym_connection_t *c, YMSOCKET newSocket, bool asS
                 break;
             } else {
                 ymerr("unknown initialization command: %d",command.command);
-                YM_CLOSE_SOCKET(newSocket);
+                YMSecurityProviderClose(security);
                 return false;
             }
             
@@ -537,40 +640,7 @@ bool __YMConnectionInitCommon(__ym_connection_t *c, YMSOCKET newSocket, bool asS
         }
     }
     
-    YMFILE inputFile;
-    YMFILE outputFile;
-//#define YM_USE_SOCKETS 1
-#if defined(YM_USE_SOCKETS)
-    c->ymSocket = YMSocketCreate(ym_connection_socket_disconnected, c);
-    bool okay = YMSocketSet(c->ymSocket, newSocket);
-    ymassert(okay,"connection set socket");
-    
-    inputFile = YMSocketGetInput(c->ymSocket);
-    outputFile = YMSocketGetOutput(c->ymSocket);
-#else
-    inputFile = newSocket;
-    outputFile = newSocket;
-#endif
-    
-    switch( c->securityType ) {
-        case YMInsecure:
-            security = YMSecurityProviderCreate(outputFile,inputFile);
-            break;
-        case YMTLS:
-            security = (YMSecurityProviderRef)YMTLSProviderCreate(outputFile, inputFile, asServer);
-            break;
-        default:
-            ymerr("unknown security type");
-            goto rewind_fail;
-    }
-    
-    bool securityOK = YMSecurityProviderInit(security);
-    if ( ! securityOK ) {
-        ymerr("security type %d failed to initialize",c->securityType);
-        goto rewind_fail;
-    }
-    
-    plexer = YMPlexerCreate(YMAddressGetDescription(c->address), security, asServer, inputFile);
+    plexer = YMPlexerCreate(YMAddressGetDescription(c->address), security, asServer, newSocket);
 	YMPlexerSetNewIncomingStreamFunc(plexer, ym_connection_new_stream_proc);
 	YMPlexerSetInterruptedFunc(plexer, ym_connection_interrupted_proc);
 	YMPlexerSetStreamClosingFunc(plexer, ym_connection_stream_closing_proc);
@@ -668,13 +738,27 @@ YMAddressRef YMConnectionGetAddress(YMConnectionRef c_)
     return c->address;
 }
 
-#define YMStreamInitBuiltinVersion 1
+#define YMConnectionStreamInitBuiltinVersion 1
 typedef struct _ymconnection_stream_init
 {
     uint16_t version;
     uint16_t compressionType;
 } _ymconnection_stream_init;
 typedef struct _ymconnection_stream_init _ymconnection_stream_init_t;
+
+typedef enum _yconnection_stream_init_response_messages
+{
+    ymConnectionStreamError = 0,
+    ymConnectionStreamOkay = 1,
+    ymConnectionStreamVersionUnsupported = 2,
+    ymConnectionStreamCompressionUnsupported = 3
+} _yconnection_stream_init_response_messages;
+
+typedef struct _ymconnection_stream_init_response
+{
+    uint16_t message;
+} _ymconnection_stream_init_response;
+typedef struct _ymconnection_stream_init_response _ymconnection_stream_init_response_t;
 
 YMStreamRef YMAPI YMConnectionCreateStream(YMConnectionRef c_, YMStringRef name, YMCompressionType compression)
 {
@@ -685,18 +769,108 @@ YMStreamRef YMAPI YMConnectionCreateStream(YMConnectionRef c_, YMStringRef name,
     
     YMStreamRef stream = YMPlexerCreateStream(c->plexer, name);
     
-#warning deadlocks if done synchronously within plexer_notify_new
-    /*_ymconnection_stream_init_t init = { YMStreamInitBuiltinVersion, compression }; // endian?
-    YMIOResult ymResult = YMStreamWriteDown(stream, (const uint8_t *)&init, sizeof(_ymconnection_stream_init_t));
-    if ( ymResult != YMIOSuccess )
-        ymerr("outgoing stream init failed");
-    
-    ymlog("%s sent initialization %hu %hu",__FUNCTION__,init.version,init.compressionType);*/
-
-    bool okay = _YMStreamSetCompression(stream,compression);
-    ymassert(okay,"set compression for outgoing stream %s",YMSTR(name));
+#warning plexer should be changed to call this back such that we can return bool and not need to CloseStream
+    if ( ! __YMConnectionInitializeOutgoingStream(c, stream, compression) ) {
+        ymerr("outgoing stream \"%s\" failed to initialize",YMSTR(name));
+#warning test this case
+        YMPlexerCloseStream(c->plexer,stream);
+        return NULL;
+    }
 
     return stream;
+}
+
+bool __YMConnectionInitializeOutgoingStream(__ym_connection_t *c, YMStreamRef stream, YMCompressionType compression)
+{
+    bool okay = false;
+
+    _ymconnection_stream_init_t init = { YMConnectionStreamInitBuiltinVersion, compression }; // endian?
+    YMIOResult ymResult = YMStreamWriteDown(stream, (const uint8_t *)&init, sizeof(_ymconnection_stream_init_t));
+    if ( ymResult != YMIOSuccess ) {
+        ymerr("outgoing stream init send failed: %d",ymResult);
+        goto catch_return;
+    }
+    
+    ymdbg("%s sent initialization %hu %hu",__FUNCTION__,init.version,init.compressionType);
+
+    okay = _YMStreamSetCompression(stream,compression);
+    if ( ! okay ) {
+        ymerr("failed to set compression %d for outgoing stream",compression);
+        goto catch_return;
+    }
+
+    _ymconnection_stream_init_response_t response;
+    ymResult = YMStreamReadUp(stream, (uint8_t *)&response, sizeof(response), NULL);
+    if ( ymResult != YMIOSuccess ) {
+        ymerr("outgoing stream init response failed: %d",ymResult);
+        goto catch_return;
+    }
+
+    if ( response.message == ymConnectionStreamVersionUnsupported ) {
+        ymerr("outgoing stream init failed: unsupported version %d",YMConnectionStreamInitBuiltinVersion);
+        goto catch_return;
+    } else if ( response.message == ymConnectionStreamCompressionUnsupported ) {
+        ymerr("outgoing stream init failed: unsupported compression %d",compression);
+        goto catch_return;
+    } else if ( response.message == ymConnectionStreamOkay) {
+        ymdbg("outgoing stream initialized: v%d %d",YMConnectionStreamInitBuiltinVersion,compression);
+        okay = true;
+    } else {
+        ymerr("outgoing stream init failed: unknown error %d",response.message);
+    }
+
+catch_return:
+    return okay;
+}
+
+bool __YMConnectionInitializeIncomingStream(__ym_connection_t *c, YMStreamRef stream)
+{
+    bool okay = false;
+
+    _ymconnection_stream_init_t init; // endian?
+    YMIOResult ymResult = YMStreamReadUp(stream, (uint8_t *)&init, sizeof(_ymconnection_stream_init_t), NULL);
+    if ( ymResult != YMIOSuccess ) {
+        ymerr("incoming stream init recv failed: %d",ymResult);
+        goto catch_return;
+    }
+
+    ymdbg("%s received initialization %hu %hu",__FUNCTION__,init.version,init.compressionType);
+
+    _ymconnection_stream_init_response_t response = { ymConnectionStreamOkay };
+
+    if ( init.version != YMConnectionStreamInitBuiltinVersion ) {
+        ymerr("incoming stream version unsupported");
+        response.message = ymConnectionStreamVersionUnsupported;
+        goto catch_respond;
+    }
+
+    if ( ( init.compressionType != YMCompressionNone ) && ( init.compressionType != YMCompressionLZ4) ) {
+        ymerr("incoming stream unsupported compression: %d",init.compressionType);
+        response.message = ymConnectionStreamCompressionUnsupported;
+        goto catch_respond;
+    }
+
+    okay = _YMStreamSetCompression(stream,init.compressionType);
+    if ( ! okay ) {
+        ymerr("failed to set compression %d for incoming stream",init.compressionType);
+        response.message = ymConnectionStreamError;
+        goto catch_respond;
+    }
+
+catch_respond:
+    ymResult = YMStreamWriteDown(stream,(const uint8_t *)&response,sizeof(response));
+    if ( ymResult != YMIOSuccess ) {
+        ymerr("incoming stream response send failed: %d (%hu)",ymResult,response.message);
+    }
+
+    okay = ( response.message == ymConnectionStreamOkay );
+
+    if ( okay ) {
+        ymdbg("incoming stream initialized: v%d %d",YMConnectionStreamInitBuiltinVersion,init.compressionType);
+    }
+
+catch_return:
+    return okay;
 }
 
 void YMConnectionCloseStream(YMConnectionRef c_, YMStreamRef stream)
@@ -778,17 +952,13 @@ void ym_connection_new_stream_proc(__unused YMPlexerRef plexer,YMStreamRef strea
     __ym_connection_t *c = (__ym_connection_t *)context;
     ymdbg("%s %p %p %p",__FUNCTION__,plexer,stream,context);
 
-#warning deadlocks if done synchronously within plexer_notify_new
-    _ymconnection_stream_init_t init = { 0, YMCompressionNone };
-    /*uint16_t outLen = 0;
-    YMIOResult ymResult = YMStreamReadUp(stream, (uint8_t *)&init, sizeof(init), &outLen);
-    if ( ymResult != YMIOSuccess || outLen != sizeof(init) )
-        ymerr("incoming stream init failed");
-    ymassert(init.version == YMStreamInitBuiltinVersion, "the installed version of yammer doesn't support stream init %u",init.version);*/
-    bool okay = _YMStreamSetCompression(stream, init.compressionType);
-    ymassert(okay,"set compression for outgoing stream");
-    
-    ymdbg("%s initialized %hu %hu (%p)",__FUNCTION__,init.version,init.compressionType,c->newFunc);
+    bool okay = __YMConnectionInitializeIncomingStream(c,stream);
+    if ( ! okay ) {
+        #warning plexer should be changed to call this back such that we can return bool and not need to CloseStream
+        YMPlexerCloseStream(plexer,stream);
+        return;
+    }
+
     if ( c->newFunc )
         c->newFunc(c, stream, c->newFuncContext);
 }
@@ -805,11 +975,6 @@ void ym_connection_interrupted_proc(__unused YMPlexerRef plexer, void *context)
     __ym_connection_t *c = (__ym_connection_t *)context;
     if ( c->interruptedFunc )
         c->interruptedFunc(c, c->interruptedFuncContext);
-}
-
-void ym_connection_socket_disconnected(YMSocketRef s, const void *ctx)
-{
-    ymlogg("socket disconnected!: %p",s);
 }
 
 YM_EXTERN_C_POP

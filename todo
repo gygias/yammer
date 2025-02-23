@@ -1,3 +1,25 @@
+are we using self lock everywhere we could? (plexer interruptionlock could be self,)
+dispatch_queue_get_current and autorelease? (passing name string to queue create, etc)
+adopt syslog/journalctl?
+ymtest ends up with dozens of threads
+debug hooks to summarize busyness of worker threads (time delta slept/woken)
+split session/plexer etc client and server into separate implementation files?
+convert mdns to dispatch
+give reverse domains to all user queues
+implement a compression provider and test on repetitive data across the wire
+what to do about ymlog vs dispatch startup deadlock (ymsemaphore now printf'd)
+task output is truncated (it's max=512 in __YMLogType)
+periodic running summary of compression performance
+subprocess and parameterize Tests, its weird main thread state stack pointers and lack of dispatchmain service
+dispatch source, especially currently unused writeability test case
+find a way to test for endianness (linux mips simulator?)
+forward test for connection stream init failure
+plexertest releases its queues but they're not being freed
+QUEUE LIFECYCLE / THREAD EXIT TASK FORCE
+  sources is a non-ymtyped array with a nested ymtype
+  test dispatchafter to queue that exits in the interim
+
+big ideas from ~10 years ago:
 - write complete build instructions based off clean w32 & debian installs
 - adaptive sample, time based, short-circuit for convergence
 

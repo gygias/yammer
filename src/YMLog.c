@@ -60,7 +60,7 @@ typedef struct ___ym_log_t
 YM_ENTRY_POINT(___ym_log)
 {
     ___ym_log_t *log = context;
-    fprintf(log->file,log->string,NULL);
+    fprintf(log->file,"%s",log->string);
     fflush(log->file);
     YMFREE(log->string);
     YMFREE(log);
@@ -116,7 +116,7 @@ void __YMLogType( int level, char* format, ... )
 void YMLogFreeGlobals()
 {
     if ( gYMLogQueue ) {
-        YMRelease(gYMLogQueue);
+        YMDispatchQueueRelease(gYMLogQueue);
         gYMLogQueue = NULL;
         
         YMFREE(gTimeFormatBuf);

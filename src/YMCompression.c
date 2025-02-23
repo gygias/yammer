@@ -15,9 +15,7 @@
 
 #if !defined(YMWIN32)
 #if !defined(YMAPPLE)
-#  define __USE_GNU
 #endif
-# include <fcntl.h>
 # include <zlib.h>
 # include <bzlib.h>
 # include <lz4.h>
@@ -454,7 +452,7 @@ YMIOResult YMLZ4Read(__ym_compression_t *c, uint8_t *b, YM_COMPRESSION_LENGTH l,
     ymlog("lz4[%s] %u -> %d",lengthPacked.compressed?"d":"-r",length,ret);
 
 catch_return:
-    c->inBytes += l;
+    c->inBytes += lengthPacked.compressed;
     c->outBytes += ret;
     if ( o ) *o = ret;
     if ( dst ) free(dst);
@@ -493,10 +491,8 @@ YMIOResult YMLZ4Write(__ym_compression_t *c, const uint8_t *b, YM_COMPRESSION_LE
 
     const uint8_t *underlyingBuf = compressUnderlying ? (const uint8_t *)buf : b;
 
-    #warning we don't "know" this is a pipe at our level
-    int pipeSize = fcntl(c->file, F_GETPIPE_SZ);
-    ymlog("pipesize %d",pipeSize);
-
+    // review bio args throughout the stack, we shouldn't assume pipe or even segment at our level
+    int pipeSize = YMGetPipeSize(c->file);
     int idx = 0;
     while ( idx < lengthPacked.size ) {
         size_t remaining = ( lengthPacked.size - idx );

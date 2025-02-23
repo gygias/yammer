@@ -133,8 +133,8 @@ void SessionTestsRun(ym_test_assert_func assert, ym_test_diff_func diff, const v
     
     YMDispatchJoin(theTest.serverQueue);
     YMDispatchJoin(theTest.clientQueue);
-    YMRelease(theTest.serverQueue);
-    YMRelease(theTest.clientQueue);
+    YMDispatchQueueRelease(theTest.serverQueue);
+    YMDispatchQueueRelease(theTest.clientQueue);
 }
 
 void _server_async_forward_callback(YMConnectionRef connection, YMStreamRef stream, YMIOResult result, uint64_t bytesWritten, void * ctx);
@@ -305,7 +305,7 @@ YM_ENTRY_POINT(_ServerWriteLargeFile)
     testassert(result==0, "rewind src: %d %s",error,errorStr);
     
     YMStringRef name = YMSTRCF("test-server-write-%s",ServerTestFile);
-    YMStreamRef stream = YMConnectionCreateStream(connection, name, YMCompressionNone);
+    YMStreamRef stream = YMConnectionCreateStream(connection, name, YMCompressionLZ4);
     YMRelease(name);
     testassert(stream,"server create stream");
     
@@ -320,6 +320,13 @@ YM_ENTRY_POINT(_ServerWriteLargeFile)
     ymerr("writing large file '%s' %sbounded, %ssync from f%d",ServerTestPath,theTest->serverBounding?"":"un",theTest->serverAsync?"a":"",theTest->largeSrcFd);
     bool okay = YMConnectionForwardFile(connection, theTest->largeSrcFd, stream, theTest->serverBounding ? &gSomeLength : NULL, !theTest->serverAsync, ctx);
     testassert(okay,"server forward file");
+
+    if ( ! theTest->serverAsync ) {
+        uint64_t dI,dO;
+        YMStreamGetPerformance(stream,&dI,&dO,NULL,NULL);
+        double percentCompressed = (1 - (double)dO / (double)dI) * 100;
+        ymlog("wrote large file with %0.2f%%",percentCompressed);
+    }
     
     if ( ! theTest->serverAsync ) {
         YMConnectionCloseStream(connection,stream);
@@ -396,7 +403,7 @@ YM_ENTRY_POINT(_ClientWriteSparseFiles)
 		testassert(aSparseFd >= 0, "client file handle %s", fullPath);
         
         YMStringRef name = YMSTRCF("test-client-write-%s",aFile);
-        YMStreamRef stream = YMConnectionCreateStream(connection, name, YMCompressionNone);
+        YMStreamRef stream = YMConnectionCreateStream(connection, name, YMCompressionNone); // man pages are already compressed! i feel powerful!
         YMRelease(name);
         testassert(stream,"client stream %s",fullPath);
         
@@ -425,6 +432,13 @@ YM_ENTRY_POINT(_ClientWriteSparseFiles)
         ymdbg("writing sparse file '%s' %sbounded, %ssync from f%d",aFile,theTest->lastClientBounded?"":"un",theTest->lastClientAsync?"a":"",aSparseFd);
         okay = YMConnectionForwardFile(connection, aSparseFd, stream, theTest->lastClientBounded ? &theTest->lastClientFileSize : NULL, !theTest->lastClientAsync, ctx);
         testassert(okay,"forwardfile failed");
+
+        if ( ! theTest->lastClientAsync ) {
+            uint64_t dI,dO;
+            YMStreamGetPerformance(stream,&dI,&dO,NULL,NULL);
+            double percentCompressed = (1 - (double)dO / (double)dI) * 100;
+            ymlog("wrote sparse file '%s' with %0.2f%% compression",aFile,percentCompressed);
+        }
 
         if ( theTest->lastClientAsync )
             YMSemaphoreWait(theTest->connectAndAsyncClientCallbackSemaphore);
@@ -538,7 +552,11 @@ YM_ENTRY_POINT(_EatLargeFile)
     YMIOResult ymResult = YMStreamWriteToFile(stream, largeOutFd, theTest->serverBounding ? &gSomeLength : NULL, &outBytes);
     testassert(ymResult!=YMIOError,"eat large result");
     testassert(!theTest->serverBounding||outBytes==gSomeLength,"eat large outBytes");
-    ymlog("reading large finished: %lu bytes",outBytes);
+
+    uint64_t uI,uO;
+    YMStreamGetPerformance(stream,NULL,NULL,&uI,&uO);
+    double percentCompressed = (double)uI/(double)uO;
+    ymlog("reading large finished: %lu bytes (%0.2f%% compression)",outBytes,percentCompressed);
 
     YM_CLOSE_FILE(largeOutFd);
     testassert(result==0, "close large out fd %d %s",errno,strerror(errno));
@@ -585,11 +603,12 @@ void _AsyncForwardCallback(struct SessionTest *theTest, YMConnectionRef connecti
         testassert(bytesWritten==gSomeLength,"lengths don't match")
     else if ( ! isServer )
         testassert(bytesWritten==theTest->lastClientFileSize,"lengths don't match");
-        
-    if ( isServer ) {
-        ymlog("_async_forward_callback (large): %lu",bytesWritten);
-    } else
-        ymlog("_async_forward_callback (sparse): %lu",bytesWritten);
+
+    uint64_t dI,dO;
+    YMStreamGetPerformance(stream,&dI,&dO,NULL,NULL);
+    double percentCompressed = (1 - (double)dO / (double)dI) * 100;
+
+    ymlog("_async_forward_callback (%s): %lu (%0.2f%% compression)",isServer?"large":"sparse",bytesWritten,percentCompressed);
     
     if ( isServer ) {
         YMConnectionCloseStream(connection, stream);

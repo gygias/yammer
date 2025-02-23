@@ -79,7 +79,7 @@ void _YMTaskFree(YMTaskRef t)
     if ( t->output )
         YMFREE(t->output);
     if ( t->outputQueue )
-        YMRelease(t->outputQueue);
+        YMDispatchQueueRelease(t->outputQueue);
 }
 
 #if defined(YMWIN32)

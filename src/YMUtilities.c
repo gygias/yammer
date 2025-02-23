@@ -8,6 +8,9 @@
 
 #include "YMUtilities.h"
 
+#if defined(YMLINUX)
+#define __USE_GNU
+#endif
 #include <fcntl.h>
 
 #include "YMLock.h"
@@ -106,20 +109,130 @@ void YMGetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time)
 	YM_WPOP
 }
 
-ComparisonResult YMTimevalCompare(struct timeval *a, struct timeval *b)
+ComparisonResult YMTimevalCompare(struct timeval a, struct timeval b)
 {
-    if ( a->tv_sec < b->tv_sec )
+    if ( a.tv_sec < b.tv_sec )
         return LessThan;
-    else if ( a->tv_sec > b->tv_sec )
+    else if ( a.tv_sec > b.tv_sec )
         return GreaterThan;
     else {
-        if ( a->tv_usec < b->tv_usec )
+        if ( a.tv_usec < b.tv_usec )
             return LessThan;
-        else if ( a->tv_usec > b->tv_usec )
+        else if ( a.tv_usec > b.tv_usec )
             return GreaterThan;
     }
     
     return EqualTo;
+}
+
+ComparisonResult YMAPI YMTimespecCompare(struct timespec a, struct timespec b)
+{
+    if ( a.tv_sec < b.tv_sec )
+        return LessThan;
+    else if ( a.tv_sec > b.tv_sec )
+        return GreaterThan;
+    else {
+        if ( a.tv_nsec < b.tv_nsec )
+            return LessThan;
+        else if ( a.tv_nsec > b.tv_nsec )
+            return GreaterThan;
+    }
+
+    return EqualTo;
+}
+
+// from GNU
+#ifndef TIMEVAL_TO_TIMESPEC
+# define TIMEVAL_TO_TIMESPEC(tv, ts) {                                   \
+	(ts)->tv_sec = (tv)->tv_sec;                                    \
+	(ts)->tv_nsec = (tv)->tv_usec * 1000;                           \
+}
+#endif
+#ifndef TIMESPEC_TO_TIMEVAL
+# define TIMESPEC_TO_TIMEVAL(tv, ts) {                                   \
+	(tv)->tv_sec = (ts)->tv_sec;                                    \
+	(tv)->tv_usec = (ts)->tv_nsec / 1000;
+#endif
+# define mytimespecsub(a, b, result)						      \
+  do {									      \
+    (result)->tv_sec = (a)->tv_sec - (b)->tv_sec;			      \
+    (result)->tv_nsec = (a)->tv_nsec - (b)->tv_nsec;			      \
+    if ((result)->tv_nsec < 0) {					      \
+      --(result)->tv_sec;						      \
+      (result)->tv_nsec += 1000000000;					      \
+    }									      \
+  } while (0)
+
+
+#ifndef USEC_PER_SEC
+#define USEC_PER_SEC 1000000
+#endif
+#ifndef NSEC_PER_SEC
+#define NSEC_PER_SEC 1000000000
+#endif
+
+double YMTimevalSince(struct timeval then, struct timeval now)
+{
+    double ret;
+#if defined(YMLINUX) // may exist on apple too
+    struct timeval difference;
+    timersub(&then, &now, &difference);
+    ret = difference.tv_sec + ( (double)difference.tv_usec / (double)1000000 );
+#else
+# error implement me
+#endif
+    return ret;
+}
+
+double YMAPI YMTimespecSince(struct timespec then, struct timespec now)
+{
+    double ret;
+    struct timespec difference;
+    mytimespecsub(&then,&now,&difference);
+    ret = difference.tv_sec + ( (double)difference.tv_nsec / (double)NSEC_PER_SEC );
+    return ret;
+}
+
+struct timespec YMTimespecNormalize(struct timespec ts)
+{
+	while(ts.tv_nsec >= NSEC_PER_SEC)
+	{
+		++(ts.tv_sec);
+		ts.tv_nsec -= NSEC_PER_SEC;
+	}
+	
+	while(ts.tv_nsec <= -NSEC_PER_SEC)
+	{
+		--(ts.tv_sec);
+		ts.tv_nsec += NSEC_PER_SEC;
+	}
+	
+	if(ts.tv_nsec < 0)
+	{
+		/* Negative nanoseconds isn't valid according to POSIX.
+		 * Decrement tv_sec and roll tv_nsec over.
+		*/
+		
+		--(ts.tv_sec);
+		ts.tv_nsec = (NSEC_PER_SEC + ts.tv_nsec);
+	}
+	
+	return ts;
+}
+
+struct timespec YMTimespecFromDouble(double s)
+{
+	struct timespec ts = {
+		.tv_sec  = s,
+		.tv_nsec = (s - (long)(s)) * NSEC_PER_SEC,
+	};
+	
+	return YMTimespecNormalize(ts);
+}
+
+double YMDoubleFromTimespec(struct timespec ts)
+{
+	return ((double)(ts.tv_sec) + ((double)(ts.tv_nsec) / NSEC_PER_SEC));
 }
 
 YMIOResult YMReadFull(YMFILE fd, uint8_t *buffer, size_t bytes, size_t *outRead)
@@ -342,6 +455,15 @@ int YMGetNumberOfOpenFilesForCurrentProcess()
     
     ymlog("open files: %d",nFiles);
     return nFiles;
+}
+
+int YMGetPipeSize(YMFILE file)
+{
+#if defined(YMLINUX)
+    return fcntl(file, F_GETPIPE_SZ); // this is a gnu libc thing, just bookmarking this
+#else
+# warning implement me
+#endif
 }
 
 YMDictionaryRef YMInterfaceMapCreateLocal()

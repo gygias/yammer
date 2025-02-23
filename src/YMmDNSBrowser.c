@@ -562,7 +562,6 @@ YM_ENTRY_POINT(__ym_mdns_event_proc)
         }
         YMSelfUnlock(b);
         
-        #warning improve this
         // wait for pending data or .5 secs to elapse:
         result = select(maxFd + 1, &readfds, nullFd, nullFd, &tv);
         if (result > 0) {

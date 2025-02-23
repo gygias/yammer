@@ -178,7 +178,7 @@ YM_ENTRY_POINT(__ym_plexer_service_upstream);
 YMStreamRef __YMPlexerChooseStreamWithID(__ym_plexer_t *, YMPlexerStreamID, bool *);
 YMStreamRef __YMPlexerCreateStreamWithID(__ym_plexer_t *, YMPlexerStreamID, bool, YMStringRef);
 bool __YMPlexerInterrupt(__ym_plexer_t *);
-void __YMPlexerDestroySources(__ym_plexer_t *, bool, void *, const char *);
+void __YMPlexerDestroySources(__ym_plexer_t *, bool, YMStreamRef, const char *);
 
 #define YMPlexerDefaultBufferSize UINT16_MAX
 
@@ -256,8 +256,11 @@ void _YMPlexerFree(YMPlexerRef p_)
     YMRelease(p->streamsByID);
     YMRelease(p->streamsLock);
     
-    YMRelease(p->eventDeliveryQueue);
+    YMDispatchQueueRelease(p->eventDeliveryQueue);
     YMRelease(p->interruptionLock);
+
+    YMDispatchQueueRelease(p->upQueue);
+    YMDispatchQueueRelease(p->downQueue);
 }
 
 void YMPlexerSetInterruptedFunc(YMPlexerRef p, ym_plexer_interrupted_func func)
@@ -347,10 +350,8 @@ YM_ENTRY_POINT(__ym_plexer_close_stream)
     YMStreamRef stream = context;
     __ym_plexer_stream_user_info_t *userInfo = YM_STREAM_INFO(stream);
     userInfo->userClosed = true;
-    #warning would putting this on the stream userinfo downqueue solve this apparent race? \
-            easy to trigger with session test middleman pipe and its odd operation
     char buf = '%';
-    YMIOResult result = _YMStreamPlexWriteDown(stream,&buf,1);
+    YMIOResult result = _YMStreamPlexWriteDown(stream,(const uint8_t *)&buf,1);
     ymassert(result==YMIOSuccess,"failed to write stream cl%%se");
 }
 
@@ -364,8 +365,7 @@ void YMPlexerCloseStream(YMPlexerRef p_, YMStreamRef stream)
     ymassert(!userInfo->userClosed,"stream double-close"); // only catches local
     
     if ( userInfo->isLocallyOriginated && p->active ) {
-        // move queue release here (where it's probably more appropriate) from source destroy callback and don't need to dispatch this
-        ym_dispatch_user_t user = { __ym_plexer_close_stream, stream, NULL, ym_dispatch_user_context_noop };
+        ym_dispatch_user_t user = { __ym_plexer_close_stream, (void *)stream, NULL, ym_dispatch_user_context_noop };
         YMDispatchAsync(p->downQueue,&user);
     }
 
@@ -394,7 +394,7 @@ bool YMPlexerStop(YMPlexerRef p_)
     return interrupted;
 }
 
-void __YMPlexerDestroySources(__ym_plexer_t *p, bool up, void *context, const char *who)
+void __YMPlexerDestroySources(__ym_plexer_t *p, bool up, YMStreamRef stream, const char *who)
 {
     if ( ! p->active )
         return;
@@ -414,7 +414,7 @@ void __YMPlexerDestroySources(__ym_plexer_t *p, bool up, void *context, const ch
     bool local = false;
     for(int i = 0; i < YMArrayGetCount(p->downstreamSourceContexts); i++) {
         c = (__ym_plexer_source_context_t *)YMArrayGet(p->downstreamSourceContexts,i);
-        if ( context && ( context != c->event->stream ) )
+        if ( stream && ( stream != c->event->stream ) )
             continue;
         YMArrayRemove(p->downstreamSourceContexts,i);
         local = YM_STREAM_INFO(c->event->stream)->isLocallyOriginated;
@@ -425,7 +425,7 @@ void __YMPlexerDestroySources(__ym_plexer_t *p, bool up, void *context, const ch
     if ( ! p->active )
         return;
 
-    ymassert(c,"%s(%p,%d,%p,%s): not found",__FUNCTION__,p,up,context,who);
+    ymassert(c,"%s(%p,%d,%p,%s): not found",__FUNCTION__,p,up,stream,who);
     ymlog("%s destroying downstream source for %s originated stream %p %p %p",who,local?"locally":"remotely",c->source,c->event,c->event->stream);
     ym_dispatch_user_t user = { __ym_plexer_destroy_source_async, c, NULL, ym_dispatch_user_context_noop };
     YMDispatchAsync(YMDispatchGetGlobalQueue(),&user); // we are absolutely in the source queue right now.
@@ -570,7 +570,6 @@ YM_ENTRY_POINT(__ym_plexer_service_downstream)
 
     ymdbg("%s V-s%lu servicing %zdb chunk...",__FUNCTION__,streamID,chunkLength);
 
-    bool closeThis = false;
     bool closeNow = false;
     if ( userInfo->userClosed ) {
         if ( chunkLength == 1 ) {
@@ -579,12 +578,8 @@ YM_ENTRY_POINT(__ym_plexer_service_downstream)
                 closeNow = true;
                 goto catch_close;
             }
-#warning this is dangerous if userClosed but user data HAPPENS to end in not-our-%
-        } else if ( (aDownBuf)[chunkLength-1] == '%' ) {
-            ymlog("user closed[%zd]... stream %lu closing THIS ITERATION!!",chunkLength,streamID);
-            closeThis = true;
-            chunkLength--;
-        } else
+        }
+        else
             ymlog("user closed[%zd]... stream %lu NOT closing THIS ITERATION!!",chunkLength,streamID);
     }
 
@@ -659,7 +654,7 @@ YM_ENTRY_POINT(__ym_plexer_service_upstream)
     if ( ! okay || ! p->active || plexerMessage.command < YMPlexerCommandMin || plexerMessage.command > YMPlexerDefaultBufferSize ) {
         bool interrupt = __YMPlexerInterrupt(p);
         if ( interrupt )
-            ymerr("^ fatal: failed reading, or plex header invalid: %d %d %d (%s)",plexerMessage.command,errno,strerror(errno));
+            ymerr("^ fatal: failed reading, or plex header invalid: %d %d (%s)",plexerMessage.command,errno,strerror(errno));
         return;
     } else if ( plexerMessage.command == YMPlexerCommandCloseStream )
         streamClosing = true;
@@ -827,7 +822,7 @@ bool __YMPlexerInterrupt(__ym_plexer_t *p)
     YMDictionaryEnumRef e = YMDictionaryEnumeratorBegin(p->streamsByID);
     while ( e ) {
         YMStreamRef aStream = e->value;
-        ymerr("hanging up s%lu",e->key);
+        ymerr("hanging up s%lu",(unsigned long)e->key);
         _YMStreamCloseWriteUp(aStream);
         YMRelease(aStream);
         e = YMDictionaryEnumeratorGetNext(e);

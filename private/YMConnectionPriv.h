@@ -28,7 +28,7 @@ typedef void (*ym_connection_stream_closing_func)(YMConnectionRef,YMStreamRef,vo
 typedef void (*ym_connection_interrupted_func)(YMConnectionRef,void*);
 
 YMConnectionRef YMAPI YMConnectionCreate(YMAddressRef peerAddress, YMConnectionType type, YMConnectionSecurityType securityType, bool closeWhenDone);
-YMConnectionRef YMAPI YMConnectionCreateIncoming(YMSOCKET socket, YMAddressRef peerAddress, YMConnectionType type, YMConnectionSecurityType securityType, bool closeWhenDone);
+YMConnectionRef YMAPI YMConnectionCreateIncoming(YMSOCKET socket, YMAddressRef peerAddress, YMConnectionType type, bool closeWhenDone);
 void YMAPI YMConnectionSetCallbacks(YMConnectionRef connection,
                                     ym_connection_new_stream_func newFunc, void *newFuncContext,
                                     ym_connection_stream_closing_func closingFunc, void *closingFuncContext,

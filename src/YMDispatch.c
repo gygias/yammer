@@ -22,6 +22,7 @@
 
 #define YM_DISPATCH_LOG
 //#define YM_DISPATCH_LOG_1
+#define YM_AFTER_LOG
 #define YM_SOURCE_LOG
 //#define YM_SOURCE_LOG_point_5
 //#define YM_SOURCE_LOG_1
@@ -32,7 +33,7 @@ YM_EXTERN_C_PUSH
 typedef struct __ym_dispatch_timer
 {
     YMDispatchQueueRef queue;
-    struct timespec *time;
+    struct timespec time;
     timer_t timer;
     ym_dispatch_user_t *dispatch;
 } __ym_dispatch_timer;
@@ -67,8 +68,7 @@ typedef struct __ym_dispatch
     __ym_dispatch_queue_t *globalQueue;
     YMArrayRef userQueues;
     YMLockRef lock;
-    YMArrayRef timers; // excluding next
-    __ym_dispatch_timer_t *nextTimer;
+    YMArrayRef orderedTimers;
 
     // sources
     YMArrayRef sources; // __ym_dispatch_source_t
@@ -115,11 +115,10 @@ YM_ONCE_FUNC(__YMDispatchInitOnce,
     name = YMSTRC("com.combobulated.dispatch.global");
     gDispatch->globalQueue = __YMDispatchQueueInitCommon(name, YMDispatchQueueGlobal, __ym_dispatch_global_service_loop);
     YMRelease(name);
-	gDispatch->userQueues = YMArrayCreate();
+	gDispatch->userQueues = YMArrayCreate2(true);
     gDispatch->lock = YMLockCreate(); // not a ymtype
 
-    gDispatch->nextTimer = NULL;
-    gDispatch->timers = YMArrayCreate();
+    gDispatch->orderedTimers = YMArrayCreate();
     signal(SIGALRM, __ym_dispatch_sigalarm);
 
     // sources
@@ -144,12 +143,13 @@ void __YM_DISPATCH_CATCH_MISUSE(__ym_dispatch_queue_t *q)
 
 void _YMDispatchQueueFree(YMDispatchQueueRef p_)
 {
-    //printf("%s %p\n",__FUNCTION__,p_);
+#ifdef YM_DISPATCH_LOG
+    printf("%s %p\n",__FUNCTION__,p_);
+#endif
     __ym_dispatch_queue_t *q = (__ym_dispatch_queue_t *)p_;
     if ( q->type == YMDispatchQueueGlobal || q->type == YMDispatchQueueMain )
         __YM_DISPATCH_CATCH_MISUSE(q);
 
-    __YMDispatchQueueExitSync(q);
     YMRelease(q->name);
     YMRelease(q->queueStack);
     YMRelease(q->queueSem);
@@ -179,7 +179,7 @@ __ym_dispatch_queue_t *__YMDispatchQueueInitCommon(YMStringRef name, YMDispatchQ
 #warning watchlist todo recycle user threads
         __ym_dispatch_service_loop_context_t *c = YMALLOC(sizeof(__ym_dispatch_service_loop_context_t));
         YMThreadRef first = YMThreadCreate(name, entry, c);
-        c->q = (__ym_dispatch_queue_t *)YMRetain(q); // matched on thread return
+        c->q = (__ym_dispatch_queue_t *)YMRetain(q);
         __ym_dispatch_queue_thread_t *qt = __YMDispatchQueueThreadCreate(first);
         c->qt = qt;
 
@@ -211,6 +211,20 @@ YMDispatchQueueRef YMDispatchQueueCreate(YMStringRef name)
     YMLockUnlock(gDispatch->lock);
 
     return q;
+}
+
+void YMAPI YMDispatchQueueRelease(YMDispatchQueueRef queue)
+{
+    YMLockLock(gDispatch->lock);
+    int before = YMArrayGetCount(gDispatch->userQueues);
+    YMArrayRemoveObject(gDispatch->userQueues,queue);
+    int after = YMArrayGetCount(gDispatch->userQueues);
+    if ( before == after ) { printf("YMArrayRemoveObject: %d\n",before); abort(); }
+    YMLockUnlock(gDispatch->lock);
+
+    __YMDispatchQueueExitSync((__ym_dispatch_queue_t *)queue);
+
+    YMRelease(queue);
 }
 
 YMDispatchQueueRef YMDispatchGetGlobalQueue()
@@ -270,7 +284,9 @@ void __YMDispatchCheckExpandGlobalQueue(__ym_dispatch_queue_t *queue)
 
     YMSelfLock(queue);
     {
+#ifdef YM_DISPATCH_LOG
         bool overflow = YMArrayGetCount(queue->queueThreads) >= YMGetDefaultThreadsForCores(YMGetNumberOfCoresAvailable());
+#endif
         if ( YMArrayGetCount(queue->queueThreads) >= YMGetDefaultThreadsForCores(YMGetNumberOfCoresAvailable()) ) {
             bool busy = true;
             for(int i = 0; i < YMArrayGetCount(queue->queueThreads); i++) {
@@ -472,63 +488,55 @@ void YMAPI YMDispatchSourceDestroy(ym_dispatch_source_t source)
 
 void YMAPI YMDispatchAfter(YMDispatchQueueRef queue, ym_dispatch_user_t *userDispatch, double secondsAfter)
 {
-    struct timespec *timespec = YMALLOC(sizeof(struct timespec));
-    int ret = clock_gettime(CLOCK_REALTIME,timespec);
+    struct timespec timespec;
+    int ret = clock_gettime(CLOCK_REALTIME,&timespec);
     if ( ret != 0 ) {
         printf("clock_gettime failed: %d %s",errno,strerror(errno));
         abort();
     }
 
-#define NSEC_PER_SEC 1000000000
-    int seconds = floor(secondsAfter);
-    time_t nSeconds = (secondsAfter - seconds) * NSEC_PER_SEC;
-    if ( nSeconds + timespec->tv_nsec > NSEC_PER_SEC ) {
-        seconds++;
-        nSeconds -= NSEC_PER_SEC;
-    }
-    timespec->tv_nsec = nSeconds;
-    timespec->tv_sec += seconds;
+    struct timespec doubleToStruct = YMTimespecFromDouble(secondsAfter);
+    timespec.tv_sec += doubleToStruct.tv_sec;
+    timespec.tv_nsec += doubleToStruct.tv_nsec;
+    timespec = YMTimespecNormalize(timespec);
 
     __ym_dispatch_timer_t *timer = YMALLOC(sizeof(__ym_dispatch_timer_t));
-    timer->time = timespec;
+    memcpy(&timer->time,&timespec,sizeof(timespec));
     timer->queue = YMRetain(queue);
     timer->dispatch = __YMUserDispatchCopy(userDispatch);
 
     YMLockLock(gDispatch->lock);
     {
-        if ( ! gDispatch->nextTimer ) {
-            gDispatch->nextTimer = timer;
-        } else {
-            ComparisonResult result = YMTimevalCompare(timer->time, gDispatch->nextTimer->time);
+        bool added = false;
+        for ( int i = 0; i < YMArrayGetCount(gDispatch->orderedTimers); i++ ) {
+            __ym_dispatch_timer_t *aTimer = (__ym_dispatch_timer_t *)YMArrayGet(gDispatch->orderedTimers,i);
+            ComparisonResult result = YMTimespecCompare(timer->time, aTimer->time);
             if ( result == LessThan ) {
-                YMArrayInsert(gDispatch->timers,0,gDispatch->nextTimer);
-                gDispatch->nextTimer = timer;
+                YMArrayInsert(gDispatch->orderedTimers,i,timer);
+                added = true;
+                break;
             } else if ( result == EqualTo ) {
-                timer->time->tv_nsec++;
-                YMArrayInsert(gDispatch->timers,0,timer);
-            } else {
-                bool added = false;
-                for ( int i = 0; i < YMArrayGetCount(gDispatch->timers); i++ ) {
-                    __ym_dispatch_timer_t *aTimer = YMArrayGet(gDispatch->timers,i);
-                    result = YMTimevalCompare(timer->time, aTimer->time);
-                    if ( result == LessThan ) {
-                        YMArrayInsert(gDispatch->timers,i,timer);
-                        added = true;
-                        break;
-                    } else if ( result == EqualTo ) {
-                        timer->time->tv_nsec++;
-                        YMArrayInsert(gDispatch->timers,i+1,timer);
-                        added = true;
-                        break;
-                    }
-                }
-
-                if ( ! added ) {
-                    YMArrayAdd(gDispatch->timers,timer);
-                }
-
+                timer->time.tv_nsec++;
+                YMArrayInsert(gDispatch->orderedTimers,i+1,timer);
+                added = true;
+                break;
             }
         }
+
+        if ( ! added ) {
+            YMArrayAdd(gDispatch->orderedTimers,timer);
+        }
+
+#ifdef YM_AFTER_LOG
+        struct timespec now;
+        int ret = clock_gettime(CLOCK_REALTIME,&now);
+        if ( ret != 0 ) {
+            printf("clock_gettime failed: %d %s",errno,strerror(errno));
+            return;
+        }
+        double inSecs = YMTimespecSince(timer->time,now);
+        printf("new timer scheduled in position %ld in %0.9f on %s (%p q%p dp%p dctx%p)\n",YMArrayIndexOf(gDispatch->orderedTimers,timer),inSecs,YMSTR((((__ym_dispatch_queue_t *)(timer->queue))->name)),timer,timer->queue,timer->dispatch->dispatchProc,timer->dispatch->context);
+#endif
 
         ret = timer_create(CLOCK_REALTIME,NULL,&(timer->timer));
         if ( ret != 0 ) {
@@ -537,19 +545,22 @@ void YMAPI YMDispatchAfter(YMDispatchQueueRef queue, ym_dispatch_user_t *userDis
         }
 
         struct itimerspec ispec = {0};
-        ispec.it_value.tv_sec = timespec->tv_sec;
-        ispec.it_value.tv_nsec = timespec->tv_nsec;
+        ispec.it_value.tv_sec = timespec.tv_sec;
+        ispec.it_value.tv_nsec = timespec.tv_nsec;
         ret = timer_settime(timer->timer,TIMER_ABSTIME,&ispec,NULL);
         if ( ret != 0 ) {
-            printf("timer_settime failed: %d %s\n",errno,strerror(errno));
+            struct timespec now;
+            int ret = clock_gettime(CLOCK_REALTIME,&now);
+            if ( ret != 0 ) {
+                printf("clock_gettime failed: %d %s",errno,strerror(errno));
+                return;
+            }
+            double since = YMTimespecSince(timespec,now);
+            printf("timer_settime failed: %lds %ldns (%0.9f) %d %s\n",timespec.tv_sec,timespec.tv_nsec,since,errno,strerror(errno));
             abort();
         }
     }
     YMLockUnlock(gDispatch->lock);
-
-#ifdef YM_DISPATCH_LOG_1
-    printf("scheduled %p[%p,%p] after %f seconds on %p(%s)  \n",userDispatch,userDispatch->dispatchProc,userDispatch->context,secondsAfter,queue,YMSTR(((__ym_dispatch_queue_t *)queue)->name));
-#endif
 }
 
 void __ym_dispatch_sigalarm(int signum)
@@ -560,60 +571,48 @@ void __ym_dispatch_sigalarm(int signum)
     if ( signum != SIGALRM ) {
         printf("__ym_dispatch_sigalarm: %d",signum);
         abort();
-    } else if ( ! gDispatch->nextTimer ) {
-        printf("__ym_dispatch_sigalarm: next timer not set %ld\n",YMArrayGetCount(gDispatch->timers));
-        return;
     }
 
-    __ym_dispatch_timer_t *thisTimer = gDispatch->nextTimer;
-
     __ym_dispatch_timer_t *nextTimer = NULL;
+    __ym_dispatch_timer_t *nextNextTimer = NULL;
     YMLockLock(gDispatch->lock);
     {
-        for( int i = 0; i < YMArrayGetCount(gDispatch->timers); i++ ) {
-            __ym_dispatch_timer_t *aTimer = (__ym_dispatch_timer_t *)YMArrayGet(gDispatch->timers,i);
-
-            if ( ! nextTimer ) {
-                nextTimer = aTimer;
-                continue;
-            }
-
-            if ( aTimer->time->tv_sec < nextTimer->time->tv_sec ) {
-                nextTimer = aTimer;
-            } else if ( aTimer->time->tv_sec == nextTimer->time->tv_sec ) {
-                if ( aTimer->time->tv_nsec < nextTimer->time->tv_nsec ) {
-                    nextTimer = aTimer;
-                }
-            }
+        if ( ! YMArrayGetCount(gDispatch->orderedTimers) ) {
+            printf("__ym_dispatch_sigalarm: next timer not set %ld\n",YMArrayGetCount(gDispatch->orderedTimers));
+            abort();
         }
-        gDispatch->nextTimer = nextTimer;
-        if ( nextTimer ) {
-            YMArrayRemoveObject(gDispatch->timers,nextTimer);
-        }
+
+        nextTimer = (__ym_dispatch_timer_t *)YMArrayGet(gDispatch->orderedTimers,0);
+        YMArrayRemove(gDispatch->orderedTimers,0);
+
+        if ( YMArrayGetCount(gDispatch->orderedTimers) )
+            nextNextTimer = (__ym_dispatch_timer_t *)YMArrayGet(gDispatch->orderedTimers,0);
     }
     YMLockUnlock(gDispatch->lock);
 
-#ifdef YM_DISPATCH_LOG_1
-    printf("dispatching %p[%p,%p] on %p(%s)\n",thisTimer->dispatch,thisTimer->dispatch->dispatchProc,thisTimer->dispatch->context,thisTimer->queue,YMSTR((((__ym_dispatch_queue_t *)(thisTimer->queue))->name)));
-#endif
-    YMDispatchAsync(thisTimer->queue,thisTimer->dispatch);
-
-    YMFREE(thisTimer->time);
-    YMRelease(thisTimer->queue);
-    YMFREE(thisTimer->dispatch);
-    YMFREE(thisTimer);
-
-#ifdef YM_DISPATCH_LOG_1
     if ( nextTimer ) {
+#ifdef YM_AFTER_LOG
+        printf("dispatching %p[%p,%p] on %p(%s)\n",nextTimer->dispatch,nextTimer->dispatch->dispatchProc,nextTimer->dispatch->context,nextTimer->queue,YMSTR((((__ym_dispatch_queue_t *)(nextTimer->queue))->name)));
+#endif
+        YMDispatchAsync(nextTimer->queue,nextTimer->dispatch);
+
+        YMRelease(nextTimer->queue);
+        YMFREE(nextTimer->dispatch);
+        YMFREE(nextTimer);
+    }
+
+#ifdef YM_AFTER_LOG
+    if ( nextNextTimer ) {
         struct timespec now;
         int ret = clock_gettime(CLOCK_REALTIME,&now);
         if ( ret != 0 ) {
             printf("clock_gettime failed: %d %s",errno,strerror(errno));
             return;
         }
-        printf("nextTimer is now %p[%p,%p] in %ld.%9ldf on %s\n",nextTimer->dispatch,nextTimer->dispatch->dispatchProc,nextTimer->dispatch->context,nextTimer->time->tv_sec-now.tv_sec,nextTimer->time->tv_nsec-now.tv_nsec,YMSTR(((__ym_dispatch_queue_t *)(nextTimer->queue))->name));
+        double inSecs = YMTimespecSince(nextNextTimer->time,now);
+        printf("next timer is now %p[%p,%p] in %0.9f on %s\n",nextNextTimer->dispatch,nextNextTimer->dispatch->dispatchProc,nextNextTimer->dispatch->context,inSecs,YMSTR(((__ym_dispatch_queue_t *)(nextNextTimer->queue))->name));
     } else
-        printf("nextTimer is now (null)\n");
+        printf("next timer is now (null)\n");
 #endif
 }
 
@@ -865,7 +864,7 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
                                 );
 #ifdef YM_SOURCE_LOG_point_5
         if ( nIterations % 1000 == 0 )
-            printf(">>> source select: %zd (%lu serviced, %lu loops (%0.2f%%) %lu timeouts (%0.2f%%), %lu $ignals (%0.2f busy))<<<\n",result,
+            printf(">>> source select: %zd (%lu serviced, %lu loops (%0.2f%%) %lu timeouts (%0.2f%%), %lu $ignals (%0.2f%% busy))<<<\n",result,
                 nServiced,nIterations,nIterations>0?100*((double)nServiced/(double)nIterations):0.0,
                 nTimeouts,nIterations>0?100*((double)nTimeouts/(double)nServiced):0.0,
                 nSignals,nSignals>0?100*((double)nBusySignals/(double)nSignals):0.0);
@@ -966,7 +965,6 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
             nTimeouts++;
         } else {
 
-            #warning add YM_SELECT
             int error;
             char *errorStr;
 #if defined(YMWIN32)
@@ -985,7 +983,7 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
         nIterations++;
     }
 
-    printf("dispatch select exiting: %lu serviced, %lu loops (%0.2f%%) %lu timeouts (%0.2f%%), %lu $ignals (%0.2f busy)\n",
+    printf("dispatch select exiting: %lu serviced, %lu loops (%0.2f%%) %lu timeouts (%0.2f%%), %lu $ignals (%0.2f%% busy)\n",
             nServiced,nIterations,nIterations>0?100*((double)nServiced/(double)nIterations):0.0,
             nTimeouts,nIterations>0?100*((double)nTimeouts/(double)nServiced):0.0,
             nSignals,nSignals>0?100*((double)nBusySignals/(double)nSignals):0.0);

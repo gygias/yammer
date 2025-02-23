@@ -220,7 +220,7 @@ void _YMSessionFree(YMTypeRef o_)
     
     if ( s->acceptQueue ) {
         YMDispatchJoin(s->acceptQueue);
-        YMRelease(s->acceptQueue);
+        YMDispatchQueueRelease(s->acceptQueue);
     }
     
     // shared
@@ -655,7 +655,7 @@ YM_ENTRY_POINT(__ym_session_init_incoming_connection_proc)
         goto catch_release;
     }
     
-    newConnection = YMConnectionCreateIncoming(socket, peerAddress, YMConnectionStream, YMTLS, true);
+    newConnection = YMConnectionCreateIncoming(socket, peerAddress, YMConnectionStream, true);
     if ( ! newConnection ) {
         ymlog("failed to create new connection");
 		if ( s->connectFailedFunc )

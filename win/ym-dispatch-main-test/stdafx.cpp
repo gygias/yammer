@@ -1,5 +1,5 @@
 // stdafx.cpp : source file that includes just the standard includes
-// ym-dispatch-main-test.pch will be the pre-compiled header
+// ym-dispatch-test.pch will be the pre-compiled header
 // stdafx.obj will contain the pre-compiled type information
 
 #include "stdafx.h"

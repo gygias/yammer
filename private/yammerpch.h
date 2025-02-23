@@ -15,6 +15,7 @@
 
 #define YM_TOKEN_STR(x) #x
 #define YM_STR_TOKEN(x,y) x ## y
+#define YM_STR_STR(x) YM_TOKEN_STR(x)
 
 #define YM_CALL(func, type) { void func(type); YM_FUNC_NAME(func)(); }
 #define YM_CALL_V(func, firstType, first, ...) func(first, first,__VA_ARGS__) // iso c requires 'first'

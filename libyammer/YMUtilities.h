@@ -32,7 +32,13 @@
 YM_EXTERN_C_PUSH
 
 const char YMAPI * YMGetCurrentTimeString(char *buf, size_t bufLen);
-ComparisonResult YMAPI YMTimevalCompare(struct timeval *a, struct timeval *b);
+ComparisonResult YMAPI YMTimevalCompare(struct timeval a, struct timeval b);
+ComparisonResult YMAPI YMTimespecCompare(struct timespec a, struct timespec b);
+double YMAPI YMTimevalSince(struct timeval then, struct timeval now);
+double YMAPI YMTimespecSince(struct timespec then, struct timespec now);
+struct timespec YMAPI YMTimespecNormalize(struct timespec ts);
+struct timespec YMAPI YMTimespecFromDouble(double s);
+double YMAPI YMDoubleFromTimespec(struct timespec ts);
 // ensure portability of the end of time for the watchtower platform
 void YMAPI YMGetTheBeginningOfPosixTimeForCurrentPlatform(struct timeval *time);
 void YMAPI YMGetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time);
@@ -41,6 +47,7 @@ YMIOResult YMAPI YMReadFull(YMFILE fd, uint8_t *buffer, size_t bytes, size_t *ou
 YMIOResult YMAPI YMWriteFull(YMFILE fd, const uint8_t *buffer, size_t bytes, size_t *outWritten);
 
 int YMAPI YMGetNumberOfOpenFilesForCurrentProcess();
+int YMAPI YMGetPipeSize(YMFILE);
 
 void YMAPI YMNetworkingInit();
 int32_t YMAPI YMPortReserve(bool ipv4, int *outSocket);

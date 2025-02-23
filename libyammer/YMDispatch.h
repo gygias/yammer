@@ -10,6 +10,7 @@ YM_EXTERN_C_PUSH
 typedef const struct __ym_dispatch_queue * YMDispatchQueueRef;
 
 YMDispatchQueueRef YMAPI YMDispatchQueueCreate(YMStringRef name);
+void YMAPI YMDispatchQueueRelease(YMDispatchQueueRef queue);
 
 typedef enum ym_dispatch_user_context_mode
 {

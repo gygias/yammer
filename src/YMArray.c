@@ -126,6 +126,7 @@ void YMArrayRemoveObject(YMArrayRef a_, const void *value)
     int64_t idx = __YMArrayFind(a, value);
     ymassert(idx!=NULL_INDEX,"array does not contain object %p",value);
     YMDictionaryRemove(a->dict, (YMDictionaryKey)idx);
+    _YMDictionaryShift(a->dict, idx, false);
     a->count--;
 }
 

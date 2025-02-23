@@ -78,8 +78,6 @@ YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_t *userInfo, Y
     
     s->userInfo = userInfo;
 
-    #warning compression is set by the (potentially remote) stream originator, and initialized by rpc at the stream level,\
-             this initializer is shared in ways that can make these redundant and short-lived, fix.
     s->downCompression = YMCompressionCreate(YMCompressionNone,YMPipeGetInputFile(s->downstreamPipe),true);
     s->upCompression = YMCompressionCreate(YMCompressionNone,YMPipeGetOutputFile(s->upstreamPipe),false);
     
@@ -121,7 +119,6 @@ bool _YMStreamSetCompression(YMStreamRef s_, YMCompressionType type)
         YMCompressionRef upCompression = YMCompressionCreate(type,YMPipeGetOutputFile(s->upstreamPipe),false);
         okay = YMCompressionInit(upCompression);
         if ( okay ) {
-            #warning leaky codepaths
             YMRelease(s->downCompression); // nocompression on create
             s->downCompression = downCompression;
             YMRelease(s->upCompression);
@@ -130,6 +127,8 @@ bool _YMStreamSetCompression(YMStreamRef s_, YMCompressionType type)
     }
     return okay;
 }
+
+#warning aborts in these basic io function should be softened for release
 
 YMIOResult YMStreamReadUp(YMStreamRef s, uint8_t *buffer, uint16_t length, uint16_t *outLength)
 {

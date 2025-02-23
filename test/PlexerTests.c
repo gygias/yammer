@@ -24,10 +24,9 @@
 YM_EXTERN_C_PUSH
 
 #define     PlexerTest1Threads 4
-#warning fix this when false on the handle_remote side, first dos's the rest, dispatch async
 #define     PlexerTest1NewStreamPerRoundTrip true
 #define     PlexerTest1RoundTripsPerThread 128
-#define     PlexerTest1CompressionType YMCompressionNone
+#define     PlexerTest1CompressionType YMCompressionLZ4
 
 #define PlexerTest1TimeBased true
 //#define PlexerTest1Indefinite
@@ -107,6 +106,9 @@ void PlexerTestsRun(ym_test_assert_func assert, const void *context)
     
     YMDispatchJoin(theTest.localQueue);
     YMDispatchJoin(theTest.fakeRemoteQueue);
+
+    YMDispatchQueueRelease(theTest.localQueue);
+    YMDispatchQueueRelease(theTest.fakeRemoteQueue);
 }
 
 void _DoManyRoundTripsTest(struct PlexerTest *theTest)
@@ -119,9 +121,7 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     
     bool localIsMaster = arc4random_uniform(2);
     ymlog("plexer test using pipes: L(%s)-s%d <-> s%d-R(%s)",localIsMaster?"m":"s",socketA,socketB,localIsMaster?"s":"m");
-    #define xstr(s) str(s)
-    #define str(s) #s
-    ymlog("plexer test using %u threads, %u trips per thread, %s stream per trip, %s messages, %s",PlexerTest1Threads,PlexerTest1RoundTripsPerThread,PlexerTest1NewStreamPerRoundTrip?"new":"one",PlexerTest1RandomMessages?"random":"fixed",xstr(PlexerTest1CompressionType));
+    ymlog("plexer test using %u threads, %u trips per thread, %s stream per trip, %s messages, %s",PlexerTest1Threads,PlexerTest1RoundTripsPerThread,PlexerTest1NewStreamPerRoundTrip?"new":"one",PlexerTest1RandomMessages?"random":"fixed",YM_STR_STR(PlexerTest1CompressionType));
     
     YMStringRef name = YMSTRC("L");
     YMSecurityProviderRef noSecurity = YMSecurityProviderCreate(socketA,socketA);
@@ -202,13 +202,13 @@ YM_ENTRY_POINT(_RunLocalPlexer)
     YMStreamRef aStream = NULL;
     size_t staticMessageLen = strlen(testLocalMessage) + 1;
 
-    unsigned idx = 0;
 #ifdef PlexerTest1TimeBased
     while ( ! theTest->timeBasedTimeOver ) {
 #else
+    unsigned idx = 0;
     for ( ; idx < PlexerTest1RoundTripsPerThread; idx++ ) {
-#endif
         //ymlog("_RunLocalPlexer loop %u",idx++);
+#endif
         YMPlexerStreamID streamID;
         if ( ! aStream || PlexerTest1NewStreamPerRoundTrip ) {
             YMStringRef name = YMSTRC(__FUNCTION__);
