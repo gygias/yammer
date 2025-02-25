@@ -46,7 +46,7 @@ YM_EXTERN_C_PUSH
                                         YMStreamRef _stream = YMDictionaryGetItem(p->streamsByID,streamID);\
                                         if ( _stream ) { \
                                             YMDictionaryRemove(p->streamsByID, streamID); \
-                                            __ym_plexer_stream_user_info_t *userInfo = YM_STREAM_INFO(_stream); \
+                                            __ym_plexer_stream_user_info_t *_userInfo = YM_STREAM_INFO(_stream); \
                                             YMRelease(userInfo->plexer); \
                                             YMFREE(userInfo->upBuffer); \
                                             YMRelease(_stream); \
@@ -166,7 +166,7 @@ typedef struct _ym_plexer_and_stream
 } _ym_plexer_and_stream;
 typedef struct _ym_plexer_and_stream _ym_plexer_and_stream_t;
 
-void __YMRegisterSigpipe();
+void __YMRegisterSigpipe(void);
 void __ym_sigpipe_handler (int signum);
 void __YMPlexerCallbackFunctionWithName(__ym_plexer_t *, YMStreamRef, YMDispatchQueueRef, ym_entry_point);
 bool __YMPlexerStartServiceThreads(__ym_plexer_t *);
@@ -433,7 +433,7 @@ void __YMPlexerDestroySources(__ym_plexer_t *p, bool up, YMStreamRef stream, con
 
 #pragma mark internal
 
-void __YMRegisterSigpipe()
+void __YMRegisterSigpipe(void)
 {
     signal(SIGPIPE,__ym_sigpipe_handler);
 }
@@ -813,8 +813,6 @@ bool __YMPlexerInterrupt(__ym_plexer_t *p)
         __YMPlexerDestroySources(p,true,NULL,"INTERRUPT");
     }
     __YMPlexerDestroySources(p,false,NULL,"INTERRUPT");
-
-    _YMDispatchSourcesReset(2.0);
     
     YMSecurityProviderClose(p->provider);
 

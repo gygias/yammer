@@ -378,7 +378,7 @@ bool YMSessionConnectToPeer(YMSessionRef s_, YMPeerRef peer, bool sync)
         bool existing = false;
         YMDictionaryEnumRef denum = YMDictionaryEnumeratorBegin(s->connectionsByAddress);
         while ( denum ) {
-            if ( YMAddressIsEqualIncludingPort(address, (YMAddressRef)denum->value, false) ) {
+            if ( YMAddressIsEqualIncludingPort(address, address, false) ) {
                 YMDictionaryEnumeratorEnd(denum);
                 existing = true;
                 break;

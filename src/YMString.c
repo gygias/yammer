@@ -25,7 +25,7 @@ typedef struct __ym_string __ym_string_t;
 
 YMStringRef __YMStringCreate(const char *allocdString, size_t length);
 
-YMStringRef YMStringCreate()
+YMStringRef YMStringCreate(void)
 {
     return YMStringCreateWithCString("");
 }

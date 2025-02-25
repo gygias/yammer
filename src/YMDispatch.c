@@ -6,6 +6,7 @@
 #include "YMArray.h"
 #include "YMPipe.h"
 #include "YMUtilities.h"
+#include "YMDispatchPriv.h"
 
 #define ymlog_type YMLogDispatch
 #include "YMLog.h"
@@ -13,11 +14,15 @@
 #include <time.h>
 #include <math.h>
 #include <signal.h>
-#if defined(YMLINUX)
+#if defined(YMLINUX) || defined(YMAPPLE)
 # include <sys/select.h>
 # include <fcntl.h>
 #else
 # error implement me
+#endif
+
+#if defined(YMAPPLE)
+#include <dispatch/dispatch.h>
 #endif
 
 #define YM_DISPATCH_LOG
@@ -34,7 +39,9 @@ typedef struct __ym_dispatch_timer
 {
     YMDispatchQueueRef queue;
     struct timespec time;
+#if !defined(YMAPPLE)
     timer_t timer;
+#endif
     ym_dispatch_user_t *dispatch;
 } __ym_dispatch_timer;
 typedef struct __ym_dispatch_timer __ym_dispatch_timer_t;
@@ -80,7 +87,7 @@ typedef struct __ym_dispatch __ym_dispatch_t;
 __ym_dispatch_t *gDispatch = NULL;
 
 YM_ONCE_DEF(__YMDispatchInitOnce);
-void YMDispatchInit()
+void YMDispatchInit(void)
 {
     YM_ONCE_DO_LOCAL(__YMDispatchInitOnce);
 }
@@ -89,7 +96,7 @@ typedef struct __ym_dispatch_queue_thread
 {
     YMThreadRef thread; // weak
     bool busy;
-} __ym_dispatch_queue_thread_t;
+} __ym_dispatch_queue_thread;
 typedef struct __ym_dispatch_queue_thread __ym_dispatch_queue_thread_t;
 
 YM_ENTRY_POINT(__ym_dispatch_main_service_loop);
@@ -144,7 +151,7 @@ void __YM_DISPATCH_CATCH_MISUSE(__ym_dispatch_queue_t *q)
 void _YMDispatchQueueFree(YMDispatchQueueRef p_)
 {
 #ifdef YM_DISPATCH_LOG
-    printf("%s %p\n",__FUNCTION__,p_);
+    printf("%s %p\n",__FUNCTION__,(void *)p_);
 #endif
     __ym_dispatch_queue_t *q = (__ym_dispatch_queue_t *)p_;
     if ( q->type == YMDispatchQueueGlobal || q->type == YMDispatchQueueMain )
@@ -192,7 +199,7 @@ __ym_dispatch_queue_t *__YMDispatchQueueInitCommon(YMStringRef name, YMDispatchQ
 
             YMArrayAdd(q->queueThreads,qt); // no sync, guarded by once
 #ifdef YM_DISPATCH_LOG
-            printf("started %s queue thread %p[%p,%p] '%s'\n", ( type == YMDispatchQueueGlobal ) ? "global" : "user", c, c->q, c->qt, YMSTR(name));
+            printf("started %s queue thread %p[%p,%p] '%s'\n", ( type == YMDispatchQueueGlobal ) ? "global" : "user", (void *)c, (void *)c->q, (void *)c->qt, YMSTR(name));
 #endif
         }
     }
@@ -216,10 +223,10 @@ YMDispatchQueueRef YMDispatchQueueCreate(YMStringRef name)
 void YMAPI YMDispatchQueueRelease(YMDispatchQueueRef queue)
 {
     YMLockLock(gDispatch->lock);
-    int before = YMArrayGetCount(gDispatch->userQueues);
+    int64_t before = YMArrayGetCount(gDispatch->userQueues);
     YMArrayRemoveObject(gDispatch->userQueues,queue);
-    int after = YMArrayGetCount(gDispatch->userQueues);
-    if ( before == after ) { printf("YMArrayRemoveObject: %d\n",before); abort(); }
+    int64_t after = YMArrayGetCount(gDispatch->userQueues);
+    if ( before == after ) { printf("YMArrayRemoveObject: %ld\n",before); abort(); }
     YMLockUnlock(gDispatch->lock);
 
     __YMDispatchQueueExitSync((__ym_dispatch_queue_t *)queue);
@@ -227,13 +234,13 @@ void YMAPI YMDispatchQueueRelease(YMDispatchQueueRef queue)
     YMRelease(queue);
 }
 
-YMDispatchQueueRef YMDispatchGetGlobalQueue()
+YMDispatchQueueRef YMDispatchGetGlobalQueue(void)
 {
     YM_ONCE_DO(gDispatchGlobalInitOnce, __YMDispatchInitOnce);
     return gDispatch->globalQueue;
 }
 
-YMDispatchQueueRef YMDispatchGetMainQueue()
+YMDispatchQueueRef YMDispatchGetMainQueue(void)
 {
     YM_ONCE_DO(gDispatchGlobalInitOnce, __YMDispatchInitOnce);
     return gDispatch->mainQueue;
@@ -468,7 +475,9 @@ void YMAPI YMDispatchSourceDestroy(ym_dispatch_source_t source)
     }
     YMLockUnlock(gDispatch->sourcesLock);
 
-    ymassert(item,"source %p not in list[%ld]",source,count);
+    if ( ! item ) {
+        printf("source %p not in list[%ld], presuming select loop has recently reset\n",source,count);
+    }
 
 #warning watchlist recycle user threads
     if ( s->queue->type == YMDispatchQueueUser ) {
@@ -486,6 +495,7 @@ void YMAPI YMDispatchSourceDestroy(ym_dispatch_source_t source)
 
 void YMAPI YMDispatchAfter(YMDispatchQueueRef queue, ym_dispatch_user_t *userDispatch, double secondsAfter)
 {
+#if !defined(YMAPPLE)
     struct timespec timespec;
     int ret = clock_gettime(CLOCK_REALTIME,&timespec);
     if ( ret != 0 ) {
@@ -527,7 +537,7 @@ void YMAPI YMDispatchAfter(YMDispatchQueueRef queue, ym_dispatch_user_t *userDis
 
 #ifdef YM_AFTER_LOG
         struct timespec now;
-        int ret = clock_gettime(CLOCK_REALTIME,&now);
+        ret = clock_gettime(CLOCK_REALTIME,&now);
         if ( ret != 0 ) {
             printf("clock_gettime failed: %d %s",errno,strerror(errno));
             return;
@@ -559,6 +569,15 @@ void YMAPI YMDispatchAfter(YMDispatchQueueRef queue, ym_dispatch_user_t *userDis
         }
     }
     YMLockUnlock(gDispatch->lock);
+#else
+    YMRetain(queue);
+    ym_dispatch_user_t *userCopy = __YMUserDispatchCopy(userDispatch);
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW,secondsAfter*NSEC_PER_SEC), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT,0), ^{
+        YMDispatchAsync(queue,userCopy);
+        YMFREE(userCopy);
+        YMRelease(queue);
+    });
+#endif
 }
 
 void __ym_dispatch_sigalarm(int signum)
@@ -848,18 +867,7 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
        tions  should instead use poll(2) or epoll(7), which do not suffer this \
        limitation.
 
-        int result = select(maxFd + 1, &readFds, &writeFds, NULL,
-#ifdef debug_timeout
-//#define debug_timeout_once
-#ifdef debug_timeout_once
-                                     (nServiced > 0) ? NULL : &tv
-#else
-                                                    &tv
-#endif
-#else
-                            NULL
-#endif
-                                );
+        result = select(maxFd + 1, &readFds, &writeFds, NULL, &tv);
 #ifdef YM_SOURCE_LOG_point_5
         if ( nIterations % 1000 == 0 )
             printf(">>> source select: %zd (%lu serviced, %lu loops (%0.2f%%) %lu timeouts (%0.2f%%), %lu $ignals (%0.2f%% busy))<<<\n",result,
@@ -963,8 +971,6 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
             nTimeouts++;
         } else {
 
-            int error;
-            char *errorStr;
 #if defined(YMWIN32)
 #error implement me
 			//error = WSAGetLastError();
@@ -973,10 +979,18 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
 			error = errno;
 			errorStr = strerror(errno);
 #endif
-            printf("select failed from n%d fds: %d: %d (%s)\n",nfds,result,error,errorStr);
             consecutiveFailures++;
-            if ( consecutiveFailures > 1 )
-                keepGoing = false;
+            if ( consecutiveFailures > 2 ) {
+                printf("select failed from n%d fds: %zd: %d (%s)\n",nfds,result,error,errorStr);
+            }
+            if ( consecutiveFailures > 10 ) {
+                YMLockLock(gDispatch->sourcesLock);
+                int64_t count = YMArrayGetCount(gDispatch->sources);
+                _YMArrayRemoveAll(gDispatch->sources, false, false);
+                printf("select thread resetting %ld -> %ld!!\n",count,YMArrayGetCount(gDispatch->sources));
+                YMLockUnlock(gDispatch->sourcesLock);
+                //keepGoing = false;
+            }
         }
         nIterations++;
     }
@@ -988,61 +1002,7 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
     fflush(stdout);
 }
 
-YM_ONCE_OBJ(gDispatchSourcesResetOnce);
-static double gDispatchSourcesResetAfter = 0.0;
-
-YM_ENTRY_POINT(_ym_dispatch_sources_reset_after);
-YM_ENTRY_POINT(_ym_dispatch_sources_reset_after)
-{
-    printf("*** %s ***\n",__FUNCTION__); fflush(stdout);
-    gDispatchGlobalInitSelect = PTHREAD_ONCE_INIT;
-    gDispatchSourcesResetOnce = PTHREAD_ONCE_INIT;
-}
-
-YM_ENTRY_POINT(_ym_dispatch_sources_signal_after);
-YM_ENTRY_POINT(_ym_dispatch_sources_signal_after)
-{
-    YM_IO_BOILERPLATE
-
-    char buf = 'x';
-    YMFILE signalFile = YMPipeGetInputFile(gDispatch->selectSignalPipe);
-    YM_WRITE_FILE(signalFile,&buf,1);
-    if ( result != 1 ) {
-        printf("*** failed to $ignal $elect loop to xit %d %d %s***\n",signalFile,error,errorStr);
-    }
-    else
-        printf("*** x->%d for xit ***\n",signalFile);
-
-    ym_dispatch_user_t *after = YMALLOC(sizeof(ym_dispatch_user_t));
-    after->dispatchProc = _ym_dispatch_sources_reset_after;
-    after->context = NULL;
-    after->onCompleteProc = NULL;
-    after->mode = ym_dispatch_user_context_noop;
-    YMDispatchAfter(YMDispatchGetGlobalQueue(),after,gDispatchSourcesResetAfter);
-}
-
-YM_ONCE_DEF(__YMDispatchSourcesResetOnce);
-YM_ONCE_FUNC(__YMDispatchSourcesResetOnce,
-{
-    printf("%s\n",__FUNCTION__);
-
-    ym_dispatch_user_t *after = YMALLOC(sizeof(ym_dispatch_user_t));
-    after->dispatchProc = _ym_dispatch_sources_signal_after;
-    after->context = NULL;
-    after->onCompleteProc = NULL;
-    after->mode = ym_dispatch_user_context_noop;
-    YMDispatchAfter(YMDispatchGetGlobalQueue(),after,gDispatchSourcesResetAfter / 2);
-    YMFREE(after);
-})
-
-// wow, what a hack for client and server running in the same process!
-void _YMDispatchSourcesReset(double seconds)
-{
-    gDispatchSourcesResetAfter = seconds;
-    YM_ONCE_DO(gDispatchSourcesResetOnce, __YMDispatchSourcesResetOnce);
-}
-
-void YMDispatchMain()
+void YMDispatchMain(void)
 {
     YM_ONCE_DO(gDispatchGlobalInitOnce, __YMDispatchInitOnce);
     __ym_dispatch_service_loop_context_t *c = YMALLOC(sizeof(__ym_dispatch_service_loop_context_t));

@@ -14,7 +14,7 @@
 YM_EXTERN_C_PUSH
 
 uint64_t YMAPI _YMThreadGetThreadNumber(YMThreadRef thread);
-uint64_t YMAPI _YMThreadGetCurrentThreadNumber();
+uint64_t YMAPI _YMThreadGetCurrentThreadNumber(void);
 
 YM_EXTERN_C_POP
 

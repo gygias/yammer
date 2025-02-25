@@ -28,8 +28,8 @@ typedef struct ym_dispatch_user
 } ym_dispatch_user;
 typedef struct ym_dispatch_user ym_dispatch_user_t;
 
-YMDispatchQueueRef YMAPI YMDispatchGetMainQueue();
-YMDispatchQueueRef YMAPI YMDispatchGetGlobalQueue();
+YMDispatchQueueRef YMAPI YMDispatchGetMainQueue(void);
+YMDispatchQueueRef YMAPI YMDispatchGetGlobalQueue(void);
 
 // userDispatch is copied and can be passed from the stack, to make up for some of the
 // inconvenience of not having language support for blocks
@@ -47,7 +47,7 @@ typedef void * ym_dispatch_source_t;
 ym_dispatch_source_t YMAPI YMDispatchSourceCreate(YMDispatchQueueRef queue, ym_dispatch_source_type type, uint64_t data, ym_dispatch_user_t *user);
 void YMAPI YMDispatchSourceDestroy(ym_dispatch_source_t source);
 
-_Noreturn void YMAPI YMDispatchMain();
+_Noreturn void YMAPI YMDispatchMain(void);
 
 YM_EXTERN_C_POP
 

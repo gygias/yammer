@@ -19,7 +19,7 @@ YMLocalSocketPairRef YMAPI YMLocalSocketPairCreate(YMStringRef name, bool moreCo
 
 // if previous calls to YMLocalSocketPairCreate said 'moreComing', this function can be used to
 // free associated resources. it is not thread-safe (with itself or with YMLocalSocketPairCreate).
-void YMAPI YMLocalSocketPairStop();
+void YMAPI YMLocalSocketPairStop(void);
 
 YMSOCKET YMAPI YMLocalSocketPairGetA(YMLocalSocketPairRef pair);
 YMSOCKET YMAPI YMLocalSocketPairGetB(YMLocalSocketPairRef pair);

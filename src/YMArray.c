@@ -28,7 +28,7 @@ typedef struct __ym_array __ym_array_t;
 
 int64_t __YMArrayFind(__ym_array_t *array, const void *value);
 
-YMArrayRef YMArrayCreate()
+YMArrayRef YMArrayCreate(void)
 {
     return YMArrayCreate2(false);
 }
@@ -134,12 +134,13 @@ void _YMArrayRemoveAll(YMArrayRef a_, bool ymRelease, bool free_)
 {
     __ym_array_t *a = (__ym_array_t *)a_;
     
-    while ( a->count-- ) {
+    while ( a->count ) {
         int64_t aKey = (int64_t)YMDictionaryGetRandomKey(a->dict);
         const void *object = YMDictionaryGetItem(a->dict, (YMDictionaryKey)aKey);
         if ( ymRelease ) YMRelease(object);
         else if ( free_ ) YMFREE((void *)object);
         YMDictionaryRemove(a->dict, (YMDictionaryKey)aKey);
+        a->count--;
     }
 }
 

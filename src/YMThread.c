@@ -49,7 +49,7 @@ typedef struct __ym_thread __ym_thread_t;
 
 __ym_thread_t * __YMThreadInitCommon(YMStringRef, void *);
 void __YMThreadInitThreadDict(__ym_thread_t *);
-YM_THREAD_TYPE _YMThreadGetCurrentThread();
+YM_THREAD_TYPE _YMThreadGetCurrentThread(void);
 YM_ENTRY_POINT(__ym_thread_generic_entry_proc);
 
 
@@ -162,7 +162,7 @@ bool YMThreadJoin(YMThreadRef t)
     return true;
 }
 
-YM_THREAD_TYPE __YMThreadGetCurrentThread()
+YM_THREAD_TYPE __YMThreadGetCurrentThread(void)
 {
 #if defined(YMWIN32)
     return GetCurrentThread();
@@ -171,7 +171,7 @@ YM_THREAD_TYPE __YMThreadGetCurrentThread()
 #endif
 }
 
-uint64_t _YMThreadGetCurrentThreadNumber()
+uint64_t _YMThreadGetCurrentThreadNumber(void)
 {
     return (uint64_t)__YMThreadGetCurrentThread();
 }

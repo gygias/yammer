@@ -88,7 +88,7 @@ void ym_tls_thread_id_callback(CRYPTO_THREADID *threadId)
     CRYPTO_THREADID_set_numeric(threadId, (unsigned long)_YMThreadGetCurrentThreadNumber());
 }
 
-void __YMTLSInitPlatform()
+void __YMTLSInitPlatform(void)
 {
 #if defined(YMWIN32)
 	OPENSSL_Applink();
@@ -179,7 +179,7 @@ void _YMTLSProviderFree(YMTLSProviderRef tls)
         SSL_CTX_free(tls->sslCtx);
 }
 
-void YMTLSProviderFreeGlobals()
+void YMTLSProviderFreeGlobals(void)
 {
 //    if ( gYMTLSExDataList ) {
 //        YMRelease(gYMTLSExDataList);

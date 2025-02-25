@@ -39,7 +39,7 @@ typedef enum
 
 typedef const struct __ym_lock * YMLockRef;
 
-YMLockRef YMAPI YMLockCreate();
+YMLockRef YMAPI YMLockCreate(void);
 YMLockRef YMAPI YMLockCreateWithOptions(YMLockOptions options);
 YMLockRef YMAPI YMLockCreateWithOptionsAndName(YMLockOptions options, YMStringRef name);
 

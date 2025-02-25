@@ -70,7 +70,7 @@ typedef enum
 void YMAPI __YMLogType( int level, char* format, ... ) __printflike(2, 3);
 void YMAPI __YMLogReturn( int level );
 
-void YMLogFreeGlobals();
+void YMLogFreeGlobals(void);
 
 YM_EXTERN_C_POP
 

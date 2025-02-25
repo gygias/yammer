@@ -44,7 +44,7 @@ typedef struct __ym_rsa_keypair
 } __ym_rsa_keypair;
 typedef struct __ym_rsa_keypair __ym_rsa_keypair_t;
 
-void __YMRSAKeyPairSeed();
+void __YMRSAKeyPairSeed(void);
 
 YMRSAKeyPairRef YMRSAKeyPairCreateWithModuloSize(int moduloBits, int publicExponent)
 {
@@ -69,7 +69,7 @@ YMRSAKeyPairRef YMRSAKeyPairCreateWithModuloSize(int moduloBits, int publicExpon
     return k;
 }
 
-YMRSAKeyPairRef YMRSAKeyPairCreate()
+YMRSAKeyPairRef YMRSAKeyPairCreate(void)
 {
     return YMRSAKeyPairCreateWithModuloSize(4096, RSA_F4);
 }
@@ -187,7 +187,7 @@ catch_return:
     return (result == openssl_success);
 }
 
-void __YMRSAKeyPairSeed()
+void __YMRSAKeyPairSeed(void)
 {
 #ifdef YMDEBUG
     struct timeval then;

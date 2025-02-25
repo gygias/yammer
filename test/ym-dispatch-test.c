@@ -13,7 +13,9 @@
 #include "YMUtilities.h"
 #include "YMThreadPriv.h"
 
+#if !defined(YMAPPLE)
 #include "arc4random.h"
+#endif
 #include <sys/time.h>
 #include <string.h>
 
@@ -39,7 +41,7 @@ typedef enum {
     ArglessTests = DenialOfServiceTest | AfterTest | SourcesTest
 } TestType;
 
-void usage() { ymlog("usage: ym-dispatch-test [m|g[r]|u|dos|after|sources] [#nReps]"); exit(1); }
+void usage(void) { ymlog("usage: ym-dispatch-test [m|g[r]|u|dos|after|sources] [#nReps]"); exit(1); }
 
 static int gNumberArg2 = 0, gIter = 0, gCompleted = 0;
 static bool gRacey = false;
@@ -117,7 +119,7 @@ int main(int argc, char *argv[])
 
 #pragma mark "rep" based tests
 
-void print_reps_by_thread()
+void print_reps_by_thread(void)
 {
     uint32_t reps = 0;
     YMDictionaryEnumRef dEnum = YMDictionaryEnumeratorBegin(gRepsByThread);
@@ -158,7 +160,7 @@ YM_ENTRY_POINT(valgrind_take_me_away)
     free(context);
 }
 
-void * valgrind_hit_me()
+void * valgrind_hit_me(void)
 {
     size_t relativelyBig = 1024;
     return malloc(relativelyBig);
@@ -194,6 +196,7 @@ YM_ENTRY_POINT(_ym_dispatch_rep_test)
     }
 
     if ( gType == GlobalTest && gRacey ) {
+        // it's now possible to <i>know</i>
         sleep(10); // could perhaps check % cpu
         printf("ym-dispatch-test assumes races have finished at (%d / %d)\n",gCompleted,gNumberArg2);
         print_reps_by_thread();
@@ -209,7 +212,8 @@ YM_ENTRY_POINT(denial_of_service)
 
 YM_ENTRY_POINT(denial_of_service_check)
 {
-    ymlog("i will fix your bugs!");
+    fprintf(stderr,"i will fix your bugs!\n");
+    fflush(stderr);
     myexit(0);
 }
 
@@ -299,7 +303,12 @@ YM_ENTRY_POINT(after_conversion_test)
         return;
     }
 
-#define kThresholdofHappiness .001
+// it is a scientific fact that apple users have a lower threshold to happiness
+#if defined(YMAPPLE)
+# define kThresholdofHappiness .01
+#else
+# define kThresholdofHappiness .001
+#endif
     double tvDoubleSince = YMTimevalSince(tvThen, tvNow);
     double tvDelta = tvDoubleSince + difference;
     bool tvHappy = ( tvDelta > -kThresholdofHappiness && tvDelta <= 0 );
@@ -372,8 +381,13 @@ YM_ENTRY_POINT(an_after_story_plot_device)
     double timeSinceThenish = YMTimevalSince(aCharacter->thenish, nowish);
     double delta = timeSinceThenish + aCharacter->aRandom;
 
+#if defined(YMAPPLE)
+# define kThresholdOfCustomerSatisfaction 1.0
+#else
+# define kThresholdOfCustomerSatisfaction 0.1
+#endif
     // we pride ourselves on not taking things too seriously
-    aCharacter->satisfied = delta >= -.1 && delta <= .1;
+    aCharacter->satisfied = delta >= -kThresholdOfCustomerSatisfaction && delta <= 0;
     ymlog("After %f seconds of active contemplation, I, %s, am %ssatisfied! (%0.6f)",aCharacter->aRandom,
                                                                                     aCharacter->name,
                                                                                     aCharacter->satisfied?"":"NOT ",

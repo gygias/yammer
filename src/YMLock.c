@@ -24,7 +24,7 @@ typedef struct __ym_lock __ym_lock_t;
 
 YM_EXTERN_C_PUSH
 
-YMLockRef YMLockCreate()
+YMLockRef YMLockCreate(void)
 {
     return YMLockCreateWithOptionsAndName(YMLockNone, NULL);
 }

@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -51,11 +51,9 @@
 		63225D641BE90A6400C28F05 /* YMSecurityProvider.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D621BE90A6400C28F05 /* YMSecurityProvider.c */; };
 		63225D651BE90A6400C28F05 /* YMSecurityProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D631BE90A6400C28F05 /* YMSecurityProvider.h */; };
 		63225D691BE9184000C28F05 /* YMUtilities.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D671BE9184000C28F05 /* YMUtilities.c */; };
-		63225D6A1BE9184000C28F05 /* YMUtilities.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D681BE9184000C28F05 /* YMUtilities.h */; };
 		63225D6D1BE91B3B00C28F05 /* YMLog.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D6B1BE91B3B00C28F05 /* YMLog.c */; };
 		63225D6E1BE91B3B00C28F05 /* YMLog.h in Headers */ = {isa = PBXBuildFile; fileRef = 63225D6C1BE91B3B00C28F05 /* YMLog.h */; };
 		63225D981BE92B6000C28F05 /* YMBase.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D971BE92B6000C28F05 /* YMBase.c */; };
-		63225D9E1BE9372800C28F05 /* libssl.1.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63225D9D1BE9372800C28F05 /* libssl.1.0.0.dylib */; };
 		6329D3241C9F646A0087988D /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 6329D3231C9F646A0087988D /* AppDelegate.m */; };
 		6329D3271C9F646A0087988D /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 6329D3261C9F646A0087988D /* main.m */; };
 		6329D3291C9F646A0087988D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6329D3281C9F646A0087988D /* Assets.xcassets */; };
@@ -67,6 +65,34 @@
 		6335CAC01BF453A800412CC9 /* YMAddress.h in Headers */ = {isa = PBXBuildFile; fileRef = 6335CABE1BF453A800412CC9 /* YMAddress.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		6335CAC51BF480DC00412CC9 /* YMPeer.c in Sources */ = {isa = PBXBuildFile; fileRef = 6335CAC31BF480DC00412CC9 /* YMPeer.c */; };
 		6335CAC61BF480DC00412CC9 /* YMPeer.h in Headers */ = {isa = PBXBuildFile; fileRef = 6335CAC41BF480DC00412CC9 /* YMPeer.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		63391DE72D6D8E60008E8BEA /* YMDispatchUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 63391DE52D6D8E60008E8BEA /* YMDispatchUtils.h */; };
+		63391DE82D6D8E60008E8BEA /* YMDispatch.h in Headers */ = {isa = PBXBuildFile; fileRef = 63391DE42D6D8E60008E8BEA /* YMDispatch.h */; };
+		63391DE92D6D8E60008E8BEA /* YMCompression.h in Headers */ = {isa = PBXBuildFile; fileRef = 63391DE32D6D8E60008E8BEA /* YMCompression.h */; };
+		63391DEA2D6D8E60008E8BEA /* YMUtilities.h in Headers */ = {isa = PBXBuildFile; fileRef = 63391DE62D6D8E60008E8BEA /* YMUtilities.h */; };
+		63391DEB2D6D8E60008E8BEA /* YMDispatchUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 63391DE52D6D8E60008E8BEA /* YMDispatchUtils.h */; };
+		63391DEC2D6D8E60008E8BEA /* YMDispatch.h in Headers */ = {isa = PBXBuildFile; fileRef = 63391DE42D6D8E60008E8BEA /* YMDispatch.h */; };
+		63391DED2D6D8E60008E8BEA /* YMCompression.h in Headers */ = {isa = PBXBuildFile; fileRef = 63391DE32D6D8E60008E8BEA /* YMCompression.h */; };
+		63391DEE2D6D8E60008E8BEA /* YMUtilities.h in Headers */ = {isa = PBXBuildFile; fileRef = 63391DE62D6D8E60008E8BEA /* YMUtilities.h */; };
+		63391DEF2D6D8E60008E8BEA /* YMDispatchUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 63391DE52D6D8E60008E8BEA /* YMDispatchUtils.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		63391DF02D6D8E60008E8BEA /* YMDispatch.h in Headers */ = {isa = PBXBuildFile; fileRef = 63391DE42D6D8E60008E8BEA /* YMDispatch.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		63391DF12D6D8E60008E8BEA /* YMCompression.h in Headers */ = {isa = PBXBuildFile; fileRef = 63391DE32D6D8E60008E8BEA /* YMCompression.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		63391DF22D6D8E60008E8BEA /* YMUtilities.h in Headers */ = {isa = PBXBuildFile; fileRef = 63391DE62D6D8E60008E8BEA /* YMUtilities.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		63391DF42D6D8E73008E8BEA /* YMDispatchPriv.h in Headers */ = {isa = PBXBuildFile; fileRef = 63391DF32D6D8E73008E8BEA /* YMDispatchPriv.h */; };
+		63391DF52D6D8E73008E8BEA /* YMDispatchPriv.h in Headers */ = {isa = PBXBuildFile; fileRef = 63391DF32D6D8E73008E8BEA /* YMDispatchPriv.h */; };
+		63391DF62D6D8E73008E8BEA /* YMDispatchPriv.h in Headers */ = {isa = PBXBuildFile; fileRef = 63391DF32D6D8E73008E8BEA /* YMDispatchPriv.h */; };
+		63391DF92D6D8E93008E8BEA /* YMDispatch.c in Sources */ = {isa = PBXBuildFile; fileRef = 63391DF72D6D8E93008E8BEA /* YMDispatch.c */; };
+		63391DFA2D6D8E93008E8BEA /* YMDispatchUtils.c in Sources */ = {isa = PBXBuildFile; fileRef = 63391DF82D6D8E93008E8BEA /* YMDispatchUtils.c */; };
+		63391DFB2D6D8E93008E8BEA /* YMDispatch.c in Sources */ = {isa = PBXBuildFile; fileRef = 63391DF72D6D8E93008E8BEA /* YMDispatch.c */; };
+		63391DFC2D6D8E93008E8BEA /* YMDispatchUtils.c in Sources */ = {isa = PBXBuildFile; fileRef = 63391DF82D6D8E93008E8BEA /* YMDispatchUtils.c */; };
+		63391DFD2D6D8E93008E8BEA /* YMDispatch.c in Sources */ = {isa = PBXBuildFile; fileRef = 63391DF72D6D8E93008E8BEA /* YMDispatch.c */; };
+		63391DFE2D6D8E93008E8BEA /* YMDispatchUtils.c in Sources */ = {isa = PBXBuildFile; fileRef = 63391DF82D6D8E93008E8BEA /* YMDispatchUtils.c */; };
+		63391DFF2D6D8E93008E8BEA /* YMDispatch.c in Sources */ = {isa = PBXBuildFile; fileRef = 63391DF72D6D8E93008E8BEA /* YMDispatch.c */; };
+		63391E002D6D8E93008E8BEA /* YMDispatchUtils.c in Sources */ = {isa = PBXBuildFile; fileRef = 63391DF82D6D8E93008E8BEA /* YMDispatchUtils.c */; };
+		63391E022D6D8EAA008E8BEA /* ym-dispatch-test.c in Sources */ = {isa = PBXBuildFile; fileRef = 63391E012D6D8EAA008E8BEA /* ym-dispatch-test.c */; };
+		63391E052D6DA289008E8BEA /* libssl.3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63391E042D6DA289008E8BEA /* libssl.3.dylib */; };
+		63391E072D6DA2C2008E8BEA /* liblz4.1.10.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63391E062D6DA2C2008E8BEA /* liblz4.1.10.0.dylib */; };
+		63391E082D6DA556008E8BEA /* liblz4.1.10.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63391E062D6DA2C2008E8BEA /* liblz4.1.10.0.dylib */; };
+		63391E092D6DA556008E8BEA /* libssl.3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63391E042D6DA289008E8BEA /* libssl.3.dylib */; };
 		6346BBB51C1F802500437E21 /* YMBase.c in Sources */ = {isa = PBXBuildFile; fileRef = 63225D971BE92B6000C28F05 /* YMBase.c */; };
 		6346BBB61C1F802500437E21 /* YMString.c in Sources */ = {isa = PBXBuildFile; fileRef = 637816C51BF68B8F00BF79E2 /* YMString.c */; };
 		6346BBB71C1F802500437E21 /* YMArray.c in Sources */ = {isa = PBXBuildFile; fileRef = 63BA70A41C174A9900210D2E /* YMArray.c */; };
@@ -112,7 +138,6 @@
 		636166DE1C18DC1100D17172 /* ThreadTests.c in Sources */ = {isa = PBXBuildFile; fileRef = 636166DD1C18DC1100D17172 /* ThreadTests.c */; };
 		636166DF1C18DC1100D17172 /* ThreadTests.c in Sources */ = {isa = PBXBuildFile; fileRef = 636166DD1C18DC1100D17172 /* ThreadTests.c */; };
 		636166EE1C18DFB500D17172 /* libyammer.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63225D421BE9026200C28F05 /* libyammer.dylib */; };
-		636166F51C18E05700D17172 /* ym-dispatch-main-test.c in Sources */ = {isa = PBXBuildFile; fileRef = 636166E21C18DF8B00D17172 /* ym-dispatch-main-test.c */; };
 		636166F71C18EDDD00D17172 /* libyammer.geany in Resources */ = {isa = PBXBuildFile; fileRef = 636166F61C18EDDD00D17172 /* libyammer.geany */; };
 		636166F91C18FAF600D17172 /* TestsMain.c in Sources */ = {isa = PBXBuildFile; fileRef = 636166F81C18FAF600D17172 /* TestsMain.c */; };
 		6369CEA31C97570600737A6B /* GrabBagTests.c in Sources */ = {isa = PBXBuildFile; fileRef = 6369CEA11C97570500737A6B /* GrabBagTests.c */; };
@@ -151,7 +176,6 @@
 		63B17DAE1CB45335005B662B /* YMCompression.c in Sources */ = {isa = PBXBuildFile; fileRef = 63500B181CAF7381009E5514 /* YMCompression.c */; };
 		63B17DB31CB45377005B662B /* libbz2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 63B17DAF1CB4534C005B662B /* libbz2.tbd */; };
 		63B17DB71CB4555B005B662B /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 63B17DB61CB4555B005B662B /* libz.tbd */; };
-		63B17DB81CB45704005B662B /* YMDebug.c in Sources */ = {isa = PBXBuildFile; fileRef = 63DFAB541C221EA50076BF27 /* YMDebug.c */; };
 		63B594071C1B895E0041121A /* YMArray.h in Headers */ = {isa = PBXBuildFile; fileRef = 63BA70A61C174AA700210D2E /* YMArray.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		63BA70A21C17493600210D2E /* YMTask.c in Sources */ = {isa = PBXBuildFile; fileRef = 63BA70A11C17493600210D2E /* YMTask.c */; };
 		63BA70A51C174A9900210D2E /* YMArray.c in Sources */ = {isa = PBXBuildFile; fileRef = 63BA70A41C174A9900210D2E /* YMArray.c */; };
@@ -168,7 +192,6 @@
 		63DD2E191C0FB45D00D822D1 /* TLSTests.c in Sources */ = {isa = PBXBuildFile; fileRef = 63DD2E171C0FB45D00D822D1 /* TLSTests.c */; };
 		63DD2E1C1C0FC0F600D822D1 /* PlexerTests.c in Sources */ = {isa = PBXBuildFile; fileRef = 63DD2E1A1C0FC0F600D822D1 /* PlexerTests.c */; };
 		63DD2E1F1C0FE41F00D822D1 /* SessionTests.c in Sources */ = {isa = PBXBuildFile; fileRef = 63DD2E1D1C0FE41F00D822D1 /* SessionTests.c */; };
-		63DFAB551C221EA60076BF27 /* YMDebug.c in Sources */ = {isa = PBXBuildFile; fileRef = 63DFAB541C221EA50076BF27 /* YMDebug.c */; };
 		63EEC75D1BFB6AD100990ECE /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 63DDCB311BFB68AA009F91CD /* main.c */; };
 		63EEC75E1BFB6BCF00990ECE /* libyammer.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 63225D421BE9026200C28F05 /* libyammer.dylib */; };
 		63F8A1871CA4519700D48581 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 63F8A1861CA4519700D48581 /* AppKit.framework */; };
@@ -392,11 +415,9 @@
 		63225D631BE90A6400C28F05 /* YMSecurityProvider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMSecurityProvider.h; path = ../private/YMSecurityProvider.h; sourceTree = "<group>"; };
 		63225D661BE90B2D00C28F05 /* YMBase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMBase.h; path = ../libyammer/YMBase.h; sourceTree = "<group>"; };
 		63225D671BE9184000C28F05 /* YMUtilities.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMUtilities.c; path = ../src/YMUtilities.c; sourceTree = "<group>"; };
-		63225D681BE9184000C28F05 /* YMUtilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMUtilities.h; path = ../private/YMUtilities.h; sourceTree = "<group>"; };
 		63225D6B1BE91B3B00C28F05 /* YMLog.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMLog.c; path = ../src/YMLog.c; sourceTree = "<group>"; };
 		63225D6C1BE91B3B00C28F05 /* YMLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMLog.h; path = ../private/YMLog.h; sourceTree = "<group>"; };
 		63225D971BE92B6000C28F05 /* YMBase.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMBase.c; path = ../src/YMBase.c; sourceTree = "<group>"; };
-		63225D991BE92CBA00C28F05 /* YMDebug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMDebug.h; path = ../private/YMDebug.h; sourceTree = "<group>"; };
 		63225D9D1BE9372800C28F05 /* libssl.1.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libssl.1.0.0.dylib; path = /opt/local/lib/libssl.1.0.0.dylib; sourceTree = "<absolute>"; };
 		6329D3201C9F646A0087988D /* ProfilingTestApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ProfilingTestApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6329D3221C9F646A0087988D /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -415,6 +436,16 @@
 		6335CAC31BF480DC00412CC9 /* YMPeer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMPeer.c; path = ../src/YMPeer.c; sourceTree = "<group>"; };
 		6335CAC41BF480DC00412CC9 /* YMPeer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YMPeer.h; path = ../libyammer/YMPeer.h; sourceTree = "<group>"; };
 		6335CAC71BF4813A00412CC9 /* YMPeerPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMPeerPriv.h; path = ../private/YMPeerPriv.h; sourceTree = "<group>"; };
+		63391DE32D6D8E60008E8BEA /* YMCompression.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMCompression.h; path = ../libyammer/YMCompression.h; sourceTree = SOURCE_ROOT; };
+		63391DE42D6D8E60008E8BEA /* YMDispatch.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMDispatch.h; path = ../libyammer/YMDispatch.h; sourceTree = SOURCE_ROOT; };
+		63391DE52D6D8E60008E8BEA /* YMDispatchUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMDispatchUtils.h; path = ../libyammer/YMDispatchUtils.h; sourceTree = SOURCE_ROOT; };
+		63391DE62D6D8E60008E8BEA /* YMUtilities.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMUtilities.h; path = ../libyammer/YMUtilities.h; sourceTree = SOURCE_ROOT; };
+		63391DF32D6D8E73008E8BEA /* YMDispatchPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMDispatchPriv.h; path = ../private/YMDispatchPriv.h; sourceTree = SOURCE_ROOT; };
+		63391DF72D6D8E93008E8BEA /* YMDispatch.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = YMDispatch.c; path = ../src/YMDispatch.c; sourceTree = SOURCE_ROOT; };
+		63391DF82D6D8E93008E8BEA /* YMDispatchUtils.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = YMDispatchUtils.c; path = ../src/YMDispatchUtils.c; sourceTree = SOURCE_ROOT; };
+		63391E012D6D8EAA008E8BEA /* ym-dispatch-test.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = "ym-dispatch-test.c"; sourceTree = "<group>"; };
+		63391E042D6DA289008E8BEA /* libssl.3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libssl.3.dylib; path = "../../../../../opt/homebrew/Cellar/openssl@3/3.4.1/lib/libssl.3.dylib"; sourceTree = "<group>"; };
+		63391E062D6DA2C2008E8BEA /* liblz4.1.10.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = liblz4.1.10.0.dylib; path = ../../../../../opt/homebrew/Cellar/lz4/1.10.0/lib/liblz4.1.10.0.dylib; sourceTree = "<group>"; };
 		6346BBAC1C1F7FE800437E21 /* libyammer-ios.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libyammer-ios.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		6346BBCF1C1F826C00437E21 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		6346BBD11C1F827000437E21 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
@@ -438,7 +469,6 @@
 		634F5B941CB8770A008CF20C /* YMSocket.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMSocket.c; path = ../src/YMSocket.c; sourceTree = "<group>"; };
 		634F5B971CB9C2ED008CF20C /* YMNumber.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMNumber.h; path = ../private/YMNumber.h; sourceTree = "<group>"; };
 		634F5B981CB9C31C008CF20C /* YMNumber.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMNumber.c; path = ../src/YMNumber.c; sourceTree = "<group>"; };
-		63500B171CAF7361009E5514 /* YMCompression.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = YMCompression.h; path = ../private/YMCompression.h; sourceTree = "<group>"; };
 		63500B181CAF7381009E5514 /* YMCompression.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMCompression.c; path = ../src/YMCompression.c; sourceTree = "<group>"; };
 		63500B1B1CAF8FF8009E5514 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		63500B1D1CAF9245009E5514 /* libbz2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libbz2.tbd; path = usr/lib/libbz2.tbd; sourceTree = SDKROOT; };
@@ -447,8 +477,7 @@
 		6351A1881CAAF37F007AEF68 /* link_bundle.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = link_bundle.sh; sourceTree = "<group>"; };
 		636166DD1C18DC1100D17172 /* ThreadTests.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ThreadTests.c; sourceTree = "<group>"; };
 		636166E01C18DC1D00D17172 /* ThreadTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ThreadTests.h; sourceTree = "<group>"; };
-		636166E21C18DF8B00D17172 /* ym-dispatch-main-test.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = "ym-dispatch-main-test.c"; sourceTree = "<group>"; };
-		636166E71C18DFA300D17172 /* ym-dispatch-main-test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "ym-dispatch-main-test"; sourceTree = BUILT_PRODUCTS_DIR; };
+		636166E71C18DFA300D17172 /* ym-dispatch-test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "ym-dispatch-test"; sourceTree = BUILT_PRODUCTS_DIR; };
 		636166F61C18EDDD00D17172 /* libyammer.geany */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = libyammer.geany; path = ../linux/libyammer.geany; sourceTree = "<group>"; };
 		636166F81C18FAF600D17172 /* TestsMain.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = TestsMain.c; sourceTree = "<group>"; };
 		6369CEA11C97570500737A6B /* GrabBagTests.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = GrabBagTests.c; sourceTree = "<group>"; };
@@ -512,7 +541,6 @@
 		63DD2E1D1C0FE41F00D822D1 /* SessionTests.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = SessionTests.c; path = ../test/SessionTests.c; sourceTree = "<group>"; };
 		63DD2E1E1C0FE41F00D822D1 /* SessionTests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SessionTests.h; path = ../test/SessionTests.h; sourceTree = "<group>"; };
 		63DDCB311BFB68AA009F91CD /* main.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = main.c; sourceTree = "<group>"; };
-		63DFAB541C221EA50076BF27 /* YMDebug.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMDebug.c; path = ../src/YMDebug.c; sourceTree = "<group>"; };
 		63EEC7561BFB6AA400990ECE /* ymchat */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ymchat; sourceTree = BUILT_PRODUCTS_DIR; };
 		63F8A1861CA4519700D48581 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		63FD5B581BF1899800174824 /* YMRSAKeyPair.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = YMRSAKeyPair.c; path = ../src/YMRSAKeyPair.c; sourceTree = "<group>"; };
@@ -548,12 +576,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				63391E072D6DA2C2008E8BEA /* liblz4.1.10.0.dylib in Frameworks */,
+				63391E052D6DA289008E8BEA /* libssl.3.dylib in Frameworks */,
 				63500B1F1CAF925D009E5514 /* libz.tbd in Frameworks */,
 				63500B1E1CAF9245009E5514 /* libbz2.tbd in Frameworks */,
 				6346BBD21C1F827000437E21 /* SystemConfiguration.framework in Frameworks */,
 				6346BBD01C1F826C00437E21 /* CoreFoundation.framework in Frameworks */,
 				638E1D661C098AF900BA2FA4 /* libcrypto.tbd in Frameworks */,
-				63225D9E1BE9372800C28F05 /* libssl.1.0.0.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -603,6 +632,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				63391E082D6DA556008E8BEA /* liblz4.1.10.0.dylib in Frameworks */,
+				63391E092D6DA556008E8BEA /* libssl.3.dylib in Frameworks */,
 				63B17DB71CB4555B005B662B /* libz.tbd in Frameworks */,
 				63B17DB31CB45377005B662B /* libbz2.tbd in Frameworks */,
 				63B17D961CB4440A005B662B /* libyammer-ios.a in Frameworks */,
@@ -659,6 +690,10 @@
 		631916461BFD069A001475FC /* libyammer */ = {
 			isa = PBXGroup;
 			children = (
+				63391DE32D6D8E60008E8BEA /* YMCompression.h */,
+				63391DE42D6D8E60008E8BEA /* YMDispatch.h */,
+				63391DE52D6D8E60008E8BEA /* YMDispatchUtils.h */,
+				63391DE62D6D8E60008E8BEA /* YMUtilities.h */,
 				630A5D0B1BE96D6E003292EE /* Yammer.h */,
 				6335CABE1BF453A800412CC9 /* YMAddress.h */,
 				63BA70A61C174AA700210D2E /* YMArray.h */,
@@ -691,6 +726,7 @@
 				63B17D5E1CB34442005B662B /* PTA-ios */,
 				637122971CBEB3C800629E10 /* pta-cli */,
 				63225D9C1BE9314100C28F05 /* apple dependencies */,
+				63391E032D6DA289008E8BEA /* Frameworks */,
 				63225D431BE9026200C28F05 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -703,7 +739,7 @@
 				63EEC7561BFB6AA400990ECE /* ymchat */,
 				631916311BFCFF13001475FC /* Yammer.framework */,
 				631F0D321C141EE500C141D4 /* ymtest */,
-				636166E71C18DFA300D17172 /* ym-dispatch-main-test */,
+				636166E71C18DFA300D17172 /* ym-dispatch-test */,
 				6346BBAC1C1F7FE800437E21 /* libyammer-ios.a */,
 				6329D3201C9F646A0087988D /* ProfilingTestApp.app */,
 				63B17D5D1CB34441005B662B /* PTA-ios.app */,
@@ -765,6 +801,15 @@
 			path = ../misc/chat;
 			sourceTree = "<group>";
 		};
+		63391E032D6DA289008E8BEA /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				63391E062D6DA2C2008E8BEA /* liblz4.1.10.0.dylib */,
+				63391E042D6DA289008E8BEA /* libssl.3.dylib */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		634A87481C17A4C600C7CA99 /* linux */ = {
 			isa = PBXGroup;
 			children = (
@@ -776,10 +821,9 @@
 		6351A1851CAAF0C5007AEF68 /* private */ = {
 			isa = PBXGroup;
 			children = (
+				63391DF32D6D8E73008E8BEA /* YMDispatchPriv.h */,
 				6332A4BB1BF134DD004BB764 /* yammerpch.h */,
-				63500B171CAF7361009E5514 /* YMCompression.h */,
 				63344DDD1BF935730049712F /* YMConnectionPriv.h */,
-				63225D991BE92CBA00C28F05 /* YMDebug.h */,
 				63BA70A71C17522400210D2E /* YMDictionaryPriv.h */,
 				637816C31BF680A700BF79E2 /* YMInternal.h */,
 				63BD75CD1BF3F0E700D01F70 /* YMLocalSocketPair.h */,
@@ -806,7 +850,6 @@
 				630A5CF91BE95E36003292EE /* YMThread.h */,
 				63A40EF81BEC239C0085ABD0 /* YMThreadPriv.h */,
 				630A5CE81BE93BEF003292EE /* YMTLSProvider.h */,
-				63225D681BE9184000C28F05 /* YMUtilities.h */,
 				637E3D5C1BF262EE00D702ED /* YMX509Certificate.h */,
 				6319164A1BFE438A001475FC /* YMX509CertificatePriv.h */,
 			);
@@ -816,12 +859,13 @@
 		6351A1861CAAF0CD007AEF68 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				63391DF72D6D8E93008E8BEA /* YMDispatch.c */,
+				63391DF82D6D8E93008E8BEA /* YMDispatchUtils.c */,
 				6335CABD1BF453A800412CC9 /* YMAddress.c */,
 				63BA70A41C174A9900210D2E /* YMArray.c */,
 				63225D971BE92B6000C28F05 /* YMBase.c */,
 				63500B181CAF7381009E5514 /* YMCompression.c */,
 				630A5CF01BE950F1003292EE /* YMConnection.c */,
-				63DFAB541C221EA50076BF27 /* YMDebug.c */,
 				63476A4D1BEB159C00D10081 /* YMDictionary.c */,
 				63BD75CC1BF3F0E700D01F70 /* YMLocalSocketPair.c */,
 				63476A421BEAF4DB00D10081 /* YMLock.c */,
@@ -848,14 +892,6 @@
 				637E3D5B1BF262EE00D702ED /* YMX509Certificate.c */,
 			);
 			name = src;
-			sourceTree = "<group>";
-		};
-		636166E11C18DF5E00D17172 /* dispatch-main-test */ = {
-			isa = PBXGroup;
-			children = (
-				636166E21C18DF8B00D17172 /* ym-dispatch-main-test.c */,
-			);
-			name = "dispatch-main-test";
 			sourceTree = "<group>";
 		};
 		637122971CBEB3C800629E10 /* pta-cli */ = {
@@ -925,7 +961,7 @@
 		63DD2E051C0F7C4200D822D1 /* test */ = {
 			isa = PBXGroup;
 			children = (
-				636166E11C18DF5E00D17172 /* dispatch-main-test */,
+				63391E012D6D8EAA008E8BEA /* ym-dispatch-test.c */,
 				636166F81C18FAF600D17172 /* TestsMain.c */,
 				63DD2E091C0F7D6C00D822D1 /* Tests.h */,
 				63DD2E0A1C0F898200D822D1 /* Tests.c */,
@@ -963,7 +999,12 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				63391DEB2D6D8E60008E8BEA /* YMDispatchUtils.h in Headers */,
+				63391DEC2D6D8E60008E8BEA /* YMDispatch.h in Headers */,
+				63391DED2D6D8E60008E8BEA /* YMCompression.h in Headers */,
+				63391DEE2D6D8E60008E8BEA /* YMUtilities.h in Headers */,
 				6319163F1BFCFFAA001475FC /* YMConnection.h in Headers */,
+				63391DF62D6D8E73008E8BEA /* YMDispatchPriv.h in Headers */,
 				631916341BFCFF13001475FC /* Yammer.h in Headers */,
 				631916431BFCFFB4001475FC /* YMStream.h in Headers */,
 				6319163B1BFCFF93001475FC /* YMSession.h in Headers */,
@@ -975,18 +1016,22 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				63345AC61BFAC7FD00569B3C /* YMBase.h in Headers */,
+				63391DF12D6D8E60008E8BEA /* YMCompression.h in Headers */,
+				63391DF02D6D8E60008E8BEA /* YMDispatch.h in Headers */,
+				63391DEF2D6D8E60008E8BEA /* YMDispatchUtils.h in Headers */,
+				63391DF22D6D8E60008E8BEA /* YMUtilities.h in Headers */,
 				63345AC71BFAC80800569B3C /* Yammer.h in Headers */,
-				630A5CF71BE9518A003292EE /* YMSession.h in Headers */,
-				6335CAC61BF480DC00412CC9 /* YMPeer.h in Headers */,
-				630A5CF31BE950F1003292EE /* YMConnection.h in Headers */,
-				637816C81BF68B8F00BF79E2 /* YMString.h in Headers */,
-				63476A501BEB159C00D10081 /* YMDictionary.h in Headers */,
 				6335CAC01BF453A800412CC9 /* YMAddress.h in Headers */,
-				63225D5D1BE9092500C28F05 /* YMStream.h in Headers */,
 				63B594071C1B895E0041121A /* YMArray.h in Headers */,
+				63345AC61BFAC7FD00569B3C /* YMBase.h in Headers */,
+				630A5CF31BE950F1003292EE /* YMConnection.h in Headers */,
+				63476A501BEB159C00D10081 /* YMDictionary.h in Headers */,
+				6335CAC61BF480DC00412CC9 /* YMPeer.h in Headers */,
+				630A5CF71BE9518A003292EE /* YMSession.h in Headers */,
+				63225D5D1BE9092500C28F05 /* YMStream.h in Headers */,
+				637816C81BF68B8F00BF79E2 /* YMString.h in Headers */,
+				63391DF52D6D8E73008E8BEA /* YMDispatchPriv.h in Headers */,
 				63476A451BEAF4DB00D10081 /* YMLock.h in Headers */,
-				63225D6A1BE9184000C28F05 /* YMUtilities.h in Headers */,
 				630A5CFB1BE95E36003292EE /* YMThread.h in Headers */,
 				637E3D5E1BF262EE00D702ED /* YMX509Certificate.h in Headers */,
 				63225D611BE909BB00C28F05 /* YMPlexer.h in Headers */,
@@ -1008,7 +1053,12 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				63391DE72D6D8E60008E8BEA /* YMDispatchUtils.h in Headers */,
+				63391DE82D6D8E60008E8BEA /* YMDispatch.h in Headers */,
+				63391DE92D6D8E60008E8BEA /* YMCompression.h in Headers */,
+				63391DEA2D6D8E60008E8BEA /* YMUtilities.h in Headers */,
 				63B17D911CB440AE005B662B /* YMPeer.h in Headers */,
+				63391DF42D6D8E73008E8BEA /* YMDispatchPriv.h in Headers */,
 				63B17D901CB440AE005B662B /* YMConnection.h in Headers */,
 				63B17D921CB440AE005B662B /* YMSession.h in Headers */,
 				63B17D931CB440AE005B662B /* YMStream.h in Headers */,
@@ -1131,9 +1181,9 @@
 			productReference = 6346BBAC1C1F7FE800437E21 /* libyammer-ios.a */;
 			productType = "com.apple.product-type.library.static";
 		};
-		636166E61C18DFA300D17172 /* ym-dispatch-main-test */ = {
+		636166E61C18DFA300D17172 /* ym-dispatch-test */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 636166EB1C18DFA300D17172 /* Build configuration list for PBXNativeTarget "ym-dispatch-main-test" */;
+			buildConfigurationList = 636166EB1C18DFA300D17172 /* Build configuration list for PBXNativeTarget "ym-dispatch-test" */;
 			buildPhases = (
 				636166E31C18DFA300D17172 /* Sources */,
 				636166E41C18DFA300D17172 /* Frameworks */,
@@ -1144,9 +1194,9 @@
 			dependencies = (
 				636166F01C18DFBB00D17172 /* PBXTargetDependency */,
 			);
-			name = "ym-dispatch-main-test";
+			name = "ym-dispatch-test";
 			productName = "dispatch-main-test";
-			productReference = 636166E71C18DFA300D17172 /* ym-dispatch-main-test */;
+			productReference = 636166E71C18DFA300D17172 /* ym-dispatch-test */;
 			productType = "com.apple.product-type.tool";
 		};
 		6371229D1CBEB5FD00629E10 /* pta */ = {
@@ -1231,8 +1281,9 @@
 		63225D3A1BE9026200C28F05 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				BuildIndependentTargetsInParallel = YES;
 				CLASSPREFIX = YM;
-				LastUpgradeCheck = 0800;
+				LastUpgradeCheck = 1620;
 				ORGANIZATIONNAME = combobulated;
 				TargetAttributes = {
 					630A5CFF1BE96CE9003292EE = {
@@ -1273,7 +1324,7 @@
 			};
 			buildConfigurationList = 63225D3D1BE9026200C28F05 /* Build configuration list for PBXProject "yammer" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
@@ -1291,7 +1342,7 @@
 				630A5CFF1BE96CE9003292EE /* YammerTests */,
 				63EEC7551BFB6AA400990ECE /* ymchat */,
 				631F0D311C141EE500C141D4 /* ymtest */,
-				636166E61C18DFA300D17172 /* ym-dispatch-main-test */,
+				636166E61C18DFA300D17172 /* ym-dispatch-test */,
 				6329D31F1C9F646A0087988D /* ProfilingTestApp */,
 				63B17D5C1CB34441005B662B /* PTA-ios */,
 				6371229D1CBEB5FD00629E10 /* pta */,
@@ -1387,6 +1438,8 @@
 			files = (
 				6319163C1BFCFF93001475FC /* YMSession.m in Sources */,
 				6319164E1BFE94AF001475FC /* YMPeer.m in Sources */,
+				63391DFD2D6D8E93008E8BEA /* YMDispatch.c in Sources */,
+				63391DFE2D6D8E93008E8BEA /* YMDispatchUtils.c in Sources */,
 				631916401BFCFFAA001475FC /* YMConnection.m in Sources */,
 				631916441BFCFFB4001475FC /* YMStream.m in Sources */,
 			);
@@ -1438,10 +1491,11 @@
 				630A5CED1BE9428C003292EE /* YMmDNSService.c in Sources */,
 				637122991CBEB3DC00629E10 /* main.c in Sources */,
 				630A5CF61BE9518A003292EE /* YMSession.c in Sources */,
+				63391DFB2D6D8E93008E8BEA /* YMDispatch.c in Sources */,
+				63391DFC2D6D8E93008E8BEA /* YMDispatchUtils.c in Sources */,
 				630A5CE91BE93BEF003292EE /* YMTLSProvider.c in Sources */,
 				63225D641BE90A6400C28F05 /* YMSecurityProvider.c in Sources */,
 				634F5B951CB8770A008CF20C /* YMSocket.c in Sources */,
-				63DFAB551C221EA60076BF27 /* YMDebug.c in Sources */,
 				63500B191CAF7381009E5514 /* YMCompression.c in Sources */,
 				63BA70A21C17493600210D2E /* YMTask.c in Sources */,
 				63476A4F1BEB159C00D10081 /* YMDictionary.c in Sources */,
@@ -1484,11 +1538,12 @@
 				6346BBC61C1F802500437E21 /* YMX509Certificate.c in Sources */,
 				6346BBC71C1F802500437E21 /* YMThread.c in Sources */,
 				6346BBC81C1F802500437E21 /* YMPipe.c in Sources */,
-				63B17DB81CB45704005B662B /* YMDebug.c in Sources */,
 				634F5B961CB8770A008CF20C /* YMSocket.c in Sources */,
 				6346BBC91C1F802500437E21 /* YMUtilities.c in Sources */,
 				6346BBCA1C1F802500437E21 /* YMLock.c in Sources */,
 				6346BBCC1C1F802500437E21 /* YMSemaphore.c in Sources */,
+				63391DFF2D6D8E93008E8BEA /* YMDispatch.c in Sources */,
+				63391E002D6D8E93008E8BEA /* YMDispatchUtils.c in Sources */,
 				6346BBCD1C1F802500437E21 /* YMLocalSocketPair.c in Sources */,
 				6346BBCE1C1F802500437E21 /* YMTask.c in Sources */,
 			);
@@ -1498,7 +1553,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				636166F51C18E05700D17172 /* ym-dispatch-main-test.c in Sources */,
+				63391E022D6D8EAA008E8BEA /* ym-dispatch-test.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1526,6 +1581,8 @@
 			files = (
 				63B17D8B1CB4409B005B662B /* YMConnection.m in Sources */,
 				63B17D8D1CB4409B005B662B /* YMSession.m in Sources */,
+				63391DF92D6D8E93008E8BEA /* YMDispatch.c in Sources */,
+				63391DFA2D6D8E93008E8BEA /* YMDispatchUtils.c in Sources */,
 				63B17D8C1CB4409B005B662B /* YMPeer.m in Sources */,
 				63B17D8E1CB4409B005B662B /* YMStream.m in Sources */,
 			);
@@ -1569,12 +1626,12 @@
 		};
 		63500B251CB2D950009E5514 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 636166E61C18DFA300D17172 /* ym-dispatch-main-test */;
+			target = 636166E61C18DFA300D17172 /* ym-dispatch-test */;
 			targetProxy = 63500B241CB2D950009E5514 /* PBXContainerItemProxy */;
 		};
 		63500B271CB2D95A009E5514 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 636166E61C18DFA300D17172 /* ym-dispatch-main-test */;
+			target = 636166E61C18DFA300D17172 /* ym-dispatch-test */;
 			targetProxy = 63500B261CB2D95A009E5514 /* PBXContainerItemProxy */;
 		};
 		636166F01C18DFBB00D17172 /* PBXTargetDependency */ = {
@@ -1652,11 +1709,17 @@
 			buildSettings = {
 				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = NO;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
 				GCC_PREFIX_HEADER = ../private/yammerpch.h;
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				HEADER_SEARCH_PATHS = "\"$SRCROOT/../\"";
 				INFOPLIST_FILE = YammerTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.combobulated.YammerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WARNING_CFLAGS = (
@@ -1671,11 +1734,17 @@
 			buildSettings = {
 				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = NO;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
 				GCC_PREFIX_HEADER = ../private/yammerpch.h;
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				HEADER_SEARCH_PATHS = "\"$SRCROOT/../\"";
 				INFOPLIST_FILE = YammerTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.combobulated.YammerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WARNING_CFLAGS = (
@@ -1692,14 +1761,20 @@
 				CODE_SIGN_IDENTITY = "";
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				FRAMEWORK_VERSION = A;
-				GCC_PREFIX_HEADER = "Yammer/Yammer-pch.h";
+				GCC_PREFIX_HEADER = $SRCROOT/../private/yammerpch.h;
 				INFOPLIST_FILE = Yammer/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.combobulated.Yammer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -1716,14 +1791,20 @@
 				CODE_SIGN_IDENTITY = "";
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				FRAMEWORK_VERSION = A;
-				GCC_PREFIX_HEADER = "Yammer/Yammer-pch.h";
+				GCC_PREFIX_HEADER = $SRCROOT/../private/yammerpch.h;
 				INFOPLIST_FILE = Yammer/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.combobulated.Yammer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -1737,8 +1818,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = NO;
+				DEAD_CODE_STRIPPING = YES;
 				GCC_PREFIX_HEADER = ../private/yammerpch.h;
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -1747,8 +1830,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = NO;
+				DEAD_CODE_STRIPPING = YES;
 				GCC_PREFIX_HEADER = ../private/yammerpch.h;
 				GCC_PREPROCESSOR_DEFINITIONS = "";
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -1762,24 +1847,33 @@
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_ASSIGN_ENUM = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NULLABLE_TO_NONNULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "-";
 				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -1805,7 +1899,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
 					"\"$SRCROOT/../\"",
-					/opt/local/include,
+					/opt/homebrew/include,
 					"\"$SRCROOT/../src\"",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
@@ -1829,24 +1923,32 @@
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_ASSIGN_ENUM = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NULLABLE_TO_NONNULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "-";
 				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEAD_CODE_STRIPPING = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_PREFIX_HEADER = ../../private/yammerpch.h;
@@ -1866,7 +1968,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
 					"\"$SRCROOT/../\"",
-					/opt/local/include,
+					/opt/homebrew/include,
 					"\"$SRCROOT/../src\"",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
@@ -1886,6 +1988,7 @@
 				CLANG_ENABLE_MODULES = NO;
 				CLANG_ENABLE_MODULE_DEBUGGING = NO;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				ENABLE_NS_ASSERTIONS = YES;
@@ -1895,17 +1998,18 @@
 					"$(inherited)",
 					"YM_TEST_BOOL_USE=1",
 				);
-				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
 				HEADER_SEARCH_PATHS = (
 					"\"$SRCROOT/../\"",
-					/opt/local/include,
+					/opt/homebrew/include,
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					/opt/local/lib,
+					/opt/homebrew/lib,
+					"/opt/homebrew/Cellar/openssl@3/3.4.1/lib",
+					/opt/homebrew/Cellar/lz4/1.10.0/lib,
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PUBLIC_HEADERS_FOLDER_PATH = /usr/local/include/libyammer;
 				WARNING_CFLAGS = "-Wall";
@@ -1918,22 +2022,24 @@
 				CLANG_ENABLE_MODULES = NO;
 				CLANG_ENABLE_MODULE_DEBUGGING = NO;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				ENABLE_NS_ASSERTIONS = YES;
 				EXECUTABLE_PREFIX = "";
 				GCC_PREFIX_HEADER = ../private/yammerpch.h;
-				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
 				HEADER_SEARCH_PATHS = (
 					"\"$SRCROOT/../\"",
-					/opt/local/include,
+					/opt/homebrew/include,
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					/opt/local/lib,
+					/opt/homebrew/lib,
+					"/opt/homebrew/Cellar/openssl@3/3.4.1/lib",
+					/opt/homebrew/Cellar/lz4/1.10.0/lib,
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PUBLIC_HEADERS_FOLDER_PATH = /usr/local/include/libyammer;
 				WARNING_CFLAGS = "-Wall";
@@ -1946,12 +2052,20 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = NO;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				INFOPLIST_FILE = ProfilingTestApp/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.combobulated.ProfilingTestApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				USER_HEADER_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR) $(PROJECT_DIR)/../libyammer";
+				USER_HEADER_SEARCH_PATHS = (
+					"$(BUILT_PRODUCTS_DIR)",
+					"$(PROJECT_DIR)/../libyammer",
+				);
 				WARNING_CFLAGS = "";
 			};
 			name = Debug;
@@ -1962,12 +2076,20 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = NO;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				INFOPLIST_FILE = ProfilingTestApp/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.combobulated.ProfilingTestApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				USER_HEADER_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR) $(PROJECT_DIR)/../libyammer";
+				USER_HEADER_SEARCH_PATHS = (
+					"$(BUILT_PRODUCTS_DIR)",
+					"$(PROJECT_DIR)/../libyammer",
+				);
 				WARNING_CFLAGS = "";
 			};
 			name = Release;
@@ -1988,7 +2110,8 @@
 					"YMAPPLE=1",
 					"YMIOS=1",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -2014,7 +2137,8 @@
 					"YMAPPLE=1",
 					"YMIOS=1",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -2033,7 +2157,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = NO;
+				DEAD_CODE_STRIPPING = YES;
 				GCC_PREFIX_HEADER = ../private/yammerpch.h;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -2042,7 +2168,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = NO;
+				DEAD_CODE_STRIPPING = YES;
 				GCC_PREFIX_HEADER = ../private/yammerpch.h;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -2051,6 +2179,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ANALYZER_NONNULL = YES;
+				DEAD_CODE_STRIPPING = YES;
+				GCC_PREFIX_HEADER = $SRCROOT/../private/yammerpch.h;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -2059,6 +2190,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ANALYZER_NONNULL = YES;
+				DEAD_CODE_STRIPPING = YES;
+				GCC_PREFIX_HEADER = $SRCROOT/../private/yammerpch.h;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -2073,8 +2207,12 @@
 				DEVELOPMENT_TEAM = B7CLPV6KGB;
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				INFOPLIST_FILE = "PTA-ios/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.combobulated.PTA-ios";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -2093,8 +2231,12 @@
 				DEVELOPMENT_TEAM = B7CLPV6KGB;
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				INFOPLIST_FILE = "PTA-ios/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.combobulated.PTA-ios";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -2115,7 +2257,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				GCC_PREFIX_HEADER = "Yammer/Yammer-pch.h";
+				GCC_PREFIX_HEADER = $SRCROOT/../private/yammerpch.h;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -2129,12 +2271,19 @@
 				);
 				INFOPLIST_FILE = YammeriOS/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/openssl-ios",
+					/opt/homebrew/Cellar/lz4/1.10.0/lib,
+					"/opt/homebrew/Cellar/openssl@3/3.4.1/lib",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.combobulated.YammeriOS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -2157,7 +2306,7 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				GCC_PREFIX_HEADER = "Yammer/Yammer-pch.h";
+				GCC_PREFIX_HEADER = $SRCROOT/../private/yammerpch.h;
 				GCC_PREPROCESSOR_DEFINITIONS = "YMIOS=1";
 				HEADER_SEARCH_PATHS = (
 					"\"$SRCROOT\"/**",
@@ -2167,12 +2316,19 @@
 				);
 				INFOPLIST_FILE = YammeriOS/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/openssl-ios",
+					/opt/homebrew/Cellar/lz4/1.10.0/lib,
+					"/opt/homebrew/Cellar/openssl@3/3.4.1/lib",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.combobulated.YammeriOS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -2189,7 +2345,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = NO;
+				DEAD_CODE_STRIPPING = YES;
 				GCC_PREFIX_HEADER = ../private/yammerpch.h;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -2198,7 +2356,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = NO;
+				DEAD_CODE_STRIPPING = YES;
 				GCC_PREFIX_HEADER = ../private/yammerpch.h;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -2269,7 +2429,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		636166EB1C18DFA300D17172 /* Build configuration list for PBXNativeTarget "ym-dispatch-main-test" */ = {
+		636166EB1C18DFA300D17172 /* Build configuration list for PBXNativeTarget "ym-dispatch-test" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				636166EC1C18DFA300D17172 /* Debug */,

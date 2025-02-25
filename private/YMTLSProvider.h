@@ -33,7 +33,7 @@ typedef bool                  (*ym_tls_provider_should_accept)(YMTLSProviderRef 
 void YMAPI YMTLSProviderSetLocalCertsFunc(YMTLSProviderRef tls, ym_tls_provider_get_certs func, void *context);
 void YMAPI YMTLSProviderSetAcceptPeerCertsFunc(YMTLSProviderRef tls, ym_tls_provider_should_accept func, void *context);
 
-void YMAPI YMTLSProviderFreeGlobals();
+void YMAPI YMTLSProviderFreeGlobals(void);
 
 YM_EXTERN_C_POP
 

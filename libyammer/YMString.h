@@ -15,7 +15,7 @@ YM_EXTERN_C_PUSH
 
 typedef const struct __ym_string * YMStringRef;
 
-YMStringRef YMAPI YMStringCreate();
+YMStringRef YMAPI YMStringCreate(void);
 YMStringRef YMAPI YMStringCreateWithCString(const char *cString);
 YMStringRef YMAPI YMStringCreateWithFormat(const char *format,...) YM_VARGS_SENTINEL_REQUIRED __printflike(1, 2);
 YMStringRef YMAPI YMStringCreateByAppendingString(YMStringRef base, YMStringRef append);

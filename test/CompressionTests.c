@@ -90,7 +90,7 @@ void _BZTestRun(CompressionTest *theTest)
 void _LZ4TestRun(CompressionTest *theTest)
 {
 #if defined(YMAPPLE)
-    const char *sourcePath = "/private/var/log/system.log";
+    const char *sourcePath = "/private/var/log/install.log";
 #elif defined(YMLINUX)
     const char *sourcePath = "/var/log/syslog";
 #else

@@ -94,7 +94,7 @@ typedef enum
     GreaterThan = 1
 } ComparisonResult;
 
-void YMAPI YMFreeGlobalResources();
+void YMAPI YMFreeGlobalResources(void);
 
 YM_EXTERN_C_POP
 

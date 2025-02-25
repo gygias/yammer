@@ -11,6 +11,8 @@
 #import "YMConnectionPriv.h"
 #import "YMPeerPriv.h"
 
+#include <libyammer/YMSession.h>
+
 @interface YMSession ()
 
 @property (nonatomic,copy) NSString *type;

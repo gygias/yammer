@@ -46,10 +46,10 @@ void YMAPI YMGetTheEndOfPosixTimeForCurrentPlatform(struct timeval *time);
 YMIOResult YMAPI YMReadFull(YMFILE fd, uint8_t *buffer, size_t bytes, size_t *outRead);
 YMIOResult YMAPI YMWriteFull(YMFILE fd, const uint8_t *buffer, size_t bytes, size_t *outWritten);
 
-int YMAPI YMGetNumberOfOpenFilesForCurrentProcess();
+int YMAPI YMGetNumberOfOpenFilesForCurrentProcess(void);
 int YMAPI YMGetPipeSize(YMFILE);
 
-void YMAPI YMNetworkingInit();
+void YMAPI YMNetworkingInit(void);
 int32_t YMAPI YMPortReserve(bool ipv4, int *outSocket);
 
 typedef enum
@@ -74,7 +74,7 @@ typedef enum
 //        "type" : YMInterfaceType } }
 #define kYMIFMapAddressesKey ((YMDictionaryKey) 1) // YMArray of YMAddresses
 #define kYMIFMapTypeKey ((YMDictionaryKey) 2) // YMNumber
-YMDictionaryRef YMAPI YMInterfaceMapCreateLocal();
+YMDictionaryRef YMAPI YMInterfaceMapCreateLocal(void);
 YMInterfaceType YMAPI YMInterfaceTypeForName(YMStringRef ifName);
 const char YMAPI * YMInterfaceTypeDescription(YMInterfaceType type);
 
@@ -89,13 +89,13 @@ bool YMAPI YMLockMutex(MUTEX_PTR_TYPE mutex);
 bool YMAPI YMUnlockMutex(MUTEX_PTR_TYPE mutex);
 bool YMAPI YMDestroyMutex(MUTEX_PTR_TYPE mutex);
 
-bool YMAPI YMIsDebuggerAttached();
+bool YMAPI YMIsDebuggerAttached(void);
 
-int YMAPI YMGetNumberOfCoresAvailable();
+int YMAPI YMGetNumberOfCoresAvailable(void);
 int YMAPI YMGetDefaultThreadsForCores(int cores);
-int YMAPI YMGetNumberOfThreadsInCurrentProcess();
+int YMAPI YMGetNumberOfThreadsInCurrentProcess(void);
 
-void YMAPI YMUtilitiesFreeGlobals();
+void YMAPI YMUtilitiesFreeGlobals(void);
 
 #if defined(YMWIN32) || defined(_YOLO_DONT_TELL_PROFESSOR)
 int YMAPI gettimeofday(struct timeval * tp, struct timezone * tzp);

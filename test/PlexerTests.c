@@ -23,7 +23,7 @@
 
 YM_EXTERN_C_PUSH
 
-#define     PlexerTest1Threads 4
+#define     PlexerTest1Threads ( YMGetDefaultThreadsForCores(YMGetNumberOfCoresAvailable()) / 2 )
 #define     PlexerTest1NewStreamPerRoundTrip true
 #define     PlexerTest1RoundTripsPerThread 128
 #define     PlexerTest1CompressionType YMCompressionLZ4

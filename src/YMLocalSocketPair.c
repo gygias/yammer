@@ -55,7 +55,7 @@ typedef struct __ym_local_socket_pair
 } __ym_local_socket_pair;
 typedef struct __ym_local_socket_pair __ym_local_socket_pair_t;
 
-int __YMLocalSocketPairCreateClient();
+int __YMLocalSocketPairCreateClient(void);
 YM_ENTRY_POINT(__ym_local_socket_accept_proc);
 YM_ONCE_DEF(__YMLocalSocketPairInitOnce);
 
@@ -70,7 +70,7 @@ static YMSemaphoreRef gYMLocalSocketThreadExited = NULL;
 static YMSOCKET gYMLocalSocketListenSocket = NULL_SOCKET;
 static YMSOCKET gYMLocalSocketPairAcceptedLast = NULL_SOCKET;
 
-void YMLocalSocketPairStop()
+void YMLocalSocketPairStop(void)
 {
 	YM_IO_BOILERPLATE
 	
@@ -212,7 +212,7 @@ void _YMLocalSocketPairFree(YMTypeRef o_)
     YMRelease(p->socketName);
 }
 
-int __YMLocalSocketPairCreateClient()
+int __YMLocalSocketPairCreateClient(void)
 {
     YM_IO_BOILERPLATE
 

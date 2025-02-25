@@ -25,8 +25,8 @@
 #if !defined(YMWIN32)
 # define YM_ONCE_OBJ pthread_once_t
 # define YM_ONCE_INIT PTHREAD_ONCE_INIT
-# define YM_ONCE_DEF(x) void x()
-# define YM_ONCE_FUNC(x,y) void x() { y; }
+# define YM_ONCE_DEF(x) void x(void)
+# define YM_ONCE_FUNC(x,y) void x(void) { y; }
 # define YM_ONCE_DO(o,f) pthread_once(&o,f);
 # define YM_ONCE_DO_LOCAL(f) { static YM_ONCE_OBJ gLocalInitOnce = YM_ONCE_INIT; YM_ONCE_DO(gLocalInitOnce,f); }
 #else

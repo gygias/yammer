@@ -49,7 +49,7 @@
 			<key>orderHint</key>
 			<integer>11</integer>
 		</dict>
-		<key>ym-dispatch-main-test.xcscheme</key>
+		<key>ym-dispatch-test.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>8</integer>

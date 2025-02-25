@@ -27,7 +27,6 @@ typedef struct __ym_pipe
 } __ym_pipe;
 typedef struct __ym_pipe __ym_pipe_t;
 
-void __YMPipeCloseOutputFile(__ym_pipe_t *);
 void __YMPipeCloseFile(__ym_pipe_t *, YMFILE *);
 
 YMPipeRef YMPipeCreate(YMStringRef name)
@@ -53,6 +52,7 @@ YMPipeRef YMPipeCreate(YMStringRef name)
                 ymerrg("pipe[%s]: new files unavailable for pipe()",YMSTR(name));
         }
         
+        ymerrg("YM_CREATE_PIPE failed %zd %d %s",result,errno,strerror(errno));
         YM_CREATE_PIPE(fds);
     }
   
@@ -79,8 +79,10 @@ void _YMPipeFree(YMTypeRef o_)
 {
     YMPipeRef p = (YMPipeRef)o_;
     
-    _YMPipeCloseInputFile(p);
-    __YMPipeCloseOutputFile((__ym_pipe_t *)p);
+    YMSelfLock(p);
+    __YMPipeCloseFile((__ym_pipe_t *)p, &((__ym_pipe_t *)p)->inFd);
+    __YMPipeCloseFile((__ym_pipe_t *)p, &((__ym_pipe_t *)p)->outFd);
+    YMSelfUnlock(p);
     
     YMRelease(p->name);
 }
@@ -95,13 +97,6 @@ YMFILE YMPipeGetOutputFile(YMPipeRef p)
 {
     ymassert(p->outFd!=NULL_FILE,"output file is closed");
     return p->outFd;
-}
-    
-void __YMPipeCloseOutputFile(__ym_pipe_t * p)
-{
-    YMSelfLock(p);
-    __YMPipeCloseFile(p, &p->outFd);
-    YMSelfUnlock(p);
 }
 
 void _YMPipeCloseInputFile(YMPipeRef p)

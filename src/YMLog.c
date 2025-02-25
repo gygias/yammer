@@ -113,7 +113,7 @@ void __YMLogType( int level, char* format, ... )
     YMDispatchAsync(gYMLogQueue,&dispatch);
 }
 
-void YMLogFreeGlobals()
+void YMLogFreeGlobals(void)
 {
     if ( gYMLogQueue ) {
         YMDispatchQueueRelease(gYMLogQueue);

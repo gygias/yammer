@@ -127,12 +127,10 @@ void _YMSemaphoreFree(YMSemaphoreRef s)
     YM_IO_BOILERPLATE
 
 #if defined(YMAPPLE)
-#warning i believe sem_unlink is/was 10 years ago what you were supposed to do on macos with named semaphores, \
-        no idea if that's still the case, on my current debian-based it leaks open files, though the man page isn't specific
     YM_UNLINK_SEMAPHORE(s);
-#else
-	YM_CLOSE_SEMAPHORE(s);
 #endif
+	YM_CLOSE_SEMAPHORE(s);
+
 	if ( result != 0 )
 		printf("warning: YM_CLOSE_SEMAPHORE(?) %s %s failed: %d (%s)\n",YMSTR(s->semName),YMSTR(s->userName), error, errorStr);
     
@@ -151,7 +149,8 @@ void YMSemaphoreWait(__ym_semaphore_t *s)
             retry = YM_RETRY_SEMAPHORE;
             printf("sem_wait(%s) %s failed%s: %d (%s)\n",YMSTR(s->semName),YMSTR(s->userName), retry ? ", retrying" : "", errno, strerror(errno));
             fflush(stdout);
-            abort();
+            // xxx
+            //abort();
         } else
             break;
     }

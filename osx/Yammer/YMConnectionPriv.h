@@ -11,6 +11,8 @@
 
 #import <yammer/YMConnection.h>
 
+#import <libyammer/YMConnection.h>
+
 @interface YMConnection (Private)
 
 - (id)_initWithConnectionRef:(YMConnectionRef)connectionRef;

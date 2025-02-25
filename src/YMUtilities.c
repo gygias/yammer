@@ -42,6 +42,8 @@
 # endif
 # include <pthread.h>
 # if defined (YMAPPLE)
+#  include <mach/mach.h>
+#  include <sys/sysctl.h>
 #  if !defined(YMIOS)
 #   include <dlfcn.h>
 #  endif
@@ -174,7 +176,7 @@ ComparisonResult YMAPI YMTimespecCompare(struct timespec a, struct timespec b)
 double YMTimevalSince(struct timeval then, struct timeval now)
 {
     double ret;
-#if defined(YMLINUX) // may exist on apple too
+#if defined(YMLINUX) || defined(YMAPPLE) // may exist on apple too
     struct timeval difference;
     timersub(&then, &now, &difference);
     ret = difference.tv_sec + ( (double)difference.tv_usec / (double)1000000 );
@@ -313,7 +315,7 @@ YM_ONCE_FUNC(__YMNetworkingInit,
 })
 #endif
 
-void YMNetworkingInit()
+void YMNetworkingInit(void)
 {
 #if defined(YMWIN32)
 	YM_ONCE_DO_LOCAL(__YMNetworkingInit);
@@ -383,8 +385,8 @@ int32_t YMPortReserve(bool ipv4, int *outSocket)
     return okay ? (uint32_t)thePort : -1;
 }
 
-#warning this doesn't seem to count semaphores, or match lsof -p | wc -l, fix
-int YMGetNumberOfOpenFilesForCurrentProcess()
+#warning this doesn't seem to count semaphores, or match lsof -p | wc -l, on debian, fix
+int YMGetNumberOfOpenFilesForCurrentProcess(void)
 {
     int nFiles = 0;
 #if !defined(YMWIN32)
@@ -453,7 +455,6 @@ int YMGetNumberOfOpenFilesForCurrentProcess()
 	YMFREE(pSysHandleInformation);
 #endif
     
-    ymlog("open files: %d",nFiles);
     return nFiles;
 }
 
@@ -461,12 +462,14 @@ int YMGetPipeSize(YMFILE file)
 {
 #if defined(YMLINUX)
     return fcntl(file, F_GETPIPE_SZ); // this is a gnu libc thing, just bookmarking this
+#elif defined(YMAPPLE)
+    return UINT16_MAX; // xxx
 #else
-# warning implement me
+#error implement me
 #endif
 }
 
-YMDictionaryRef YMInterfaceMapCreateLocal()
+YMDictionaryRef YMInterfaceMapCreateLocal(void)
 {
     YMDictionaryRef map = YMDictionaryCreate2(true,true);
     
@@ -727,10 +730,11 @@ catch_close:
 	} else if ( YMStringHasPrefix2(ifName, "wlan") || YMStringHasPrefix2(ifName, "wlx") ) {
 	  return YMInterfaceWirelessEthernet;
 	}
+    goto catch_return;
 #else
 #error if-matching not implemented for this configuration
 #endif
-
+catch_return:
     return defaultType;
 }
 
@@ -854,7 +858,7 @@ catch_release:
     return mutex;
 }
 
-void __YM_MUTEX_CATCH()
+void __YM_MUTEX_CATCH(void)
 {
     ymassert(false,"mutex error: %d %s",errno,strerror(errno));
 }
@@ -949,7 +953,7 @@ void __ymutilities_debug_sigtrap(int sig)
 }
 #endif
 
-bool YMIsDebuggerAttached()
+bool YMIsDebuggerAttached(void)
 {
 #if defined(YMAPPLE)
     int                 junk;
@@ -995,11 +999,16 @@ bool YMIsDebuggerAttached()
     return false;
 }
 
-int YMAPI YMGetNumberOfCoresAvailable()
+int YMAPI YMGetNumberOfCoresAvailable(void)
 {
     int nCores = 0;
 #if defined(YMLINUX)
     nCores = get_nprocs();
+#elif defined (YMAPPLE)
+    // xxx
+    size_t len = sizeof(nCores);
+    int result = sysctlbyname("hw.ncpu",&nCores,&len,0,0);
+    ymassert(result==0,"failed to get number of cores %d %d %s",result,errno,strerror(errno));
 #else
 #error implement me
 #endif
@@ -1011,7 +1020,7 @@ int YMAPI YMGetDefaultThreadsForCores(int cores)
     return cores * 1;
 }
 
-int YMAPI YMGetNumberOfThreadsInCurrentProcess()
+int YMAPI YMGetNumberOfThreadsInCurrentProcess(void)
 {
     int nThreads = 0;
 #if defined(YMLINUX)
@@ -1031,13 +1040,33 @@ int YMAPI YMGetNumberOfThreadsInCurrentProcess()
 
     if ( closedir(dir) != 0 )
         ymlog("closedir(%s) failed: %d %s",buf,errno,strerror(errno));
+#elif defined(YMAPPLE)
+    mach_port_t me = mach_task_self();
+    mach_port_t task;
+    kern_return_t res;
+    thread_array_t threads;
+    mach_msg_type_number_t n_threads;
+
+    res = task_threads(me, &threads, &n_threads);
+    if (res != KERN_SUCCESS) {
+        // Handle error...
+    }
+    nThreads = n_threads;
+
+    // You now have `n_threads` as well as the `threads` array
+    // You can use these to extract info about each thread
+
+    res = vm_deallocate(me, (vm_address_t)threads, n_threads * sizeof(*threads));
+    if (res != KERN_SUCCESS) {
+        // Handle error...
+    }
 #else
 #error implement me
 #endif
     return nThreads;
 }
 
-void YMUtilitiesFreeGlobals()
+void YMUtilitiesFreeGlobals(void)
 {
 #if defined(YMWIN32) && defined(YM_FEELING_THOROUGH)
 	WSACleanup();

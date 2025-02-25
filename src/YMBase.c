@@ -234,7 +234,7 @@ void YMSelfUnlock(YMTypeRef o_)
 
 #include "YMTLSProvider.h"
 
-void YMFreeGlobalResources()
+void YMFreeGlobalResources(void)
 {
     YMTLSProviderFreeGlobals();
 	YMUtilitiesFreeGlobals();

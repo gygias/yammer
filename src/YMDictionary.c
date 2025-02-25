@@ -54,7 +54,7 @@ YMDictionaryRef __YMDictionaryCreate(bool ymtypeKeys, bool ymtypeValues)
     return d;
 }
 
-YMDictionaryRef YMDictionaryCreate()
+YMDictionaryRef YMDictionaryCreate(void)
 {
     return __YMDictionaryCreate(false, false);
 }

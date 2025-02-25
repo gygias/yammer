@@ -695,7 +695,7 @@ bool __YMConnectionDestroy(__ym_connection_t *c, bool explicit)
     
     if ( explicit && c->socket != NULL_SOCKET ) {
         YM_CLOSE_SOCKET(c->socket);
-        ymassert(result==0,"connection explicit media close: %d: %d %s",c->socket,error,errorStr);
+        ymerr("connection explicit media close: %d: %zd %d %s",c->socket,result,error,errorStr);
     }
     
     c->socket = NULL_SOCKET;

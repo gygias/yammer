@@ -39,7 +39,7 @@ YM_WPOP
 typedef void (*ym_test_assert_func)(const void *ctx, bool exp, const char *fmt, ...);
 typedef bool (*ym_test_diff_func)(const void *ctx, const char *path1, const char *path2, bool recursive, YMDictionaryRef exceptions);
 
-void RunAllTests();
+void RunAllTests(void);
 
 YM_EXTERN_C_POP
 

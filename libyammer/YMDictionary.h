@@ -18,7 +18,7 @@ typedef const struct __ym_dictionary * YMDictionaryRef;
 typedef const void *YMDictionaryKey;
 typedef const void *YMDictionaryValue;
 
-YMDictionaryRef YMAPI YMDictionaryCreate();
+YMDictionaryRef YMAPI YMDictionaryCreate(void);
 YMDictionaryRef YMAPI YMDictionaryCreate2(bool ymtypeKeys, bool ymtypeValues);
 
 void YMAPI YMDictionaryAdd(YMDictionaryRef, YMDictionaryKey key, YMDictionaryValue item);

@@ -49,9 +49,9 @@ typedef struct __ym_task __ym_task_t;
 #define NULL_PID (-1)
 
 YM_ENTRY_POINT(__ym_task_read_output_proc);
-void __ym_task_prepare_atfork();
-void __ym_task_parent_atfork();
-void __ym_task_child_atfork();
+void __ym_task_prepare_atfork(void);
+void __ym_task_parent_atfork(void);
+void __ym_task_child_atfork(void);
 YM_ONCE_DEF(__YMTaskRegisterAtfork);
 
 YMTaskRef YMTaskCreate(YMStringRef path, YMArrayRef args, bool saveOutput)
@@ -121,7 +121,7 @@ bool YMTaskLaunch(YMTaskRef t_)
         argv[0] = YMSTR(t->path);
         argv[argvSize - 1] = NULL;
         
-#define ymtask_aline 512
+#define ymtask_aline 1024
         uint16_t max = ymtask_aline, off = 0;
         char line[ymtask_aline];
         off += snprintf(line+off,max-off,"%s",argv[0]);
@@ -129,8 +129,6 @@ bool YMTaskLaunch(YMTaskRef t_)
             argv[i + 1] = YMArrayGet(t->args, i);
             off += snprintf(line+off,max-off," %s",argv[i + 1]);
         }
-
-        printf("%s\n",argv[0]);
 
         if ( t->save ) {
             int pipeIn = YMPipeGetInputFile(t->outputPipe);
@@ -262,15 +260,15 @@ const unsigned char *YMTaskGetOutput(YMTaskRef t_, uint32_t *outLength)
 }
 
 // printf: lazily avoid log chicken-and-egg
-void __ym_task_prepare_atfork() {
+void __ym_task_prepare_atfork(void) {
     fprintf(stderr,"__ym_task_prepare_atfork happened\n");
 }
 
-void __ym_task_parent_atfork() {
+void __ym_task_parent_atfork(void) {
     fprintf(stderr,"__ym_task_parent_atfork happened\n");
 }
-void __ym_task_child_atfork() {
-    fprintf(stderr,"__ym_task_child_atfork happened\n");
+void __ym_task_child_atfork(void) {
+    //fprintf(stderr,"__ym_task_child_atfork happened\n");
 }
 
 YM_ENTRY_POINT(__ym_task_read_output_proc)
@@ -283,23 +281,25 @@ YM_ENTRY_POINT(__ym_task_read_output_proc)
     
     _YMPipeCloseInputFile(t->outputPipe);
     YMFILE outFd = YMPipeGetOutputFile(t->outputPipe);
-    
-#define OUTPUT_BUF_INIT_SIZE 1024
-    t->output = malloc(OUTPUT_BUF_INIT_SIZE);
-    off_t outputBufSize = OUTPUT_BUF_INIT_SIZE;
+
+    off_t outputBufSize = 65536;
+    t->output = malloc(outputBufSize);
+    ymassert(t->output,"failed to allocate task output %ld",outputBufSize);
     off_t outputOff = 0;
     
     while(true) {
-        while( ( outputOff + OUTPUT_BUF_INIT_SIZE ) > outputBufSize ) {
+        while( outputOff >= outputBufSize ) {
             outputBufSize *= 2;
             t->output = realloc(t->output, (unsigned long)outputBufSize);
+            ymassert(t->output,"failed to allocate task output %ld",outputBufSize);
+            ymdbg("reallocated output buffer to %ld",outputBufSize);
         }
-        YM_READ_FILE(outFd, t->output + outputOff, OUTPUT_BUF_INIT_SIZE);
+        YM_READ_FILE(outFd, t->output + outputOff, outputBufSize - outputOff);
         if ( result == -1 ) {
-            ymerr("reading output: %d %s",error,errorStr);
+            ymerr("reading task output: %d %s",error,errorStr);
             break;
         } else if ( result == 0 ) {
-            ymlog("finished reading output: %db",(int)outputOff);
+            ymlog("finished reading task output: %db",(int)outputOff);
             break;
         } else {
             ymdbg("flushed %ld bytes...",result);

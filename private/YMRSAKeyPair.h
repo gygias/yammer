@@ -13,7 +13,7 @@ YM_EXTERN_C_PUSH
 
 typedef const struct __ym_rsa_keypair * YMRSAKeyPairRef;
 
-YMRSAKeyPairRef YMAPI YMRSAKeyPairCreate();
+YMRSAKeyPairRef YMAPI YMRSAKeyPairCreate(void);
 YMRSAKeyPairRef YMAPI YMRSAKeyPairCreateWithModuloSize(int moduloBits, int publicExponent);
 
 bool YMAPI YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair); // blocking

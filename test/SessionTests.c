@@ -38,7 +38,11 @@ uint64_t gSomeLength = 5678900;
 #  define ServerTestFile          "syslog"
 #  define ServerTestPath          "/var/log/" ServerTestFile
 # endif
+#if defined(YMLINUX)
 # define ClientSparsePath	"/usr/share/man/man2"
+#elif defined(YMAPPLE)
+# define ClientSparsePath    "/usr/share/man/man1"
+#endif
 # define OutSparseDir		"/tmp/ymsessiontest-sparse"
 # define LargeSrcTemplate	"/tmp/ymsessiontest-%s-orig"
 # define LargeDestTemplate	"/tmp/ymsessiontest-%s-dest"
@@ -102,8 +106,9 @@ YM_ENTRY_POINT(_EatLargeFile);
 YM_ENTRY_POINT(_EatASparseFile);
 void _AsyncForwardCallback(struct SessionTest *theTest, YMConnectionRef connection, YMStreamRef stream, YMIOResult result, uint64_t bytesWritten, bool isServer);
 
-void SessionTestsRun(ym_test_assert_func assert, ym_test_diff_func diff, const void *context)
+void SessionTestsRun(ym_test_assert_func assert, const void *context)
 {
+    ym_test_diff_func diff = (ym_test_diff_func)context;
     char suffix[10];
     YMRandomASCIIStringWithLength(suffix, arc4random_uniform(10)+1, true, false);
     struct SessionTest theTest = {  assert, diff, context,
@@ -272,7 +277,7 @@ YM_ENTRY_POINT(_ServerWriteLargeFile)
     
     uint64_t copyBytes = 0;
     theTest->serverBounding = 
-#if !defined(YMWIN32) && !defined(YMLINUX) || defined(FOUND_LARGE_WELL_KNOWN_WINDOWS_TEXT_FILE_THATS_BIGGER_THAN_5_MB_TO_USE_FOR_THIS)
+#if !defined(YMWIN32) && !defined(YMLINUX) && !defined(YMAPPLE) & !defined(LMAO) || defined(FOUND_LARGE_WELL_KNOWN_WINDOWS_TEXT_FILE_THATS_BIGGER_THAN_5_MB_TO_USE_FOR_THIS)
 		arc4random_uniform(2);
 #else
 		false;
@@ -470,7 +475,7 @@ YM_ENTRY_POINT(_ClientWriteSparseFiles)
     
     theTest->nSparseFilesToRead = actuallyWritten;
     YMSemaphoreSignal(theTest->threadExitSemaphore);
-    ymlog("write sparse files thread exiting");
+    ymlog("write sparse files [%llu] thread exiting",actuallyWritten);
 }
 
 YM_ENTRY_POINT(_EatASparseFile)

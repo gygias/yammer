@@ -8,6 +8,8 @@
 
 #import "YMStream.h"
 
+#import <libyammer/YMStream.h>
+
 @interface YMStream()
 
 @property (nonatomic) YMStreamRef streamRef;
