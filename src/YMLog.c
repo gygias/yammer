@@ -28,7 +28,7 @@ static char *gTimeFormatBuf = NULL;
 
 YM_ONCE_FUNC(__YMLogInit,
 {
-    YMStringRef name = YMSTRC("com.combobulated.dispatch.ymlog");
+    YMStringRef name = YMSTRC("com.combobulated.ymlog");
     gYMLogQueue = YMDispatchQueueCreate(name);
     YMRelease(name);
     gTimeFormatBuf = YMALLOC(gTimeFormatBufLen);
@@ -90,7 +90,7 @@ void __YMLogType( int level, char* format, ... )
     while ( indent-- > 0 )
         off += snprintf(line+off,max-off," ");
     if ( level == YMLogError ) off += snprintf(line+off,max-off, "!: ");
-    
+
     va_list args;
     va_start(args,format);
     off += vsnprintf(line+off,max-off,format, args);

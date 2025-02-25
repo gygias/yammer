@@ -42,12 +42,6 @@ typedef struct _YMmDNSServiceRecord
     size_t txtRecordKeyPairsSize;
 } YMmDNSServiceRecord;
 
-typedef struct _YMmDNSServiceList
-{
-    YMmDNSServiceRecord *service;
-    struct _YMmDNSServiceList *next;
-} YMmDNSServiceList;
-
 YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*type, const char *domain);
 void _YMmDNSServiceRecordSetPort(YMmDNSServiceRecord *record, uint16_t port);
 void _YMmDNSServiceRecordSetTxtRecord(YMmDNSServiceRecord *record, const unsigned char *txtRecord, uint16_t txtLength);
@@ -58,8 +52,6 @@ void _YMmDNSServiceRecordFree(YMmDNSServiceRecord *record, bool floatResolvedInf
 YMAPI YMmDNSTxtRecordKeyPair **_YMmDNSTxtKeyPairsCreate(const unsigned char *txtRecord, uint16_t txtLength, size_t *outSize);
 void YMAPI _YMmDNSTxtKeyPairsFree(YMmDNSTxtRecordKeyPair **keyPairList, size_t size);
 YMAPI unsigned char  *_YMmDNSTxtBlobCreate(YMmDNSTxtRecordKeyPair **keyPairList, uint16_t *inSizeOutLength);
-
-void YMAPI _YMmDNSServiceListFree(YMmDNSServiceList *serviceList); // xxx
 
 YM_EXTERN_C_POP
 

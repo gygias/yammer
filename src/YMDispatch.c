@@ -177,24 +177,24 @@ __ym_dispatch_queue_t *__YMDispatchQueueInitCommon(YMStringRef name, YMDispatchQ
 
     if ( type != YMDispatchQueueMain ) {
 #warning watchlist todo recycle user threads
-        __ym_dispatch_service_loop_context_t *c = YMALLOC(sizeof(__ym_dispatch_service_loop_context_t));
-        YMThreadRef first = YMThreadCreate(name, entry, c);
-        c->q = (__ym_dispatch_queue_t *)YMRetain(q);
-        __ym_dispatch_queue_thread_t *qt = __YMDispatchQueueThreadCreate(first);
-        c->qt = qt;
+        int nThreads = ( type == YMDispatchQueueUser ) ? 1 : YMGetDefaultThreadsForCores(YMGetNumberOfCoresAvailable());
+        while ( nThreads-- ) {
+            __ym_dispatch_service_loop_context_t *c = YMALLOC(sizeof(__ym_dispatch_service_loop_context_t));
+            YMThreadRef first = YMThreadCreate(name, entry, c);
+            c->q = (__ym_dispatch_queue_t *)YMRetain(q);
+            __ym_dispatch_queue_thread_t *qt = __YMDispatchQueueThreadCreate(first);
+            c->qt = qt;
+            bool okay = YMThreadStart(first);
+            if ( ! okay ) {
+                printf("ymdispatch failed to start %s queue thread\n", YMSTR(name));
+                abort();
+            }
 
-        bool okay = YMThreadStart(first);
-        if ( ! okay ) {
-            printf("ymdispatch failed to start %s queue thread\n", YMSTR(name));
-            abort();
-        }
-
-        YMArrayAdd(q->queueThreads,qt); // no sync, guarded by once
-
-
+            YMArrayAdd(q->queueThreads,qt); // no sync, guarded by once
 #ifdef YM_DISPATCH_LOG
-        printf("started %s queue thread %p[%p,%p] '%s'\n", ( type == YMDispatchQueueGlobal ) ? "global" : "user", c, c->q, c->qt, YMSTR(name));
+            printf("started %s queue thread %p[%p,%p] '%s'\n", ( type == YMDispatchQueueGlobal ) ? "global" : "user", c, c->q, c->qt, YMSTR(name));
 #endif
+        }
     }
 
     return q;
@@ -284,10 +284,8 @@ void __YMDispatchCheckExpandGlobalQueue(__ym_dispatch_queue_t *queue)
 
     YMSelfLock(queue);
     {
-#ifdef YM_DISPATCH_LOG
         bool overflow = YMArrayGetCount(queue->queueThreads) >= YMGetDefaultThreadsForCores(YMGetNumberOfCoresAvailable());
-#endif
-        if ( YMArrayGetCount(queue->queueThreads) >= YMGetDefaultThreadsForCores(YMGetNumberOfCoresAvailable()) ) {
+        if ( overflow ) {
             bool busy = true;
             for(int i = 0; i < YMArrayGetCount(queue->queueThreads); i++) {
                 __ym_dispatch_queue_thread_t *qt = (__ym_dispatch_queue_thread_t *)YMArrayGet(queue->queueThreads,i);
@@ -792,8 +790,8 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
 #define debug_timeout
 #ifdef debug_timeout
         struct timeval tv;
-        tv.tv_sec = 1;
-        tv.tv_usec = 000000;
+        tv.tv_sec = 0;
+        tv.tv_usec = 10000;
 #endif
 
         FD_ZERO(&readFds);

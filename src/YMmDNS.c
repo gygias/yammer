@@ -53,19 +53,6 @@
 
 YM_EXTERN_C_PUSH
 
-void _YMmDNSServiceListFree(YMmDNSServiceList *serviceList)
-{
-    YMmDNSServiceList *listIter = serviceList;
-    while ( listIter ) {
-        YMmDNSServiceList *aListItem = listIter;
-        struct _YMmDNSServiceRecord *service = (struct _YMmDNSServiceRecord *)aListItem->service;
-        if ( service )
-            _YMmDNSServiceRecordFree(service, false);
-        listIter = listIter->next;
-        YMFREE(aListItem);
-    }
-}
-
 YMmDNSServiceRecord *_YMmDNSServiceRecordCreate(const char *name, const char*type, const char *domain)
 {
 	if ( ! name || ! type || ! domain )
@@ -217,7 +204,7 @@ YMmDNSTxtRecordKeyPair **_YMmDNSTxtKeyPairsCreate(const unsigned char *txtRecord
         aKeyPair->valueLen = (uint8_t)valueLength;
         keyPairList[listSize] = aKeyPair;
         
-        ymlog("parsed [%zd][%zu] <- [%zu]'%s'",listSize,valueLength,keyLength,keyBuf);
+        ymdbg("parsed [%zd][%zu] <- [%zu]'%s'",listSize,valueLength,keyLength,keyBuf);
         
         listSize++;
         
@@ -231,7 +218,7 @@ YMmDNSTxtRecordKeyPair **_YMmDNSTxtKeyPairsCreate(const unsigned char *txtRecord
     if ( outSize )
         *outSize = listSize;
     
-    ymlog("created list size %zd from blob length %u",listSize,txtLength);
+    ymdbg("created list size %zd from blob length %u",listSize,txtLength);
     
     return keyPairList;
 }

@@ -9,9 +9,9 @@
 #include "YMmDNSBrowser.h"
 
 #include "YMUtilities.h"
-#include "YMThread.h"
 #include "YMAddress.h"
-#include "YMArray.h"
+#include "YMDictionary.h"
+#include "YMDispatch.h"
 
 #include <dns_sd.h>
 #include <errno.h>
@@ -44,11 +44,11 @@ typedef struct __ym_mdns_browser
     _YMType _common;
     
     YMStringRef type;
-    YMmDNSServiceList *serviceList; // convert to collection
     
     bool browsing;
-    YMThreadRef browseEventThread;
-    YMArrayRef activeServiceRefs;
+    YMArrayRef services;
+    YMArrayRef serviceRefs;
+    YMArrayRef sources;
     
     bool resolving;
     
@@ -70,7 +70,7 @@ YM_ENTRY_POINT(__ym_mdns_event_proc);
 YMmDNSServiceRecord *__YMmDNSBrowserAddOrUpdateService(__ym_mdns_browser_t *, YMmDNSServiceRecord*);
 void __YMmDNSBrowserRemoveServiceNamed(__ym_mdns_browser_t *, YMStringRef);
 YMmDNSServiceRecord *__YMmDNSBrowserGetServiceWithName(__ym_mdns_browser_t *, YMStringRef, bool);
-void __YMmDNSBrowserAddServiceRef(__ym_mdns_browser_t *, DNSServiceRef*);
+void __YMmDNSBrowserAddServiceRef(__ym_mdns_browser_t *, DNSServiceRef);
 void __YMmDNSBrowserRemoveServiceRef(__ym_mdns_browser_t *, DNSServiceRef);
 
 YMmDNSBrowserRef YMmDNSBrowserCreate(YMStringRef type)
@@ -90,8 +90,9 @@ YMmDNSBrowserRef YMmDNSBrowserCreateWithCallbacks(YMStringRef type,
     __ym_mdns_browser_t *b = (__ym_mdns_browser_t *)_YMAlloc(_YMmDNSBrowserTypeID,sizeof(__ym_mdns_browser_t));
     
     b->type = YMRetain(type);
-    b->serviceList = NULL;
-    b->activeServiceRefs = YMArrayCreate();
+    b->services = YMArrayCreate();
+    b->serviceRefs = YMArrayCreate();
+    b->sources = YMArrayCreate();
     YMmDNSBrowserSetServiceAppearedFunc(b, serviceAppeared);
     YMmDNSBrowserSetServiceUpdatedFunc(b, serviceUpdated);
     YMmDNSBrowserSetServiceResolvedFunc(b, serviceResolved);
@@ -110,14 +111,22 @@ void _YMmDNSBrowserFree(YMTypeRef o_)
     if ( b->type )
         YMRelease(b->type);
     
-    YMRelease(b->activeServiceRefs);
-        
-    //YMFREE(browser->browseServiceRef); // released by event thread
-    if ( b->browseEventThread )
-        YMRelease(b->browseEventThread);
+    YMSelfLock(b);
+    for( int i = 0; i < YMArrayGetCount(b->serviceRefs); i++ ) {
+        DNSServiceRef sdref = (DNSServiceRef)YMArrayGet(b->serviceRefs,i);
+        ym_dispatch_source_t source = (ym_dispatch_source_t)YMArrayGet(b->sources,i);
+        YMDispatchSourceDestroy(source);
+        YMFREE(sdref);
+    }
+    YMRelease(b->serviceRefs);
+    YMRelease(b->sources);
     
-    if ( b->serviceList )
-        _YMmDNSServiceListFree((YMmDNSServiceList *)(b->serviceList));
+    for ( int i = 0; i < YMArrayGetCount(b->services); i++ ) {
+        YMmDNSServiceRecord *record = (YMmDNSServiceRecord *)YMArrayGet(b->services,i);
+        _YMmDNSServiceRecordFree(record,false);
+    }
+    YMRelease(b->services);
+    YMSelfUnlock(b);
 }
 
 void YMmDNSBrowserSetServiceAppearedFunc(YMmDNSBrowserRef b, ym_mdns_service_appeared_func func)
@@ -153,9 +162,9 @@ bool YMmDNSBrowserStart(YMmDNSBrowserRef b_)
         return false;
     b->browsing = true;
 
-    DNSServiceRef *sdref = (DNSServiceRef *)YMALLOC( sizeof(DNSServiceRef) );
+    DNSServiceRef sdref = NULL;
     
-    DNSServiceErrorType result = DNSServiceBrowse(sdref, // DNSServiceRef
+    DNSServiceErrorType result = DNSServiceBrowse(&sdref, // DNSServiceRef
                                                   0, // DNSServiceFlags
                                                   0, // interfaceIndex
                                                   YMSTR(b->type), // type
@@ -170,13 +179,7 @@ bool YMmDNSBrowserStart(YMmDNSBrowserRef b_)
     
     __YMmDNSBrowserAddServiceRef(b,sdref);
     
-    YMStringRef threadName = YMSTRCF("mdns-browse-%s",YMSTR(b->type));
-    b->browseEventThread = YMThreadCreate(threadName, __ym_mdns_event_proc, (void *)YMRetain(b));
-    YMRelease(threadName);
-    
-    bool okay = YMThreadStart(b->browseEventThread);
-    
-    return okay;
+    return true;
 }
 
 bool YMmDNSBrowserStop(YMmDNSBrowserRef b_)
@@ -208,14 +211,12 @@ bool YMmDNSBrowserResolve(YMmDNSBrowserRef b_, YMStringRef serviceName)
         return false;
     }
     
-    DNSServiceRef *sdref = YMALLOC( sizeof(DNSServiceRef) );
+    DNSServiceRef sdref;
     __ym_mdns_resolve_t *ctx = YMALLOC(sizeof(__ym_mdns_resolve_t));
     ctx->b = (__ym_mdns_browser_t *)YMRetain(b);
     ctx->unescapedName = YMRetain(serviceName);
-    
-    __YMmDNSBrowserAddServiceRef(b, sdref);
-    
-    DNSServiceErrorType result = DNSServiceResolve ( sdref, // DNSServiceRef
+
+    DNSServiceErrorType result = DNSServiceResolve ( &sdref, // DNSServiceRef
                                                     0, // DNSServiceFlags
                                                     0, // interfaceIndex
                                                     YMSTR(serviceName),
@@ -223,18 +224,19 @@ bool YMmDNSBrowserResolve(YMmDNSBrowserRef b_, YMStringRef serviceName)
                                                     YMSTR(theService->domain), // domain
                                                     __ym_mdns_resolve_callback,
                                                     ctx );
+
     if ( result != kDNSServiceErr_NoError ) {
         ymerr("service resolve '%s' failed: %d",YMSTR(b->type),result);
         YMRelease(ctx->b);
         YMRelease(ctx->unescapedName);
         YMFREE(ctx);
         
-        YMSelfLock(b);
-            YMArrayRemoveObject(b->activeServiceRefs, sdref);
-        YMSelfUnlock(b);
         YMFREE(sdref);
+
         return false;
     }
+
+    __YMmDNSBrowserAddServiceRef(b, sdref);
     
     ymlog("resolving '%s::%s' (%s)...", YMSTR(b->type), YMSTR(serviceName), theService->domain ? YMSTR(theService->domain) : "(NULL)");
     
@@ -243,12 +245,11 @@ bool YMmDNSBrowserResolve(YMmDNSBrowserRef b_, YMStringRef serviceName)
 
 YMmDNSServiceRecord *__YMmDNSBrowserAddOrUpdateService(__ym_mdns_browser_t *b, YMmDNSServiceRecord *record)
 {
-    YMmDNSServiceList *aListItem = b->serviceList;
-    
-    // update?
-    while ( aListItem ) {
-        if ( 0 == strcmp(YMSTR(record->name),YMSTR(((YMmDNSServiceRecord *)aListItem->service)->name)) ) {
-            YMmDNSServiceRecord *existingRecord = aListItem->service;
+    YMSelfLock(b);
+    for( int i = 0; i < YMArrayGetCount(b->services); i++ ) {
+        YMmDNSServiceRecord *service = (YMmDNSServiceRecord *)YMArrayGet(b->services,i);
+
+        if ( 0 == strcmp(YMSTR(record->name),YMSTR(service->name)) ) {
             
             // the mDNSResponder api behaves such that when ProcessResult is called either from
             // either the browser event thread or after Resolve, we're called back out to on the
@@ -262,37 +263,34 @@ YMmDNSServiceRecord *__YMmDNSBrowserAddOrUpdateService(__ym_mdns_browser_t *b, Y
             // on the same service are reasonably not thread safe.
             // an optimization would be to refactor these private methods so that we didn't construct
             // a throw-away copy of the record structure.
-            if ( existingRecord->txtRecordKeyPairs )
-                _YMmDNSTxtKeyPairsFree(existingRecord->txtRecordKeyPairs, existingRecord->txtRecordKeyPairsSize);
-            if ( existingRecord->sockaddrList ) {
-                while ( YMArrayGetCount(existingRecord->sockaddrList) > 0 ) {
-                    YMAddressRef address = (YMAddressRef)YMArrayGet(existingRecord->sockaddrList, 0);
+            if ( record->txtRecordKeyPairs )
+                _YMmDNSTxtKeyPairsFree(record->txtRecordKeyPairs, record->txtRecordKeyPairsSize);
+            if ( record->sockaddrList ) {
+                while ( YMArrayGetCount(record->sockaddrList) > 0 ) {
+                    YMAddressRef address = (YMAddressRef)YMArrayGet(record->sockaddrList, 0);
                     YMRelease(address);
-                    YMArrayRemove(existingRecord->sockaddrList, 0);
+                    YMArrayRemove(record->sockaddrList, 0);
                 }
-                YMRelease(existingRecord->sockaddrList);
+                YMRelease(record->sockaddrList);
             }
             
-            existingRecord->txtRecordKeyPairs = record->txtRecordKeyPairs;
-            existingRecord->txtRecordKeyPairsSize = record->txtRecordKeyPairsSize;
-            existingRecord->sockaddrList = record->sockaddrList ? YMRetain(record->sockaddrList) : NULL;
-            existingRecord->port = record->port;
+            record->txtRecordKeyPairs = record->txtRecordKeyPairs;
+            record->txtRecordKeyPairsSize = record->txtRecordKeyPairsSize;
+            record->sockaddrList = record->sockaddrList ? YMRetain(record->sockaddrList) : NULL;
+            record->port = record->port;
             
             _YMmDNSServiceRecordFree(record, true);
             
-            // keep the list item for now
             if ( b->serviceUpdated )
-                b->serviceUpdated(b, existingRecord, b->callbackContext);
-            return existingRecord;
+                b->serviceUpdated(b, record, b->callbackContext);
+            YMSelfUnlock(b);
+            return record;
         }
-        aListItem = aListItem->next;
     }
     
     // add
-    YMmDNSServiceList *newItem = YMALLOC(sizeof(YMmDNSServiceList));
-    newItem->service = record;
-    newItem->next = b->serviceList;
-    b->serviceList = newItem;
+    YMArrayAdd(b->services,record);
+    YMSelfUnlock(b);
     
     if ( b->serviceAppeared )
         b->serviceAppeared(b, record, b->callbackContext);
@@ -300,31 +298,24 @@ YMmDNSServiceRecord *__YMmDNSBrowserAddOrUpdateService(__ym_mdns_browser_t *b, Y
     return record;
 }
 
-#define _YMmDNSServiceFoundAndRemovedHack ((YMmDNSServiceRecord *)0xEA75F00D)
 YMmDNSServiceRecord *__YMmDNSBrowserGetServiceWithName(__ym_mdns_browser_t *b, YMStringRef name, bool remove)
-{    
+{
     YMmDNSServiceRecord *matchedRecord = NULL;
-    YMmDNSServiceList *aListItem = b->serviceList,
-                        *previousListItem = b->serviceList;
-    while ( aListItem ) {
-        YMmDNSServiceRecord *aRecord = aListItem->service;
+
+    YMSelfLock(b);
+    for( int i = 0; i < YMArrayGetCount(b->services); i++ ) {
+        YMmDNSServiceRecord *aRecord = (YMmDNSServiceRecord *)YMArrayGet(b->services,i);
         if ( 0 == strcmp(YMSTR(aRecord->name), YMSTR(name)) ) {
             if ( remove ) {
-                previousListItem->next = aListItem->next; // nil or not
-                if ( aListItem == b->serviceList )
-                    b->serviceList = NULL;
+                YMArrayRemove(b->services,i);
                 _YMmDNSServiceRecordFree(aRecord,false);
-                YMFREE(aListItem);
-                matchedRecord = _YMmDNSServiceFoundAndRemovedHack;
             }
             else
                 matchedRecord = aRecord;
             break;
         }
-        
-        previousListItem = aListItem;
-        aListItem = aListItem->next;
     }
+    YMSelfUnlock(b);
     
     return matchedRecord;
 }
@@ -341,33 +332,91 @@ void __YMmDNSBrowserRemoveServiceNamed(__ym_mdns_browser_t *b, YMStringRef name)
         b->serviceRemoved(b, name, b->callbackContext);
 }
 
-#ifdef YMmDNS_ENUMERATION
-void DNSSD_API __YMmDNSEnumerateReply(DNSServiceRef sdRef, DNSServiceFlags flags, uint32_t interfaceIndex, DNSServiceErrorType errorCode, const char *replyDomain, void *context)
+typedef struct __ym_mdns_context
 {
-    ymlog("enumerate reply '%s' flags: %04x", YMSTR(browser->type), flags);
-}
-#endif
+    YMmDNSBrowserRef browser;
+    DNSServiceRef sdref;
+    YMDispatchQueueRef queue;
+} __ym_mdns_context;
+typedef struct __ym_mdns_context __ym_mdns_context_t;
 
-void __YMmDNSBrowserAddServiceRef(__ym_mdns_browser_t *b, DNSServiceRef *serviceRef)
+YM_ENTRY_POINT(__ym_mdns_source_service) // ServicesServices.framework
 {
+    __ym_mdns_context *c = context;
+    __ym_mdns_browser_t *b = (__ym_mdns_browser_t *)c->browser;
+
+    YMFILE fd = DNSServiceRefSockFD(c->sdref);
+    if ( fd == -1 ) {
+        ymlog("%s fd == -1, do nothing",__FUNCTION__);
+        return;
+    }
+
+    bool tracking = false;
     YMSelfLock(b);
-    YMArrayAdd(b->activeServiceRefs, serviceRef);
+    tracking = YMArrayContains(b->serviceRefs,c->sdref);
     YMSelfUnlock(b);
-    ymerr("added active sdref: %p",serviceRef); // socketFD is probably not valid at this point
+    if ( ! tracking ) {
+        ymlog("%s no longer tracking %p",__FUNCTION__,c->sdref);
+        return;
+    }
+
+    ymlog("processing service ref fd f%d s%p",fd,c->sdref);
+
+    DNSServiceErrorType err = DNSServiceProcessResult(c->sdref);
+    if (err != kDNSServiceErr_NoError) {
+        ymerr("mdns: process result on f%d failed: %d", fd, err);
+        __YMmDNSBrowserRemoveServiceRef(b,NULL);
+    }
+}
+
+YM_ENTRY_POINT(__ym_mdns_source_destroy)
+{
+    __ym_mdns_context_t *c = context;
+    YMDispatchQueueRelease(c->queue);
+}
+
+void __YMmDNSBrowserAddServiceRef(__ym_mdns_browser_t *b, DNSServiceRef serviceRef)
+{
+    __ym_mdns_context_t *c = YMALLOC(sizeof(__ym_mdns_context_t));
+    c->browser = b;
+    c->sdref = serviceRef;
+    YMStringRef name = YMStringCreateWithFormat("com.combobulated.mdns.browser.sdref.%p",serviceRef,NULL);
+    c->queue = YMDispatchQueueCreate(name);
+    YMRelease(name);
+
+    YMSelfLock(b);
+    ym_dispatch_user_t user = { __ym_mdns_source_service, c, __ym_mdns_source_destroy, ym_dispatch_user_context_free };
+    ym_dispatch_source_t source = YMDispatchSourceCreate(c->queue, ym_dispatch_source_readable, DNSServiceRefSockFD(serviceRef), &user);
+    YMArrayAdd(b->serviceRefs,serviceRef);
+    YMArrayAdd(b->sources,source);
+    YMSelfUnlock(b);
+
+    ymlog("added active sdref: %p (%d)",serviceRef,DNSServiceRefSockFD(serviceRef)); // socketFD is probably not valid at this point
+}
+
+YM_ENTRY_POINT(__ym_mdns_remove_ref_async)
+{
+    ym_dispatch_source_t source = context;
+    YMDispatchSourceDestroy(source);
 }
 
 void __YMmDNSBrowserRemoveServiceRef(__ym_mdns_browser_t *b, DNSServiceRef serviceRef)
 {
     YMSelfLock(b);
     bool removed = false;
-    for ( int i = 0; i < YMArrayGetCount(b->activeServiceRefs); i++ ) {
-        DNSServiceRef *sdref = (DNSServiceRef *)YMArrayGet(b->activeServiceRefs, i);
+    for ( int i = 0; i < YMArrayGetCount(b->serviceRefs); i++ ) {
+        DNSServiceRef sdref = (DNSServiceRef)YMArrayGet(b->serviceRefs,i);
+        ym_dispatch_source_t source = (ym_dispatch_source_t)YMArrayGet(b->sources,i);
         
         // the pointer we pass into DNSServiceProcessResult, from event thread (below us here), isn't the same as the one passed in here
-        if ( ! serviceRef || DNSServiceRefSockFD(*sdref) == DNSServiceRefSockFD(serviceRef) ) {
-            YMArrayRemove(b->activeServiceRefs, i);
-            DNSServiceRefDeallocate(*sdref);
-            YMFREE(sdref);
+        if ( ! serviceRef || DNSServiceRefSockFD(sdref) == DNSServiceRefSockFD(serviceRef) ) {
+            YMArrayRemove(b->serviceRefs, i);
+            DNSServiceRefDeallocate(sdref);
+
+            // the avahi compat layer calls back out to us from the same thread we called into
+            YMArrayRemove(b->sources,i);
+            ym_dispatch_user_t user = { __ym_mdns_remove_ref_async, source, NULL, ym_dispatch_user_context_noop };
+            YMDispatchAsync(YMDispatchGetGlobalQueue(),&user);
             removed = true;
             break;
         }
@@ -401,7 +450,7 @@ static void DNSSD_API __ym_mdns_browse_callback(__unused DNSServiceRef serviceRe
     
     // "An enumeration callback with the "Add" flag NOT set indicates a "Remove", i.e. the domain is no longer valid.
     bool remove = ! ((flags & kDNSServiceFlagsAdd) || (flags & kDNSServiceFlagsMoreComing));
-        
+
     YMStringRef ymName = YMSTRC(name);
     if ( remove )
         __YMmDNSBrowserRemoveServiceNamed(b, ymName);
@@ -442,7 +491,7 @@ void DNSSD_API __ym_mdns_addr_info_callback
     ymsoftassert(record, "failed to find existing record for %s on addrinfo callback",YMSTR(unescapedName));
     
     YMAddressRef ymAddress = YMAddressCreate(address,record->port);
-    ymerr("__ym_mdns_addr_info_callback: %s: %d: %s",hostname,address->sa_family,ymAddress?YMSTR(YMAddressGetDescription(ymAddress)):"*");
+    ymlog("__ym_mdns_addr_info_callback: %s: %d: %s",hostname,address->sa_family,ymAddress?YMSTR(YMAddressGetDescription(ymAddress)):"*");
     if ( ymAddress ) {
         YMRelease(ymAddress);
         if ( address->sa_family == AF_INET )
@@ -455,7 +504,6 @@ void DNSSD_API __ym_mdns_addr_info_callback
         if ( b->serviceResolved )
             b->serviceResolved(b, true, record, b->callbackContext);
         
-        __YMmDNSBrowserRemoveServiceRef(b,sdRef);
         YMFREE(context);
     }
 }
@@ -483,7 +531,7 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
     ymlog("__ym_mdns_resolve_callback: %s/%s(%s) -> %s:%u[txt%ub]",YMSTR(b->type),fullname,YMSTR(unescapedName),host,(unsigned)hostPort,txtLength);
     
     __YMmDNSBrowserRemoveServiceRef(b,serviceRef);
-    
+
     YMmDNSServiceRecord *record = __YMmDNSBrowserGetServiceWithName(b, unescapedName, false);
     ymassert(record,"failed to lookup existing service from %s: %s",fullname,YMSTR(unescapedName));
     
@@ -493,16 +541,14 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
         _YMmDNSServiceRecordSetTxtRecord(record, txtRecord, txtLength);
         
         if ( ! record->addrinfoSdref ) {
-            
             record->addrinfoSdref = YMALLOC(sizeof(DNSServiceRef));
-            __YMmDNSBrowserAddServiceRef(b, record->addrinfoSdref);
 
             struct addrinfo *c;
             char portstr[10];
             snprintf(portstr, 10, "%u", hostPort);
             int ret = getaddrinfo(host, portstr, NULL, &c);
             if ( ret != 0 ) {
-                ymerr("getting addr info for '%s::%s::%s:%s': %d %s", YMSTR(b->type), YMSTR(unescapedName), host, portstr, ret, strerror(ret));
+                ymlog("getting addr info for '%s::%s::%s:%s': %d %s", YMSTR(b->type), YMSTR(unescapedName), host, portstr, ret, strerror(ret));
                 YMFREE(record->addrinfoSdref);
                 record->addrinfoSdref = NULL;
                 return;
@@ -516,90 +562,12 @@ void DNSSD_API __ym_mdns_resolve_callback(__unused DNSServiceRef serviceRef,
                 if (c->ai_family == AF_INET || c->ai_family == AF_INET6)
                     __ym_mdns_addr_info_callback(record->addrinfoSdref,c->ai_next?kDNSServiceFlagsMoreComing:0,idx,0,host,c->ai_addr,0,aCtx);
                 else
-                    ymlog("getaddrinfo unknown type: %d",c->ai_family);
+                    ymerr("getaddrinfo unknown type: %d",c->ai_family);
                 c = c->ai_next; idx++;
             } while (c);
         }
     } else if ( b->serviceResolved )
         b->serviceResolved(b, false, record, b->callbackContext);
-}
-
-// this function was mostly lifted from "Zero Configuration Networking: The Definitive Guide" -o'reilly
-YM_ENTRY_POINT(__ym_mdns_event_proc)
-{
-    YM_IO_BOILERPLATE
-    
-    __ym_mdns_browser_t *b = context;
-    
-    ymlog("event thread entered");
-    
-    bool keepGoing = true;
-    while ( keepGoing ) {
-		int nfds = 1;
-        int maxFd = -1; // unused on win32, parameter only exists for compatibility
-        fd_set readfds;
-        fd_set* nullFd = (fd_set*) NULL;
-        struct timeval tv;
-        
-        // 3. Set up the timeout.
-        tv.tv_sec = 0; // wakes up every .5 sec if no socket activity occurs
-        tv.tv_usec = 500000;
-        
-        // 1. Set up the fd_set as usual here.
-        FD_ZERO(&readfds);
-        
-        // 2. Add the fds to the fd_set
-        YMSelfLock(b);
-        {
-            for ( int i = 0; i < YMArrayGetCount(b->activeServiceRefs); i++ ) {
-                DNSServiceRef *sdref = (DNSServiceRef *)YMArrayGet(b->activeServiceRefs, i);
-                int aFd = DNSServiceRefSockFD(*sdref);
-                if ( aFd > maxFd )
-                    maxFd = aFd;
-				FD_SET(aFd, &readfds);
-                nfds++;
-            }
-        }
-        YMSelfUnlock(b);
-        
-        // wait for pending data or .5 secs to elapse:
-        result = select(maxFd + 1, &readfds, nullFd, nullFd, &tv);
-        if (result > 0) {
-            YMSelfLock(b);
-            {
-                for ( int i = 0; i < YMArrayGetCount(b->activeServiceRefs); i++ ) {
-                    DNSServiceRef *sdref = (DNSServiceRef *)YMArrayGet(b->activeServiceRefs, i);
-                    int aFd = DNSServiceRefSockFD(*sdref);
-                    if ( FD_ISSET(aFd, &readfds) ) {
-                        ymerr("processing service ref fd f%d",aFd);
-                        
-                        DNSServiceErrorType err = DNSServiceProcessResult(*(sdref));
-                        if (err != kDNSServiceErr_NoError) {
-                            ymerr("event thread process result on f%d failed: %d", aFd, err);
-                            keepGoing = false;
-                        }
-                    }
-                }
-            }
-            YMSelfUnlock(b);
-        } else if (result == 0) {
-            // timeout elapsed but no fd-s were signalled.
-        } else {
-#if defined(YMWIN32)
-			error = WSAGetLastError();
-			errorStr = "*";
-#else
-			error = errno;
-			errorStr = strerror(errno);
-#endif
-            ymerr("event thread select failed from n%d fds: %ld: %d (%s)",nfds,result,error,errorStr);
-            keepGoing = false;
-        }
-    }
-    
-    __YMmDNSBrowserRemoveServiceRef(b, NULL);
-    
-    ymlog("event thread exiting");
 }
 
 YM_EXTERN_C_POP

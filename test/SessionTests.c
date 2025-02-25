@@ -325,7 +325,7 @@ YM_ENTRY_POINT(_ServerWriteLargeFile)
         uint64_t dI,dO;
         YMStreamGetPerformance(stream,&dI,&dO,NULL,NULL);
         double percentCompressed = (1 - (double)dO / (double)dI) * 100;
-        ymlog("wrote large file with %0.2f%%",percentCompressed);
+        ymlog("wrote large file with %0.2f%% compression",percentCompressed);
     }
     
     if ( ! theTest->serverAsync ) {

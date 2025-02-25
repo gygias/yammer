@@ -1008,7 +1008,7 @@ int YMAPI YMGetNumberOfCoresAvailable()
 
 int YMAPI YMGetDefaultThreadsForCores(int cores)
 {
-    return cores * 2;
+    return cores * 1;
 }
 
 int YMAPI YMGetNumberOfThreadsInCurrentProcess()

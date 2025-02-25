@@ -15,6 +15,9 @@ dispatch source, especially currently unused writeability test case
 find a way to test for endianness (linux mips simulator?)
 forward test for connection stream init failure
 plexertest releases its queues but they're not being freed
+get to a point where YMThread is private
+queue probably should not be a ymtype
+make the poll/epoll version of sources
 QUEUE LIFECYCLE / THREAD EXIT TASK FORCE
   sources is a non-ymtyped array with a nested ymtype
   test dispatchafter to queue that exits in the interim

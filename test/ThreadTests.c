@@ -9,6 +9,8 @@
 #include "ThreadTests.h"
 
 #include "YMTask.h"
+#include "YMUtilities.h"
+#include "YMLog.h"
 
 struct ThreadTest {
     ym_test_assert_func assert;

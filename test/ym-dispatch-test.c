@@ -11,6 +11,7 @@
 #include "YMLock.h"
 #include "YMSemaphore.h"
 #include "YMUtilities.h"
+#include "YMThreadPriv.h"
 
 #include "arc4random.h"
 #include <sys/time.h>
@@ -22,7 +23,7 @@
 # define myexit exit
 #endif
 
-YM_ENTRY_POINT(_ym_dispatch_main_test_proc);
+YM_ENTRY_POINT(_ym_dispatch_rep_test);
 YM_ENTRY_POINT(denial_of_service_test);
 YM_ENTRY_POINT(after_test);
 YM_ENTRY_POINT(sources_test);
@@ -46,6 +47,9 @@ static TestType gType;
 static YMLockRef gLock = NULL;
 static YMDispatchQueueRef gUserQueue;
 static bool gEneralStateOfAccumulatedHappiness = true;
+
+static YMDictionaryRef gRepsByThread = NULL;
+static YMLockRef gRepsByThreadLock = NULL;
 
 int main(int argc, char *argv[])
 {
@@ -73,12 +77,14 @@ int main(int argc, char *argv[])
         
     
     if ( gType & RepTests ) {
-        ymlog("ym-dispatch-test targeting %s with %d %sreps",(gType==0)?"main":(gType==1)?"global":"user",gNumberArg2,gRacey?"*RACEY* ":"");
+        ymlog("ym-dispatch-test targeting %s with %d %sreps",(gType==MainTest)?"main":(gType==GlobalTest)?"global":"user",gNumberArg2,gRacey?"*RACEY* ":"");
 
-        ym_dispatch_user_t dispatch = { _ym_dispatch_main_test_proc, NULL, false, ym_dispatch_user_context_noop };
-        if ( gType == 0 ) {
+        gRepsByThread = YMDictionaryCreate();
+        gRepsByThreadLock = YMLockCreate();
+        ym_dispatch_user_t dispatch = { _ym_dispatch_rep_test, NULL, false, ym_dispatch_user_context_noop };
+        if ( gType == MainTest ) {
             YMDispatchAsync(YMDispatchGetGlobalQueue(),&dispatch);
-        } else if ( gType == 1 ) {
+        } else if ( gType == GlobalTest ) {
             if ( ! gRacey )
                 gLock = YMLockCreate();
             YMDispatchAsync(YMDispatchGetMainQueue(), &dispatch);
@@ -111,8 +117,29 @@ int main(int argc, char *argv[])
 
 #pragma mark "rep" based tests
 
+void print_reps_by_thread()
+{
+    uint32_t reps = 0;
+    YMDictionaryEnumRef dEnum = YMDictionaryEnumeratorBegin(gRepsByThread);
+    while ( dEnum ) {
+        fprintf(stdout,"thread %08lx %u reps (%0.2f%%)\n",(unsigned long)dEnum->key,*((uint32_t *)dEnum->value),(double)*((uint32_t *)dEnum->value)/(double)gNumberArg2 * 100);
+        reps += *((uint32_t *)dEnum->value);
+        dEnum = YMDictionaryEnumeratorGetNext(dEnum);
+    }
+    fprintf(stdout,"===========================================\n\t\t%u reps\n",reps);
+    fflush(stdout);
+}
+
 YM_ENTRY_POINT(_do_a_work)
 {
+    YMLockLock(gRepsByThreadLock);
+    unsigned long tn = _YMThreadGetCurrentThreadNumber();
+    if ( ! YMDictionaryContains(gRepsByThread,(const void *)tn) )
+        YMDictionaryAdd(gRepsByThread,(const void *)tn,YMALLOC(sizeof(uint32_t)));
+    uint32_t *c = (uint32_t *)YMDictionaryGetItem(gRepsByThread,(const void *)tn);
+    (*c)++;
+    YMLockUnlock(gRepsByThreadLock);
+
     bool lock = gLock != NULL;
     if ( lock ) YMLockLock(gLock);
     gCompleted++;
@@ -120,7 +147,8 @@ YM_ENTRY_POINT(_do_a_work)
     if ( lock ) YMLockUnlock(gLock);
     
     if ( gCompleted == gNumberArg2 ) {
-        ymlog("ym-dispatch-test completed %d reps",gNumberArg2);
+        fprintf(stdout,"ym-dispatch-test completed %d reps\n",gNumberArg2);
+        print_reps_by_thread();
         myexit(0);
     }
 }
@@ -136,12 +164,12 @@ void * valgrind_hit_me()
     return malloc(relativelyBig);
 }
 
-YM_ENTRY_POINT(_ym_dispatch_main_test_proc)
+YM_ENTRY_POINT(_ym_dispatch_rep_test)
 {
     YMDispatchQueueRef queue = NULL;
-    if ( gType == 0 )
+    if ( gType == MainTest )
         queue = YMDispatchGetMainQueue();
-    else if ( gType == 1 )
+    else if ( gType == GlobalTest )
         queue = YMDispatchGetGlobalQueue();
     else
         queue = gUserQueue;
@@ -165,9 +193,10 @@ YM_ENTRY_POINT(_ym_dispatch_main_test_proc)
         }
     }
 
-    if ( gType == 1 && gRacey ) {
+    if ( gType == GlobalTest && gRacey ) {
         sleep(10); // could perhaps check % cpu
         printf("ym-dispatch-test assumes races have finished at (%d / %d)\n",gCompleted,gNumberArg2);
+        print_reps_by_thread();
         myexit(1);
     }
 }
@@ -270,14 +299,15 @@ YM_ENTRY_POINT(after_conversion_test)
         return;
     }
 
+#define kThresholdofHappiness .001
     double tvDoubleSince = YMTimevalSince(tvThen, tvNow);
     double tvDelta = tvDoubleSince + difference;
-    bool tvHappy = ( tvDelta > -.0001 && tvDelta < .0001 );
+    bool tvHappy = ( tvDelta > -kThresholdofHappiness && tvDelta <= 0 );
     ymlog("%shappy with tvDoubleSince=%0.6f, tvDelta=%0.6f",tvHappy?"":"un",tvDoubleSince,tvDelta);
 
     double tsDoubleSince = YMTimespecSince(tsThen, tsNow);
     double tsDelta = tsDoubleSince + difference;
-    bool tsHappy = ( tsDelta > -.0001 && tsDelta < .0001 );
+    bool tsHappy = ( tsDelta > -kThresholdofHappiness && tsDelta <= 0 );
     ymlog("%shappy with tsDoubleSince=%0.9f, tsDelta=%0.9f",tsHappy?"":"un",tsDoubleSince,tsDelta);
 
     gEneralStateOfAccumulatedHappiness &= ( tvHappy & tsHappy );

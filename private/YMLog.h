@@ -14,7 +14,7 @@
 #endif
 
 #ifndef ymlog_target
-# define ymlog_target ( YMLogDefault | YMLogSecurity | YMLogConnection | YMLogSession )
+# define ymlog_target ( YMLogDefault | YMLogSecurity | YMLogConnection | YMLogSession | YMLogmDNS )
 #endif
 
 #ifndef ymlog_type_debug
