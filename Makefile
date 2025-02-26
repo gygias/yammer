@@ -22,6 +22,12 @@ GCC=gcc
 CLANG=clang
 MIPSGCC=mips-linux-gnu-gcc
 
+ifeq ($(SAVE),1)
+	ACTION=-c -save-temps=obj
+else
+	ACTION=-c
+endif
+
 ifeq ($(ARCH),macos)
 	DEFS=-DYMAPPLE
 	CC=$(CLANG)
@@ -77,34 +83,34 @@ $(LTGT): $(LOBJ)
 	$(CC) -shared -o "$(OUT)/$@" $(PT) $(ALG) $(LLIBS) $(DBGO) $(LDEP)
 
 interface.o: linux/interface.c
-	$(CC) -c $< -o "$(OUT)/$@" $(CCF) $(INC) $(FLG) $(DBGO)
+	$(CC) $(ACTION) $< -o "$(OUT)/$@" $(CCF) $(INC) $(FLG) $(DBGO)
 
 %.o: src/%.c
-	$(CC) -c $< -o "$(OUT)/$@" $(CCF) $(INC) $(FLG) $(DBGO)
+	$(CC) $(ACTION) $< -o "$(OUT)/$@" $(CCF) $(INC) $(FLG) $(DBGO)
 
 %.o: test/%.c
-	$(CC) -c $< -o "$(OUT)/$@" $(CCF) $(INC) $(FLG) $(DBGO)
+	$(CC) $(ACTION) $< -o "$(OUT)/$@" $(CCF) $(INC) $(FLG) $(DBGO)
 
 ymtest: $(LTGT) $(TOBJ) TestsMain.o
 	cd "$(OUT)" ;	$(CC) -o $@ TestsMain.o $(PT) $(DLIBS) $(DBGO) $(TDEP)
 
 TestsMain.o:
-	$(CC) -c test/TestsMain.c $(CCF) -o "$(OUT)/$@" $(INC) $(FLG) $(DBGO)
+	$(CC) $(ACTION) test/TestsMain.c $(CCF) -o "$(OUT)/$@" $(INC) $(FLG) $(DBGO)
 
 ymchat: $(LTGT) chat.o
 	cd "$(OUT)" ; $(CC) -o $@ $(PT) $(DLIBS) $(DBGO) chat.o
 
 chat.o:
-	$(CC) -c misc/chat/main.c $(CCF) -o "$(OUT)/$@" $(INC) $(FLG) $(DBGO)
+	$(CC) $(ACTION) misc/chat/main.c $(CCF) -o "$(OUT)/$@" $(INC) $(FLG) $(DBGO)
 
 ym-dispatch-test: $(LTGT) ym-dispatch-test.o
 	cd "$(OUT)" ;	$(CC) -o $@ $(PT) ym-dispatch-test.o $(DLIBS) $(DBGO) $(TDEP)
 
 ym-dispatch-test.o:
-	$(CC) -c test/ym-dispatch-test.c -o "$(OUT)/$@" $(CCF) $(INC) $(FLG) $(DBGO)
+	$(CC) $(ACTION) test/ym-dispatch-test.c -o "$(OUT)/$@" $(CCF) $(INC) $(FLG) $(DBGO)
 
 pta: $(LTGT) pta.o
 	cd "$(OUT)" ; $(CC) -o $@ $(PT) $(DLIBS) $(DBGO) pta.o
 
 pta.o:
-	$(CC) -c misc/pta-cli/main.c $(CCF) -o "$(OUT)/$@" $(INC) $(FLG) $(DBGO)
+	$(CC) $(ACTION) misc/pta-cli/main.c $(CCF) -o "$(OUT)/$@" $(INC) $(FLG) $(DBGO)
