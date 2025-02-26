@@ -60,7 +60,7 @@ typedef struct ___ym_log_t
 YM_ENTRY_POINT(___ym_log)
 {
     ___ym_log_t *log = context;
-    fprintf(log->file,"%s",log->string);
+    fprintf(log->file,"%s\n",log->string);
     fflush(log->file);
     YMFREE(log->string);
     YMFREE(log);
@@ -70,7 +70,7 @@ void __YMLogType( int level, char* format, ... )
 {
 	YM_ONCE_DO(gYMLogInitOnce,__YMLogInit);
 
-    uint16_t max = 512, off = 0;
+    off_t max = 1024, off = 0;
     char *line = YMALLOC(max*sizeof(char));
     
     const char *timeStr = YMGetCurrentTimeString(gTimeFormatBuf, gTimeFormatBufLen);
@@ -93,13 +93,11 @@ void __YMLogType( int level, char* format, ... )
 
     va_list args;
     va_start(args,format);
-    off += vsnprintf(line+off,max-off,format, args);
+    vsnprintf(line+off,max-off,format,args);
     va_end(args);
-    
-    off += snprintf(line+off,max-off,"\n");
 
     if ( level == YMLogError ) {
-        fprintf(stderr,"%s",line);
+        fprintf(stderr,"%s\n",line);
         fflush(stderr);
         YMFREE(line);
         return;

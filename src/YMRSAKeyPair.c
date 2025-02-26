@@ -208,7 +208,7 @@ void __YMRSAKeyPairSeed(void)
     if ( timeResult == 0 ) {
         timeResult = gettimeofday(&now, NULL);
         if ( timeResult == 0 )
-            ymdbg("rsa: it took %ld seconds and %llu words to seed openssl rand",now.tv_sec - then.tv_sec,iters);
+            ymdbg("rsa: it took %ld seconds and %"PRIu64" words to seed openssl rand",now.tv_sec - then.tv_sec,iters);
     }
     if ( timeResult != 0 )
         ymlog("rsa: gettimeofday failed");

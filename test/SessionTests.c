@@ -475,7 +475,7 @@ YM_ENTRY_POINT(_ClientWriteSparseFiles)
     
     theTest->nSparseFilesToRead = actuallyWritten;
     YMSemaphoreSignal(theTest->threadExitSemaphore);
-    ymlog("write sparse files [%llu] thread exiting",actuallyWritten);
+    ymlog("write sparse files [%"PRIu64"] thread exiting",actuallyWritten);
 }
 
 YM_ENTRY_POINT(_EatASparseFile)

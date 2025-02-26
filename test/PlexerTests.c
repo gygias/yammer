@@ -258,7 +258,7 @@ YM_ENTRY_POINT(_RunLocalPlexer)
         uint8_t *lastMessageWritten = (uint8_t *)YMDictionaryRemove(theTest->lastMessageWrittenByStreamID, (YMDictionaryKey)streamID);
         if ( protectTheList )
             YMLockUnlock(theTest->plexerTest1Lock);
-        testassert(incomingMessageLen&&0==memcmp(incomingMessage,lastMessageWritten,incomingMessageLen),"incoming and last written do not match (o%llu i%llu?)",outgoingMessageLen,incomingMessageLen);
+        testassert(incomingMessageLen&&0==memcmp(incomingMessage,lastMessageWritten,incomingMessageLen),"incoming and last written do not match (o%"PRIu16" i%"PRIu16"?)",outgoingMessageLen,incomingMessageLen);
         free(incomingMessage);
         
         if ( PlexerTest1NewStreamPerRoundTrip ) {

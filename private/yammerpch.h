@@ -53,6 +53,7 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <inttypes.h>
 
 #if defined(YMWIN32)
 # define ssize_t SSIZE_T

@@ -116,7 +116,7 @@ YMTypeRef YMAutorelease(YMTypeRef object)
 
 void __YM_CATCH_OVERRELEASE(__ym_type_t *p)
 {
-    ymassert(false, "something has overreleased %p (%c)",p,p->__type);
+    ymassert(false, "something has overreleased %p (%c)",p,p?p->__type:'0');
 }
 
 YM_RELEASE_RETURN_TYPE YMRelease(YMTypeRef o_)

@@ -22,7 +22,7 @@ YMTaskRef YMAPI YMTaskCreate(YMStringRef path, YMArrayRef args, bool saveOutput)
 bool YMAPI YMTaskLaunch(YMTaskRef task);
 void YMAPI YMTaskWait(YMTaskRef task);
 int YMAPI YMTaskGetExitStatus(YMTaskRef task);
-const unsigned YMAPI char *YMTaskGetOutput(YMTaskRef task, uint32_t *outLength);
+const char * YMAPI YMTaskGetOutput(YMTaskRef task, uint32_t *outLength);
 
 YM_EXTERN_C_POP
 

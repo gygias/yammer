@@ -47,8 +47,8 @@ YM_EXTERN_C_PUSH
                                         if ( _stream ) { \
                                             YMDictionaryRemove(p->streamsByID, streamID); \
                                             __ym_plexer_stream_user_info_t *_userInfo = YM_STREAM_INFO(_stream); \
-                                            YMRelease(userInfo->plexer); \
-                                            YMFREE(userInfo->upBuffer); \
+                                            YMRelease(_userInfo->plexer); \
+                                            YMFREE(_userInfo->upBuffer); \
                                             YMRelease(_stream); \
                                         } \
                                         YMLockUnlock(p->streamsLock);

@@ -343,7 +343,7 @@ ym_dispatch_user_t *__YMUserDispatchCopy(ym_dispatch_user_t *userDispatch)
     return copy;
 }
 
-[[clang::optnone]]
+__attribute__((optnone))
 void YMAPI YMDispatchAsync(YMDispatchQueueRef queue, ym_dispatch_user_t *userDispatch)
 {
     __YMDispatchCheckExpandGlobalQueue((__ym_dispatch_queue_t *)queue);
@@ -351,7 +351,7 @@ void YMAPI YMDispatchAsync(YMDispatchQueueRef queue, ym_dispatch_user_t *userDis
     __YMDispatchDispatch(queue, copy, NULL, false);
 }
 
-[[clang::optnone]]
+__attribute__((optnone))
 void YMAPI YMDispatchSync(YMDispatchQueueRef queue, ym_dispatch_user_t *userDispatch)
 {
     __YMDispatchCheckExpandGlobalQueue((__ym_dispatch_queue_t *)queue);
@@ -651,25 +651,25 @@ void __YMDispatchUserFinalize(ym_dispatch_user_t *user)
     }
 }
 
-[[clang::optnone]]
+__attribute__((optnone))
 YM_ENTRY_POINT(__ym_dispatch_user_service_loop)
 {
     __ym_dispatch_service_loop(context);
 }
 
-[[clang::optnone]]
+__attribute__((optnone))
 YM_ENTRY_POINT(__ym_dispatch_global_service_loop)
 {
     __ym_dispatch_service_loop(context);
 }
 
-[[clang::optnone]]
+__attribute__((optnone))
 YM_ENTRY_POINT(__ym_dispatch_main_service_loop)
 {
     __ym_dispatch_service_loop(context);
 }
 
-[[clang::optnone]]
+__attribute__((optnone))
 YM_ENTRY_POINT(__ym_dispatch_service_loop)
 {
     __ym_dispatch_service_loop_context_t *c = context;
@@ -943,7 +943,7 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
                         YM_READ_FILE(signalFd,flushBuf,1);
                         if ( result == -1 && errno == EAGAIN )
                             break;
-                        ymassert(result==1,"%s YM_READ_FILE(signalFd,,)[%d] %d %d %s",__FUNCTION__,i,result,errno,strerror(errno));
+                        ymassert(result==1,"%s YM_READ_FILE(signalFd,,)[%d] %zd %d %s",__FUNCTION__,i,result,errno,strerror(errno));
 
                         if ( flushBuf[0] == 'x' ) {
                             printf("select thread signaled to xit\n");

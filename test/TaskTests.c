@@ -59,11 +59,21 @@ void _TaskUsrBinTrueRun(struct TaskTest *theTest)
     testassert(result==0,"task true result");
     
     uint32_t len = 0;
-    const unsigned char *output = YMTaskGetOutput(task, &len);
+    const char *output = YMTaskGetOutput(task, &len);
     testassert(!output&&len==0,"true output exists");
     
     YMRelease(path);
     YMRelease(task);
+}
+
+void _PrintOutputLineByLine(char *output)
+{
+    char *lineEnd = NULL, *lastLineEnd = output;
+    while ( ( lineEnd = strstr(lastLineEnd,"\n") ) ) {
+        *lineEnd = '\0';
+        ymlog("%s",lastLineEnd);
+        lastLineEnd = lineEnd + 1;
+    }
 }
 
 void _TaskCatSomeLogRun(struct TaskTest *theTest)
@@ -95,11 +105,12 @@ void _TaskCatSomeLogRun(struct TaskTest *theTest)
     testassert(result==0,"task result");
     
     uint32_t len = 0;
-    const unsigned char *output = YMTaskGetOutput(task, &len);
+    const char *output = YMTaskGetOutput(task, &len);
     testassert(output&&len>0,"output");
     
-    ymlog(">>>>> %s output:\n%s\n<<<<< %s output",YMSTR(path),output,YMSTR(path));
-    
+    ymlog(">>>>> %s output[%lu]",YMSTR(path),strlen(output));
+    _PrintOutputLineByLine((char *)output);
+    ymlog("<<<<< %s output",YMSTR(path));
     YMRelease(args);
     YMRelease(path);
     YMRelease(task);
@@ -133,10 +144,12 @@ void _TaskOpensslRun(struct TaskTest *theTest)
     testassert(result==0,"task openssl result");
     
     uint32_t len = 0;
-    const unsigned char *output = YMTaskGetOutput(task, &len);
+    const char *output = YMTaskGetOutput(task, &len);
     testassert(output&&len>0,"openssl output");
-    
-    ymlog(">>>>> %s output:\n%s\n<<<<< %s output",YMSTR(path),output,YMSTR(path));
+
+    ymlog(">>>>> %s output[%lu]: ",YMSTR(path),strlen(output));
+    _PrintOutputLineByLine((char *)output);
+    ymlog("<<<<< %s output",YMSTR(path));
     
     YMRelease(args);
     YMRelease(path);

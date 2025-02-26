@@ -36,7 +36,7 @@ typedef struct __ym_task
     pid_t childPid;
     bool exited;
     int result;
-    unsigned char *output;
+    char *output;
     uint32_t outputLen;
     YMPipeRef outputPipe;
     YMDispatchQueueRef outputQueue;
@@ -250,7 +250,7 @@ int YMTaskGetExitStatus(YMTaskRef t_)
     return t->result;
 }
 
-const unsigned char *YMTaskGetOutput(YMTaskRef t_, uint32_t *outLength)
+const char *YMTaskGetOutput(YMTaskRef t_, uint32_t *outLength)
 {
     __ym_task_t *t = (__ym_task_t *)t_;
     if ( t->save )
