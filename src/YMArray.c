@@ -55,7 +55,7 @@ void YMArrayAdd(YMArrayRef a, const void *value)
 void YMArrayInsert(YMArrayRef a_, int64_t idx, const void *value)
 {
     __ym_array_t *a = (__ym_array_t *)a_;
-    ymassert(idx<=a->count,"cannot insert at %lu in array with count %lu",idx,a->count);
+    ymassert(idx<=a->count,"cannot insert at %"PRIu64" in array with count %"PRIu64,idx,a->count);
     
     _YMDictionaryShift(a->dict, idx, true);
     YMDictionaryAdd(a->dict, (YMDictionaryKey)idx, (YMDictionaryValue)value);

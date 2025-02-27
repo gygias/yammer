@@ -27,8 +27,8 @@
 
 YM_EXTERN_C_PUSH
 
-uint64_t gSomeLength = 5678900;
-#define FAKE_DELAY_MAX 3
+size_t gSomeLength = 5678900;
+#define FAKE_DELAY_MAX 10
 
 #ifndef YMWIN32
 # if defined(YMAPPLE)
@@ -72,7 +72,7 @@ struct SessionTest
     YMConnectionRef clientConnection;
     bool serverAsync, serverBounding, lastClientAsync, lastClientBounded;
 	YMFILE largeSrcFd;
-    uint64_t lastClientFileSize;
+    size_t lastClientFileSize;
     uint64_t nSparseFilesToRead;
     uint64_t nSparseFilesRead;
     
@@ -104,7 +104,7 @@ YM_ENTRY_POINT(_ClientWriteSparseFiles);
 YM_ENTRY_POINT(_FlushMiddleman);
 YM_ENTRY_POINT(_EatLargeFile);
 YM_ENTRY_POINT(_EatASparseFile);
-void _AsyncForwardCallback(struct SessionTest *theTest, YMConnectionRef connection, YMStreamRef stream, YMIOResult result, uint64_t bytesWritten, bool isServer);
+void _AsyncForwardCallback(struct SessionTest *theTest, YMConnectionRef connection, YMStreamRef stream, YMIOResult result, size_t bytesWritten, bool isServer);
 
 void SessionTestsRun(ym_test_assert_func assert, const void *context)
 {
@@ -120,7 +120,7 @@ void SessionTestsRun(ym_test_assert_func assert, const void *context)
     
     ymerr(" Session test: '%s'",YMSTR(theTest.testName));
     _TestSessionWritingLargeAndReadingSparseFiles(&theTest);
-    ymerr(" Session test finished with %lu sparse files",theTest.nSparseFilesToRead);
+    ymerr(" Session test finished with %"PRIu64" sparse files",theTest.nSparseFilesToRead);
     
     while ( YMDictionaryGetCount(theTest.nonRegularFileNames) > 0 ) {
         const void *filename = YMDictionaryRemove(theTest.nonRegularFileNames, YMDictionaryGetRandomKey(theTest.nonRegularFileNames));
@@ -142,8 +142,8 @@ void SessionTestsRun(ym_test_assert_func assert, const void *context)
     YMDispatchQueueRelease(theTest.clientQueue);
 }
 
-void _server_async_forward_callback(YMConnectionRef connection, YMStreamRef stream, YMIOResult result, uint64_t bytesWritten, void * ctx);
-void _client_async_forward_callback(YMConnectionRef connection, YMStreamRef stream, YMIOResult result, uint64_t bytesWritten, void * ctx);
+void _server_async_forward_callback(YMConnectionRef connection, YMStreamRef stream, YMIOResult result, size_t bytesWritten, void * ctx);
+void _client_async_forward_callback(YMConnectionRef connection, YMStreamRef stream, YMIOResult result, size_t bytesWritten, void * ctx);
 void _added_peer_func(YMSessionRef session, YMPeerRef peer, void *context);
 void _removed_peer_func(YMSessionRef session, YMPeerRef peer, void *context);
 void _resolve_failed_func(YMSessionRef session, YMPeerRef peer, void *context);
@@ -275,7 +275,7 @@ YM_ENTRY_POINT(_ServerWriteLargeFile)
     theTest->tempServerSrc = YMSTRCF(LargeSrcTemplate,ServerTestFile);
     unlink(YMSTR(theTest->tempServerSrc));
     
-    uint64_t copyBytes = 0;
+    size_t copyBytes = 0;
     theTest->serverBounding = 
 #if !defined(YMWIN32) && !defined(YMLINUX) && !defined(YMAPPLE) & !defined(LMAO) || defined(FOUND_LARGE_WELL_KNOWN_WINDOWS_TEXT_FILE_THATS_BIGGER_THAN_5_MB_TO_USE_FOR_THIS)
 		arc4random_uniform(2);
@@ -369,7 +369,7 @@ YM_ENTRY_POINT(_ClientWriteSparseFiles)
 #endif
     testassert(result==0, "mkdir failed %d %s",errno,strerror(errno));
     
-    uint64_t actuallyWritten = 0;
+    size_t actuallyWritten = 0;
     DIR *dir = opendir(ClientSparsePath);
     testassert(dir, "opendir");
     
@@ -449,7 +449,7 @@ YM_ENTRY_POINT(_ClientWriteSparseFiles)
             YMSemaphoreWait(theTest->connectAndAsyncClientCallbackSemaphore);
         
         struct SparseFileThanks thx;
-        uint16_t outLength = 0, length = sizeof(thx);
+        size_t outLength = 0, length = sizeof(thx);
         result = YMStreamReadUp(stream, (uint8_t *)&thx, length, &outLength);
         if ( theTest->stopping ) {
             YMConnectionCloseStream(connection, stream);
@@ -467,7 +467,7 @@ YM_ENTRY_POINT(_ClientWriteSparseFiles)
         YM_CLOSE_FILE(aSparseFd);
         
         actuallyWritten++;
-        ymdbg("wrote the %luth sparse file, %d open files in process",actuallyWritten,YMGetNumberOfOpenFilesForCurrentProcess());
+        ymdbg("wrote the %zuth sparse file, %d open files in process",actuallyWritten,YMGetNumberOfOpenFilesForCurrentProcess());
     }
     
     result = closedir(dir);
@@ -475,7 +475,7 @@ YM_ENTRY_POINT(_ClientWriteSparseFiles)
     
     theTest->nSparseFilesToRead = actuallyWritten;
     YMSemaphoreSignal(theTest->threadExitSemaphore);
-    ymlog("write sparse files [%"PRIu64"] thread exiting",actuallyWritten);
+    ymlog("write sparse files [%zu] thread exiting",actuallyWritten);
 }
 
 YM_ENTRY_POINT(_EatASparseFile)
@@ -489,14 +489,14 @@ YM_ENTRY_POINT(_EatASparseFile)
     YMStreamRef stream = ctx->stream;
     
     struct SparseFileHeader header;
-    uint16_t outLength = 0, length = sizeof(header);
+    size_t outLength = 0, length = sizeof(header);
     YMIOResult ymResult = YMStreamReadUp(stream, (uint8_t *)&header, length, &outLength);
     if ( theTest->stopping )
         goto catch_release;
     
     testassert(ymResult==YMIOSuccess&&outLength==length,"read sparse header");
     testassert(strlen(header.name)>0&&strlen(header.name)<=NAME_MAX, "??? %s",header.name);
-    uint64_t outBytes = 0;
+    size_t outBytes = 0;
     
     char filePath[PATH_MAX];
     strcpy(filePath, YMSTR(theTest->tempSparseDir));
@@ -507,12 +507,12 @@ YM_ENTRY_POINT(_EatASparseFile)
     YMFILE sparseDstFd = (YMFILE)result;
     testassert(sparseDstFd>=0,"create '%s' dst %d %s",header.name,errno,strerror(errno))
     
-    uint64_t len64 = header.len;
-    ymdbg("reading sparse file '%s'[%lu] %sbounded, sync to f%d",header.name,header.len,header.willBoundDataStream?"":"un",sparseDstFd);
+    size_t len64 = header.len;
+    ymdbg("reading sparse file '%s'[%"PRIu64"] %sbounded, sync to f%d",header.name,header.len,header.willBoundDataStream?"":"un",sparseDstFd);
     ymResult = YMStreamWriteToFile(stream, sparseDstFd, header.willBoundDataStream ? &len64 : NULL, &outBytes);
     testassert(ymResult==YMIOSuccess||(!header.willBoundDataStream&&ymResult==YMIOEOF),"eat sparse result");
     testassert(outBytes==header.len,"eat sparse result");
-    ymdbg("read sparse file '%s'[%lu] bytes: %s : %s",header.name,outBytes,YMSTR(theTest->tempSparseDir),header.name);
+    ymdbg("read sparse file '%s'[%zu] bytes: %s : %s",header.name,outBytes,YMSTR(theTest->tempSparseDir),header.name);
     
 	YM_CLOSE_FILE(sparseDstFd);
     testassert(result==0,"close sparse dst %s",header.name);
@@ -552,7 +552,7 @@ YM_ENTRY_POINT(_EatLargeFile)
     YMFILE largeOutFd = (YMFILE)result;
     testassert(largeOutFd>=0,"create out file");
 
-    uint64_t outBytes = 0;
+    size_t outBytes = 0;
     ymlog("reading large %sbounded...",theTest->serverBounding?"":"un");
     YMIOResult ymResult = YMStreamWriteToFile(stream, largeOutFd, theTest->serverBounding ? &gSomeLength : NULL, &outBytes);
     testassert(ymResult!=YMIOError,"eat large result");
@@ -579,22 +579,22 @@ YM_ENTRY_POINT(_EatLargeFile)
     YMRelease(stream);
 }
 
-void _server_async_forward_callback(YMConnectionRef connection, YMStreamRef stream, YMIOResult result, uint64_t bytesWritten, void * ctx)
+void _server_async_forward_callback(YMConnectionRef connection, YMStreamRef stream, YMIOResult result, size_t bytesWritten, void * ctx)
 {
-    ymdbg("%s %p %p %d %lu %p",__FUNCTION__,connection,stream,result,bytesWritten,ctx);
+    ymdbg("%s %p %p %d %zu %p",__FUNCTION__,(void *)connection,(void *)stream,result,bytesWritten,ctx);
     struct SessionTest *theTest = ctx;
     _AsyncForwardCallback(theTest, connection, stream, result, bytesWritten, true);
 }
 
-void _client_async_forward_callback(YMConnectionRef connection, YMStreamRef stream, YMIOResult result, uint64_t bytesWritten, void * ctx)
+void _client_async_forward_callback(YMConnectionRef connection, YMStreamRef stream, YMIOResult result, size_t bytesWritten, void * ctx)
 {
-    ymdbg("%s %p %p %d %lu %p",__FUNCTION__,connection,stream,result,bytesWritten,ctx);
+    ymdbg("%s %p %p %d %zu %p",__FUNCTION__,(void *)connection,(void *)stream,result,bytesWritten,ctx);
     struct SessionTest *theTest = ctx;
     testassert(theTest,"async forward cb context");
     _AsyncForwardCallback(theTest, connection, stream, result, bytesWritten, false);
 }
 
-void _AsyncForwardCallback(struct SessionTest *theTest, YMConnectionRef connection, YMStreamRef stream, YMIOResult ioResult, uint64_t bytesWritten, bool isServer)
+void _AsyncForwardCallback(struct SessionTest *theTest, YMConnectionRef connection, YMStreamRef stream, YMIOResult ioResult, size_t bytesWritten, bool isServer)
 {
     YM_IO_BOILERPLATE
 
@@ -613,7 +613,7 @@ void _AsyncForwardCallback(struct SessionTest *theTest, YMConnectionRef connecti
     YMStreamGetPerformance(stream,&dI,&dO,NULL,NULL);
     double percentCompressed = (1 - (double)dO / (double)dI) * 100;
 
-    ymlog("_async_forward_callback (%s): %lu (%0.2f%% compression)",isServer?"large":"sparse",bytesWritten,percentCompressed);
+    ymlog("_async_forward_callback (%s): %zu (%0.2f%% compression)",isServer?"large":"sparse",bytesWritten,percentCompressed);
     
     if ( isServer ) {
         YMConnectionCloseStream(connection, stream);
@@ -664,6 +664,33 @@ void _resolve_failed_func(YMSessionRef session, YMPeerRef peer, void *context)
     testassert(false,"resolveFailed");
 }
 
+typedef struct session_test_delayed_connect_ctx
+{
+    YMSessionRef session;
+    YMPeerRef peer;
+    bool connectSync;
+    struct SessionTest *theTest;
+} session_test_delayed_connect_ctx;
+typedef struct session_test_delayed_connect_ctx session_test_delayed_connect_ctx_t;
+
+YM_ENTRY_POINT(session_test_delayed_connect)
+{
+    session_test_delayed_connect_ctx_t *ctx = context;
+    struct SessionTest *theTest = ctx->theTest;
+    
+    ymlog("connecting %s (%ssync)...",YMSTR(YMPeerGetName(ctx->peer)),ctx->connectSync?"":"a");
+    bool okay = YMSessionConnectToPeer(ctx->session,ctx->peer,ctx->connectSync);
+    testassert(okay,"client connect to peer");
+    
+    if ( ctx->connectSync ) {
+        YMConnectionRef connection = YMSessionGetDefaultConnection(ctx->session);
+        _connected_func(ctx->session,connection,theTest);
+    }
+    
+    YMRelease(ctx->session);
+    YMRelease(ctx->peer);
+}
+
 void _resolved_func(YMSessionRef session, YMPeerRef peer, void *context)
 {
     ymlog("%s",__FUNCTION__);
@@ -677,19 +704,16 @@ void _resolved_func(YMSessionRef session, YMPeerRef peer, void *context)
     if ( theTest->stopping )
         return;
     
-    uint32_t fakeDelay = 0;// arc4random_uniform(FAKE_DELAY_MAX);
-    int64_t fakeDelayNsec = (int64_t)fakeDelay * 1000000000;
-    //dispatch_after(dispatch_time(DISPATCH_TIME_NOW, fakeDelay), dispatch_get_global_queue(0, 0), ^{
-        bool testSync = arc4random_uniform(2);
-        ymlog("connecting to %s after %ld delay (%ssync)...",YMSTR(YMPeerGetName(peer)),fakeDelayNsec,testSync?"":"a");
-        bool okay = YMSessionConnectToPeer(session,peer,testSync);
-        testassert(okay,"client connect to peer");
-        
-        if ( testSync ) {
-            YMConnectionRef connection = YMSessionGetDefaultConnection(session);
-            _connected_func(session,connection,theTest);
-        }
-    //});
+    session_test_delayed_connect_ctx_t *ctx = YMALLOC(sizeof(session_test_delayed_connect_ctx_t));
+    ctx->session = YMRetain(session);
+    ctx->peer = YMRetain(peer);
+    ctx->connectSync = arc4random_uniform(2);
+    ctx->theTest = theTest;
+    
+    uint32_t fakeDelay = arc4random_uniform(FAKE_DELAY_MAX);
+    ym_dispatch_user_t delayUser = { session_test_delayed_connect, ctx, NULL, ym_dispatch_user_context_free };
+    ymlog("connecting after %"PRIu32" seconds...",fakeDelay);
+    YMDispatchAfter(YMDispatchGetGlobalQueue(),&delayUser,(double)fakeDelay);
 }
 
 void _connect_failed_func(YMSessionRef session, YMPeerRef peer, bool moreComing, void *context)

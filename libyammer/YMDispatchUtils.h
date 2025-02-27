@@ -21,8 +21,8 @@ typedef struct ym_forward_file ym_forward_file_t;
 // want to be able to leave stream open, forward file doesn't imply close after completion
 // need event based way to either notify user when forward is complete, or 'close when done' in sync with plexer's list of streams
 // should the client 'forward' api be on connection, so it can ConnectionCloseStream either on callback or after sync method?
-bool YMAPI YMDispatchForwardFile(YMDispatchQueueRef queue, YMFILE fromFile, YMStreamRef toStream, const uint64_t *nBytesPtr, bool sync, ym_forward_file_t *callbackInfo);
-bool YMAPI YMDispatchForwardStream(YMDispatchQueueRef queue, YMStreamRef fromStream, YMFILE toFile, const uint64_t *nBytesPtr, bool sync, ym_forward_file_t *callbackInfo);
+bool YMAPI YMDispatchForwardFile(YMDispatchQueueRef queue, YMFILE fromFile, YMStreamRef toStream, size_t *nBytesPtr, bool sync, ym_forward_file_t *callbackInfo);
+bool YMAPI YMDispatchForwardStream(YMDispatchQueueRef queue, YMStreamRef fromStream, YMFILE toFile, size_t *nBytesPtr, bool sync, ym_forward_file_t *callbackInfo);
 void YMAPI YMDispatchJoin(YMDispatchQueueRef queue);
 
 YM_EXTERN_C_POP

@@ -40,8 +40,8 @@ void DictionaryTestsRun(ym_test_assert_func assert, const void *context)
     YMStringRef name = YMSTRC("DictionaryTestQueue");
     YMRelease(name);
     
-    unsigned int nThreads = 16;
-    ymlog("DictionaryTests has decided to run %u instances",nThreads);
+    int nThreads = 16;
+    ymlog("DictionaryTests has decided to run %d instances",nThreads);
     ym_dispatch_user_t dispatch = { _dictionary_test_proc, &theTest, NULL, ym_dispatch_user_context_noop };
     for ( int i = 0; i < nThreads; i++ ) {
         YMDispatchAsync(YMDispatchGetGlobalQueue(), &dispatch);
@@ -58,7 +58,7 @@ void DictionaryTestsRun(ym_test_assert_func assert, const void *context)
     YMRelease(theTest.lock);
     YMRelease(theTest.existingKeys);
     
-    ymerr("YMDictionary test completed after %lu iterations",theTest.completedTests);
+    ymerr("YMDictionary test completed after %"PRIu64" iterations",theTest.completedTests);
 }
 
 YM_ENTRY_POINT(_dictionary_test_proc)

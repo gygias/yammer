@@ -369,7 +369,7 @@ void YMPlexerCloseStream(YMPlexerRef p_, YMStreamRef stream)
         YMDispatchAsync(p->downQueue,&user);
     }
 
-    ymlog("user %s stream %lu", userInfo->isLocallyOriginated?"closing":"releasing", streamID);
+    ymlog("user %s stream %"PRIu64, userInfo->isLocallyOriginated?"closing":"releasing", streamID);
     YMRelease(stream); // for user, still retained by internal list until finalized
 }
 
@@ -568,19 +568,19 @@ YM_ENTRY_POINT(__ym_plexer_service_downstream)
         return;
     }
 
-    ymdbg("%s V-s%lu servicing %zdb chunk...",__FUNCTION__,streamID,chunkLength);
+    ymdbg("%s V-s%"PRIu64" servicing %zdb chunk...",__FUNCTION__,streamID,chunkLength);
 
     bool closeNow = false;
     if ( userInfo->userClosed ) {
         if ( chunkLength == 1 ) {
             if ( (aDownBuf)[0] == '%' ) {
-                ymlog("user closed... stream %lu closing RIGHT NOW!!",streamID);
+                ymlog("user closed... stream %"PRIu64" closing RIGHT NOW!!",streamID);
                 closeNow = true;
                 goto catch_close;
             }
         }
         else
-            ymlog("user closed[%zd]... stream %lu NOT closing THIS ITERATION!!",chunkLength,streamID);
+            ymlog("user closed[%zd]... stream %"PRIu64" NOT closing THIS ITERATION!!",chunkLength,streamID);
     }
 
     if ( ! p->active ) //dispatchify cruft?
@@ -589,29 +589,29 @@ YM_ENTRY_POINT(__ym_plexer_service_downstream)
 catch_close:
 
     if ( ! closeNow ) {
-        YMPlexerMessage plexMessage = { chunkLength, streamID };
+        YMPlexerMessage plexMessage = { (int)chunkLength, streamID };
         size_t plexMessageLen = sizeof(plexMessage);
         bool okay = YMSecurityProviderWrite(p->provider, (uint8_t *)&plexMessage, plexMessageLen);
         if ( ! okay || ! p->active ) {
             bool interrupt = __YMPlexerInterrupt(p);
-            ymerr("p: V-s%lu failed writing plex message size %zub: %d (%s)%s",streamID,plexMessageLen,errno,strerror(errno),interrupt?" interrupted":"");
+            ymerr("p: V-s%"PRIu64" failed writing plex message size %zub: %d (%s)%s",streamID,plexMessageLen,errno,strerror(errno),interrupt?" interrupted":"");
             goto catch_release;
         }
 
-        ymdbg("V-s%lu wrote %zub plex header",streamID,plexMessageLen);
+        ymdbg("V-s%"PRIu64" wrote %zub plex header",streamID,plexMessageLen);
 
         okay = YMSecurityProviderWrite(p->provider, aDownBuf, chunkLength);
         if ( ! okay || ! p->active ) {
             bool interrupt = __YMPlexerInterrupt(p);
-            ymerr("p: V-s%lu failed writing plex buffer %ub: %d (%s)%s",streamID,plexMessage.command,errno,strerror(errno),interrupt?" interrupted":"");
+            ymerr("p: V-s%"PRIu64" failed writing plex buffer %ub: %d (%s)%s",streamID,plexMessage.command,errno,strerror(errno),interrupt?" interrupted":"");
             goto catch_release;
         }
 
-        ymlog("V-s%lu funnel wrote %zu + %zdb chunk",streamID,plexMessageLen,chunkLength);
+        ymlog("V-s%"PRIu64" funnel wrote %zu + %zdb chunk",streamID,plexMessageLen,chunkLength);
     }
 
     if ( closeNow ) {
-        ymlog("%s stream %lu closed locally",userInfo->isLocallyOriginated?"local":"remote", streamID);
+        ymlog("%s stream %"PRIu64" closed locally",userInfo->isLocallyOriginated?"local":"remote", streamID);
 
         if ( userInfo->isLocallyOriginated ) {
             bool okay = true;
@@ -622,14 +622,14 @@ catch_close:
             if ( ! okay || ! p->active ) {
                 bool interrupt = __YMPlexerInterrupt(p);
                 if ( interrupt )
-                    ymerr("V-s%lu perror: failed writing plex message size %zub: %d (%s)",streamID,plexMessageLen,errno,strerror(errno));
+                    ymerr("V-s%"PRIu64" perror: failed writing plex message size %zub: %d (%s)",streamID,plexMessageLen,errno,strerror(errno));
             }
             userInfo->muxerWritten += plexMessageLen;
         }
 
         __YMPlexerDestroySources(p,false,stream,"DOWNSTREAM");
 
-        ymlog("V-s%lu stream closing (rW%lu,pW%lu,rR%lu,pR%lu): %p (%s)",streamID,userInfo->rawWritten,userInfo->muxerRead,userInfo->rawRead,userInfo->muxerRead,stream,YMSTR(_YMStreamGetName(stream)));
+        ymlog("V-s%"PRIu64" stream closing (rW%"PRIu64",pW%"PRIu64",rR%"PRIu64",pR%"PRIu64"): %p (%s)",streamID,userInfo->rawWritten,userInfo->muxerRead,userInfo->rawRead,userInfo->muxerRead,stream,YMSTR(_YMStreamGetName(stream)));
 
         CHECK_REMOVE((YMDictionaryKey)streamID);
     }
@@ -660,7 +660,7 @@ YM_ENTRY_POINT(__ym_plexer_service_upstream)
         streamClosing = true;
     else {
         chunkLength = plexerMessage.command;
-        ymdbg("^-s%lu read plex header %zub",plexerMessage.streamID,chunkLength);
+        ymdbg("^-s%"PRIu64" read plex header %zub",plexerMessage.streamID,chunkLength);
     }
     
     YMPlexerStreamID streamID = plexerMessage.streamID;
@@ -669,7 +669,7 @@ YM_ENTRY_POINT(__ym_plexer_service_upstream)
     if ( ! theStream || ! p->active ) {
         bool interrupt = __YMPlexerInterrupt(p);
         if ( interrupt )
-            ymerr("fatal: ^-s%lu stream lookup",streamID);
+            ymerr("fatal: ^-s%"PRIu64" stream lookup",streamID);
         return;
     }
     
@@ -681,7 +681,7 @@ YM_ENTRY_POINT(__ym_plexer_service_upstream)
         _YMStreamCloseWriteUp(theStream);
         if ( p->closingFunc )
             __YMPlexerCallbackFunctionWithName(p, theStream, p->eventDeliveryQueue, __ym_plexer_notify_stream_closing);
-        ymlog("^-s%lu stream closing (rW%lu,pW%lu,rR%lu,pR%lu)",plexerMessage.streamID,userInfo->rawWritten,userInfo->muxerWritten,userInfo->rawRead,userInfo->muxerRead);
+        ymlog("^-s%"PRIu64" stream closing (rW%"PRIu64",pW%"PRIu64",rR%"PRIu64",pR%"PRIu64")",plexerMessage.streamID,userInfo->rawWritten,userInfo->muxerWritten,userInfo->rawRead,userInfo->muxerRead);
         return;
     }
 
@@ -692,7 +692,7 @@ YM_ENTRY_POINT(__ym_plexer_service_upstream)
     if ( ! okay || ! p->active ) {
         bool interrupt = __YMPlexerInterrupt(p);
         if ( interrupt )
-            ymerr("p: ^-s%lu failed reading plex buffer of length %zub: %d (%s)",streamID,chunkLength,errno,strerror(errno));
+            ymerr("p: ^-s%"PRIu64" failed reading plex buffer of length %zub: %d (%s)",streamID,chunkLength,errno,strerror(errno));
         return;
     }
     userInfo->rawRead += chunkLength;
@@ -701,14 +701,14 @@ YM_ENTRY_POINT(__ym_plexer_service_upstream)
     if ( result != YMIOSuccess || ! p->active ) {
         bool interrupt = __YMPlexerInterrupt(p);
         if ( interrupt )
-            ymerr("internal fatal: ^-s%lu failed writing plex buffer of length %zub: %d (%s)",streamID,chunkLength,errno,strerror(errno));
+            ymerr("internal fatal: ^-s%"PRIu64" failed writing plex buffer of length %zub: %d (%s)",streamID,chunkLength,errno,strerror(errno));
         return;
     }
 
-    ymlog("^-s%lu wrote plex buffer %zub",streamID,chunkLength);
+    ymlog("^-s%"PRIu64" wrote plex buffer %zub",streamID,chunkLength);
 
     if ( newUp ) {
-        ymlog("L-%lu notifying new incoming",streamID);
+        ymlog("L-%"PRIu64" notifying new incoming",streamID);
 
         if ( p->newIncomingFunc )
             __YMPlexerCallbackFunctionWithName(p, theStream, p->eventDeliveryQueue, __ym_plexer_notify_new_stream);
@@ -728,7 +728,7 @@ YMStreamRef __YMPlexerChooseStreamWithID(__ym_plexer_t *p, YMPlexerStreamID stre
     if ( ! theStream ) {
         if ( ( streamID % 2 == 0 ) && p->myStreamsEven ) {
             if ( __YMPlexerInterrupt(p) )
-                ymerr("internal: L-%lu stream id collision",streamID);
+                ymerr("internal: L-%"PRIu64" stream id collision",streamID);
             return NULL;
         }
 
@@ -761,7 +761,7 @@ YMStreamRef __YMPlexerCreateStreamWithID(__ym_plexer_t *p, YMPlexerStreamID stre
     userInfo->upBuffer = YMALLOC(YMPlexerDefaultBufferSize);
     userInfo->upBufferSize = YMPlexerDefaultBufferSize;
 
-    YMStringRef memberName = YMStringCreateWithFormat("%s-%s-s%lu-%s",p->master?"m":"s",isLocal?">":"<",streamID,YMSTR(userNameToRelease),NULL);
+    YMStringRef memberName = YMStringCreateWithFormat("%s-%s-s%"PRIu64"-%s",p->master?"m":"s",isLocal?">":"<",streamID,YMSTR(userNameToRelease),NULL);
 
     YMFILE downOut;
     YMStreamRef theStream = _YMStreamCreate(memberName,(ym_stream_user_info_t *)userInfo,&downOut);
@@ -857,10 +857,10 @@ YM_ENTRY_POINT(__ym_plexer_notify_new_stream)
     YMStreamRef stream = notifyDef->s;
     YMPlexerStreamID streamID = YM_STREAM_INFO(stream)->streamID;
     
-    ymlog("ym_notify_new_stream entered s%lu (%p)", streamID, p->newIncomingFunc);
+    ymlog("ym_notify_new_stream entered s%"PRIu64" (%p)", streamID, p->newIncomingFunc);
     if ( p->newIncomingFunc )
         p->newIncomingFunc(p,stream,p->callbackContext);
-    ymlog("ym_notify_new_stream exiting s%lu", streamID);
+    ymlog("ym_notify_new_stream exiting s%"PRIu64"", streamID);
     
     YMRelease(p);
     YMRelease(stream);
@@ -885,7 +885,7 @@ YM_ENTRY_POINT(__ym_plexer_notify_stream_closing)
     __ym_plexer_stream_user_info_t *userInfo = YM_STREAM_INFO(stream);
     YMPlexerStreamID streamID = userInfo->streamID;
     
-    ymlog("%s entered s%lu",__FUNCTION__, streamID);
+    ymlog("%s entered s%"PRIu64"",__FUNCTION__, streamID);
     if ( p->closingFunc )
         p->closingFunc(p,stream,p->callbackContext);
 
@@ -893,7 +893,7 @@ YM_ENTRY_POINT(__ym_plexer_notify_stream_closing)
 
     CHECK_REMOVE((YMDictionaryKey)streamID);
     
-    ymlog("%s exiting s%lu",__FUNCTION__, streamID);
+    ymlog("%s exiting s%"PRIu64"",__FUNCTION__, streamID);
     
     YMRelease(p);
     YMRelease(stream);

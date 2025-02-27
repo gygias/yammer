@@ -11,6 +11,7 @@ QUEUE LIFECYCLE / THREAD EXIT TASK FORCE
   sources is a non-ymtyped array with a nested ymtype
   test dispatchafter to queue that exits in the interim
 contextual lz4
+linux rng
 
 big ideas from ~10 years ago:
 - write complete build instructions based off clean w32 & debian installs

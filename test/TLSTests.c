@@ -44,8 +44,8 @@ typedef struct TLSTest
     
     YMLockRef stateLock;
     YMSemaphoreRef threadExitSemaphore;
-    uint64_t bytesIn;
-    uint64_t bytesOut;
+    size_t bytesIn;
+    size_t bytesOut;
     bool timeBasedEnd;
     uint8_t *lastMessageSent;
     uint16_t lastMessageSentLen;
@@ -82,7 +82,7 @@ void TLSTestsRun(ym_test_assert_func assert, const void *context)
     YMRelease(name);
     
     _TestTLS1(&theTest);
-    ymerr(" TLSTest1 completed %lub in %lub out",theTest.bytesIn,theTest.bytesOut);
+    ymerr(" TLSTest1 completed %zub in %zub out",theTest.bytesIn,theTest.bytesOut);
     
     YMRelease(theTest.stateLock);
     YMRelease(theTest.threadExitSemaphore);
@@ -192,7 +192,7 @@ YM_ENTRY_POINT(_RunEndpoint)
         uint16_t outgoingMessageLen;
         uint16_t incomingMessageLen;
         if ( TLSTestRandomMessages ) {
-            outgoingMessageLen = arc4random_uniform(TLSTestRandomMessageMaxLength) + 1;
+            outgoingMessageLen = (uint16_t)arc4random_uniform(TLSTestRandomMessageMaxLength) + 1;
             outgoingMessage = calloc(1,outgoingMessageLen);
             YMRandomDataWithLength(outgoingMessage,outgoingMessageLen);
         } else {

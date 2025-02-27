@@ -69,10 +69,7 @@ bool _ym_test_diff_func(__unused const void *ctx, __unused const char *path1, __
 {
 	ymerr("*** diff ***");
 
-#if defined(YMAPPLE)
-# warning is apple's diff in /usr/bin?
-# define SomeDiffPath "/usr/bin/diff"
-#elif defined(YMLINUX)
+#if defined(YMLINUX) || defined(YMAPPLE)
 # define SomeDiffPath "/usr/bin/diff"
 #elif defined(YMWIN32)
 # error implement me

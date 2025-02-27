@@ -130,7 +130,7 @@ void _CompressionTest(CompressionTest *theTest, const char *sourcePath, const ch
     YMThreadStart(readThread);
     
 #define by UINT16_MAX
-    int nOutBytes = by;
+    size_t nOutBytes = by;
     theTest->outBytes = malloc(nOutBytes);
     theTest->rawWritten = 0;
 
@@ -184,7 +184,7 @@ void _CompressionTest(CompressionTest *theTest, const char *sourcePath, const ch
 
     uint64_t cIn,cOut;
     YMCompressionGetPerformance(theTest->compressC,&cIn,&cOut);
-    ymlog("compression test succeeded with %0.2f percent compression (%lu vs %lu)",(1 - (double)cOut/(double)cIn)*100,cOut,cIn);
+    ymlog("compression test succeeded with %0.2f percent compression (%"PRIu64" vs %"PRIu64")",(1 - (double)cOut/(double)cIn)*100,cOut,cIn);
 
     YMRelease(theTest->compressC);
     YMRelease(theTest->decompressC);
@@ -204,7 +204,7 @@ YM_ENTRY_POINT(compression_test_compress_proc)
 
     do {
         size_t aRead = 0;
-        YMIOResult result = YMReadFull(theTest->sourceFd,buf,by,&aRead);
+        result = YMReadFull(theTest->sourceFd,buf,by,&aRead);
         testassert((result==YMIOSuccess&&aRead==by)||result==YMIOEOF,"read source %d[%zu]",result,aRead);
         if ( result == YMIOEOF ) {
             ymlog("compressor hit EOF (aRead %zu)",aRead);

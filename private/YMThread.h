@@ -33,7 +33,7 @@ typedef void *(*ym_voidp_voidp_func)(void *);
 # define YM_THREAD_PARAM LPVOID
 #endif
 
-#define YM_ENTRY_POINT(x) YM_THREAD_RETURN YM_CALLING_CONVENTION x(YM_THREAD_PARAM context)
+#define YM_ENTRY_POINT(x) YM_THREAD_RETURN YM_CALLING_CONVENTION x(__unused YM_THREAD_PARAM context)
 typedef YM_THREAD_RETURN(YM_CALLING_CONVENTION *ym_entry_point)(YM_THREAD_PARAM);
 
 YMThreadRef YMAPI YMThreadCreate(YMStringRef name, ym_entry_point entryPoint, void *context);

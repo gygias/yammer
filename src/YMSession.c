@@ -781,7 +781,7 @@ void __ym_session_new_stream_proc(YMConnectionRef connection, YMStreamRef stream
     
     YMAddressRef address = YMConnectionGetAddress(connection);
     YMPlexerStreamID streamID = YM_STREAM_INFO(stream)->streamID;
-    ymdbg("new incoming stream %lu on %s",streamID,YMSTR(YMAddressGetDescription(address)));
+    ymdbg("new incoming stream %"PRIu64" on %s",streamID,YMSTR(YMAddressGetDescription(address)));
     
     if ( connection != s->defaultConnection )
         ymerr("warning: new stream on non-default connection");
@@ -797,7 +797,7 @@ void __ym_session_stream_closing_proc(YMConnectionRef connection, YMStreamRef st
     
     YMAddressRef address = YMConnectionGetAddress(connection);
     YMPlexerStreamID streamID = YM_STREAM_INFO(stream)->streamID;
-    ymdbg("remote stream %lu closing on %s",streamID,YMSTR(YMAddressGetDescription(address)));
+    ymdbg("remote stream %"PRIu64" closing on %s",streamID,YMSTR(YMAddressGetDescription(address)));
     
     if ( connection != s->defaultConnection ) {
         ymerr("warning: closing remote stream on non-default connection");

@@ -197,7 +197,21 @@ bool YMTaskLaunch(YMTaskRef t_)
         ym_dispatch_user_t dispatch = { __ym_task_read_output_proc, (void *)YMRetain(t), NULL, ym_dispatch_user_context_noop };
         YMDispatchAsync(t->outputQueue,&dispatch);
     }
-	ymlog("forked: p%d", t->childPid);
+
+    size_t logBufLen = 1024, logBufOff = 0;
+    char logBuf[logBufLen];
+    logBufOff = snprintf(logBuf,logBufLen,"%s",YMSTR(t->path));
+    if ( t->args ) {
+        for( int i = 0; i < YMArrayGetCount(t->args); i++ ) {
+            const char *arg = YMArrayGet(t->args,i);
+            logBufOff += snprintf(logBuf + logBufOff, logBufLen - logBufOff, " %s", arg);
+            if ( logBufOff >= logBufLen - 1 ) {
+                snprintf(logBuf + logBufLen - 4, 4, "...");
+                break;
+            }
+        }
+    }
+	ymlog("forked[pid%d]: %s", t->childPid, logBuf);
 
 	return okay;
 }
@@ -284,15 +298,15 @@ YM_ENTRY_POINT(__ym_task_read_output_proc)
 
     off_t outputBufSize = 65536;
     t->output = malloc(outputBufSize);
-    ymassert(t->output,"failed to allocate task output %ld",outputBufSize);
+    ymassert(t->output,"failed to allocate task output %"PRId64,outputBufSize);
     off_t outputOff = 0;
     
     while(true) {
         while( outputOff >= outputBufSize ) {
             outputBufSize *= 2;
             t->output = realloc(t->output, (unsigned long)outputBufSize);
-            ymassert(t->output,"failed to allocate task output %ld",outputBufSize);
-            ymdbg("reallocated output buffer to %ld",outputBufSize);
+            ymassert(t->output,"failed to allocate task output %"PRId64,outputBufSize);
+            ymdbg("reallocated output buffer to %"PRId64,outputBufSize);
         }
         YM_READ_FILE(outFd, t->output + outputOff, outputBufSize - outputOff);
         if ( result == -1 ) {

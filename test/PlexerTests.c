@@ -61,8 +61,8 @@ typedef struct PlexerTest
     YMSemaphoreRef interruptNotificationSem;
     
     uint64_t raceyStreamsCompleted;
-    uint64_t bytesIn;
-    uint64_t bytesOut;
+    size_t bytesIn;
+    size_t bytesOut;
     
     YMDictionaryRef lastMessageWrittenByStreamID;
 } PlexerTest;
@@ -179,7 +179,7 @@ void _DoManyRoundTripsTest(struct PlexerTest *theTest)
     YMRelease(theTest->fakeRemotePlexer);
     
     sleep(2); // let the system settle 3.0 (let threads exit before stack theTest goes out of scope without coordination)
-    ymlog("plexer test finished %lu incoming round-trips on %d threads (%d round-trips per %s)",theTest->incomingStreamRoundTrips,
+    ymlog("plexer test finished %"PRIu64" incoming round-trips on %d threads (%d round-trips per %s)",theTest->incomingStreamRoundTrips,
           PlexerTest1Threads,
           PlexerTest1RoundTripsPerThread,
           PlexerTest1NewStreamPerRoundTrip?"stream":"round-trip");
@@ -223,12 +223,12 @@ YM_ENTRY_POINT(_RunLocalPlexer)
         uint8_t *outgoingMessage = NULL;
         uint16_t outgoingMessageLen;
         if ( PlexerTest1RandomMessages ) {
-            outgoingMessageLen = arc4random_uniform(PlexerTest1RandomMessageMaxLength) + 1;
+            outgoingMessageLen = (uint16_t)arc4random_uniform(PlexerTest1RandomMessageMaxLength) + 1;
             outgoingMessage = calloc(1,outgoingMessageLen);
             YMRandomDataWithLength(outgoingMessage,outgoingMessageLen);
         } else {
             outgoingMessage = (uint8_t *)strdup(testLocalMessage);
-            outgoingMessageLen = staticMessageLen;
+            outgoingMessageLen = (uint16_t)staticMessageLen;
         }
         
         bool protectTheList = ( PlexerTest1Threads > 1 );
@@ -297,7 +297,8 @@ void _SendMessage(__unused struct PlexerTest *theTest, YMStreamRef stream, uint8
 
 uint8_t *_ReceiveMessage(struct PlexerTest *theTest, YMStreamRef stream, uint16_t *outLen)
 {
-    uint16_t length, outLength = 0;
+    uint16_t length;
+    size_t outLength = 0;
     YMIOResult result = YMStreamReadUp(stream, (uint8_t *)&length, sizeof(length), &outLength);
     if ( theTest->timeBasedTimeOver )
         return NULL;
@@ -415,12 +416,12 @@ YM_ENTRY_POINT(_handle_remote_stream)
         uint8_t *outgoingMessage;
         uint16_t outgoingMessageLen;
         if ( PlexerTest1RandomMessages ) {
-            outgoingMessageLen = arc4random_uniform(PlexerTest1RandomMessageMaxLength) + 1;
+            outgoingMessageLen = (uint16_t)arc4random_uniform(PlexerTest1RandomMessageMaxLength) + 1;
             outgoingMessage = calloc(1,outgoingMessageLen);
             YMRandomDataWithLength(outgoingMessage, outgoingMessageLen);
         } else {
             outgoingMessage = (uint8_t *)strdup(testRemoteResponse);
-            outgoingMessageLen = staticMessageLen;
+            outgoingMessageLen = (uint16_t)staticMessageLen;
         }
     
         if ( protectTheList )
@@ -440,7 +441,7 @@ catch_return:
     
     YMPlexerCloseStream(theTest->fakeRemotePlexer,stream);
     
-    ymdbg("^^^ REMOTE -newStream [%lu] exiting (and remoteReleasing)",streamID);
+    ymdbg("^^^ REMOTE -newStream [%"PRIu64"] exiting (and remoteReleasing)",streamID);
 }
 
 void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *context)
@@ -453,7 +454,7 @@ void remote_plexer_stream_closing(YMPlexerRef plexer, YMStreamRef stream, void *
     uint64_t completed = theTest->raceyStreamsCompleted++;
 
     if ( completed && ( completed % 10000 == 0 ) )
-        ymlog("handled around %luth streams, approx %lumb in, %lumb out",completed,theTest->bytesIn/1024/1024,theTest->bytesOut/1024/1024);
+        ymlog("handled around %"PRIu64"th streams, approx %lumb in, %lumb out",completed,theTest->bytesIn/1024/1024,theTest->bytesOut/1024/1024);
 }
 
 YM_EXTERN_C_POP

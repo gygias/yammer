@@ -11,6 +11,8 @@
 		</dict>
 		<key>PTA-ios.xcscheme</key>
 		<dict>
+			<key>isShown</key>
+			<true/>
 			<key>orderHint</key>
 			<integer>10</integer>
 		</dict>
@@ -31,11 +33,15 @@
 		</dict>
 		<key>YammeriOS.xcscheme</key>
 		<dict>
+			<key>isShown</key>
+			<true/>
 			<key>orderHint</key>
 			<integer>4</integer>
 		</dict>
 		<key>libyammer-ios.xcscheme</key>
 		<dict>
+			<key>isShown</key>
+			<true/>
 			<key>orderHint</key>
 			<integer>2</integer>
 		</dict>

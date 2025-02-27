@@ -35,7 +35,7 @@ YMSecurityProviderRef YMSecurityProviderCreate(YMFILE inFile, YMFILE outFile)
     return p;
 }
 
-void _YMSecurityProviderFree(YMSecurityProviderRef p_)
+void _YMSecurityProviderFree(__unused YMSecurityProviderRef p_)
 {
     //__unused __ym_security_provider_t *p = (__ym_security_provider_t *)p_;
 }

@@ -21,7 +21,7 @@
 # define YM_THREAD_TYPE HANDLE
 #endif
 
-#define ymlog_pre "ymthread[%lu]: "
+#define ymlog_pre "ymthread[%"PRIu64"]: "
 #define ymlog_args _YMThreadGetCurrentThreadNumber()
 #define ymlog_type YMLogThread
 #define ymlog_type_debug YMLogThreadDebug

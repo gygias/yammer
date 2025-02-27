@@ -16,8 +16,8 @@ typedef const struct __ym_rsa_keypair * YMRSAKeyPairRef;
 YMRSAKeyPairRef YMAPI YMRSAKeyPairCreate(void);
 YMRSAKeyPairRef YMAPI YMRSAKeyPairCreateWithModuloSize(int moduloBits, int publicExponent);
 
-bool YMAPI YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair); // blocking
-YMAPI void * YMRSAKeyPairGetRSA(YMRSAKeyPairRef keyPair); // meh
+bool YMAPI YMRSAKeyPairGenerate(YMRSAKeyPairRef keyPair);
+YMAPI void * YMRSAKeyPairGetRSA(YMRSAKeyPairRef keyPair);
 
 YM_EXTERN_C_POP
 

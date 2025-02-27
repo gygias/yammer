@@ -113,7 +113,7 @@ bool __YMConnectionInitCommon(__ym_connection_t *, YMSOCKET newSocket, bool asSe
 bool __YMConnectionInitializeIncomingStream(__ym_connection_t *c, YMStreamRef stream);
 bool __YMConnectionInitializeOutgoingStream(__ym_connection_t *c, YMStreamRef stream, YMCompressionType compression);
 
-bool __YMConnectionForward(YMConnectionRef connection, bool toFile, YMStreamRef stream, YMFILE file, const uint64_t *nBytesPtr, bool sync, ym_connection_forward_context_t*);
+bool __YMConnectionForward(YMConnectionRef connection, bool toFile, YMStreamRef stream, YMFILE file, size_t *nBytesPtr, bool sync, ym_connection_forward_context_t*);
 void _ym_connection_forward_callback_proc(void *context, YMIOResult result, uint64_t bytesForwarded);
 
 YMConnectionRef YMConnectionCreate(YMAddressRef peerAddress, YMConnectionType type, YMConnectionSecurityType securityType, bool closeWhenDone)
@@ -390,7 +390,7 @@ int64_t __YMConnectionDoSample(__unused __ym_connection_t *c, YMSOCKET socket, u
 {
     YM_IO_BOILERPLATE
     
-    uint64_t sample = -1;
+    uint32_t sample = -1;
     
     #define bufLen 16384
     if ( length % bufLen != 0 ) {
@@ -407,25 +407,25 @@ int64_t __YMConnectionDoSample(__unused __ym_connection_t *c, YMSOCKET socket, u
         return sample;
     }
     
-    uint64_t halfLength = length / 2;
+    uint32_t halfLength = length / 2;
     for( int i = 0; i < 2; i++ ) {
         bool writing = ( i == 0 ) ^ !asServer;
-        uint64_t sentReceived = 0;
+        uint32_t sentReceived = 0;
         
         while ( sentReceived < halfLength ) {
-            ssize_t toReadWrite = ( bufLen + sentReceived > halfLength ) ? ( halfLength - sentReceived ) : bufLen;
+            uint32_t toReadWrite = ( bufLen + sentReceived > halfLength ) ? ( halfLength - sentReceived ) : bufLen;
             if ( writing ) {
                 YMRandomDataWithLength(buf,toReadWrite);
                 YM_WRITE_SOCKET(socket, buf, (size_t)toReadWrite);
                 if ( result == -1 ) {
-                    ymerr("%zd = YM_WRITE_SOCKET(%d, %p, %ld): %d %s",result,socket,buf,toReadWrite,errno,strerror(errno));
+                    ymerr("%zd = YM_WRITE_SOCKET(%d, %p, %"PRId32"): %d %s",result,socket,buf,toReadWrite,errno,strerror(errno));
                     goto catch_return;
                 }
                 sentReceived += result;
             } else {
                 YM_READ_SOCKET(socket, buf, (size_t)toReadWrite);
                 if ( result == -1 ) {
-                    ymerr("%zd = YM_READ_SOCKET(%d, %p, %ld): %d %s",result,socket,buf,toReadWrite,errno,strerror(errno));
+                    ymerr("%zd = YM_READ_SOCKET(%d, %p, %"PRIu32"): %d %s",result,socket,buf,toReadWrite,errno,strerror(errno));
                     goto catch_return;
                 }
                 sentReceived += result;
@@ -437,8 +437,8 @@ int64_t __YMConnectionDoSample(__unused __ym_connection_t *c, YMSOCKET socket, u
     struct timeval end;
     gettimeofday(&end,NULL);
     uint64_t usecsElapsed = ( end.tv_sec - start.tv_sec ) * 1000000000 + ( end.tv_usec - start.tv_usec );
-    sample = length / ((double)usecsElapsed / 1000000000);
-    ymlog("approximated sample to %lub/s",sample);
+    sample = (uint32_t)(length / ((double)usecsElapsed / 1000000000));
+    ymlog("approximated sample to %"PRIu32"b/s",sample);
     
 catch_return:
     free(buf);
@@ -784,7 +784,7 @@ bool __YMConnectionInitializeOutgoingStream(__ym_connection_t *c, YMStreamRef st
 {
     bool okay = false;
 
-    _ymconnection_stream_init_t init = { YMConnectionStreamInitBuiltinVersion, compression }; // endian?
+    _ymconnection_stream_init_t init = { YMConnectionStreamInitBuiltinVersion, (uint16_t)compression }; // endian?
     YMIOResult ymResult = YMStreamWriteDown(stream, (const uint8_t *)&init, sizeof(_ymconnection_stream_init_t));
     if ( ymResult != YMIOSuccess ) {
         ymerr("outgoing stream init send failed: %d",ymResult);
@@ -889,17 +889,17 @@ typedef struct __ym_connection_forward_callback_t
     ym_connection_forward_context_t *userContext;
 } __ym_connection_forward_callback_t;
 
-bool YMConnectionForwardFile(YMConnectionRef c, YMFILE fromFile, YMStreamRef toStream, const uint64_t *nBytesPtr, bool sync, ym_connection_forward_context_t *callbackInfo)
+bool YMConnectionForwardFile(YMConnectionRef c, YMFILE fromFile, YMStreamRef toStream, size_t *nBytesPtr, bool sync, ym_connection_forward_context_t *callbackInfo)
 {
     return __YMConnectionForward(c, false, toStream, fromFile, nBytesPtr, sync, callbackInfo);
 }
 
-bool YMConnectionForwardStream(YMConnectionRef c, YMStreamRef fromStream, YMFILE toFile, const uint64_t *nBytesPtr, bool sync, ym_connection_forward_context_t *callbackInfo)
+bool YMConnectionForwardStream(YMConnectionRef c, YMStreamRef fromStream, YMFILE toFile, size_t *nBytesPtr, bool sync, ym_connection_forward_context_t *callbackInfo)
 {
     return __YMConnectionForward(c, true, fromStream, toFile, nBytesPtr, sync, callbackInfo);
 }
 
-bool __YMConnectionForward(YMConnectionRef c, bool toFile, YMStreamRef stream, YMFILE file, const uint64_t *nBytesPtr, bool sync, ym_connection_forward_context_t *callbackInfo)
+bool __YMConnectionForward(YMConnectionRef c, bool toFile, YMStreamRef stream, YMFILE file, size_t *nBytesPtr, bool sync, ym_connection_forward_context_t *callbackInfo)
 {
     __ym_connection_forward_callback_t *myContext = NULL;
     ym_forward_file_t *threadContext = NULL;

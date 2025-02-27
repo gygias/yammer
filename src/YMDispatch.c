@@ -226,7 +226,7 @@ void YMAPI YMDispatchQueueRelease(YMDispatchQueueRef queue)
     int64_t before = YMArrayGetCount(gDispatch->userQueues);
     YMArrayRemoveObject(gDispatch->userQueues,queue);
     int64_t after = YMArrayGetCount(gDispatch->userQueues);
-    if ( before == after ) { printf("YMArrayRemoveObject: %ld\n",before); abort(); }
+    if ( before == after ) { printf("YMArrayRemoveObject: %"PRId64"\n",before); abort(); }
     YMLockUnlock(gDispatch->lock);
 
     __YMDispatchQueueExitSync((__ym_dispatch_queue_t *)queue);
@@ -311,7 +311,7 @@ void __YMDispatchCheckExpandGlobalQueue(__ym_dispatch_queue_t *queue)
             }
         }
 
-        name = YMStringCreateWithFormat("com.combobulated.dispatch.global-%ld",YMArrayGetCount(queue->queueThreads),NULL);
+        name = YMStringCreateWithFormat("com.combobulated.dispatch.global-%"PRId64,YMArrayGetCount(queue->queueThreads),NULL);
         __ym_dispatch_service_loop_context_t *c = YMALLOC(sizeof(__ym_dispatch_service_loop_context_t));
         YMThreadRef next = YMThreadCreate(name, __ym_dispatch_global_service_loop, c);
         __ym_dispatch_queue_thread_t *qt = __YMDispatchQueueThreadCreate(next);
@@ -325,7 +325,7 @@ void __YMDispatchCheckExpandGlobalQueue(__ym_dispatch_queue_t *queue)
 
         YMRelease(name);
 #ifdef YM_DISPATCH_LOG
-        printf("added %sworker to busy global queue %s [%ld]\n",overflow?"overflow ":"",YMSTR(name),YMArrayGetCount(queue->queueThreads));
+        printf("added %sworker to busy global queue %s [%"PRId64"]\n",overflow?"overflow ":"",YMSTR(name),YMArrayGetCount(queue->queueThreads));
 #endif
     }
     YMSelfUnlock(queue);
@@ -476,7 +476,7 @@ void YMAPI YMDispatchSourceDestroy(ym_dispatch_source_t source)
     YMLockUnlock(gDispatch->sourcesLock);
 
     if ( ! item ) {
-        printf("source %p not in list[%ld], presuming select loop has recently reset\n",source,count);
+        printf("source %p not in list[%"PRId64"], presuming select loop has recently reset\n",source,count);
     }
 
 #warning watchlist recycle user threads
@@ -572,7 +572,7 @@ void YMAPI YMDispatchAfter(YMDispatchQueueRef queue, ym_dispatch_user_t *userDis
 #else
     YMRetain(queue);
     ym_dispatch_user_t *userCopy = __YMUserDispatchCopy(userDispatch);
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW,secondsAfter*NSEC_PER_SEC), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT,0), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW,(int64_t)secondsAfter*NSEC_PER_SEC), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT,0), ^{
         YMDispatchAsync(queue,userCopy);
         YMFREE(userCopy);
         YMRelease(queue);
@@ -595,7 +595,7 @@ void __ym_dispatch_sigalarm(int signum)
     YMLockLock(gDispatch->lock);
     {
         if ( ! YMArrayGetCount(gDispatch->orderedTimers) ) {
-            printf("__ym_dispatch_sigalarm: next timer not set %ld\n",YMArrayGetCount(gDispatch->orderedTimers));
+            printf("__ym_dispatch_sigalarm: next timer not set %"PRId64"\n",YMArrayGetCount(gDispatch->orderedTimers));
             abort();
         }
 
@@ -678,7 +678,7 @@ YM_ENTRY_POINT(__ym_dispatch_service_loop)
     
     __ym_dispatch_dispatch_t *aDispatch = NULL;
 #ifdef YM_DISPATCH_LOG
-    printf("[%s:%08lx] entered\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber());
+    printf("[%s:%08"PRIx64"] entered\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber());
 #endif
 
     while ( true ) {
@@ -729,7 +729,7 @@ YM_ENTRY_POINT(__ym_dispatch_service_loop)
 catch_return:
 
 #ifdef YM_DISPATCH_LOG
-    printf("[%s:%08lx] exiting\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber());
+    printf("[%s:%08"PRIx64"] exiting\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber());
 #endif
 
     YMSemaphoreSignal(q->queueExitSem);
@@ -987,7 +987,7 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
                 YMLockLock(gDispatch->sourcesLock);
                 int64_t count = YMArrayGetCount(gDispatch->sources);
                 _YMArrayRemoveAll(gDispatch->sources, false, false);
-                printf("select thread resetting %ld -> %ld!!\n",count,YMArrayGetCount(gDispatch->sources));
+                printf("select thread resetting %"PRId64" -> %"PRId64"!!\n",count,YMArrayGetCount(gDispatch->sources));
                 YMLockUnlock(gDispatch->sourcesLock);
                 //keepGoing = false;
             }
@@ -995,7 +995,7 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
         nIterations++;
     }
 
-    printf("dispatch select exiting: %lu serviced, %lu loops (%0.2f%%) %lu timeouts (%0.2f%%), %lu $ignals (%0.2f%% busy)\n",
+    printf("dispatch select exiting: %"PRIu64" serviced, %"PRIu64" loops (%0.2f%%) %"PRIu64" timeouts (%0.2f%%), %"PRIu64" $ignals (%0.2f%% busy)\n",
             nServiced,nIterations,nIterations>0?100*((double)nServiced/(double)nIterations):0.0,
             nTimeouts,nIterations>0?100*((double)nTimeouts/(double)nServiced):0.0,
             nSignals,nSignals>0?100*((double)nBusySignals/(double)nSignals):0.0);

@@ -82,7 +82,7 @@ bool __YMTLSProviderClose(__ym_security_provider_t *);
 
 extern BIO_METHOD ym_bio_methods;
 
-void ym_tls_thread_id_callback(CRYPTO_THREADID *threadId)
+void ym_tls_thread_id_callback(__unused CRYPTO_THREADID *threadId)
 {
     //ymlog("ym_tls_thread_id_callback");
     CRYPTO_THREADID_set_numeric(threadId, (unsigned long)_YMThreadGetCurrentThreadNumber());

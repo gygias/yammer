@@ -167,7 +167,7 @@ YMmDNSTxtRecordKeyPair ** _MakeTxtRecordKeyPairs(uint16_t *inOutnKeypairs)
         
         // as far as i can tell, value can be empty
         uint8_t valueLenMax = (uint8_t)( UINT8_MAX - keyLen - testKeyPairReserved );
-        uint8_t aValueLen = ( valueLenMax > remaining ) ? remaining : valueLenMax;
+        uint8_t aValueLen = ( valueLenMax > remaining ) ? (uint8_t)remaining : valueLenMax;
         uint8_t *value_data = calloc(1,aValueLen);
         YMRandomDataWithLength((uint8_t *)value_data, aValueLen);
         keyPairs[idx]->value = value_data;
@@ -216,11 +216,11 @@ void _CompareTxtList(struct mDNSTest *theTest, YMmDNSTxtRecordKeyPair **aList, s
     for ( size_t i = 0; i < aSize; i++ ) {
         testassert(aList[i]->key,"(a) key %zdth null (%p %p)",i,aList[i]->key,bList[i]->key);
 
-        // this happened to work once, no more on ubuntu 24.04 / libavahi-core7/noble,now 0.8-13ubuntu6 amd64
+        // this happened to work once, list preserved order for whatever reason, no more on ubuntu 24.04 / libavahi-core7/noble,now 0.8-13ubuntu6 amd64
         //testassert(0 == strcmp(YMSTR(aList[i]->key), YMSTR(bList[i]->key)),"%zd-th keys '%s' and '%s' don't match (%d)",i,YMSTR(aList[i]->key),YMSTR(bList[i]->key),aSize);
         ssize_t j = 0;
-        for ( ; j <= bSize; j++ ) {
-            if ( j == bSize ) {
+        for ( ; j <= (ssize_t)bSize; j++ ) {
+            if ( j == (ssize_t)bSize ) {
                 j = -1;
                 break;
             }

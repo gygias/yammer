@@ -83,7 +83,7 @@ const char *YMGetCurrentTimeString(char *buf, size_t bufLen)
     if ( result == 0 )
         return NULL;
     if ( result < (int)bufLen - 4 )
-        snprintf(buf + result, bufLen - result, ".%03ld",epoch.tv_usec/1000);
+        snprintf(buf + result, bufLen - result, ".%03"PRId64,(int64_t)epoch.tv_usec/1000);
     return buf;
 }
 
@@ -197,13 +197,13 @@ double YMAPI YMTimespecSince(struct timespec then, struct timespec now)
 
 struct timespec YMTimespecNormalize(struct timespec ts)
 {
-	while(ts.tv_nsec >= NSEC_PER_SEC)
+	while(ts.tv_nsec >= (long)NSEC_PER_SEC)
 	{
 		++(ts.tv_sec);
 		ts.tv_nsec -= NSEC_PER_SEC;
 	}
 	
-	while(ts.tv_nsec <= -NSEC_PER_SEC)
+	while(ts.tv_nsec <= (long)-NSEC_PER_SEC)
 	{
 		--(ts.tv_sec);
 		ts.tv_nsec += NSEC_PER_SEC;
@@ -458,7 +458,7 @@ int YMGetNumberOfOpenFilesForCurrentProcess(void)
     return nFiles;
 }
 
-int YMGetPipeSize(YMFILE file)
+int YMGetPipeSize(__unused YMFILE file)
 {
 #if defined(YMLINUX)
     return fcntl(file, F_GETPIPE_SZ); // this is a gnu libc thing, just bookmarking this
@@ -1042,7 +1042,6 @@ int YMAPI YMGetNumberOfThreadsInCurrentProcess(void)
         ymlog("closedir(%s) failed: %d %s",buf,errno,strerror(errno));
 #elif defined(YMAPPLE)
     mach_port_t me = mach_task_self();
-    mach_port_t task;
     kern_return_t res;
     thread_array_t threads;
     mach_msg_type_number_t n_threads;
@@ -1094,21 +1093,21 @@ int gettimeofday(struct timeval * tp, struct timezone * tzp)
 }
 #endif
 
-void YMRandomDataWithLength(uint8_t *buf, uint32_t len)
+void YMRandomDataWithLength(uint8_t *buf, size_t len)
 {
-    uint16_t countdown = len;
+    size_t countdown = len;
     while ( countdown-- ) {
         uint8_t aByte = (uint8_t)arc4random_uniform(0x100);
         buf[countdown] = aByte;
     }
 }
 
-void YMRandomASCIIStringWithLength(char *buf, uint16_t len, bool for_mDNSServiceName, bool for_txtKey)
+void YMRandomASCIIStringWithLength(char *buf, size_t len, bool for_mDNSServiceName, bool for_txtKey)
 {
     buf[--len] = '\0';
 
-    uint8_t maxChar = for_mDNSServiceName ? 'z' : 0x7E, minChar = for_mDNSServiceName ? 'a' : 0x20;
-    uint8_t range = maxChar - minChar;
+    char maxChar = for_mDNSServiceName ? 'z' : 0x7E, minChar = for_mDNSServiceName ? 'a' : 0x20;
+    char range = maxChar - minChar;
     while ( len-- ) {
         char aChar;
         do {

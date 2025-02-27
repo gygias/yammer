@@ -123,9 +123,9 @@ YMCompressionRef YMCompressionCreate(YMCompressionType type, YMFILE file, bool c
     return c;
 }
 
-void _YMCompressionFree(YMCompressionRef c_)
+void _YMCompressionFree(__unused YMCompressionRef c_)
 {
-    //__unused __ym_compression_t *c = (__ym_compression_t *)c_;
+    
 }
 
 void YMCompressionSetInitFunc(YMCompressionRef c_, ym_compression_init_func func)
@@ -150,7 +150,7 @@ YMIOResult __ym_compression_read_underlying(__ym_compression_t *c, uint8_t *b, Y
     ymassert(ol<=UINT16_MAX,"ol overflow %zu",ol);
     ymassert(result!=YMIOError,"__ym_compression_read_underlying failed %d %s",errno,strerror(errno));
     if ( o ) { *o = (uint16_t)ol; }
-    return result;
+    return (YMIOResult)result;
 }
 
 YMIOResult __ym_compression_write_underlying(__ym_compression_t *c, const uint8_t *b, YM_COMPRESSION_LENGTH l, YM_COMPRESSION_LENGTH *o)
@@ -163,7 +163,7 @@ YMIOResult __ym_compression_write_underlying(__ym_compression_t *c, const uint8_
     ymassert(ol<=UINT16_MAX,"ol overflow %zu",ol);
     ymassert(result!=YMIOError,"__ym_compression_write_underlying failed %d %s",errno,strerror(errno));
     if ( o ) { *o = (uint16_t)ol; }
-    return result;
+    return (YMIOResult)result;
 }
 
 YMIOResult YMCompressionRead(YMCompressionRef c_, uint8_t *b, YM_COMPRESSION_LENGTH l, YM_COMPRESSION_LENGTH *o)
@@ -377,7 +377,7 @@ bool YMLZClose(__ym_compression_t *c)
 
 #endif
 
-bool YMLZ4Init(__ym_compression_t *c)
+bool YMLZ4Init(__unused __ym_compression_t *c)
 {
     return true;
 }
@@ -399,7 +399,7 @@ YMIOResult YMLZ4Read(__ym_compression_t *c, uint8_t *b, YM_COMPRESSION_LENGTH l,
     #define bufSize (sizeof(__ym_lz4_packed) + UINT16_MAX)
     char *buf = malloc(bufSize);
 
-    int ret = 0;
+    size_t ret = 0;
     uint8_t *dst = NULL;
     __ym_lz4_packed lengthPacked;
     size_t ol = 0;
@@ -440,7 +440,7 @@ YMIOResult YMLZ4Read(__ym_compression_t *c, uint8_t *b, YM_COMPRESSION_LENGTH l,
             result = YMIOError;
             goto catch_return;
         } else if ( ret > l ) {
-            ymassert(false,"lz4 decompress too big (%d %zu)",ret,l);
+            ymassert(false,"lz4 decompress too big (%zu %zu)",ret,l);
             result = YMIOError;
             goto catch_return;
         }
@@ -449,7 +449,7 @@ YMIOResult YMLZ4Read(__ym_compression_t *c, uint8_t *b, YM_COMPRESSION_LENGTH l,
         result = YMIOSuccess;
     }
 
-    ymlog("lz4[%s] %u -> %d",lengthPacked.compressed?"d":"-r",length,ret);
+    ymlog("lz4[%s] %u -> %zu",lengthPacked.compressed?"d":"-r",length,ret);
 
 catch_return:
     c->inBytes += lengthPacked.compressed;
@@ -464,11 +464,11 @@ YMIOResult YMLZ4Write(__ym_compression_t *c, const uint8_t *b, YM_COMPRESSION_LE
     ymassert(c->compressing,"attempt to write to lz4 decompressor %p(%p,%zu,%p)",c,b,l,o);
     ymassert(l<=UINT16_MAX,"YMLZ4Write overflow %zu",l);
     // instinct was to statically allocate and grow this, we're very multithreaded and forcing relatively small i/o
-    int bound = LZ4_compressBound(l);
+    int bound = LZ4_compressBound((int)l);
     ymlog("%d = LZ4_compressBound(%zu)",bound,l);
     char *buf = malloc(bound);
 
-    int compressedSize = LZ4_compress_default((const char *)b, buf, l, bound);
+    int compressedSize = LZ4_compress_default((const char *)b, buf, (int)l, bound);
     if ( compressedSize == 0 ) {
         ymerr("LZ4_compress_default failed");
         return YMIOError;
@@ -476,8 +476,8 @@ YMIOResult YMLZ4Write(__ym_compression_t *c, const uint8_t *b, YM_COMPRESSION_LE
 
     ymlog("%d = LZ4_compress_default(%p,%p,%zu,%d)",compressedSize,b,buf,l,bound);
 
-    bool compressUnderlying = (compressedSize < l);
-    __ym_lz4_packed lengthPacked = { .compressed = compressUnderlying, .size = ( compressUnderlying ? compressedSize : l ) };
+    bool compressUnderlying = (compressedSize < (int)l);
+    __ym_lz4_packed lengthPacked = { .compressed = compressUnderlying, .size = (uint16_t)( compressUnderlying ? compressedSize : l ) };
 
     size_t ol = 0;
     YMIOResult result = __ym_compression_write_underlying(c,(const uint8_t *)&lengthPacked,sizeof(lengthPacked),&ol);
@@ -491,21 +491,13 @@ YMIOResult YMLZ4Write(__ym_compression_t *c, const uint8_t *b, YM_COMPRESSION_LE
 
     const uint8_t *underlyingBuf = compressUnderlying ? (const uint8_t *)buf : b;
 
-    // review bio args throughout the stack, we shouldn't assume pipe or even segment at our level
-    int pipeSize = YMGetPipeSize(c->file);
-    int idx = 0;
-    while ( idx < lengthPacked.size ) {
-        size_t remaining = ( lengthPacked.size - idx );
-        size_t toWrite = ( pipeSize < remaining ) ? pipeSize : remaining;
-        result = __ym_compression_write_underlying(c,underlyingBuf,toWrite,&ol);
-        ymlog("%d(ol=%zu) = __ym_compression_write_underlying(%p[%d],%p,%hu,%p)",result,ol,c,c->file,underlyingBuf,lengthPacked.size,&ol);
+    result = __ym_compression_write_underlying(c,underlyingBuf,lengthPacked.size,&ol);
+    ymlog("%d(ol=%zu) = __ym_compression_write_underlying(%p[%d],%p,%hu,%p)",result,ol,c,c->file,underlyingBuf,lengthPacked.size,&ol);
 
-        if ( ( result != YMIOSuccess ) || ( ol != lengthPacked.size ) ) {
-            ymerr("lz4 write packed failed %d %zu %hu",result,ol,lengthPacked.size);
-            result = YMIOError;
-            goto catch_return;
-        }
-        idx += ol;
+    if ( ( result != YMIOSuccess ) || ( ol != lengthPacked.size ) ) {
+        ymerr("lz4 write packed failed %d %zu %hu",result,ol,lengthPacked.size);
+        result = YMIOError;
+        goto catch_return;
     }
 
     ymlog("lz4[%s] %zu -> %zu (%hu)",lengthPacked.compressed?"c":"-w",l,ol,lengthPacked.size);

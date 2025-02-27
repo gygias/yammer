@@ -132,7 +132,7 @@ bool YMRSAKeyPairGenerate(YMRSAKeyPairRef k_)
     // "OpenSSL makes sure that the PRNG state is unique for each thread.
     // On systems that provide /dev/urandom, the randomness device is used to seed the PRNG transparently."
     // leaving me unsure if this should be once'd. For now playing it safe.
-    //pthread_once(&gYMRSAKeyPairSeedOnce, _YMRSAKeyPairSeed);
+    //pthread_once(&gYMRSAKeyPairSeedOnce, __YMRSAKeyPairSeed);
     __YMRSAKeyPairSeed();
     
 #ifdef YMDEBUG
@@ -201,17 +201,17 @@ void __YMRSAKeyPairSeed(void)
 #ifdef YMDEBUG
         iters++;
 #endif
-    } while ( RAND_status() == 0 ); // all the solar flares
+    } while ( RAND_status() == 0 );
     
 #ifdef YMDEBUG
     struct timeval now;
     if ( timeResult == 0 ) {
         timeResult = gettimeofday(&now, NULL);
         if ( timeResult == 0 )
-            ymdbg("rsa: it took %ld seconds and %"PRIu64" words to seed openssl rand",now.tv_sec - then.tv_sec,iters);
+            ymlog("rsa: it took %ld seconds and %"PRIu64" words to seed openssl rand",now.tv_sec - then.tv_sec,iters);
     }
     if ( timeResult != 0 )
-        ymlog("rsa: gettimeofday failed");
+    ymlog("rsa: gettimeofday failed");
 #endif
 }
 

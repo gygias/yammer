@@ -76,7 +76,7 @@ bool ym_test_diff_proc(const void *ctx, const char *path1, const char *path2, bo
                 YMDictionaryEnumRef dEnum = YMDictionaryEnumeratorBegin(exceptions);
                 while (dEnum) {
                     if ( strstr([line UTF8String],dEnum->value) ) {
-                        NSLog(@"making exception for %s based on '%@'",dEnum->value,line);
+                        NSLog(@"making exception for %s based on '%@'",(char *)dEnum->value,line);
                         lineOK = true;
                         break;
                     }
@@ -170,7 +170,7 @@ bool ym_test_diff_proc(const void *ctx, const char *path1, const char *path2, bo
 
 - (void)testSession {
     const void *SELF = (__bridge const void *)(self);
-    SessionTestsRun(ym_test_assert_proc, ym_test_diff_proc, SELF);
+    SessionTestsRun(ym_test_assert_proc, (void *)ym_test_diff_proc);
 }
 
 @end

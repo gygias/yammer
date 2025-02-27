@@ -12,7 +12,7 @@ typedef struct __ym_forward_file_async
     YMStreamRef stream;
     bool toStream;
     bool bounded;
-    uint64_t nBytes;
+    size_t nBytes;
     bool sync; // only necessary to free return value
     ym_forward_file_t *callbackInfo;
     
@@ -21,14 +21,14 @@ typedef struct __ym_forward_file_async
 typedef struct __ym_forward_file_async __ym_forward_file_async_t;
 
 YM_ENTRY_POINT(__ym_dispatch_forward_file_proc);
-bool __YMThreadDispatchForward(YMDispatchQueueRef, YMStreamRef, YMFILE, bool, const uint64_t *, bool, ym_forward_file_t *);
+bool __YMThreadDispatchForward(YMDispatchQueueRef, YMStreamRef, YMFILE, bool, size_t *, bool, ym_forward_file_t *);
 
-bool YMDispatchForwardFile(YMDispatchQueueRef queue, YMFILE fromFile, YMStreamRef toStream, const uint64_t *nBytesPtr, bool sync, ym_forward_file_t *userInfo)
+bool YMDispatchForwardFile(YMDispatchQueueRef queue, YMFILE fromFile, YMStreamRef toStream, size_t *nBytesPtr, bool sync, ym_forward_file_t *userInfo)
 {
     return __YMThreadDispatchForward(queue, toStream, fromFile, true, nBytesPtr, sync, userInfo);
 }
 
-bool YMDispatchForwardStream(YMDispatchQueueRef queue, YMStreamRef fromStream, YMFILE toFile, const uint64_t *nBytesPtr, bool sync, ym_forward_file_t *userInfo)
+bool YMDispatchForwardStream(YMDispatchQueueRef queue, YMStreamRef fromStream, YMFILE toFile, size_t *nBytesPtr, bool sync, ym_forward_file_t *userInfo)
 {
     return __YMThreadDispatchForward(queue, fromStream, toFile, false, nBytesPtr, sync, userInfo);
 }
@@ -44,7 +44,7 @@ void YMAPI YMDispatchJoin(YMDispatchQueueRef queue)
     YMDispatchSync(queue,&user);
 }
 
-bool __YMThreadDispatchForward(YMDispatchQueueRef queue, YMStreamRef stream, YMFILE file, bool toStream, const uint64_t *nBytesPtr, bool sync, ym_forward_file_t *userInfo)
+bool __YMThreadDispatchForward(YMDispatchQueueRef queue, YMStreamRef stream, YMFILE file, bool toStream, size_t *nBytesPtr, bool sync, ym_forward_file_t *userInfo)
 {
     __ym_forward_file_async_t *context = YMALLOC(sizeof(__ym_forward_file_async_t));
     context->file = file;
@@ -75,21 +75,21 @@ YM_ENTRY_POINT(__ym_dispatch_forward_file_proc)
     YMStreamRef stream = async->stream;
     bool toStream = async->toStream;
     bool bounded = async->bounded;
-    uint64_t nBytes = async->nBytes;
+    size_t nBytes = async->nBytes;
     bool sync = async->sync;
     ym_forward_file_t *callbackInfo = async->callbackInfo;
     
-    uint64_t outBytes = 0;
+    size_t outBytes = 0;
     
     YMPlexerStreamID streamID = YM_STREAM_INFO(stream)->streamID;
-    ymlog("forward: entered for f%d%ss%lu",file,toStream?"->":"<-",streamID);
-    uint64_t forwardBytes = bounded ? nBytes : 0;
+    ymlog("forward: entered for f%d%ss%"PRIu64,file,toStream?"->":"<-",streamID);
+    size_t forwardBytes = bounded ? nBytes : 0;
     YMIOResult result;
     if ( toStream )
         result = YMStreamReadFromFile(stream, file, bounded ? &forwardBytes : NULL, &outBytes);
     else
         result = YMStreamWriteToFile(stream, file, bounded ? &forwardBytes : NULL, &outBytes);
-    ymlog("forward: %s %lu bytes from f%d%ss%lu", (result == YMIOError)?"error at offset":"finished",outBytes,file,toStream?"->":"<-",streamID);
+    ymlog("forward: %s %zu bytes from f%d%ss%"PRIu64, (result == YMIOError)?"error at offset":"finished",outBytes,file,toStream?"->":"<-",streamID);
     
     if ( ! sync && callbackInfo->callback ) {
         YMIOResult effectiveResult = nBytes ? result : ( result == YMIOEOF );

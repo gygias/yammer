@@ -84,7 +84,7 @@ void __YMLogType( int level, char* format, ... )
 
     if (timeStr)
         off += snprintf(line+off, max-off, "%s ", timeStr);
-    off += snprintf(line+off,max-off,"yammer[%lu:%08lx]: ",pid,threadID);
+    off += snprintf(line+off,max-off,"yammer[%"PRIu64":%08"PRIx64"]: ",pid,threadID);
     
     int indent = __YMLogIndent(level);
     while ( indent-- > 0 )

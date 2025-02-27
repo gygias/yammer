@@ -34,15 +34,15 @@ YMAddressRef YMAPI YMConnectionGetAddress(YMConnectionRef connection);
 YMStreamRef YMAPI YMConnectionCreateStream(YMConnectionRef connection, YMStringRef name, YMCompressionType compression);
 void YMAPI YMConnectionCloseStream(YMConnectionRef connection, YMStreamRef stream);
     
-typedef void (*ym_connection_forward_callback)(YMConnectionRef, YMStreamRef, YMIOResult, uint64_t, void *);
+typedef void (*ym_connection_forward_callback)(YMConnectionRef, YMStreamRef, YMIOResult, size_t, void *);
 typedef struct ym_connection_forward_context_t
 {
     ym_connection_forward_callback callback;
     void * context;
 } ym_connection_forward_context_t;
     
-bool YMAPI YMConnectionForwardFile(YMConnectionRef connection, YMFILE fromFile, YMStreamRef toStream, const uint64_t *nBytesPtr, bool sync, ym_connection_forward_context_t *callbackInfo);
-bool YMAPI YMConnectionForwardStream(YMConnectionRef connection, YMStreamRef fromStream, YMFILE toFile, const uint64_t *nBytesPtr, bool sync, ym_connection_forward_context_t *callbackInfo);
+bool YMAPI YMConnectionForwardFile(YMConnectionRef connection, YMFILE fromFile, YMStreamRef toStream, size_t *nBytesPtr, bool sync, ym_connection_forward_context_t *callbackInfo);
+bool YMAPI YMConnectionForwardStream(YMConnectionRef connection, YMStreamRef fromStream, YMFILE toFile, size_t *nBytesPtr, bool sync, ym_connection_forward_context_t *callbackInfo);
 
 YM_EXTERN_C_POP
 

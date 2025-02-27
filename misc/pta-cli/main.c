@@ -113,7 +113,7 @@ YM_ENTRY_POINT(print_stuff)
     uint64_t this = *(p->off) - *(p->thenOff);
     *(p->thenOff) = *(p->off);
 
-    printf("%s: wrote %lu: ",server?"s":"c",this);
+    printf("%s: wrote %"PRIu64": ",server?"s":"c",this);
     
     YMArrayRef connections = YMSessionCopyConnections(gYMSession);
     for( int i = 0; i < YMArrayGetCount(connections); i++ ) {
@@ -184,10 +184,10 @@ void run_server_loop(YMStreamRef stream)
     do {
         uint8_t buf[bufSize];
 
-        uint16_t o = 0;
+        size_t o = 0;
         ymResult = YMStreamReadUp(stream, buf, bufSize, &o);
         if ( ymResult != YMIOSuccess ) {
-            printf("%d = YMStreamReadUp(%p, %p, %d, &%u)\n",ymResult,stream,buf,bufSize,o);
+            printf("%d = YMStreamReadUp(%p, %p, %d, &%zu)\n",ymResult,stream,buf,bufSize,o);
             break;
         } else if ( o != bufSize ) {
             printf("server read incomplete\n");

@@ -15,7 +15,7 @@
 
 YM_EXTERN_C_PUSH
 
-typedef int32_t _YMStreamCommandType;
+typedef int64_t _YMStreamCommandType;
 typedef uint64_t _YMStreamBoundType;
 
 typedef enum _YMStreamCommandType
@@ -50,11 +50,11 @@ YMStreamRef _YMStreamCreate(YMStringRef name, ym_stream_user_info_t *userInfo, Y
 bool _YMStreamSetCompression(YMStreamRef stream, YMCompressionType compression);
 
 // with dispatchify, only exposed to keep lower-level fds private
-YM_IO_RESULT _YMStreamPlexReadDown(YMStreamRef stream, void *buffer, uint32_t length);
-YMIOResult _YMStreamPlexWriteUp(YMStreamRef stream, const void *buffer, uint32_t length);
+YM_IO_RESULT _YMStreamPlexReadDown(YMStreamRef stream, void *buffer, size_t length);
+YMIOResult _YMStreamPlexWriteUp(YMStreamRef stream, const void *buffer, size_t length);
 
 // bypasses compression for stream close
-YMIOResult _YMStreamPlexWriteDown(YMStreamRef s, const uint8_t *buffer, uint16_t length);
+YMIOResult _YMStreamPlexWriteDown(YMStreamRef s, const uint8_t *buffer, size_t length);
 
 void _YMStreamCloseWriteUp(YMStreamRef stream);
 
