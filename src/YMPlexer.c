@@ -49,6 +49,7 @@ YM_EXTERN_C_PUSH
                                             __ym_plexer_stream_user_info_t *_userInfo = YM_STREAM_INFO(_stream); \
                                             YMRelease(_userInfo->plexer); \
                                             YMFREE(_userInfo->upBuffer); \
+                                            YMFREE(_userInfo); \
                                             YMRelease(_stream); \
                                         } \
                                         YMLockUnlock(p->streamsLock);

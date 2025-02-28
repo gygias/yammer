@@ -192,7 +192,7 @@ YM_IO_RESULT _YMStreamPlexReadDown(YMStreamRef s, void *buffer, size_t length)
     } else if ( result == -1 ) {
         ymerr("%s failed reading %zub from downstream",__FUNCTION__,length);
     } else
-        ymlog("%s read %zub from downstream",__FUNCTION__,length);
+        ymlog("%s read %zub from downstream",__FUNCTION__,result);
 
     return result;
 }

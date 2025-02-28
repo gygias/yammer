@@ -40,7 +40,7 @@
             count++;
     }
     if ( count > 1 )
-        self.asServerCheckbox.state = NSOffState;
+        self.asServerCheckbox.state = NSControlStateValueOff;
 }
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification {
@@ -56,44 +56,65 @@
         NSLog(@"starting");
         
         __unsafe_unretained typeof(self) weakSelf = self;
-        self.session = [[YMSession alloc] initWithType:self.typeField.stringValue name:[[NSProcessInfo processInfo] processName]];
+        self.session = [[YMSession alloc] initWithType:self.typeField.stringValue];
         [self.session setStandardHandlers:^(YMSession *session) {
-            weakSelf.connectionState = InitializingState;
+            dispatch_async(dispatch_get_main_queue(),^{
+                weakSelf.connectionState = InitializingState;
+            });
         } :^(YMSession *session, YMConnection *connection, YMStream *stream) {
-            if ( self.asServerCheckbox.state != NSOnState ) {
-                [[NSException exceptionWithName:@"client incoming stream" reason:@"shouldn't happen" userInfo:nil] raise];
-            } else {
-                [weakSelf _consumeServerIncomingStream:stream];
-            }
+            dispatch_async(dispatch_get_main_queue(),^{
+                if ( self.asServerCheckbox.state != NSControlStateValueOn ) {
+                    [[NSException exceptionWithName:@"client incoming stream" reason:@"shouldn't happen" userInfo:nil] raise];
+                } else {
+                    // though it's not clearly expressed right now, plexer (and thus connection) events are on a queue
+                    // so we can't run our whole server from this callback block anymore, this should be thought through
+                    // and made clear in header docs
+                    dispatch_async(dispatch_get_global_queue(0, 0),^{
+                        [weakSelf _consumeServerIncomingStream:stream];
+                    });
+                }
+            });
         } :^(YMSession *session, YMConnection *connection, YMStream *stream) {
             NSLog(@"%@: %@: stream closing: %@",session,connection,stream);
         } :^(YMSession *session) {
             NSLog(@"%@: interrupted",session);
-            weakSelf.connectionState = InterruptedState;
+            dispatch_async(dispatch_get_main_queue(),^{
+                weakSelf.connectionState = InterruptedState;
+            });
         }];
         if ( self.session ) {
             
-            if ( self.asServerCheckbox.state == NSOnState ) {
-                self.connectionState = AdvertisingState;
+            if ( self.asServerCheckbox.state == NSControlStateValueOn ) {
+                dispatch_async(dispatch_get_main_queue(),^{
+                    self.connectionState = AdvertisingState;
+                });
                 stateOK = [self.session startAdvertisingWithName:self.nameField.stringValue
                                                    acceptHandler:^bool(YMSession *session, YMPeer *connection) {
                                                        return true;
                                                    }
                                                connectionHandler:^(YMSession *session, YMConnection *connection) {
                                                    NSLog(@"connected over %@",connection);
-                                                   self.connectionState = ConnectedState;
+                                                   dispatch_async(dispatch_get_main_queue(),^{
+                                                       self.connectionState = ConnectedState;
+                                                   });
                                                    [self _incomingConnection:connection];
                                                }];
             } else {
-                self.connectionState = SearchingState;
+                dispatch_async(dispatch_get_main_queue(),^{
+                    self.connectionState = SearchingState;
+                });
                 stateOK = [self.session browsePeersWithHandler:^(YMSession *session, YMPeer *peer) {
                     [self.session resolvePeer:peer withHandler:^(YMSession *session_, YMPeer *peer_, BOOL resolved) {
                         if ( resolved ) {
                             NSLog(@"resolved %@",peer_);
                             [self.session connectToPeer:peer_ connectionHandler:^(YMSession *session__, YMConnection *connection) {
                                 NSLog(@"connected over %@",connection);
-                                self.connectionState = ConnectedState;
-                                [self _outgoingConnection:connection];
+                                dispatch_async(dispatch_get_main_queue(),^{
+                                    self.connectionState = ConnectedState;
+                                });
+                                dispatch_async(dispatch_get_global_queue(0, 0),^{
+                                    [self _outgoingConnection:connection];
+                                });
                             } failureHandler:^(YMSession *session__, YMPeer *peer__) {
                                 NSLog(@"outgoing connection failed: %@",peer__);
                                 dispatch_async(dispatch_get_main_queue(), ^{ [self startStopPressed:nil]; });
@@ -129,29 +150,40 @@
 
 - (void)_incomingConnection:(YMConnection *)connection {
     NSLog(@"incoming connection: %@",connection);
-    self.currentConnection = connection;
+    dispatch_async(dispatch_get_main_queue(),^{
+        self.currentConnection = connection;
+    });
 }
 
 - (void)_outgoingConnection:(YMConnection *)connection {
     NSLog(@"outgoing connection %@",connection);
-    self.currentConnection = connection;
+    dispatch_async(dispatch_get_main_queue(),^{
+        self.currentConnection = connection;
+    });
     
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
        
         NSUInteger idx = 0;
+        uint16_t aWrite = 16384;
+        unsigned char buf[aWrite];
         self.lastTputDate = [NSDate date];
         self.bytesSinceLastTput = 0;
+        
         while(self.state == OnState) {
        
             NSUInteger streamIdx = 0;
             YMStream *aStream = [connection newStreamWithName:@"some stream"];
             while ( streamIdx < SingleStreamLength ) {
-                uint32_t fourBytes = arc4random();
-                NSUInteger remaining = SingleStreamLength - streamIdx;
-                uint16_t thisLength = ( remaining < sizeof(fourBytes) ) ? (uint16_t)remaining : sizeof(fourBytes);
-                [aStream writeData:[NSData dataWithBytes:&fourBytes length:thisLength]];
+                uint16_t randomBytesCopied = 0;
+                while ( randomBytesCopied < aWrite ) {
+                    uint32_t randomBytes = arc4random();
+                    memcpy(buf + randomBytesCopied, &randomBytes, sizeof(randomBytes));
+                    randomBytesCopied += sizeof(randomBytes);
+                }
+                NSData *aData = [NSData dataWithBytesNoCopy:buf length:aWrite freeWhenDone:NO];
+                [aStream writeData:aData];
                 
-                self.bytesSinceLastTput += thisLength;
+                self.bytesSinceLastTput += aWrite;
                 if ( -[self.lastTputDate timeIntervalSinceNow] > 1 ) {
                     
                     NSString *tputString = [NSString stringWithFormat:@"%0.2f mb/s (%0.1f%%)",(double)self.bytesSinceLastTput / 1024 / 1024,
@@ -166,8 +198,8 @@
                     self.bytesSinceLastTput = 0;
                 }
                 
-                if ( ( streamIdx % 1048576 ) == 0 ) NSLog(@"c[%zu]: wrote %zu-%u",idx,streamIdx,thisLength);
-                streamIdx += thisLength;
+                //if ( ( streamIdx % 268435456 ) == 0 ) NSLog(@"c[%zu]: wrote %zu",idx,streamIdx);
+                streamIdx += aWrite;
             }
             [connection closeStream:aStream];
             
@@ -179,7 +211,7 @@
 }
 
 - (void)_consumeServerIncomingStream:(YMStream *)stream {
-    
+    NSLog(@"%s",__PRETTY_FUNCTION__);
     NSUInteger idx = 0;
     self.lastTputDate = [NSDate date];
     self.bytesSinceLastTput = 0;
@@ -199,14 +231,16 @@
                                     100 * ((self.currentConnection.sample.doubleValue > 0) ?
                                            ((double)self.bytesSinceLastTput / self.currentConnection.sample.doubleValue)
                                            : (double)self.bytesSinceLastTput)];
-            self.tputLabel.stringValue = tputString;
+            dispatch_async(dispatch_get_main_queue(),^{
+                self.tputLabel.stringValue = tputString;
+            });
             
             self.lastTputDate = [NSDate date];
             self.bytesSinceLastTput = 0;
         }
         
         idx += aRead;
-        if ( ( idx % 1048576 ) == 0 ) NSLog(@"s[*]: read %zu-%u: %zu",idx,aRead,[data length]);
+        //if ( ( idx % 268435456 ) == 0 ) NSLog(@"s[*]: read %zu",idx);
     }
     
     NSLog(@"server finished reading stream with length %0.1fmb",(float)idx / 1024 / 1024);

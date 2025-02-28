@@ -112,12 +112,12 @@
     YMConnectionCloseStream(self.connectionRef, [stream _streamRef]);
 }
 
-- (BOOL)forwardFile:(int)file toStream:(YMStream *)stream length:(uint64_t *)inOutLen
+- (BOOL)forwardFile:(int)file toStream:(YMStream *)stream length:(size_t *)inOutLen
 {
     return YMConnectionForwardFile(self.connectionRef, file, [stream _streamRef], inOutLen, true, NULL);
 }
 
-- (BOOL)forwardStream:(YMStream *)stream toFile:(int)file length:(uint64_t *)inOutLen
+- (BOOL)forwardStream:(YMStream *)stream toFile:(int)file length:(size_t *)inOutLen
 {
     return YMConnectionForwardStream(self.connectionRef, [stream _streamRef], file, inOutLen, true, NULL);
 }

@@ -408,6 +408,18 @@ bool YMSessionConnectToPeer(YMSessionRef s_, YMPeerRef peer, bool sync)
         }
         
         YMRelease(newConnection);
+        
+        // https://github.com/gygias/yammer/issues/2
+#if defined(YMAPPLE)
+        for ( int j = 0; j < YMArrayGetCount(addresses); j++ ) {
+            YMAddressRef anotherAddress = (YMAddressRef)YMArrayGet(addresses,j);
+            const char *desc = YMSTR(YMAddressGetDescription(anotherAddress));
+            if ( strstr(desc,"127.0.0.1") ) {
+                ymerr("limiting localhost session to one connection on apple: %s",YMSTR(YMAddressGetDescription(address)));
+                return true;
+            }
+        }
+#endif
     }
     
     return true;

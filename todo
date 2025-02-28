@@ -12,6 +12,8 @@ QUEUE LIFECYCLE / THREAD EXIT TASK FORCE
   test dispatchafter to queue that exits in the interim
 contextual lz4
 linux rng
+a switch to make dispatch fully libdispatch on apple [for comparison]
+think through and explain callback queues in header docs (see PTA.app's startStopPressed:)
 
 big ideas from ~10 years ago:
 - write complete build instructions based off clean w32 & debian installs

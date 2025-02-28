@@ -274,10 +274,8 @@ void __YMDispatchDispatch(YMDispatchQueueRef queue, ym_dispatch_user_t *user, YM
 
     if ( sem ) {
         YMSemaphoreWait(sem);
-        if ( ! isSource ) {
-            YMRelease(sem);
-            YMFREE(user);
-        }
+        YMRelease(sem);
+        YMFREE(user);
         YMFREE(d);
     }
 }
@@ -609,7 +607,7 @@ void __ym_dispatch_sigalarm(int signum)
 
     if ( nextTimer ) {
 #ifdef YM_AFTER_LOG
-        printf("dispatching %p[%p,%p] on %p(%s)\n",nextTimer->dispatch,nextTimer->dispatch->dispatchProc,nextTimer->dispatch->context,nextTimer->queue,YMSTR((((__ym_dispatch_queue_t *)(nextTimer->queue))->name)));
+        printf("dispatching %p[%p,%p] on %p(%s)\n",(void *)nextTimer->dispatch,(void *)nextTimer->dispatch->dispatchProc,(void *)nextTimer->dispatch->context,(void *)nextTimer->queue,YMSTR((((__ym_dispatch_queue_t *)(nextTimer->queue))->name)));
 #endif
         YMDispatchAsync(nextTimer->queue,nextTimer->dispatch);
 
@@ -627,7 +625,7 @@ void __ym_dispatch_sigalarm(int signum)
             return;
         }
         double inSecs = YMTimespecSince(nextNextTimer->time,now);
-        printf("next timer is now %p[%p,%p] in %0.9f on %s\n",nextNextTimer->dispatch,nextNextTimer->dispatch->dispatchProc,nextNextTimer->dispatch->context,inSecs,YMSTR(((__ym_dispatch_queue_t *)(nextNextTimer->queue))->name));
+        printf("next timer is now %p[%p,%p] in %0.9f on %s\n",(void *)nextNextTimer->dispatch,(void *)nextNextTimer->dispatch->dispatchProc,(void *)nextNextTimer->dispatch->context,inSecs,YMSTR(((__ym_dispatch_queue_t *)(nextNextTimer->queue))->name));
     } else
         printf("next timer is now (null)\n");
 #endif
@@ -645,7 +643,7 @@ void __YMDispatchUserFinalize(ym_dispatch_user_t *user)
             free(user->context);
             break;
         default:
-            ymerr("invalid user dispatch mode ignored (%d,%p,%p)",user->mode,user->dispatchProc,user->context);
+            ymerr("invalid user dispatch mode ignored (%d,%p,%p)",user->mode,(void *)user->dispatchProc,(void *)user->context);
         case ym_dispatch_user_context_noop:
             break;
     }
@@ -720,8 +718,7 @@ YM_ENTRY_POINT(__ym_dispatch_service_loop)
         if ( aDispatch->sem )
             YMSemaphoreSignal(aDispatch->sem);
         else {
-            if ( ! aDispatch->isSource )
-                YMFREE(aDispatch->user);
+            YMFREE(aDispatch->user);
             YMFREE(aDispatch);
         }
     }
@@ -778,10 +775,6 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
     // potentially factor this out of here and dnsbrowser, make dnsbrowser handle indefinite wait
     bool keepGoing = true;
     YMFILE signalFd = YMPipeGetOutputFile(gDispatch->selectSignalPipe);
-//#define source_dispatch_direct
-#ifdef source_dispatch_sync
-    YMSemaphoreRef signalThreadSem = YMSemaphoreCreate(0);
-#endif
 
     char buf[] = {'#'};
     int syncFd = YMPipeGetInputFile(gDispatch->selectSignalPipe);
@@ -870,9 +863,9 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
         result = select(maxFd + 1, &readFds, &writeFds, NULL, &tv);
 #ifdef YM_SOURCE_LOG_point_5
         if ( nIterations % 1000 == 0 )
-            printf(">>> source select: %zd (%lu serviced, %lu loops (%0.2f%%) %lu timeouts (%0.2f%%), %lu $ignals (%0.2f%% busy))<<<\n",result,
+            printf(">>> source select: %zd (%"PRIu64" serviced, %"PRIu64" loops (%0.2f%%) %"PRIu64" timeouts (%0.2f%%), %"PRIu64" $ignals (%0.2f%% busy))<<<\n",result,
                 nServiced,nIterations,nIterations>0?100*((double)nServiced/(double)nIterations):0.0,
-                nTimeouts,nIterations>0?100*((double)nTimeouts/(double)nServiced):0.0,
+                nTimeouts,nIterations>0?100*((double)nTimeouts/(double)nIterations):0.0,
                 nSignals,nSignals>0?100*((double)nBusySignals/(double)nSignals):0.0);
 #endif
         if (result > 0) {
@@ -887,24 +880,14 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
 #ifdef YM_SOURCE_LOG_1
                             printf(">>> %sreadable fd %d %s %p %p %p %p<<<\n",serviceable?"":"BUSY ",anFd,YMSTR(source->queue->name),source,source->user,source->user->dispatchProc,source->user->context);
 #endif
-//#define source_dispatch_sync
-#ifndef source_dispatch_direct
                             if ( ! serviceable )
                                 continue;
                             ym_dispatch_user_t *wrapper = YMALLOC(sizeof(ym_dispatch_user_t));
                             wrapper->dispatchProc = __ym_source_select_wrapper;
                             wrapper->context = source;
+                            wrapper->onCompleteProc = NULL;
                             wrapper->mode = ym_dispatch_user_context_free;
-                            __YMDispatchDispatch(source->queue,wrapper,
-#ifdef source_dispatch_sync
-                                                    signalThreadSem,
-#else
-                                                    NULL,
-#endif
-                                                    true);
-#else
-                            source->user->dispatchProc(source->user->context);
-#endif
+                            __YMDispatchDispatch(source->queue,wrapper,NULL,true);
                             nServicedThis++;
                         }
                     } else if ( source->type == ym_dispatch_source_writeable ) {
@@ -913,24 +896,15 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
 #ifdef YM_SOURCE_LOG_1
                             printf(">>>%swriteable fd %d %s %p %p %p %p<<<\n",serviceable?"":"BUSY ",anFd,YMSTR(source->queue->name),source,source->user,source->user->dispatchProc,source->user->context);
 #endif
-#ifndef source_dispatch_direct
                             if ( ! serviceable )
                                 continue;
 
                             ym_dispatch_user_t *wrapper = YMALLOC(sizeof(ym_dispatch_user_t));
                             wrapper->dispatchProc = __ym_source_select_wrapper;
                             wrapper->context = source;
+                            wrapper->onCompleteProc = NULL;
                             wrapper->mode = ym_dispatch_user_context_free;
-                            __YMDispatchDispatch(source->queue,wrapper,
-#ifdef source_dispatch_sync
-                                                    signalThreadSem,
-#else
-                                                    NULL,
-#endif
-                                                    true);
-#else
-                            source->user->dispatchProc(source->user->context);
-#endif
+                            __YMDispatchDispatch(source->queue,wrapper,NULL,true);
                             nServicedThis++;
                         }
                     }
@@ -997,7 +971,7 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
 
     printf("dispatch select exiting: %"PRIu64" serviced, %"PRIu64" loops (%0.2f%%) %"PRIu64" timeouts (%0.2f%%), %"PRIu64" $ignals (%0.2f%% busy)\n",
             nServiced,nIterations,nIterations>0?100*((double)nServiced/(double)nIterations):0.0,
-            nTimeouts,nIterations>0?100*((double)nTimeouts/(double)nServiced):0.0,
+            nTimeouts,nIterations>0?100*((double)nTimeouts/(double)nIterations):0.0,
             nSignals,nSignals>0?100*((double)nBusySignals/(double)nSignals):0.0);
     fflush(stdout);
 }

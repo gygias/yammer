@@ -47,15 +47,14 @@
 - (NSData *)readDataOfLength:(NSUInteger)length
 {
     NSUInteger idx = 0;
-    NSMutableData *data = [NSMutableData data],
-        *outData = nil;
+    NSMutableData *data = [NSMutableData data];
     
     uint16_t bufLen = 16384;
-    uint8_t *buf = malloc(bufLen);
+    uint8_t buf[bufLen];
     while ( idx < length ) {
-        uint16_t outLen = 0;
+        size_t outLen = 0;
         NSUInteger remaining = ( length - idx );
-        uint16_t aReadLen = ( remaining < bufLen ) ? (uint16_t)remaining : bufLen;
+        size_t aReadLen = ( remaining < bufLen ) ? remaining : bufLen;
         YMIOResult result = YMStreamReadUp(self.streamRef, buf, aReadLen, &outLen);
         if ( result != YMIOError ) {
             [data appendBytes:buf length:outLen];
@@ -66,25 +65,21 @@
             }
         } else {
             NSLog(@"%s: read %lu-%lu failed with %d",__PRETTY_FUNCTION__,(unsigned long)idx,(unsigned long)(idx+bufLen),result);
-            goto catch_return;
+            return nil;
         }
         
         idx += outLen;
     }
     
-    outData = data;
-    
-catch_return:
-    YMFREE(buf);
-    return outData;
+    return data;
 }
 
 - (BOOL)writeData:(NSData *)data
 {
     NSUInteger idx = 0;
     while ( idx < [data length] ) {
-        NSUInteger remaining = [data length] - idx;
-        uint16_t aLength = remaining < UINT16_MAX ? (uint16_t)remaining : UINT16_MAX;
+        size_t remaining = [data length] - idx;
+        size_t aLength = remaining < UINT16_MAX ? remaining : UINT16_MAX;
         YMIOResult result = YMStreamWriteDown(self.streamRef, (uint8_t *)[data bytes] + idx, aLength);
         if ( result != YMIOSuccess ) {
             NSLog(@"%s: write %lu-%lu failed with %d",__PRETTY_FUNCTION__,(unsigned long)idx,(unsigned long)(idx + aLength),result);

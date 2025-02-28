@@ -263,7 +263,7 @@ bool YMConnectionConnect(YMConnectionRef c_)
         return false;
     }
     
-    ymlog("connected");
+    ymlog("connected on [%d]",newSocket);
     c->socket = newSocket;
     
     return true;

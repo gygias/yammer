@@ -22,7 +22,7 @@
 - (YMStream *)newStreamWithName:(NSString *)name;
 - (void)closeStream:(YMStream *)stream;
 
-- (BOOL)forwardFile:(int)file toStream:(YMStream *)stream length:(uint64_t *)inOutLen;
-- (BOOL)forwardStream:(YMStream *)stream toFile:(int)file length:(uint64_t *)inOutLen;
+- (BOOL)forwardFile:(int)file toStream:(YMStream *)stream length:(size_t *)inOutLen;
+- (BOOL)forwardStream:(YMStream *)stream toFile:(int)file length:(size_t *)inOutLen;
 
 @end
