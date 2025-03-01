@@ -12,7 +12,7 @@
 #include "YMCompression.h"
 #include "YMPipe.h"
 #include "YMPipePriv.h"
-#include "YMThread.h"
+#include "YMDispatch.h"
 
 #include <sys/types.h>
 #if !defined(YMWIN32)
@@ -125,9 +125,9 @@ void _CompressionTest(CompressionTest *theTest, const char *sourcePath, const ch
     okay = YMCompressionInit(theTest->decompressC);
     testassert(okay,"read init");
     
-    
-    YMThreadRef readThread = YMThreadCreate(NULL, compression_test_compress_proc, theTest);
-    YMThreadStart(readThread);
+    ym_dispatch_user_t user = { compression_test_compress_proc, theTest, NULL, ym_dispatch_user_context_noop };
+    YMDispatchQueueRef readQueue = YMDispatchQueueCreate(YMSTRC("com.combobulated.CompressionTests.read"));
+    YMDispatchAsync(readQueue, &user);
     
 #define by UINT16_MAX
     size_t nOutBytes = by;
@@ -161,8 +161,7 @@ void _CompressionTest(CompressionTest *theTest, const char *sourcePath, const ch
     // these are available from YMCompressionGetPerformance, but since it's already here leaving as another sanity check
     ymassert(theTest->rawWritten==theTest->rawRead,"raw mismatch w%lu v r%lu",theTest->rawWritten,theTest->rawRead);
     
-    YMThreadJoin(readThread);
-    YMRelease(readThread);
+    YMDispatchQueueRelease(readQueue);
     _YMPipeSetClosed(pipe);
     YMRelease(pipe);
     

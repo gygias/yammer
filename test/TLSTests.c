@@ -13,7 +13,6 @@
 #include "YMSemaphore.h"
 #include "YMLocalSocketPair.h"
 #include "YMSocket.h"
-#include "YMThread.h"
 #include "YMUtilities.h"
 
 #if defined (YMLINUX)
@@ -134,14 +133,14 @@ void _TestTLS1(struct TLSTest *theTest)
     YMTLSProviderRef theClient = localIsServer?remoteProvider:localProvider;
     
     struct RunEndpointContext serverContext = { theTest, theServer, true };
-    YMThreadRef serverThread = YMThreadCreate(NULL, _RunEndpoint, &serverContext);
-    YMThreadStart(serverThread);
+    ym_dispatch_user_t serverUser = { _RunEndpoint, &serverContext, NULL, ym_dispatch_user_context_noop };
+    YMDispatchAsync(YMDispatchGetGlobalQueue(), &serverUser);
     
     sleep(2); // xxx let server reach accept()
     
     struct RunEndpointContext clientContext = { theTest, theClient, false };
-    YMThreadRef clientThread = YMThreadCreate(NULL, _RunEndpoint, &clientContext);
-    YMThreadStart(clientThread);
+    ym_dispatch_user_t clientUser = { _RunEndpoint, &clientContext, NULL, ym_dispatch_user_context_noop };
+    YMDispatchAsync(YMDispatchGetGlobalQueue(), &clientUser);
     
 #if TLSTestTimeBased
     CFRunLoopRunInMode(kCFRunLoopDefaultMode, [TLSTestEndDate timeIntervalSinceDate:[NSDate date]], false);
@@ -154,19 +153,25 @@ void _TestTLS1(struct TLSTest *theTest)
     YMSemaphoreWait(theTest->threadExitSemaphore); // todo: there's still a deadlock bug in this code, where server races client and timeBasedEnd to try to receive an additional message
     YMSemaphoreWait(theTest->threadExitSemaphore);
     
+    usleep(500000);
+    signal(SIGPIPE, __sigpipe_handler);
+    
     bool clientFirst = arc4random_uniform(2);
     bool okay = YMSecurityProviderClose((YMSecurityProviderRef)(clientFirst?theClient:theServer));
     testassert(okay,"client close failed");
     
-    signal(SIGPIPE, __sigpipe_handler);
     okay = YMSecurityProviderClose((YMSecurityProviderRef)(clientFirst?theServer:theClient));
     testassert(okay,"server close failed");
     
     YMRelease(clientFirst?theClient:theServer);
     YMRelease(clientFirst?theServer:theClient);
     YMRelease(localSocketPair);
+    YMRelease(localSocket);
+    YMRelease(remoteSocket);
     
+    usleep(500000);
     signal(SIGPIPE, SIG_DFL);
+    
     ymlog("tls test finished (%lu in, %lu out)",theTest->bytesIn,theTest->bytesOut);
 }
 

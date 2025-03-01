@@ -9,7 +9,6 @@
 #include "YMmDNSService.h"
 
 #include "YMUtilities.h"
-#include "YMThread.h"
 
 #if !defined(YMWIN32)
 # include <sys/socket.h>
@@ -41,7 +40,6 @@ typedef struct __ym_mdns_service
     uint16_t txtRecordLen;
     DNSServiceRef *dnsService;
     bool advertising;
-    YMThreadRef eventThread;
 } __ym_mdns_service;
 typedef struct __ym_mdns_service __ym_mdns_service_t;
 
@@ -157,7 +155,7 @@ bool YMmDNSServiceStart( YMmDNSServiceRef s_ )
     return true;
 }
 
-bool YMmDNSServiceStop( YMmDNSServiceRef s_, bool synchronous )
+bool YMmDNSServiceStop( YMmDNSServiceRef s_ )
 {
     __ym_mdns_service_t *s = (__ym_mdns_service_t *)s_;
     
@@ -171,9 +169,6 @@ bool YMmDNSServiceStop( YMmDNSServiceRef s_, bool synchronous )
     DNSServiceRefDeallocate(*(s->dnsService));
     YMFREE(s->dnsService);
     s->dnsService = NULL;
-    
-    if ( synchronous )
-        okay = YMThreadJoin(s->eventThread);
     
     ymlog("mdns: browser stopping");
     return okay;

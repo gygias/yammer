@@ -21,7 +21,7 @@ YMmDNSServiceRef YMAPI YMmDNSServiceCreate(YMStringRef type, YMStringRef name, u
 // copies the keys/values
 bool YMAPI YMmDNSServiceSetTXTRecord( YMmDNSServiceRef service, YMmDNSTxtRecordKeyPair *keyPairs[], size_t nPairs );
 bool YMAPI YMmDNSServiceStart( YMmDNSServiceRef service );
-bool YMAPI YMmDNSServiceStop( YMmDNSServiceRef service, bool synchronous );
+bool YMAPI YMmDNSServiceStop( YMmDNSServiceRef service );
 
 YM_EXTERN_C_POP
 

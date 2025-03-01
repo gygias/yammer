@@ -9,7 +9,8 @@
 #include "YMSocket.h"
 
 #include "YMPipe.h"
-#include "YMThread.h"
+#include "YMDispatch.h"
+#include "YMSemaphore.h"
 
 #include "YMLog.h"
 
@@ -27,10 +28,9 @@ typedef struct __ym_socket
     bool passthrough;
     
     YMPipeRef inPipe;
-    YMThreadRef inThread;
-    
     YMPipeRef outPipe;
-    YMThreadRef outThread;
+    
+    YMSemaphoreRef exitSem;
     
     uint64_t iOff;
     uint64_t oOff;
@@ -67,25 +67,26 @@ YMSocketRef YMSocketCreate(ym_socket_disconnected f, const void *c)
     s->dFunc = f;
     s->dCtx = c;
     s->passthrough = true;
+    s->exitSem = YMSemaphoreCreate(0);
     
     s->inPipe = YMPipeCreate(NULL);
-    s->inThread = YMThreadCreate(NULL, _ym_socket_in_proc, s);
-    
     s->outPipe = YMPipeCreate(NULL);
-    s->outThread = YMThreadCreate(NULL, _ym_socket_out_proc, s);
     
     return s;
 }
 
 void _YMSocketFree(YMTypeRef object)
 {
-    YMSocketRef s = object;
+    __ym_socket_t *s = (__ym_socket_t *)object;
+    
+    s->dNotified = true;
     
     YMRelease(s->inPipe);
-    YMRelease(s->inThread);
-    
     YMRelease(s->outPipe);
-    YMRelease(s->outThread);
+    
+    YMSemaphoreWait(s->exitSem);
+    YMSemaphoreWait(s->exitSem);
+    YMRelease(s->exitSem);
 }
 
 bool YMSocketSet(YMSocketRef s_, YMSOCKET socket)
@@ -112,16 +113,14 @@ bool YMSocketSet(YMSocketRef s_, YMSOCKET socket)
           YMPipeGetOutputFile(s->outPipe),
           s );
     
-    bool okay = YMThreadStart(s->outThread);
-    if ( okay ) {
-        okay = YMThreadStart(s->inThread);
-    }
-    if ( ! okay )
-        s->socket = NULL_SOCKET;
+    ym_dispatch_user_t inUser = { _ym_socket_in_proc, s, NULL, ym_dispatch_user_context_noop };
+    YMDispatchAsync(YMDispatchGetGlobalQueue(), &inUser);
+    ym_dispatch_user_t outUser = { _ym_socket_out_proc, s, NULL, ym_dispatch_user_context_noop };
+    YMDispatchAsync(YMDispatchGetGlobalQueue(), &outUser);
     
     s->dNotified = false;
     
-    return okay;
+    return true;
 }
 
 YMFILE YMSocketGetInput(YMSocketRef s)
@@ -193,6 +192,7 @@ YM_ENTRY_POINT(_ym_socket_out_proc)
     } while (true);
 out_proc_exit:
     ymlog("_ym_socket_out_proc exiting");
+    YMSemaphoreSignal(s->exitSem);
 }
 
 YM_ENTRY_POINT(_ym_socket_in_proc)
@@ -254,6 +254,7 @@ YM_ENTRY_POINT(_ym_socket_in_proc)
     
 in_proc_exit:
     ymlog("_ym_socket_in_proc exiting");
+    YMSemaphoreSignal(s->exitSem);
 }
 
 YM_EXTERN_C_POP

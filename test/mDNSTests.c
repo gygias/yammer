@@ -272,7 +272,7 @@ void test_service_resolved(YMmDNSBrowserRef browser, bool resolved, YMmDNSServic
     _CompareTxtList(theTest,service->txtRecordKeyPairs,service->txtRecordKeyPairsSize,theTest->testKeyPairs,theTest->nTestKeyPairs);
     
     theTest->waitingOnResolution = false;
-    YMmDNSServiceStop(theTest->service, false);
+    YMmDNSServiceStop(theTest->service);
 }
 
 void test_service_removed(YMmDNSBrowserRef browser, YMStringRef serviceName, void *context)

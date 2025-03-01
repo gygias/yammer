@@ -232,7 +232,7 @@ void _YMSessionFree(YMTypeRef o_)
     if ( s->name )
         YMRelease(s->name);
     if ( s->service ) {
-        YMmDNSServiceStop(s->service, true); // xxx
+        YMmDNSServiceStop(s->service); // xxx
         __YMSessionObserveNetworkInterfaceChanges(s, false);
         YMRelease(s->service);
     }
@@ -556,7 +556,7 @@ rewind_fail:
     s->acceptExitFlag = true;
 
     if ( s->service ) {
-        YMmDNSServiceStop(s->service, false);
+        YMmDNSServiceStop(s->service);
         YMRelease(s->service);
         s->service = NULL;
     }
@@ -580,7 +580,7 @@ bool YMSessionStopAdvertising(YMSessionRef s_)
     }
     
     if ( s->service ) {
-        bool mdnsOK = YMmDNSServiceStop(s->service, false);
+        bool mdnsOK = YMmDNSServiceStop(s->service);
         YMRelease(s->service);
         s->service = NULL;
         if ( ! mdnsOK )

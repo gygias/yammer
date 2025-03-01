@@ -8,11 +8,11 @@
 
 #include "YMLocalSocketPair.h"
 
-#include "YMThread.h"
+#include "YMDispatch.h"
 #include "YMSemaphore.h"
 #include "YMUtilities.h"
 
-#define ymlog_type YMLogIO
+#define ymlog_type YMLogDefault
 #define ymlog_pre "local-socket[%s]: "
 #define ymlog_args ( p->userName ? YMSTR(p->userName) : "&" )
 #include "YMLog.h"
@@ -20,7 +20,6 @@
 #if !defined(YMWIN32)
 # include <sys/socket.h>
 # include <sys/un.h>
-# include <pthread.h>
 # define LOCAL_SOCKET_PROTOCOL PF_UNSPEC
 # define LOCAL_SOCKET_DOMAIN AF_LOCAL
 #else
@@ -61,12 +60,11 @@ YM_ONCE_DEF(__YMLocalSocketPairInitOnce);
 
 static YM_ONCE_OBJ gYMLocalSocketOnce = YM_ONCE_INIT;
 static const char *__YMLocalSocketPairNameBase = "ym-lsock";
-static YMThreadRef gYMLocalSocketPairAcceptThread = NULL;
+static YMDispatchQueueRef gYMLocalSocketPairAcceptQueue = NULL;
 static YMStringRef gYMLocalSocketPairName = NULL;
 static YMSemaphoreRef gYMLocalSocketSemaphore = NULL; // thread ready & each 'accepted'
 static bool gYMLocalSocketPairAcceptKeepListening = false;
 static bool gYMLocalSocketThreadEnd = false; // sadly not quite the same as 'keep listening'
-static YMSemaphoreRef gYMLocalSocketThreadExited = NULL;
 static YMSOCKET gYMLocalSocketListenSocket = NULL_SOCKET;
 static YMSOCKET gYMLocalSocketPairAcceptedLast = NULL_SOCKET;
 
@@ -87,15 +85,11 @@ void YMLocalSocketPairStop(void)
         ymsoftassert(result==0,"warning: close(%d) listen failed: %d (%s)",(int)gYMLocalSocketListenSocket,error,errorStr);
         gYMLocalSocketListenSocket = NULL_SOCKET;
 
-        YMSemaphoreWait(gYMLocalSocketThreadExited);
-        YMRelease(gYMLocalSocketThreadExited);
-        gYMLocalSocketThreadExited = NULL;
+        YMDispatchQueueRelease(gYMLocalSocketPairAcceptQueue);
+        gYMLocalSocketPairAcceptQueue = NULL;
         
         YMRelease(gYMLocalSocketSemaphore);
         gYMLocalSocketSemaphore = NULL;
-
-        YMRelease(gYMLocalSocketPairAcceptThread);
-        gYMLocalSocketPairAcceptThread = NULL;
         
 #if defined(YMAPPLE) || defined(YMLINUX)
 		char *prefix = "";
@@ -120,15 +114,17 @@ YM_ONCE_FUNC(__YMLocalSocketPairInitOnce,
 {
     YMStringRef name = YMSTRC("local-socket-spawn");
     gYMLocalSocketSemaphore = YMSemaphoreCreateWithName(name, 0);
-    gYMLocalSocketPairAcceptThread = YMThreadCreate(name, __ym_local_socket_accept_proc, NULL);
+    gYMLocalSocketPairAcceptQueue = YMDispatchQueueCreate(name);
     YMRelease(name);
     
-    ymassert(gYMLocalSocketPairAcceptThread&&gYMLocalSocketSemaphore,"local-socket: fatal: failed to spawn accept thread");
-    
     gYMLocalSocketThreadEnd = false;
-    gYMLocalSocketThreadExited = YMSemaphoreCreate(0);
-    bool okay = YMThreadStart(gYMLocalSocketPairAcceptThread);
-    ymassert(okay,"fatal: failed to start accept thread");
+    ym_dispatch_user_t *user = YMALLOC(sizeof(ym_dispatch_user_t));
+    user->dispatchProc = __ym_local_socket_accept_proc;
+    user->context = NULL;
+    user->onCompleteProc = NULL;
+    user->mode = ym_dispatch_user_context_noop;
+    YMDispatchAsync(gYMLocalSocketPairAcceptQueue,user);
+    YMFREE(user);
     
     YMSemaphoreWait(gYMLocalSocketSemaphore);
 })
@@ -339,8 +335,6 @@ YM_ENTRY_POINT(__ym_local_socket_accept_proc)
     } while ( gYMLocalSocketPairAcceptKeepListening );
     
     ymlogg("__ym_local_socket_accept_proc exiting");
-    
-    YMSemaphoreSignal(gYMLocalSocketThreadExited);
 }
 
 YM_EXTERN_C_POP

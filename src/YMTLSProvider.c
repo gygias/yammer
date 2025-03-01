@@ -13,7 +13,6 @@
 #include "YMX509CertificatePriv.h"
 
 #include "YMUtilities.h"
-#include "YMThread.h"
 #include "YMThreadPriv.h"
 #include "YMDictionary.h"
 #include "YMLock.h"
@@ -82,11 +81,11 @@ bool __YMTLSProviderClose(__ym_security_provider_t *);
 
 extern BIO_METHOD ym_bio_methods;
 
-void ym_tls_thread_id_callback(__unused CRYPTO_THREADID *threadId)
+/*void ym_tls_thread_id_callback(__unused CRYPTO_THREADID *threadId)
 {
     //ymlog("ym_tls_thread_id_callback");
     CRYPTO_THREADID_set_numeric(threadId, (unsigned long)_YMThreadGetCurrentThreadNumber());
-}
+}*/
 
 void __YMTLSInitPlatform(void)
 {
@@ -105,7 +104,8 @@ YM_ONCE_FUNC(__YMTLSInit,
 
 	gYMTLSLocks = YMALLOC(CRYPTO_num_locks()*sizeof(YMLockRef));
 
-	CRYPTO_THREADID_set_callback(ym_tls_thread_id_callback);
+    // seems to have been made a no-op at some point in the last decade
+	//CRYPTO_THREADID_set_callback(ym_tls_thread_id_callback);
 	CRYPTO_set_locking_callback(__ym_tls_lock_callback);
 
 	gYMTLSExDataList = YMDictionaryCreate();

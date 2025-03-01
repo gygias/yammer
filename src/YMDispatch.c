@@ -268,7 +268,7 @@ void __YMDispatchDispatch(YMDispatchQueueRef queue, ym_dispatch_user_t *user, YM
     YMArrayAdd(q->queueStack,d);
     YMSelfUnlock(queue);
 #ifdef YM_DISPATCH_LOG_1
-    printf("signaling %s for %p[%p,%p]\n",YMSTR(q->name),user,user->dispatchProc,user->context);
+    printf("signaling queue \"%s\" for %p[%p,%p,%p,%d]\n",YMSTR(q->name),user,user->dispatchProc,user->context,user->onCompleteProc,user->mode);
 #endif
     YMSemaphoreSignal(q->queueSem);
 
@@ -676,12 +676,12 @@ YM_ENTRY_POINT(__ym_dispatch_service_loop)
     
     __ym_dispatch_dispatch_t *aDispatch = NULL;
 #ifdef YM_DISPATCH_LOG
-    printf("[%s:%08"PRIx64"] entered\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber());
+    printf("[%s:%08"PRIx64"] entered for %p[%p,%p]\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber(),c,q,qt);
 #endif
 
     while ( true ) {
 #ifdef YM_DISPATCH_LOG_1
-        printf("[%s:%08lx] begin service loop\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber());
+        printf("[%s:%08"PRIx64"] begin service loop\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber());
 #endif
         YMSemaphoreWait(q->queueSem);
 
@@ -689,7 +689,7 @@ YM_ENTRY_POINT(__ym_dispatch_service_loop)
             goto catch_return;
 
 #ifdef YM_DISPATCH_LOG_1
-        printf("[%s:%08lx] woke for service\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber());
+        printf("[%s:%08"PRIx64"] woke for service\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber());
         int64_t count;
 #endif
         YMSelfLock(q);
@@ -703,13 +703,13 @@ YM_ENTRY_POINT(__ym_dispatch_service_loop)
         YMSelfUnlock(q);
         
 #ifdef YM_DISPATCH_LOG_1
-        printf("[%s:%08lx:%ld] entering dispatch\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber(),count);
+        printf("[%s:%08"PRIx64":%"PRId64"] entering dispatch %p(%p)\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber(),count,aDispatch->user->dispatchProc,aDispatch->user->context);
 #endif
         if ( qt ) qt->busy = true;
         aDispatch->user->dispatchProc(aDispatch->user->context);
         if ( qt ) qt->busy = false;
 #ifdef YM_DISPATCH_LOG_1
-        printf("[%s:%08lx:%ld] finished dispatch\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber(),count);
+        printf("[%s:%08"PRIx64":%"PRId64"] finished dispatch\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber(),count);
 #endif
         if ( ! aDispatch->isSource ) {
             __YMDispatchUserFinalize(aDispatch->user);

@@ -10,6 +10,7 @@ YM_EXTERN_C_PUSH
 typedef const struct __ym_dispatch_queue * YMDispatchQueueRef;
 
 YMDispatchQueueRef YMAPI YMDispatchQueueCreate(YMStringRef name);
+// add flag for join?
 void YMAPI YMDispatchQueueRelease(YMDispatchQueueRef queue);
 
 typedef enum ym_dispatch_user_context_mode
@@ -47,7 +48,8 @@ typedef void * ym_dispatch_source_t;
 ym_dispatch_source_t YMAPI YMDispatchSourceCreate(YMDispatchQueueRef queue, ym_dispatch_source_type type, uint64_t data, ym_dispatch_user_t *user);
 void YMAPI YMDispatchSourceDestroy(ym_dispatch_source_t source);
 
-_Noreturn void YMAPI YMDispatchMain(void);
+__attribute__((__noreturn__))
+void YMAPI YMDispatchMain(void);
 
 YM_EXTERN_C_POP
 
