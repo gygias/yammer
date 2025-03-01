@@ -109,7 +109,7 @@ void __YMDispatchQueueExitSync(__ym_dispatch_queue_t *q);
 
 void __ym_dispatch_sigalarm(int);
 
-YM_ONCE_OBJ(gDispatchGlobalInitOnce);
+YM_ONCE_OBJ(gDispatchInitOnce);
 YM_ONCE_DEF(__YMDispatchInitOnce);
 YM_ONCE_FUNC(__YMDispatchInitOnce,
 {
@@ -209,7 +209,7 @@ __ym_dispatch_queue_t *__YMDispatchQueueInitCommon(YMStringRef name, YMDispatchQ
 
 YMDispatchQueueRef YMDispatchQueueCreate(YMStringRef name)
 {
-    YM_ONCE_DO(gDispatchGlobalInitOnce, __YMDispatchInitOnce);
+    YM_ONCE_DO(gDispatchInitOnce, __YMDispatchInitOnce);
 
     __ym_dispatch_queue_t *q = __YMDispatchQueueInitCommon(name, YMDispatchQueueUser, __ym_dispatch_user_service_loop);
 
@@ -236,13 +236,13 @@ void YMAPI YMDispatchQueueRelease(YMDispatchQueueRef queue)
 
 YMDispatchQueueRef YMDispatchGetGlobalQueue(void)
 {
-    YM_ONCE_DO(gDispatchGlobalInitOnce, __YMDispatchInitOnce);
+    YM_ONCE_DO(gDispatchInitOnce, __YMDispatchInitOnce);
     return gDispatch->globalQueue;
 }
 
 YMDispatchQueueRef YMDispatchGetMainQueue(void)
 {
-    YM_ONCE_DO(gDispatchGlobalInitOnce, __YMDispatchInitOnce);
+    YM_ONCE_DO(gDispatchInitOnce, __YMDispatchInitOnce);
     return gDispatch->mainQueue;
 }
 
@@ -401,7 +401,7 @@ ym_dispatch_source_t YMAPI YMDispatchSourceCreate(YMDispatchQueueRef queue, ym_d
 {
     YM_IO_BOILERPLATE
 
-    YM_ONCE_DO(gDispatchGlobalInitOnce, __YMDispatchInitOnce);
+    YM_ONCE_DO(gDispatchInitOnce, __YMDispatchInitOnce);
     YM_ONCE_DO(gDispatchGlobalInitSelect, __YMDispatchSelectOnce);
 
     __ym_dispatch_source_t *source = YMALLOC(sizeof(__ym_dispatch_source_t));
@@ -978,7 +978,7 @@ YM_ENTRY_POINT(__ym_dispatch_source_select_loop)
 
 void YMDispatchMain(void)
 {
-    YM_ONCE_DO(gDispatchGlobalInitOnce, __YMDispatchInitOnce);
+    YM_ONCE_DO(gDispatchInitOnce, __YMDispatchInitOnce);
     __ym_dispatch_service_loop_context_t *c = YMALLOC(sizeof(__ym_dispatch_service_loop_context_t));
     __ym_dispatch_queue_thread_t *qt = YMALLOC(sizeof(__ym_dispatch_queue_thread_t));
     qt->thread = NULL;
