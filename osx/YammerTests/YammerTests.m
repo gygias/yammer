@@ -169,7 +169,7 @@ bool ym_test_diff_proc(const void *ctx, const char *path1, const char *path2, bo
 }
 
 - (void)testSession {
-    const void *SELF = (__bridge const void *)(self);
+    //const void *SELF = (__bridge const void *)(self);
     SessionTestsRun(ym_test_assert_proc, (void *)ym_test_diff_proc);
 }
 

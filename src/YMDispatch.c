@@ -223,10 +223,7 @@ YMDispatchQueueRef YMDispatchQueueCreate(YMStringRef name)
 void YMAPI YMDispatchQueueRelease(YMDispatchQueueRef queue)
 {
     YMLockLock(gDispatch->lock);
-    int64_t before = YMArrayGetCount(gDispatch->userQueues);
     YMArrayRemoveObject(gDispatch->userQueues,queue);
-    int64_t after = YMArrayGetCount(gDispatch->userQueues);
-    if ( before == after ) { printf("YMArrayRemoveObject: %"PRId64"\n",before); abort(); }
     YMLockUnlock(gDispatch->lock);
 
     __YMDispatchQueueExitSync((__ym_dispatch_queue_t *)queue);
@@ -676,7 +673,7 @@ YM_ENTRY_POINT(__ym_dispatch_service_loop)
     
     __ym_dispatch_dispatch_t *aDispatch = NULL;
 #ifdef YM_DISPATCH_LOG
-    printf("[%s:%08"PRIx64"] entered for %p[%p,%p]\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber(),c,q,qt);
+    printf("[%s:%08"PRIx64"] entered for %p[%p,%p]\n", YMSTR(q->name), _YMThreadGetCurrentThreadNumber(),(void *)c,(void *)q,(void *)qt);
 #endif
 
     while ( true ) {

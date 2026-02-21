@@ -69,7 +69,6 @@ typedef struct {
 typedef int32_t YMPlexerCommandType;
 typedef enum
 {
-    YMPlexerCommandClose = -1, // indicates to up/down threads to terminate
     YMPlexerCommandCloseStream = -2,
     YMPlexerCommandMin = YMPlexerCommandCloseStream
 } YMPlexerCommand;

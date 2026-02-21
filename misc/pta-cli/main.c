@@ -159,7 +159,7 @@ void run_client_loop(YMStreamRef stream)
         YMRandomDataWithLength(buf,bufSize);
         ymResult = YMStreamWriteDown(stream, buf, bufSize);
         if ( ymResult != YMIOSuccess ) {
-            printf("%d = YMStreamWriteDown(%p, %p, %d)\n",ymResult,stream,buf,bufSize);
+            printf("%d = YMStreamWriteDown(%p, %p, %d)\n",ymResult,(void *)stream,(void *)buf,bufSize);
             break;
         }
         off += bufSize;

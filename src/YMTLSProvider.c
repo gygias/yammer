@@ -546,9 +546,8 @@ bool __YMTLSProviderRead(__ym_security_provider_t *p, uint8_t *buffer, size_t by
 {
     __ym_tls_provider_t *tls = (__ym_tls_provider_t *)p;
     
-    // loop or something? hate to change the whole prototype for this, and i like having length-y things be unsigned
-    if ( bytes > INT32_MAX )
-        ymabort("tls[%d]: error: fix thy internal errors!",tls->isServer );
+    ymassert(buffer,"tls[%d]: error: read buffer nil",tls->isServer);
+    ymassert(bytes<=INT32_MAX,"tls[%d]: error: read size %zd",tls->isServer,bytes);
     
     int result = SSL_read(tls->ssl, buffer, (int)bytes);
     
@@ -565,7 +564,8 @@ bool __YMTLSProviderWrite(__ym_security_provider_t *p, const uint8_t *buffer, si
 {
     __ym_tls_provider_t *tls = (__ym_tls_provider_t *)p;
     
-    ymassert(bytes <= INT32_MAX,"fix thy internal errors!");
+    ymassert(buffer,"tls[%d]: error: write buffer nil",tls->isServer);
+    ymassert(bytes<=INT32_MAX,"tls[%d]: error: write size %zd",tls->isServer,bytes);
     
     int result = SSL_write(tls->ssl, buffer, (int)bytes);
     
